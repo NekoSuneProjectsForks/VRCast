@@ -121,6 +121,8 @@ namespace VRCast.Converter.Editor
                     "Only Unity built-in components (Transform, Animator, Renderers, MeshFilter, Particle System) are exported. " +
                     "VRChat components, scripts and the Animator Controller are removed from the exported copy. " +
                     "The FX layer's default state (toggles etc.) is baked into the copy before removal. " +
+                    "Inactive objects are not exported, except particles, which are kept turned off " +
+                    "so they can be turned on in the app (no need to turn them all on before exporting). " +
                     "Avatar tools such as VRCFury and Modular Avatar are applied to the copy first, " +
                     "the same way as when uploading to VRChat. " +
                     "Outfits and accessories set up with MA Merge Armature / Bone Proxy that were not merged " +
@@ -128,24 +130,30 @@ namespace VRCast.Converter.Editor
                     "書き出されるのは Unity 標準のコンポーネント（Transform・Animator・Renderer・MeshFilter・Particle System）だけです。" +
                     "VRChat のコンポーネント・スクリプト・Animator Controller は書き出し用の複製から取り除かれます" +
                     "（元のアバターは変更しません）。取り除く前に、FX レイヤーの初期状態（トグルなど）を複製に焼き込みます。" +
+                    "非アクティブなオブジェクトは書き出しませんが、パーティクルだけは OFF のまま書き出し、アプリで ON にできます" +
+                    "（書き出し前にすべて ON にする必要はありません）。" +
                     "VRCFury・Modular Avatar などの改変は、VRChat へのアップロード時と同じく先に複製へ適用します。" +
                     "MA Merge Armature / Bone Proxy で付けた衣装・小物が統合されなかった場合は、" +
                     "VRCast がアバターのボーンに付け替えて体に追従させます。",
                     "Unity 기본 컴포넌트(Transform, Animator, Renderer, MeshFilter, Particle System)만 내보냅니다. " +
                     "VRChat 컴포넌트, 스크립트, Animator Controller는 내보내기용 복제본에서 제거됩니다" +
                     "(원본 아바타는 변경하지 않습니다). 제거하기 전에 FX 레이어의 초기 상태(토글 등)를 복제본에 반영합니다. " +
+                    "비활성 오브젝트는 내보내지 않지만, 파티클만은 꺼진 상태로 내보내 앱에서 켤 수 있습니다 " +
+                    "(내보내기 전에 모두 켤 필요가 없습니다). " +
                     "VRCFury, Modular Avatar 등의 개조는 VRChat 업로드 시와 같이 먼저 복제본에 적용합니다. " +
                     "MA Merge Armature / Bone Proxy로 붙인 의상·소품이 통합되지 않은 경우에는 " +
                     "VRCast가 아바타의 본에 다시 붙여 몸을 따라가게 합니다.",
                     "只导出 Unity 内置组件（Transform、Animator、Renderer、MeshFilter、Particle System）。" +
                     "VRChat 组件、脚本和 Animator Controller 会从导出用的副本中移除（不会修改原始虚拟形象）。" +
                     "移除前会把 FX 层的初始状态（开关等）烘焙到副本中。" +
+                    "未激活的对象不会导出，但粒子会以关闭状态导出，可在应用中开启（导出前无需全部开启）。" +
                     "VRCFury、Modular Avatar 等改造会像上传到 VRChat 时一样先应用到副本。" +
                     "用 MA Merge Armature / Bone Proxy 添加的服装和小物如果未被合并，" +
                     "VRCast 会把它们重新挂到虚拟形象的骨骼上并跟随身体。",
                     "只匯出 Unity 內建元件（Transform、Animator、Renderer、MeshFilter、Particle System）。" +
                     "VRChat 元件、腳本和 Animator Controller 會從匯出用的副本中移除（不會修改原始虛擬形象）。" +
                     "移除前會把 FX 層的初始狀態（開關等）烘焙到副本中。" +
+                    "未啟用的物件不會匯出，但粒子會以關閉狀態匯出，可在應用程式中開啟（匯出前無需全部開啟）。" +
                     "VRCFury、Modular Avatar 等改造會像上傳到 VRChat 時一樣先套用到副本。" +
                     "用 MA Merge Armature / Bone Proxy 新增的服裝和小物如果未被合併，" +
                     "VRCast 會把它們重新掛到虛擬形象的骨骼上並跟隨身體。"),
