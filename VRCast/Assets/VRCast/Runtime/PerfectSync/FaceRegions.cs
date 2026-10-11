@@ -199,6 +199,7 @@ namespace VRCast.PerfectSync
         public float HalfWidth { get; }
         public float Height { get; }
         public float NoseY { get; }
+        public float ChinY => _chinY;
 
         public MouthRegion(FaceRig rig)
         {

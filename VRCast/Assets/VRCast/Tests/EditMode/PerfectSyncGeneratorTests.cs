@@ -237,6 +237,74 @@ namespace VRCast.Tests
             }
         }
 
+        [Test]
+        public void Seams_FindSkinOuterEdgeOnly()
+        {
+            // 格子の右半分を、中央の列を複製した頂点（UV の継ぎ目）で作り、離れた三角形（眉などの部品）を足す
+            FaceMeshGeometry grid = PerfectSyncTestFace.CreateGeometry();
+            var vertices = new List<Vector3>(grid.Vertices);
+            var duplicates = new Dictionary<int, int>();
+            const int SplitColumn = 20;
+            for (int y = 0; y < PerfectSyncTestFace.Rows; y++)
+            {
+                int original = y * PerfectSyncTestFace.Columns + SplitColumn;
+                duplicates[original] = vertices.Count;
+                vertices.Add(grid.Vertices[original]);
+            }
+
+            float splitX = PerfectSyncTestFace.MinX + SplitColumn * PerfectSyncTestFace.Step;
+            var triangles = new List<int>();
+            for (int t = 0; t < grid.Triangles.Length; t += 3)
+            {
+                // 右半分の三角形（継ぎ目より右の頂点を含む）は複製した頂点を使う
+                bool right = false;
+                for (int k = 0; k < 3; k++)
+                {
+                    right |= grid.Vertices[grid.Triangles[t + k]].x > splitX + 1e-4f;
+                }
+
+                for (int k = 0; k < 3; k++)
+                {
+                    int index = grid.Triangles[t + k];
+                    triangles.Add(right && duplicates.TryGetValue(index, out int copy) ? copy : index);
+                }
+            }
+
+            int island = vertices.Count;
+            vertices.AddRange(new[] { new Vector3(5f, 5f, 0f), new Vector3(5.1f, 5f, 0f), new Vector3(5f, 5.1f, 0f) });
+            triangles.AddRange(new[] { island, island + 1, island + 2 });
+
+            // 外周は格子の 4 辺だけ（継ぎ目の列・離れた三角形は含まない）
+            List<Vector3> boundary = FaceMeshSeams.OuterBoundary(vertices.ToArray(), triangles.ToArray(), 1e-3f);
+            int expected = (PerfectSyncTestFace.Columns - 1) * 2 + (PerfectSyncTestFace.Rows - 1) * 2;
+            Assert.That(boundary.Count, Is.EqualTo(expected));
+            Assert.That(boundary.Exists(p => p.x > 4f), Is.False);
+            float maxY = PerfectSyncTestFace.MinY + (PerfectSyncTestFace.Rows - 1) * PerfectSyncTestFace.Step;
+            Assert.That(boundary.Exists(p => Mathf.Abs(p.x - splitX) < 1e-4f
+                && p.y > PerfectSyncTestFace.MinY + 1e-3f && p.y < maxY - 1e-3f), Is.False);
+        }
+
+        [Test]
+        public void Generate_KeepsSkinOuterEdgeStill()
+        {
+            // 三角形を渡すと、肌の外周（下の縁）は顎を開いても動かず、あご先は下がること
+            FaceMeshGeometry geometry = PerfectSyncTestFace.CreateGeometry();
+            Dictionary<LandmarkId, Vector3> points = PerfectSyncTestFace.MinimalPoints();
+            FaceRig rig = FaceRig.Build(points, PerfectSyncTestFace.Normals(points.Keys), out _);
+            var face = new PerfectSyncGenerator.MeshInput
+            {
+                Path = "Body",
+                Vertices = geometry.Vertices,
+                Normals = geometry.Normals,
+                Triangles = geometry.Triangles,
+            };
+            PerfectSyncShape jawOpen = Find(PerfectSyncGenerator.Generate(rig, new[] { face }, Strengths(1f)), "jawOpen");
+            Assert.That(jawOpen, Is.Not.Null);
+            int edge = PerfectSyncTestFace.VertexAt(new Vector3(0f, PerfectSyncTestFace.MinY, 0f));
+            Assert.That(Delta(jawOpen, edge), Is.EqualTo(Vector3.zero));
+            Assert.That(Delta(jawOpen, PerfectSyncTestFace.VertexAt(new Vector3(0f, -0.85f, 0f))).y, Is.LessThan(0f));
+        }
+
         private static List<PerfectSyncShape> GenerateAll(FaceMeshGeometry geometry, float strength)
         {
             // 平らな顔の全形状を同じ強さで作る

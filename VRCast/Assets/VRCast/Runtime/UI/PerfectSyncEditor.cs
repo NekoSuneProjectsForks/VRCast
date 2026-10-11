@@ -142,6 +142,9 @@ namespace VRCast.UI
         // 視点を顔の正面に固定するか（開くたびに ON。拡大・移動はできる）
         private bool _lockView = true;
 
+        // 保存前に実際のトラッキングで試している間 true（止めていた動きを設定どおりに動かす）
+        private bool _trackingTest;
+
         // 次に打つ（選択中の）目印と、ドラッグ中か・そのドラッグで新しく打ったか
         private LandmarkId? _selected;
         private bool _dragging;
@@ -261,6 +264,7 @@ namespace VRCast.UI
             _faceDriver = avatar.Instance.GetComponent<FaceTrackingDriver>();
 
             // 顔の線と目印がずれないよう、揺れもの・待機モーション・トラッキング・まばたき・口パクを止める（閉じたら戻す）
+            _trackingTest = false;
             SetMotionSuspended(true);
 
             // 読み込み時に足した形状を外し、元のメッシュから編集する（閉じたら足し直す）
@@ -364,6 +368,7 @@ namespace VRCast.UI
             StopPreview();
             CancelDetection();
             _orbit.RotationLocked = false;
+            _trackingTest = false;
             if (avatarAlive)
             {
                 // 試しに足した形状を外し、アバター自身のパーフェクトシンク（読み込んだファイルの内容）を足し直す
@@ -412,6 +417,31 @@ namespace VRCast.UI
             _faceDriver = null;
             _avatar = null;
             _dragging = false;
+        }
+
+        private void SetTrackingTest(bool on)
+        {
+            // 同じ状態なら何もしない
+            if (_trackingTest == on)
+            {
+                return;
+            }
+
+            if (on)
+            {
+                // 試す形状を最新にし（作れなければ始めない）、スライダーで試していた形状をやめる
+                if ((_dirty || _preview == null) && !ApplyChanges())
+                {
+                    return;
+                }
+
+                StopPreview();
+                _previewIndex = -1;
+            }
+
+            // 試す間は止めていた動き（トラッキング・まばたき・口パク・揺れもの・待機モーション）を設定どおりに動かす
+            _trackingTest = on;
+            SetMotionSuspended(!on);
         }
 
         private void SetMotionSuspended(bool suspended)
@@ -878,7 +908,8 @@ namespace VRCast.UI
 
         private void HandleMouse(bool pointerFree)
         {
-            if (_geometry == null || _camera == null)
+            // トラッキングで試している間は顔が動くので、目印を打たない
+            if (_geometry == null || _camera == null || _trackingTest)
             {
                 return;
             }
@@ -1347,6 +1378,7 @@ namespace VRCast.UI
                     Path = _facePath,
                     Vertices = _geometry.Vertices,
                     Normals = _geometry.Normals,
+                    Triangles = _geometry.Triangles,
                 },
             };
             if (_includeMouthParts)
@@ -1599,8 +1631,13 @@ namespace VRCast.UI
 
         private void SelectPreview(int index)
         {
-            // 前の形状を元に戻してから、試す形状を替える
+            // 前の形状を元に戻してから、試す形状を替える（スライダーで試すならトラッキングで試すのはやめる）
             StopPreview();
+            if (index >= 0)
+            {
+                SetTrackingTest(false);
+            }
+
             _previewIndex = index;
         }
 

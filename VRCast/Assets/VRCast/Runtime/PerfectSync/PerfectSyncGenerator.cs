@@ -16,6 +16,10 @@ namespace VRCast.PerfectSync
         // 小さすぎる移動（顔の大きさに対する比）は形状に入れない
         private const float MinDeltaRatio = 1e-4f;
 
+        // 顔の大きさに対する比: 同じ位置とみなす距離 / 肌の外周から動かし始めるまでの距離
+        private const float WeldRatio = 1e-3f;
+        private const float PinRadiusRatio = 0.3f;
+
         // 顎と一緒に動かす形状（歯・舌のメッシュにも作る）
         private static readonly HashSet<string> JawShapes = new HashSet<string>
         {
@@ -33,6 +37,9 @@ namespace VRCast.PerfectSync
             public Vector3[] Normals;
             public Matrix4x4 FaceToMesh = Matrix4x4.identity;
             public bool IsMouthPart;
+
+            // 三角形（肌の外周 = 別のメッシュとの継ぎ目を動かさないために使う。null なら外周も動かす）
+            public int[] Triangles;
         }
 
         /// <summary>
@@ -64,6 +71,8 @@ namespace VRCast.PerfectSync
                     }
                 }
 
+                // 肌の外周の近くは動かさない（歯・舌のメッシュは顎と一緒にそのまま動かす）
+                float[] pins = mesh.IsMouthPart ? null : regions.Pins(local, mesh.Triangles);
                 for (int i = 0; i < strengths.Length; i++)
                 {
                     // 作らない形状と、歯・舌のメッシュの顎以外の形状は飛ばす
@@ -73,7 +82,7 @@ namespace VRCast.PerfectSync
                         continue;
                     }
 
-                    PerfectSyncShape shape = Build(rig, regions, mesh, name, local, normals, strengths[i]);
+                    PerfectSyncShape shape = Build(rig, regions, mesh, name, local, normals, pins, strengths[i]);
                     if (shape != null)
                     {
                         shapes.Add(shape);
@@ -85,16 +94,17 @@ namespace VRCast.PerfectSync
         }
 
         private static PerfectSyncShape Build(FaceRig rig, Regions regions, MeshInput mesh, string name,
-            Vector3[] local, Vector3[] normals, float strength)
+            Vector3[] local, Vector3[] normals, float[] pins, float strength)
         {
-            // 動く頂点だけを集める
+            // 動く頂点だけを集める（pins は外周の近くほど 0 に近い倍率。null なら 1）
             float minDelta = rig.Scale * MinDeltaRatio;
             var vertices = new List<int>();
             var deltas = new List<float>();
             for (int v = 0; v < local.Length; v++)
             {
                 Vector3 normal = normals != null ? normals[v] : Vector3.zero;
-                Vector3 delta = regions.Delta(name, local[v], normal) * strength;
+                float pin = pins != null ? pins[v] : 1f;
+                Vector3 delta = pin > 0f ? regions.Delta(name, local[v], normal) * (strength * pin) : Vector3.zero;
                 if (delta.magnitude < minDelta)
                 {
                     continue;
@@ -146,6 +156,55 @@ namespace VRCast.PerfectSync
                 _cheekRight = rig[LandmarkId.CheekRight];
                 _noseWingLeft = rig[LandmarkId.NoseWingLeft];
                 _noseWingRight = rig[LandmarkId.NoseWingRight];
+            }
+
+            /// <summary>
+            /// 頂点ごとの動かす倍率（肌の外周 = 別のメッシュとの継ぎ目で 0、離れるほど 1）。三角形が無い・外周が無ければ null。
+            /// 目・口の穴の縁と口の中は外周から除く（まばたき・口の開閉で動かす必要がある）。
+            /// </summary>
+            public float[] Pins(Vector3[] local, int[] triangles)
+            {
+                List<Vector3> seams = FaceMeshSeams.OuterBoundary(local, triangles, _s * WeldRatio);
+                seams.RemoveAll(IsOpening);
+                if (seams.Count == 0)
+                {
+                    return null;
+                }
+
+                // 最も近い外周の頂点までの距離で、外周から PinRadiusRatio の範囲をなめらかに 0 へ寄せる
+                float radius = _s * PinRadiusRatio;
+                float limit = radius * radius;
+                var pins = new float[local.Length];
+                for (int v = 0; v < local.Length; v++)
+                {
+                    float nearest = limit;
+                    foreach (Vector3 seam in seams)
+                    {
+                        nearest = Mathf.Min(nearest, (local[v] - seam).sqrMagnitude);
+                    }
+
+                    pins[v] = 1f - FaceShapeMath.Falloff(Mathf.Sqrt(nearest), radius);
+                }
+
+                return pins;
+            }
+
+            private bool IsOpening(Vector3 p)
+            {
+                // 目のまわり（まぶたの縁 = 目の穴。まばたきで動かす上下の範囲だけ）
+                foreach (EyeRegion eye in new[] { _eyeLeft, _eyeRight })
+                {
+                    eye.Coordinates(p, out float t, out float v);
+                    if (eye.Mask(p, t, _s) > 0f && v < eye.Upper(t) + eye.Height * 1.2f
+                        && v > eye.Lower(t) - eye.Height * 0.8f)
+                    {
+                        return true;
+                    }
+                }
+
+                // 口の穴と口の中（口の幅の 1.5 倍以内で、あごより上・鼻より下）
+                return Mathf.Abs(p.x - _mouth.Center.x) <= _mouth.HalfWidth * 1.5f
+                    && p.y > _mouth.ChinY && p.y < _mouth.NoseY;
             }
 
             public Vector3 Delta(string name, Vector3 p, Vector3 normal)

@@ -390,12 +390,15 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
   その部位の形状（眉: browDown / browInnerUp / browOuterUp、鼻: noseSneer、口の中: jawOpen・mouthClose・mouthFunnel・mouthLowerDown・mouthUpperUp）は既定で「なし」になる
   （既存の BlendShape を割り当てたものはそのまま。口の中が無いアバターは「あ」などの BlendShape で口を動かす）。選択はファイルに保存され、Undo で戻せる。
 - **Generate and preview**（生成して試す）で ARKit の 51 種を作り、アバターに足して試す。形状ごとに「自動生成」「既存の BlendShape」「なし」と強さ（0〜2）を選べる。
-  既存の BlendShape は名前（VRChat の Viseme・まばたき・笑顔・眉・ジト目など）から自動で割り当て、目の動き（eyeLook*）は目のボーンがあればボーンで動かすため既定で「なし」
+  既存の BlendShape は名前（VRChat の Viseme・まばたき・笑顔・眉など）から自動で割り当て（ジト目は目を開けていても半目になるため eyeSquint には割り当てない）、目の動き（eyeLook*）は目のボーンがあればボーンで動かすため既定で「なし」
   （目のボーンが無いアバターは「自動生成」で、顔メッシュに描かれた瞳を動かす）。
   ARKit 名の BlendShape が元からある形状はそのまま使う。形状の名前を押すとスライダーで動かして確かめられ、既存の BlendShape を検索して選べる。
   自動生成しても動く頂点が無かった形状（目が別のメッシュ・その部位が無いなど）には「動く部分なし」と出るので、既存の BlendShape か「なし」を選ぶ。
+  自動生成では顔メッシュの肌の外周（首・頭など別のメッシュとの継ぎ目）の近くは動かさないので、口を開けても継ぎ目に隙間は開かない。
 - 「歯・舌のメッシュも顎と一緒に動かす」（既定 ON）では、名前に teeth / tooth / tongue / 歯 / 舌 を含み BlendShape のあるメッシュにも顎の形状（jawOpen など）を作る。
   そのようなメッシュが無いアバターでは選べず、「見つかりません」と出る（顔メッシュに含まれる歯・舌は顔と一緒に動く）。
+- 形状の段階の **Test with live tracking (before saving)**（実際のトラッキングで試す）を ON にすると、試している形状と割り当てのまま、止めていたトラッキング・まばたき・口パク・揺れもの・待機モーションを設定どおりに動かし、保存する前に自分の顔の動きで確かめられる（顔の線と目印は消え、目印は打てない）。
+  トラッキングタブでトラッキングとパーフェクトシンクを ON にしておく（動いていなければ理由をパネルに出す）。形状を変えたら **Apply**（反映）で更新され、スライダーで形状を試す・目印の段階に戻ると OFF になる。
 - **Save as new file...**（別名で保存）で、元のファイルと同じフォルダの `元の名前_PerfectSync.vrcaster` を既定として保存する（元のファイルは変更しない）。
   保存後は **Load the saved avatar** でそのまま読み込める。**Close**（閉じる）は確認（**Close without saving** / **Keep editing**）の後に、保存していない変更を捨て、アバターと視点を元に戻す。
 - 保存したファイルには目印と設定（`metadata/perfect_sync.json`）と、作った形状の頂点の移動量（`metadata/perfect_sync_shapes.bin`）が入る。

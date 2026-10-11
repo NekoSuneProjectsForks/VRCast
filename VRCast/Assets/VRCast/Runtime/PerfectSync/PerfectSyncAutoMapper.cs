@@ -51,8 +51,10 @@ namespace VRCast.PerfectSync
             ("browOuterUpRight", new[] { "browouterupr", "browupr", "browup", "眉上", "眉上げ" }, 1f),
             ("eyeWideLeft", new[] { "eyewidel", "eyewide", "びっくり", "見開き", "目見開き" }, 1f),
             ("eyeWideRight", new[] { "eyewider", "eyewide", "びっくり", "見開き", "目見開き" }, 1f),
-            ("eyeSquintLeft", new[] { "eyesquintl", "eyesquint", "ジト目", "じと目", "jitome", "なごみ" }, 1f),
-            ("eyeSquintRight", new[] { "eyesquintr", "eyesquint", "ジト目", "じと目", "jitome", "なごみ" }, 1f),
+            // eyeSquint は下まぶたを上げる動きで、目を開けていても 0.3〜0.5 ほど出る。上まぶたを下げるジト目・なごみを
+            // 当てると常に半目になるので、名前が eyeSquint のものだけを割り当てる
+            ("eyeSquintLeft", new[] { "eyesquintl", "eyesquint" }, 1f),
+            ("eyeSquintRight", new[] { "eyesquintr", "eyesquint" }, 1f),
             ("cheekPuff", new[] { "cheekpuff", "ぷくー", "ぷく", "puff" }, 1f),
         };
 

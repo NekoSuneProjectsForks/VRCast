@@ -89,8 +89,8 @@ namespace VRCast.UI
 
         private void DrawOverlay(float uiScale)
         {
-            // 描くのは Repaint のときだけ
-            if (Event.current.type != EventType.Repaint || _geometry == null || _camera == null
+            // 描くのは Repaint のときだけ（トラッキングで試している間は顔を見やすいよう描かない）
+            if (Event.current.type != EventType.Repaint || _trackingTest || _geometry == null || _camera == null
                 || _world.Length != _geometry.Vertices.Length)
             {
                 return;
@@ -149,8 +149,10 @@ namespace VRCast.UI
                     Loc.T("1. Points", "1. 目印", "1. 표시", "1. 标记", "1. 標記"), GUI.skin.button) && _step != Step.Points)
             {
                 // 形状の段階の検索欄から入力の焦点を外し、Delete・Ctrl+Z を目印の操作に使えるようにする
+                // （目印を打てるよう、トラッキングで試すのはやめて顔を止める）
                 _step = Step.Points;
                 GUIUtility.keyboardControl = 0;
+                SetTrackingTest(false);
             }
 
             if (GUILayout.Toggle(_step == Step.Shapes,
@@ -400,6 +402,59 @@ namespace VRCast.UI
             GUI.enabled = true;
         }
 
+        private void DrawTrackingTest(UiTheme theme)
+        {
+            // ON にすると形状を最新にしてから（重いので次のフレームで）トラッキングを動かす
+            bool test = GUILayout.Toggle(_trackingTest, Loc.T(
+                    "Test with live tracking (before saving)", "実際のトラッキングで試す（保存する前に）",
+                    "실제 트래킹으로 확인 (저장하기 전에)", "用实际追踪测试（保存前）", "用實際追蹤測試（儲存前）"),
+                WrapButton(theme));
+            if (test != _trackingTest)
+            {
+                if (test)
+                {
+                    _deferred = () => SetTrackingTest(true);
+                }
+                else
+                {
+                    SetTrackingTest(false);
+                }
+            }
+
+            if (!_trackingTest)
+            {
+                return;
+            }
+
+            // 動いていない理由（顔が映っていない・パーフェクトシンクが OFF）か、動作中であること
+            if (_faceDriver == null || !_faceDriver.IsTracking)
+            {
+                GuiControls.Warning(Loc.T(
+                    "No face detected. Turn on tracking in the Tracking tab and face the camera.",
+                    "顔を検出していません。トラッキングタブでトラッキングを ON にして、カメラに顔を映してください。",
+                    "얼굴이 감지되지 않습니다. 트래킹 탭에서 트래킹을 켜고 카메라에 얼굴을 비추세요.",
+                    "未检测到脸部。请在追踪分页开启追踪，并让摄像头拍到脸。",
+                    "未偵測到臉部。請在追蹤分頁開啟追蹤，並讓攝影機拍到臉。"));
+            }
+            else if (!_faceDriver.IsPerfectSyncActive)
+            {
+                GuiControls.Warning(Loc.T(
+                    "Perfect sync is not running. Turn on Perfect sync in the Tracking tab (MediaPipe, iPhone, VMC or iFacialMocap only).",
+                    "パーフェクトシンクが動いていません。トラッキングタブの「パーフェクトシンク」を ON にしてください（MediaPipe・iPhone・VMC・iFacialMocap のみ）。",
+                    "퍼펙트 싱크가 작동하지 않습니다. 트래킹 탭의 '퍼펙트 싱크'를 켜세요(MediaPipe·iPhone·VMC·iFacialMocap만).",
+                    "完美同步未运行。请在追踪分页开启“完美同步”（仅限 MediaPipe、iPhone、VMC、iFacialMocap）。",
+                    "完美同步未運作。請在追蹤分頁開啟「完美同步」（僅限 MediaPipe、iPhone、VMC、iFacialMocap）。"));
+            }
+            else
+            {
+                GuiControls.Status(Loc.T("Moving with live tracking. After changing shapes, press Apply to update.",
+                    "トラッキングで動かしています。形状を変えたら「反映」で更新されます。",
+                    "트래킹으로 움직이는 중입니다. 형상을 바꾼 뒤 '반영'으로 갱신됩니다.",
+                    "正在用追踪驱动。更改形状后点击“应用”即可更新。",
+                    "正在用追蹤驅動。變更形狀後點擊「套用」即可更新。"), true);
+            }
+        }
+
         private static GUIStyle WrapButton(UiTheme theme)
         {
             // 幅に収まらない文字を折り返すボタン（テーマが無ければ通常のボタン）
@@ -554,6 +609,9 @@ namespace VRCast.UI
             }
 
             GUILayout.EndHorizontal();
+
+            // 保存する前に、実際のトラッキングで動きを確かめる
+            DrawTrackingTest(theme);
 
             // 試す値（形状を選んでいるときだけ）
             if (_previewIndex >= 0)
