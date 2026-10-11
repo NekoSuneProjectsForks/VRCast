@@ -10,7 +10,7 @@ using VRCast.Rendering;
 namespace VRCast.UI
 {
     /// <summary>
-    /// Settings タブ（表示言語、UI の大きさ、テーマ（ライト / ダーク）、リセットのショートカットキー、軽量モード・プロセスの優先度・描画に使う GPU、
+    /// Settings タブ（表示言語、UI の大きさ、パネルの背景の不透明度、テーマ（ライト / ダーク）、リセットのショートカットキー、軽量モード・プロセスの優先度・描画に使う GPU、
     /// NVIDIA ShadowPlay に検知させない設定（NVIDIA の PC のみ）、アップデートの確認、ヘルプ、設定プリセットの書き出し・読み込み、
     /// 全設定のリセット（2 段階確認）、バージョン情報）。
     /// </summary>
@@ -65,6 +65,7 @@ namespace VRCast.UI
         {
             DrawLanguage();
             DrawScale();
+            DrawOpacity();
             DrawTheme();
             DrawResetHotkeys();
             DrawPerformance();
@@ -106,6 +107,23 @@ namespace VRCast.UI
             }
 
             GUILayout.EndHorizontal();
+            GuiControls.EndCard();
+        }
+
+        private void DrawOpacity()
+        {
+            GuiControls.BeginCard(Loc.T("Panel opacity", "パネルの不透明度", "패널 불투명도", "面板不透明度", "面板不透明度"));
+
+            // 背景（ウィンドウ・カード・ボタン）だけを透かし、文字は読めるまま残す（パーセントで表示）
+            float percent = GuiControls.Slider(Loc.T("Background", "背景", "배경", "背景", "背景"),
+                _settings.uiOpacity * 100f, AppSettings.MinUiOpacity * 100f, AppSettings.MaxUiOpacity * 100f, "F0");
+            _settings.uiOpacity = Mathf.Round(percent) / 100f;
+            GuiControls.Hint(Loc.T(
+                "Lower it to see the avatar through the panel. Text stays readable. Also applies to the perfect sync editor.",
+                "下げるとパネル越しにアバターが透けて見えます。文字は薄くなりません。パーフェクトシンク化の編集画面にも効きます。",
+                "낮추면 패널 너머로 아바타가 비쳐 보입니다. 글자는 흐려지지 않습니다. 퍼펙트 싱크화 편집 화면에도 적용됩니다.",
+                "调低后可透过面板看到虚拟形象。文字不会变淡。也适用于完美同步化的编辑画面。",
+                "調低後可透過面板看到虛擬形象。文字不會變淡。也適用於完美同步化的編輯畫面。"));
             GuiControls.EndCard();
         }
 

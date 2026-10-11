@@ -232,6 +232,7 @@ VRM（VRoid Studio などで作った `.vrm`）は書き出し不要で、その
 - **Credits**（クレジット）: 開発者（ごみぃ）・協力者（Arche_039、おけパ）のリンク（名前のボタンで X、その右に YouTube 等があれば並べる）、開発者の Twitch チャンネル（[coffinnoob299](https://www.twitch.tv/coffinnoob299)）へのリンクと、ライセンス・NOTICE を GitHub で開くボタン（配布物にも `LICENSE.txt` / `NOTICE.txt` を同梱）
   （配布フォルダにファイルが無い場合は GitHub のファイルを開くボタンになる）。
 - **UI の大きさ**: **Settings** の UI size で 75% / 100% / 125% / 150% / 200% を選べる（高解像度ディスプレイ向け）。
+- **パネルの不透明度**: **Settings** の Panel opacity で、操作パネルとパーフェクトシンク化の編集画面の背景（ウィンドウ・カード・ボタン）を 20%〜100% で透かせる（文字は薄くしない。設定プリセットの「パネル」に含む）。
 - **テーマ**: **Settings** の Theme で **Light**（既定、ベージュ）/ **Dark**（暗い茶系）を選べる（OS の設定には合わせない）。
   背景色が既定色のままならテーマに合わせて切り替わる（ライト = ベージュ、ダーク = ダークグレー。Display で変更した色は残す）。
 - **軽量モード**（既定 ON）: **Settings** の **Low load mode** が ON の間は、描画を 30fps（OFF なら 60fps）に抑え、OpenSeeFace は軽いモデルを使う。
@@ -386,10 +387,10 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
   ARKit 名の BlendShape が元からある形状はそのまま使う。形状の名前を押すとスライダーで動かして確かめられ、既存の BlendShape を検索して選べる。
 - 「歯・舌のメッシュも顎と一緒に動かす」（既定 ON）では、名前に teeth / tooth / tongue / 歯 / 舌 を含み BlendShape のあるメッシュにも顎の形状（jawOpen など）を作る。
 - **Save as new file...**（別名で保存）で、元のファイルと同じフォルダの `元の名前_PerfectSync.vrcaster` を既定として保存する（元のファイルは変更しない）。
-  保存後は **Load the saved avatar** でそのまま読み込める。**Close**（閉じる）は保存していない変更を捨て、アバターと視点を元に戻す。
+  保存後は **Load the saved avatar** でそのまま読み込める。**Close**（閉じる）は確認（**Close without saving** / **Keep editing**）の後に、保存していない変更を捨て、アバターと視点を元に戻す。
 - 保存したファイルには目印と設定（`metadata/perfect_sync.json`）と、作った形状の頂点の移動量（`metadata/perfect_sync_shapes.bin`）が入る。
   読み込むと形状をメッシュの複製に足し（既存の BlendShape の番号は変わらない）、割り当てと合わせてパーフェクトシンクで動かす。
-  そのファイルで編集を始めると、保存した目印と設定の続きから編集できる。パーフェクトシンク版のファイルは、この機能に対応していない古い VRCast では開けない。
+  そのファイルで編集を始めると、保存した目印と設定の続きから編集できる。パーフェクトシンク版のファイルは、この機能に対応していない古い VRCast（2.0.0 より前）では開けない。
 
 **Vowel mouth shapes (A I U E O)**（既定 ON）では、VRChat と同じく声の母音に合わせて Viseme の aa / ih / ou / E / oh を切り替える
 （あ = aa、い = ih、う = ou、え = E、お = oh）。

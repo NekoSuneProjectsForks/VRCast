@@ -81,6 +81,10 @@ namespace VRCast.Core
         public const float MinUiScale = 0.75f;
         public const float MaxUiScale = 2f;
 
+        // 操作パネルの背景の不透明度の範囲（0 にすると枠も見えず操作できなくなるため下限を設ける）
+        public const float MinUiOpacity = 0.2f;
+        public const float MaxUiOpacity = 1f;
+
         // カメラの視点・見た目を覚えておくアバターの数の上限（設定ファイルが際限なく大きくならないように）
         public const int MaxAvatarCameras = 50;
 
@@ -103,6 +107,9 @@ namespace VRCast.Core
         // 操作パネルの表示言語と拡大率
         public UiLanguage uiLanguage = UiLanguage.Auto;
         public float uiScale = 1f;
+
+        // 操作パネル（パーフェクトシンク化の編集画面を含む）の背景の不透明度。文字・画像は薄くしない
+        public float uiOpacity = 1f;
 
         // 操作パネルのダークモード（既定はライト = ベージュ。OS の設定には合わせない）
         public bool darkMode;
@@ -794,6 +801,9 @@ namespace VRCast.Core
 
             // パネルの拡大率は範囲内に制限
             uiScale = Mathf.Clamp(uiScale, MinUiScale, MaxUiScale);
+
+            // パネルの背景の不透明度も範囲内に制限
+            uiOpacity = Mathf.Clamp(uiOpacity, MinUiOpacity, MaxUiOpacity);
             // 未知の優先度（リアルタイム等の手編集）は通常へ
             if (!Enum.IsDefined(typeof(ProcessPriority), processPriority))
             {

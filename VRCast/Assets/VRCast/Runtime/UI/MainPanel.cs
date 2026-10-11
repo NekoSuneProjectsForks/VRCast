@@ -309,9 +309,14 @@ namespace VRCast.UI
             // スキン・倍率を適用（終わったら元に戻す）
             GUISkin previousSkin = GUI.skin;
             Matrix4x4 previousMatrix = GUI.matrix;
+            Color previousBackground = GUI.backgroundColor;
             float scale = _settings.uiScale;
             GUI.skin = _theme.Skin;
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+
+            // 背景（ウィンドウ・カード・ボタン）だけを設定の不透明度で透かす（文字は GUI.color なので薄くならない）
+            GUI.backgroundColor = new Color(previousBackground.r, previousBackground.g, previousBackground.b,
+                previousBackground.a * _settings.uiOpacity);
 
             // パーフェクトシンク化の編集中は、メインのパネルの代わりに編集画面を出す
             if (_perfectSyncEditor.IsOpen)
@@ -326,6 +331,7 @@ namespace VRCast.UI
                     GUILayout.Width(_windowRect.width), GUILayout.Height(_windowRect.height));
             }
 
+            GUI.backgroundColor = previousBackground;
             GUI.matrix = previousMatrix;
             GUI.skin = previousSkin;
         }

@@ -142,6 +142,9 @@ namespace VRCast.UI
         private bool _messageIsError;
         private string _savedPath;
 
+        // 「閉じる」の確認中なら true（保存していない変更を誤って捨てないよう 2 段階にする）
+        private bool _confirmingClose;
+
         public PerfectSyncEditor(AvatarSession session, OrbitCameraController orbit)
         {
             _session = session;
@@ -262,6 +265,7 @@ namespace VRCast.UI
             _message = string.Empty;
             _messageIsError = false;
             _savedPath = null;
+            _confirmingClose = false;
             _generated = null;
             _dirty = true;
             _selected = NextUnplaced();
@@ -337,6 +341,7 @@ namespace VRCast.UI
 
             // 作ったものを破棄して閉じた状態にする
             _deferred = null;
+            _confirmingClose = false;
             _previewIndex = -1;
             _preview = null;
             _generated = null;

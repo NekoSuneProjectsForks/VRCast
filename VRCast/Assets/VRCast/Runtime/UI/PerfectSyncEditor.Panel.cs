@@ -566,7 +566,14 @@ namespace VRCast.UI
                 GUILayout.Label(_message, style);
             }
 
-            // 別名で保存・閉じる（保存していない変更は捨てる）
+            // 閉じるの確認中は、確認の行だけを出す
+            if (_confirmingClose)
+            {
+                DrawCloseConfirmation();
+                return;
+            }
+
+            // 別名で保存・閉じる（閉じるは 1 段階目。押すと確認を出す）
             GUILayout.BeginHorizontal();
             if (GUILayout.Button(Loc.T("Save as new file...", "別名で保存...", "다른 이름으로 저장...", "另存为...", "另存新檔..."),
                     theme != null ? theme.AccentButton : GUI.skin.button, GuiControls.Shrinkable))
@@ -576,7 +583,7 @@ namespace VRCast.UI
 
             if (GUILayout.Button(Loc.T("Close", "閉じる", "닫기", "关闭", "關閉"), GuiControls.Shrinkable))
             {
-                _deferred = Close;
+                _confirmingClose = true;
             }
 
             GUILayout.EndHorizontal();
@@ -591,6 +598,29 @@ namespace VRCast.UI
 
             GuiControls.Hint(Loc.T("Closing discards unsaved changes.", "閉じると保存していない変更は破棄されます。",
                 "닫으면 저장하지 않은 변경은 버려집니다.", "关闭后未保存的更改将被丢弃。", "關閉後未儲存的變更將被捨棄。"));
+        }
+
+        private void DrawCloseConfirmation()
+        {
+            // 2 段階目: 保存していない変更を捨てて閉じるか、編集に戻るか
+            GuiControls.Warning(Loc.T("Close the editor? Unsaved changes will be lost.",
+                "編集をやめますか？保存していない変更は破棄されます。",
+                "편집을 끝내시겠습니까? 저장하지 않은 변경은 버려집니다.",
+                "要结束编辑吗？未保存的更改将被丢弃。", "要結束編輯嗎？未儲存的變更將被捨棄。"));
+            GUILayout.BeginHorizontal();
+            if (GuiControls.DangerButton(Loc.T("Close without saving", "保存せずに閉じる", "저장하지 않고 닫기",
+                    "不保存并关闭", "不儲存並關閉"), GuiControls.Shrinkable))
+            {
+                _deferred = Close;
+            }
+
+            if (GUILayout.Button(Loc.T("Keep editing", "編集を続ける", "계속 편집", "继续编辑", "繼續編輯"),
+                    GuiControls.Shrinkable))
+            {
+                _confirmingClose = false;
+            }
+
+            GUILayout.EndHorizontal();
         }
 
         private void GenerateAndShow()

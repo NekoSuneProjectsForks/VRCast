@@ -560,5 +560,16 @@ namespace VRCast.Tests
             AppSettings settings = _store.Load();
             Assert.That(settings.uiScale, Is.EqualTo(AppSettings.MaxUiScale));
         }
+
+        [TestCase(0f, AppSettings.MinUiOpacity)]
+        [TestCase(5f, AppSettings.MaxUiOpacity)]
+        public void Load_OutOfRangeUiOpacity_IsClamped(float saved, float expected)
+        {
+            _store.Save(new AppSettings { uiOpacity = saved });
+
+            // 範囲外のパネルの不透明度は範囲の端へ丸められること（0 で見えなくならない）
+            AppSettings settings = _store.Load();
+            Assert.That(settings.uiOpacity, Is.EqualTo(expected));
+        }
     }
 }

@@ -439,8 +439,10 @@ namespace VRCast.UI
                     return Loc.T("Shortcut keys and OSC / HTTP", "ショートカットキー・OSC / HTTP", "단축키·OSC / HTTP",
                         "快捷键·OSC / HTTP", "快捷鍵·OSC / HTTP");
                 case "interface":
-                    return Loc.T("Panel (language, size, theme, updates, logs)", "パネル（言語・大きさ・テーマ・アップデート・ログ）",
-                        "패널 (언어·크기·테마·업데이트·로그)", "面板（语言·大小·主题·更新·日志）", "面板（語言·大小·主題·更新·日誌）");
+                    return Loc.T("Panel (language, size, opacity, theme, updates, logs)",
+                        "パネル（言語・大きさ・不透明度・テーマ・アップデート・ログ）",
+                        "패널 (언어·크기·불투명도·테마·업데이트·로그)", "面板（语言·大小·不透明度·主题·更新·日志）",
+                        "面板（語言·大小·不透明度·主題·更新·日誌）");
                 case "avatarLook":
                     return Loc.T("Light, brightness, outline, pose and direction", "ライト・明るさ・輪郭線・ポーズ・向き",
                         "조명·밝기·윤곽선·포즈·방향", "灯光·亮度·轮廓线·姿势·朝向", "燈光·亮度·輪廓線·姿勢·朝向");
