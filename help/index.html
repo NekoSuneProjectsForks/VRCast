@@ -212,23 +212,23 @@
   <p class="note ko">씬에 <a href="https://github.com/suzuryg/face-emo">FaceEmo</a> 설정이 있으면 그 아바타의 표정을 FaceEmo의 모드 이름으로 자동으로 내보냅니다 (FaceEmo의 「아바타에 적용」을 하지 않아도 됩니다. 소품 표시 등은 제외하고 블렌드셰이프 부분만 사용합니다).</p>
   <p class="note zh-hans">如果场景中有该虚拟形象的 <a href="https://github.com/suzuryg/face-emo">FaceEmo</a> 设置，会自动以 FaceEmo 的模式名称导出其表情（即使未执行 FaceEmo 的“应用到虚拟形象”也可以；仅使用 BlendShape 部分，不含小物显示等）。</p>
   <p class="note zh-hant">如果場景中有該虛擬形象的 <a href="https://github.com/suzuryg/face-emo">FaceEmo</a> 設定，會自動以 FaceEmo 的模式名稱匯出其表情（即使未執行 FaceEmo 的「套用到虛擬形象」也可以；僅使用 BlendShape 部分，不含小物顯示等）。</p>
-  <p class="note ja">【ベータ版】Modular Avatar などで改変したアバターは、そのまま指定すれば改変後の姿（衣装の統合・追加した表情やトグル）で書き出されます。
+  <p class="note ja">【ベータ版】VRCFury や Modular Avatar などで改変したアバターは、そのまま指定すれば改変後の姿（衣装の統合・追加した表情やトグル）で書き出されます。
     MA の Merge Armature / Bone Proxy で付けた衣装・小物は、統合されなかった場合でもアバターのボーンに付け替えて体に追従させます。
     MA の Blendshape Sync で口などに追従させたチェーン・小物も、口パク・まばたき・トラッキングに追従します。
     暫定対応のため、正しく書き出せない場合があります。</p>
-  <p class="note en">[Beta] Avatars customized with Modular Avatar and other NDMF tools are exported with the changes applied (merged outfits, added expressions and toggles).
+  <p class="note en">[Beta] Avatars customized with VRCFury, Modular Avatar and other avatar tools are exported with the changes applied (merged outfits, added expressions and toggles).
     Outfits and accessories set up with MA Merge Armature / Bone Proxy are attached to the avatar's bones so they follow the body, even if they were not merged.
     Chains and accessories synced to the mouth or other shapes with MA Blendshape Sync also follow lip sync, blinking and tracking.
     This is preliminary support; some avatars may not export correctly.</p>
-  <p class="note ko">[베타] Modular Avatar 등으로 개조한 아바타는 그대로 지정하면 개조 후의 모습 (의상 통합·추가한 표정과 토글)으로 내보내집니다.
+  <p class="note ko">[베타] VRCFury, Modular Avatar 등으로 개조한 아바타는 그대로 지정하면 개조 후의 모습 (의상 통합·추가한 표정과 토글)으로 내보내집니다.
     MA의 Merge Armature / Bone Proxy로 붙인 의상·소품은 통합되지 않은 경우에도 아바타의 본에 다시 붙여 몸을 따라가게 합니다.
     MA의 Blendshape Sync로 입 등에 따라가게 한 체인·소품도 립싱크·눈 깜빡임·트래킹을 따라갑니다.
     임시 지원이므로 올바르게 내보내지지 않을 수 있습니다.</p>
-  <p class="note zh-hans">【测试版】用 Modular Avatar 等改造过的虚拟形象，直接指定即可按改造后的样子（合并的服装、添加的表情和开关）导出。
+  <p class="note zh-hans">【测试版】用 VRCFury、Modular Avatar 等改造过的虚拟形象，直接指定即可按改造后的样子（合并的服装、添加的表情和开关）导出。
     用 MA 的 Merge Armature / Bone Proxy 添加的服装和小物，即使未被合并，也会重新挂到虚拟形象的骨骼上并跟随身体。
     用 MA 的 Blendshape Sync 跟随嘴部等的链条和小物，也会跟随口型同步、眨眼和追踪。
     目前为临时支持，部分虚拟形象可能无法正确导出。</p>
-  <p class="note zh-hant">【測試版】用 Modular Avatar 等改造過的虛擬形象，直接指定即可按改造後的樣子（合併的服裝、新增的表情和開關）匯出。
+  <p class="note zh-hant">【測試版】用 VRCFury、Modular Avatar 等改造過的虛擬形象，直接指定即可按改造後的樣子（合併的服裝、新增的表情和開關）匯出。
     用 MA 的 Merge Armature / Bone Proxy 新增的服裝和小物，即使未被合併，也會重新掛到虛擬形象的骨骼上並跟隨身體。
     用 MA 的 Blendshape Sync 跟隨嘴部等的鏈條和小物，也會跟隨口型同步、眨眼和追蹤。
     目前為暫時支援，部分虛擬形象可能無法正確匯出。</p>
@@ -283,15 +283,20 @@
         <span class="zh-hant"><span class="ui">虛擬形象</span> 分頁的 <span class="ui">最近使用的虛擬形象</span> 中最多列出 10 個最近使用的虛擬形象，點擊即可切換。名稱下方顯示加入（拖放、瀏覽、載入）的時間（點擊 <span class="ui">×</span> 後再點 <span class="ui">移除</span> 從清單移除）。
           相機、燈光、虛擬形象亮度、待機姿勢和身體朝向會依虛擬形象分別記住，切換時恢復。</span></li>
     <li><span class="ja">一覧はアバターごとの画像付きのタイルで並びます。タイルの <span class="ui">画像</span> で PNG / JPG / GIF（GIF はアニメーションします）を設定できます。
-          表示中のアバターには、画像をウィンドウにドロップしても設定できます。外すときは <span class="ui">状態</span> の <span class="ui">画像を外す</span> を押します。</span>
+          表示中のアバターには、画像をウィンドウにドロップしても設定できます。外すときは <span class="ui">状態</span> の <span class="ui">画像を外す</span> を押します。
+          画像の無いアバターは、読み込むと顔を自動で撮って一覧の画像にします。<span class="ui">状態</span> の <span class="ui">顔を撮る</span> で撮り直せます。</span>
         <span class="en">The list shows a tile with a picture for each avatar. Use <span class="ui">Image</span> on a tile to set a PNG / JPG / GIF (GIFs are animated).
-          For the avatar being shown you can also drop an image onto the window. To remove it, press <span class="ui">Remove image</span> under <span class="ui">Status</span>.</span>
+          For the avatar being shown you can also drop an image onto the window. To remove it, press <span class="ui">Remove image</span> under <span class="ui">Status</span>.
+          Avatars without an image get a picture of their face automatically when loaded. Press <span class="ui">Capture face</span> under <span class="ui">Status</span> to retake it.</span>
         <span class="ko">목록은 아바타마다 이미지가 있는 타일로 표시됩니다. 타일의 <span class="ui">이미지</span>로 PNG / JPG / GIF(GIF는 애니메이션됩니다)를 설정할 수 있습니다.
-          표시 중인 아바타는 이미지를 창에 드롭해도 설정됩니다. 제거하려면 <span class="ui">상태</span>의 <span class="ui">이미지 제거</span>를 누르세요.</span>
+          표시 중인 아바타는 이미지를 창에 드롭해도 설정됩니다. 제거하려면 <span class="ui">상태</span>의 <span class="ui">이미지 제거</span>를 누르세요.
+          이미지가 없는 아바타는 불러올 때 얼굴을 자동으로 촬영해 목록 이미지로 사용합니다. <span class="ui">상태</span>의 <span class="ui">얼굴 촬영</span>으로 다시 찍을 수 있습니다.</span>
         <span class="zh-hans">列表以带图片的磁贴显示每个虚拟形象。用磁贴上的 <span class="ui">图片</span> 可设置 PNG / JPG / GIF（GIF 会播放动画）。
-          也可将图片拖放到窗口，设置给正在显示的虚拟形象。要移除时，请按 <span class="ui">状态</span> 中的 <span class="ui">移除图片</span>。</span>
+          也可将图片拖放到窗口，设置给正在显示的虚拟形象。要移除时，请按 <span class="ui">状态</span> 中的 <span class="ui">移除图片</span>。
+          没有图片的虚拟形象在加载时会自动拍摄脸部作为列表图片。按 <span class="ui">状态</span> 中的 <span class="ui">拍摄脸部</span> 可重新拍摄。</span>
         <span class="zh-hant">清單以附圖片的磚塊顯示每個虛擬形象。用磚塊上的 <span class="ui">圖片</span> 可設定 PNG / JPG / GIF（GIF 會播放動畫）。
-          也可將圖片拖放到視窗，設定給正在顯示的虛擬形象。要移除時，請按 <span class="ui">狀態</span> 中的 <span class="ui">移除圖片</span>。</span></li>
+          也可將圖片拖放到視窗，設定給正在顯示的虛擬形象。要移除時，請按 <span class="ui">狀態</span> 中的 <span class="ui">移除圖片</span>。
+          沒有圖片的虛擬形象在載入時會自動拍攝臉部作為清單圖片。按 <span class="ui">狀態</span> 中的 <span class="ui">拍攝臉部</span> 可重新拍攝。</span></li>
   </ul>
   <p class="note warn ja"><code>.vrcaster</code> と <code>.vrm</code> 以外のファイル（画像や unitypackage など）は読み込めません。<code>.vrcaster</code> でエラーが表示された場合は書き出し直してください。</p>
   <p class="note warn en">Only <code>.vrcaster</code> and <code>.vrm</code> files can be loaded (not images, unitypackages, etc.). If a <code>.vrcaster</code> shows an error, export the avatar again.</p>
@@ -626,8 +631,7 @@
         <span class="en">Turn off <span class="ui">Track blinks</span> (on by default) to ignore your eye openness and use auto blink from the Face tab instead (perfect sync also leaves blinking alone).</span>
         <span class="ko"><span class="ui">눈 깜빡임 트래킹</span>(기본은 켜짐)을 끄면 눈의 개폐를 따라가지 않고 얼굴 탭의 자동 눈 깜빡임을 사용합니다 (퍼펙트 싱크에서도 눈 깜빡임만은 움직이지 않습니다).</span>
         <span class="zh-hans">关闭 <span class="ui">追踪眨眼</span>（默认开启）后，不再跟随眼睛开合，改用面部标签的自动眨眼（完美同步也不驱动眨眼）。</span>
-        <span class="zh-hant">關閉 <span class="ui">追蹤眨眼</span>（預設開啟）後，不再跟隨眼睛開合，改用臉部分頁的自動眨眼（完美同步也不驅動眨眼）。</span></li>
-    <li><span class="ja">閉じた目・ウインクが頭の傾きや腕と逆側になるときは、<span class="ui">動き</span> 欄の <span class="ui">顔の左右を入れ替える</span>（既定は OFF）を ON にします。顔（まばたき・パーフェクトシンク・視線）だけが入れ替わり、頭の向きと腕は <span class="ui">ミラー</span> の設定のままです。</span>
+        <span class="zh-hant">關閉 <span class="ui">追蹤眨眼</span>（預設開啟）後，不再跟隨眼睛開合，改用臉部分頁的自動眨眼（完美同步也不驅動眨眼）。</span></li>    <li><span class="ja">閉じた目・ウインクが頭の傾きや腕と逆側になるときは、<span class="ui">動き</span> 欄の <span class="ui">顔の左右を入れ替える</span>（既定は OFF）を ON にします。顔（まばたき・パーフェクトシンク・視線）だけが入れ替わり、頭の向きと腕は <span class="ui">ミラー</span> の設定のままです。</span>
         <span class="en">If the closed eye or wink appears on the wrong side compared with your head tilt and arms, turn on <span class="ui">Swap face left / right</span> under <span class="ui">Motion</span> (off by default). Only the face (blink, perfect sync, gaze) is swapped; head and arms keep following <span class="ui">Mirror</span>.</span>
         <span class="ko">감은 눈·윙크가 머리 기울기나 팔과 반대쪽이 될 때는 <span class="ui">움직임</span> 항목의 <span class="ui">얼굴 좌우 바꾸기</span>(기본은 꺼짐)를 켭니다. 얼굴 (눈 깜빡임·퍼펙트 싱크·시선)만 바뀌고, 머리 방향과 팔은 <span class="ui">미러</span> 설정 그대로입니다.</span>
         <span class="zh-hans">如果闭上的眼睛或单眼眨眼与头部倾斜、手臂方向相反，请开启 <span class="ui">动作</span> 栏中的 <span class="ui">交换面部左右</span>（默认关闭）。只交换面部（眨眼、完美同步、视线），头部朝向和手臂仍按 <span class="ui">镜像</span> 设置。</span>

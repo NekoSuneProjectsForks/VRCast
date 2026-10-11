@@ -137,7 +137,7 @@
   <p class="note ja">FX レイヤーにある表情クリップは自動で書き出されます。FX に入っていない表情（昔のアバターに付属していた表情アニメーションなど）は、
     書き出し画面の <span class="ui">追加の表情</span> にアニメーションクリップかフォルダをドラッグすると表情として書き出せます（ブレンドシェイプだけを動かすクリップが対象。指定はアバターごとに保存）。</p>
   <p class="note ja">シーンに <a href="https://github.com/suzuryg/face-emo">FaceEmo</a> の設定があれば、そのアバターの表情を FaceEmo のモード名で自動的に書き出します（FaceEmo の「アバターに適用」をしていなくても可。小物の表示などは除き、ブレンドシェイプの部分だけを使います）。</p>
-  <p class="note ja">【ベータ版】Modular Avatar などで改変したアバターは、そのまま指定すれば改変後の姿（衣装の統合・追加した表情やトグル）で書き出されます。
+  <p class="note ja">【ベータ版】VRCFury や Modular Avatar などで改変したアバターは、そのまま指定すれば改変後の姿（衣装の統合・追加した表情やトグル）で書き出されます。
     MA の Merge Armature / Bone Proxy で付けた衣装・小物は、統合されなかった場合でもアバターのボーンに付け替えて体に追従させます。
     MA の Blendshape Sync で口などに追従させたチェーン・小物も、口パク・まばたき・トラッキングに追従します。
     暫定対応のため、正しく書き出せない場合があります。</p>
@@ -160,7 +160,8 @@
           カメラ・ライト・アバターの明るさ・待機ポーズ・体の向きはアバターごとに記憶され、切り替えると戻ります。</span>
         </li>
     <li><span class="ja">一覧はアバターごとの画像付きのタイルで並びます。タイルの <span class="ui">画像</span> で PNG / JPG / GIF（GIF はアニメーションします）を設定できます。
-          表示中のアバターには、画像をウィンドウにドロップしても設定できます。外すときは <span class="ui">状態</span> の <span class="ui">画像を外す</span> を押します。</span>
+          表示中のアバターには、画像をウィンドウにドロップしても設定できます。外すときは <span class="ui">状態</span> の <span class="ui">画像を外す</span> を押します。
+          画像の無いアバターは、読み込むと顔を自動で撮って一覧の画像にします。<span class="ui">状態</span> の <span class="ui">顔を撮る</span> で撮り直せます。</span>
         </li>
   </ul>
   <p class="note warn ja"><code>.vrcaster</code> と <code>.vrm</code> 以外のファイル（画像や unitypackage など）は読み込めません。<code>.vrcaster</code> でエラーが表示された場合は書き出し直してください。</p>
@@ -301,8 +302,7 @@
     <li><span class="ja"><span class="ui">入力元</span> は、縦に並んだスイッチのどれか 1 つを ON にして選びます。各行の右（幅が足りないときはスイッチの下）に推奨（MediaPipe）と PC 負荷の目安（低・中・高）が出ます。MediaPipe は <span class="ui">腕・手</span> を OFF にすると軽くなり、iPhone などから受け取る入力元は推定をスマートフォン側で行うため PC の負荷は低めです。</span>
         </li>
     <li><span class="ja"><span class="ui">まばたきをトラッキング</span>（既定は ON）を OFF にすると、目の開閉は追わず、顔タブの自動まばたきでまばたきします（パーフェクトシンクでもまばたきだけは動かしません）。</span>
-        </li>
-    <li><span class="ja">閉じた目・ウインクが頭の傾きや腕と逆側になるときは、<span class="ui">動き</span> 欄の <span class="ui">顔の左右を入れ替える</span>（既定は OFF）を ON にします。顔（まばたき・パーフェクトシンク・視線）だけが入れ替わり、頭の向きと腕は <span class="ui">ミラー</span> の設定のままです。</span>
+        </li>    <li><span class="ja">閉じた目・ウインクが頭の傾きや腕と逆側になるときは、<span class="ui">動き</span> 欄の <span class="ui">顔の左右を入れ替える</span>（既定は OFF）を ON にします。顔（まばたき・パーフェクトシンク・視線）だけが入れ替わり、頭の向きと腕は <span class="ui">ミラー</span> の設定のままです。</span>
         </li>
     <li><span class="ja">MediaPipe・iPhone・外部アプリ（VMC）・iFacialMocap では <span class="ui">表情を反映</span> を ON にすると（既定は ON）、笑顔・驚き・怒り・悲しみ・ウインク・ジト目・ふくれっ面を検出してアバターの表情に切り替えます（割り当て先の表情が無いものは検出しません）。
         表情ごとの <span class="ui">しきい値</span> で反応のしやすさ（低いほど反応しやすい。<span class="ui">生データ表示</span> 中に出る表情の値が目安）を、表情ごとの選択で使う表情を変えられます（<span class="ui">自動</span> は表情の名前から推定）。</span>
