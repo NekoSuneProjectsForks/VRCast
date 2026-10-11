@@ -10,10 +10,12 @@ Newest first. Each version is written in Japanese, then English.
 - 画像の無いアバターを読み込んだとき、顔を自動で撮って最近使ったアバターの一覧の画像にする機能を追加
 - 表示中のアバターの顔を撮り直して一覧の画像にする「顔を撮る」ボタンを追加
 - 書き出しツールで、VRCFury で改変したアバターを改変後の姿で書き出せるように対応（VRChat へのアップロード時と同じ処理を適用します）
+- トラッキングで目を開けているのにアバターが半目になる人向けに「目の開きの補正」を追加（トラッキングタブ）
 [English]
 - Added automatic face pictures for avatars without a list image when they are loaded
 - Added a "Capture face" button to retake the list image of the avatar being shown
 - Added support for exporting avatars customized with VRCFury with the changes applied (the same processing as uploading to VRChat)
+- Added "Eye open correction" (Tracking tab) for when the avatar's eyes look half-closed while yours are open
 ■ 1.16.7 (2026-10-10)
 
 [日本語]

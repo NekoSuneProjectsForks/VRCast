@@ -42,5 +42,14 @@ namespace VRCast.Tracking
         {
             return new Quaternion(rotation.x, -rotation.y, -rotation.z, rotation.w);
         }
+
+        /// <summary>
+        /// 目の閉じ具合（0 = 開き、1 = 閉じ）のうち offset 以下を開いているとみなし、残りを 0〜1 へ広げ直す
+        /// （普段から目が細く映る人でも半目にせず、閉じ切ったまばたきは閉じたままにする）。
+        /// </summary>
+        public static float OpenEyes(float closed, float offset)
+        {
+            return Mathf.InverseLerp(offset, 1f, closed);
+        }
     }
 }

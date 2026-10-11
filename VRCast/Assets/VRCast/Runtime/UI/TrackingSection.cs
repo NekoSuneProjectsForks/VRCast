@@ -499,7 +499,19 @@ namespace VRCast.UI
             {
                 GuiControls.Hint(Loc.T("Uses auto blink (Face tab) instead", "代わりに自動まばたき（顔タブ）を使います",
                     "대신 자동 눈 깜빡임 (얼굴 탭)을 사용합니다", "改用自动眨眼（面部标签）", "改用自動眨眼（臉部分頁）"));
+                return;
             }
+
+            // 目が細く映って半目になる人向けに、この閉じ具合までは開いた目とみなす
+            _settings.trackingEyeOpenOffset = GuiControls.Slider(
+                Loc.T("Eye open correction", "目の開きの補正", "눈 뜨기 보정", "睁眼校正", "睜眼校正"),
+                _settings.trackingEyeOpenOffset, 0f, AppSettings.MaxTrackingEyeOpenOffset);
+            GuiControls.Hint(Loc.T(
+                "Raise this if the avatar's eyes look half-closed while yours are open. Blinks still close the eyes fully.",
+                "目を開けているのにアバターが半目になるときに上げます。まばたきでは閉じ切ります。",
+                "눈을 뜨고 있는데 아바타가 반쯤 감은 눈이 될 때 올립니다. 깜빡임에서는 완전히 감깁니다.",
+                "睁着眼时虚拟形象却半闭眼时调高。眨眼时仍会完全闭上。",
+                "睜著眼時虛擬形象卻半閉眼時調高。眨眼時仍會完全閉上。"));
         }
 
         private void DrawPerfectSync()

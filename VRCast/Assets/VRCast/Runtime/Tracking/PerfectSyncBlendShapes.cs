@@ -147,8 +147,10 @@ namespace VRCast.Tracking
         /// <summary>
         /// 受信値を書き込む（毎フレーム呼ぶ）。range は入力元のまばたきの値の範囲。
         /// drivesBlink が false なら eyeBlinkLeft / Right は元の値へ戻して書かない（自動まばたきに任せる）。
+        /// eyeOpenOffset は開いているとみなす目の閉じ具合（0 = 補正なし）。
         /// </summary>
-        public void Apply(float[] scores, ArKitRange range, bool mirror, float deltaTime, bool drivesBlink)
+        public void Apply(
+            float[] scores, ArKitRange range, bool mirror, float deltaTime, bool drivesBlink, float eyeOpenOffset = 0f)
         {
             // 要素数が合わない値は使わない
             if (scores == null || scores.Length != _targets.Length)
@@ -179,11 +181,11 @@ namespace VRCast.Tracking
                     continue;
                 }
 
-                // 左右を合わせた値（まばたきは閉じ切るよう範囲を広げる）を平滑化して 0〜100 で書く
+                // 左右を合わせた値（まばたきは閉じ切るよう範囲を広げ、補正分は開いているとみなす）を平滑化して 0〜100 で書く
                 float target = Mathf.Clamp01(scores[SourceIndex(i, mirror)]);
                 if (blinkShape)
                 {
-                    target = range.BlinkToClosed(target);
+                    target = TrackingMath.OpenEyes(range.BlinkToClosed(target), eyeOpenOffset);
                 }
 
                 _current[i] = Mathf.Lerp(_current[i], target, blend);

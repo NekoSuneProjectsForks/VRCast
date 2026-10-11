@@ -205,14 +205,19 @@ namespace VRCast.Tests
         [Test]
         public void Load_OutOfRangeTrackingPort_IsClamped()
         {
-            _store.Save(new AppSettings { trackingPort = 80, vmcPort = 70000, trackingBodyLean = 10f, trackingGaze = -1f });
+            _store.Save(new AppSettings
+            {
+                trackingPort = 80, vmcPort = 70000, trackingBodyLean = 10f, trackingGaze = -1f, trackingEyeOpenOffset = 1f,
+            });
 
-            // 特権ポートは下限へ、範囲外の VMC のポートは上限へ、上半身の傾きの強さは上限へ、視線の強さは 0 へ補正されること
+            // 特権ポートは下限へ、範囲外の VMC のポートは上限へ、上半身の傾きの強さは上限へ、視線の強さは 0 へ、
+            // 目の開きの補正は上限へ補正されること
             AppSettings settings = _store.Load();
             Assert.That(settings.trackingPort, Is.EqualTo(AppSettings.MinTrackingPort));
             Assert.That(settings.vmcPort, Is.EqualTo(AppSettings.MaxTrackingPort));
             Assert.That(settings.trackingBodyLean, Is.EqualTo(AppSettings.MaxTrackingBodyLean));
             Assert.That(settings.trackingGaze, Is.EqualTo(0f));
+            Assert.That(settings.trackingEyeOpenOffset, Is.EqualTo(AppSettings.MaxTrackingEyeOpenOffset));
         }
 
         [Test]

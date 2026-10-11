@@ -452,9 +452,12 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 本人の左右の目の開きを閉じ具合へ
-            float personLeft = 1f - Mathf.InverseLerp(EyeClosedValue, EyeOpenedValue, _lastFrame.EyeOpenLeft);
-            float personRight = 1f - Mathf.InverseLerp(EyeClosedValue, EyeOpenedValue, _lastFrame.EyeOpenRight);
+            // 本人の左右の目の開きを閉じ具合へ（目の開きの補正分は開いているとみなす）
+            float offset = _settings.trackingEyeOpenOffset;
+            float personLeft = TrackingMath.OpenEyes(
+                1f - Mathf.InverseLerp(EyeClosedValue, EyeOpenedValue, _lastFrame.EyeOpenLeft), offset);
+            float personRight = TrackingMath.OpenEyes(
+                1f - Mathf.InverseLerp(EyeClosedValue, EyeOpenedValue, _lastFrame.EyeOpenRight), offset);
             _eyesClosed = (personLeft + personRight) * 0.5f;
 
             // 差が小さければ平均（ウインクは差が大きいときだけ）
@@ -497,7 +500,7 @@ namespace VRCast.Tracking
             if (IsPerfectSyncActive)
             {
                 _perfectSync.Apply(_lastFrame.BlendShapes, _lastFrame.BlendShapeRange, _settings.FaceMirror,
-                    Time.deltaTime, _settings.trackingBlink);
+                    Time.deltaTime, _settings.trackingBlink, _settings.trackingEyeOpenOffset);
             }
             else
             {

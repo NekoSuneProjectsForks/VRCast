@@ -62,6 +62,9 @@ namespace VRCast.Core
         // 視線の強さの上限（0 = 目を動かさない）
         public const float MaxTrackingGaze = 2f;
 
+        // 目の開きの補正の上限（開いているとみなす目の閉じ具合。1 にするとまばたきで閉じなくなる）
+        public const float MaxTrackingEyeOpenOffset = 0.6f;
+
         // 待機モーション（呼吸・体の揺れ・頭のゆらぎ）の強さの上限と、速さの倍率の範囲
         public const float MaxIdleMotionStrength = 2f;
         public const float MinIdleMotionSpeed = 0.5f;
@@ -218,6 +221,9 @@ namespace VRCast.Core
 
         // まばたきをトラッキングする（OFF なら目の開閉は使わず自動まばたきに任せる）
         public bool trackingBlink = true;
+
+        // 目の開きの補正（この閉じ具合までは開いた目とみなす。トラッキングで目が半開きになる人向け、0 = 補正なし）
+        public float trackingEyeOpenOffset;
 
         // 腕・手（指）のトラッキング（MediaPipe のみ）
         public bool trackingHands = true;
@@ -803,6 +809,8 @@ namespace VRCast.Core
 
             // 視線の強さも同様
             trackingGaze = Mathf.Clamp(trackingGaze, 0f, MaxTrackingGaze);
+            // 目の開きの補正も同様
+            trackingEyeOpenOffset = Mathf.Clamp(trackingEyeOpenOffset, 0f, MaxTrackingEyeOpenOffset);
             // 表情のしきい値は範囲内に制限
             trackingExpressionThreshold = Mathf.Clamp(
                 trackingExpressionThreshold, MinExpressionThreshold, MaxExpressionThreshold);
