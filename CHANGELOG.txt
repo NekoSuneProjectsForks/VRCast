@@ -13,6 +13,7 @@ Newest first. Each version is written in Japanese, then English.
 - パーティクルに名前を付けられる機能と、Unity 上の場所（パス）の表示を追加
 - トラッキングタブに「左右の目をそろえる」（なし / 常に / 横を向いたときだけ）を追加（まばたきはそのまま、意図しないウィンクや左右のばらつきを抑えます）
 - 表示タブに「体に入り込まない」を追加（カメラを近づけても体の手前で止まり、それ以上は画角を狭めて大写しにします。既定 ON）
+- スクロールバーが背景に溶け込んで見えにくい問題を修正（つまみを濃い色にし、少し太くしました）
 [English]
 - Added the Objects tab (lists the avatar's contents in the same order as Unity's Hierarchy, with checkboxes to show or hide outfits, accessories, etc.; also lists only the objects switched by VRChat menus and supports search; saved per avatar)
 - Added "Also export inactive objects" to the exporter (when on, objects turned off in the scene are exported, kept turned off, and can be turned on in the Objects tab; on by default; when off, they are not exported as before)
@@ -20,6 +21,7 @@ Newest first. Each version is written in Japanese, then English.
 - Added renaming of particles and showing where they are in Unity (path)
 - Added "Match both eyes" to the Tracking tab (Off / Always / When turned) to keep blinks while avoiding unintended winks and uneven eyes
 - Added "Don't go inside the avatar" to the Display tab (the camera stops in front of the body and zooms in by narrowing the view instead; on by default)
+- Fixed the scroll bar blending into the background (the handle is now darker and slightly wider)
 
 ■ 1.17.7 (2026-10-11)
 
