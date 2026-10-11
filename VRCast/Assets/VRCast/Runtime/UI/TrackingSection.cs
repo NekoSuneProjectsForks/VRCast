@@ -507,11 +507,11 @@ namespace VRCast.UI
                 Loc.T("Eye open correction", "目の開きの補正", "눈 뜨기 보정", "睁眼校正", "睜眼校正"),
                 _settings.trackingEyeOpenOffset, 0f, AppSettings.MaxTrackingEyeOpenOffset);
             GuiControls.Hint(Loc.T(
-                "Raise this if the avatar's eyes look half-closed while yours are open. Blinks still close the eyes fully.",
-                "目を開けているのにアバターが半目になるときに上げます。まばたきでは閉じ切ります。",
-                "눈을 뜨고 있는데 아바타가 반쯤 감은 눈이 될 때 올립니다. 깜빡임에서는 완전히 감깁니다.",
-                "睁着眼时虚拟形象却半闭眼时调高。眨眼时仍会完全闭上。",
-                "睜著眼時虛擬形象卻半閉眼時調高。眨眼時仍會完全閉上。"));
+                "Raise this if the avatar's eyes look half-closed while yours are open. Blinks still close the eyes fully, and \"Half-closed eyes\" expression detection also uses this.",
+                "目を開けているのにアバターが半目になるときに上げます。まばたきでは閉じ切ります。ジト目の判定にも効きます。",
+                "눈을 뜨고 있는데 아바타가 반쯤 감은 눈이 될 때 올립니다. 깜빡임에서는 완전히 감깁니다. 실눈 판정에도 적용됩니다.",
+                "睁着眼时虚拟形象却半闭眼时调高。眨眼时仍会完全闭上。也会用于眯眼的判定。",
+                "睜著眼時虛擬形象卻半閉眼時調高。眨眼時仍會完全閉上。也會用於瞇眼的判定。"));
         }
 
         private void DrawPerfectSync()
@@ -926,10 +926,10 @@ namespace VRCast.UI
                         + $"{Loc.T("tilt", "傾き", "기울기", "倾斜", "傾斜")} {torso.y:F1}°");
                 }
 
-                // 表情の強さ（MediaPipe・VMC・iFacialMocap のみ。しきい値調整の目安）
+                // 表情の強さ（MediaPipe・VMC・iFacialMocap のみ。しきい値調整の目安なので、判定と同じく目の開きの補正を反映）
                 if (face.HasExpression)
                 {
-                    ExpressionScores scores = face.Expression;
+                    ExpressionScores scores = ArKitFace.AdjustExpression(face, _settings.trackingEyeOpenOffset);
                     GuiControls.Hint($"{ExpressionLabel(FaceExpression.Smile)} {scores.Smile:F2}  "
                         + $"{ExpressionLabel(FaceExpression.Surprise)} {scores.Surprise:F2}  "
                         + $"{ExpressionLabel(FaceExpression.Angry)} {scores.Angry:F2}  "

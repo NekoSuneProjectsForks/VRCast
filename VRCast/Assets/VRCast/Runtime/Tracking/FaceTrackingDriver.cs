@@ -370,9 +370,12 @@ namespace VRCast.Tracking
                 _thresholds[(int)expression] = ExpressionMapping.GetThreshold(_settings, expression);
             }
 
+            // 目の開きの補正分の半目はジト目・ウインクにしない
+            ExpressionScores scores = ArKitFace.AdjustExpression(_lastFrame, _settings.trackingEyeOpenOffset);
+
             // 割り当て先の無い表情は選ばない（強く出ても、割り当てのある表情を押しのけてニュートラルにしない）
             FaceExpression detected = _detector.Update(
-                _lastFrame.Expression, _lastFrame.MouthOpen, _thresholds, Time.deltaTime, GetCandidates());
+                scores, _lastFrame.MouthOpen, _thresholds, Time.deltaTime, GetCandidates());
 
             // 手動で固定中は当てない（判定は続け、固定を外したら今の判定結果をすぐ当て直す）
             if (_expressions.IsManual)

@@ -130,6 +130,28 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void AdjustExpression_EyeOpenOffsetSuppressesSquint()
+        {
+            // 両目が少し細く映る（閉じ具合 0.4）フレームを用意
+            var scores = new float[ArKitFace.BlendShapeNames.Length];
+            scores[ArKitFace.EyeBlinkLeft] = 0.35f;
+            scores[ArKitFace.EyeBlinkRight] = 0.35f;
+            var face = new FaceTrackingFrame();
+            ArKitFace.Fill(scores, ArKitRange.MediaPipe, ref face);
+
+            // 補正なしでは受信時の値のまま、補正分の半目はジト目にならないこと
+            Assert.That(face.Expression.Squint, Is.GreaterThan(0.5f));
+            Assert.That(ArKitFace.AdjustExpression(face, 0f).Squint, Is.EqualTo(face.Expression.Squint));
+            Assert.That(ArKitFace.AdjustExpression(face, 0.5f).Squint, Is.EqualTo(0f).Within(1e-5f));
+
+            // 閉じ切った片目（ウインク）は補正しても変わらないこと
+            scores[ArKitFace.EyeBlinkLeft] = 0.9f;
+            scores[ArKitFace.EyeBlinkRight] = 0.05f;
+            ArKitFace.Fill(scores, ArKitRange.MediaPipe, ref face);
+            Assert.That(ArKitFace.AdjustExpression(face, 0.5f).Wink, Is.EqualTo(face.Expression.Wink).Within(1e-5f));
+        }
+
+        [Test]
         public void TryParse_Face_PassesBlendShapesWithMediaPipeRange()
         {
             // パーフェクトシンク用に受信値と MediaPipe のまばたきの範囲が渡ること

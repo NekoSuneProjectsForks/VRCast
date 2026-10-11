@@ -46,6 +46,22 @@ namespace VRCast.Tracking
         {
             return Mathf.InverseLerp(BlinkOpen, BlinkClosed, blink);
         }
+
+        /// <summary>
+        /// まばたきの値（1 = 閉じ）を、閉じ具合 offset までを開いた目とみなすよう開いた側へ寄せる
+        /// （範囲外の値はそのまま、offset 0 なら変えない）。
+        /// </summary>
+        public float OpenEyes(float blink, float offset)
+        {
+            // 開き切り・閉じ切りの値は変えない（範囲の端でつながるよう、範囲内だけを写し直す）
+            if (blink <= BlinkOpen || blink >= BlinkClosed)
+            {
+                return blink;
+            }
+
+            // 閉じ具合で補正してから、まばたきの値へ戻す
+            return Mathf.Lerp(BlinkOpen, BlinkClosed, TrackingMath.OpenEyes(BlinkToClosed(blink), offset));
+        }
     }
 
     /// <summary>
@@ -145,11 +161,9 @@ namespace VRCast.Tracking
                 Surprise = (browInner + browOuter) * 0.5f,
                 Angry = Average(scores, AngryShapes),
                 Sad = Mathf.Clamp01(Average(scores, FrownShapes) + Mathf.Max(0f, browInner - browOuter)),
-                Wink = WinkScore(scores[EyeBlinkLeft], scores[EyeBlinkRight]),
-                Squint = SquintScore(scores[EyeBlinkLeft], scores[EyeBlinkRight],
-                    (scores[EyeLookDownLeft] + scores[EyeLookDownRight]) * 0.5f),
                 Pout = Mathf.InverseLerp(PoutStart, PoutFull, scores[MouthPucker]),
             };
+            FillEyeExpressions(scores, range, 0f, ref face.Expression);
             face.HasExpression = true;
 
             // パーフェクトシンク用に生の値と、まばたきを写す範囲も渡す
@@ -170,6 +184,33 @@ namespace VRCast.Tracking
             }
 
             return scores;
+        }
+
+        /// <summary>
+        /// 目の開きの補正（eyeOpenOffset、0 = 補正なし）を反映した表情の強さ。
+        /// ARKit の値を持たないフレームと補正なしは受信時の値のまま。
+        /// </summary>
+        public static ExpressionScores AdjustExpression(in FaceTrackingFrame face, float eyeOpenOffset)
+        {
+            // 目を使う表情（ウインク・ジト目）だけを、補正したまばたきの値で求め直す
+            ExpressionScores expression = face.Expression;
+            if (face.BlendShapes != null && face.BlendShapes.Length == BlendShapeNames.Length && eyeOpenOffset > 0f)
+            {
+                FillEyeExpressions(face.BlendShapes, face.BlendShapeRange, eyeOpenOffset, ref expression);
+            }
+
+            return expression;
+        }
+
+        private static void FillEyeExpressions(
+            float[] scores, ArKitRange range, float eyeOpenOffset, ref ExpressionScores expression)
+        {
+            // 補正分の半目は開いた目へ寄せる（普段から目が細く映る人をジト目と判定しないため）
+            float blinkLeft = range.OpenEyes(scores[EyeBlinkLeft], eyeOpenOffset);
+            float blinkRight = range.OpenEyes(scores[EyeBlinkRight], eyeOpenOffset);
+            expression.Wink = WinkScore(blinkLeft, blinkRight);
+            expression.Squint = SquintScore(blinkLeft, blinkRight,
+                (scores[EyeLookDownLeft] + scores[EyeLookDownRight]) * 0.5f);
         }
 
         /// <summary>
