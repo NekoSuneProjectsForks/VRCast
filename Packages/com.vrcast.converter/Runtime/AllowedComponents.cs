@@ -18,6 +18,8 @@ namespace VRCast.AvatarFormat
             typeof(SkinnedMeshRenderer),
             typeof(MeshRenderer),
             typeof(MeshFilter),
+            typeof(ParticleSystem),
+            typeof(ParticleSystemRenderer),
         };
 
         public static bool IsAllowed(Component component)

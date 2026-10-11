@@ -52,6 +52,7 @@ namespace VRCast.Converter.Editor
             public int PhysBoneCount;
             public int ConstraintCount;
             public int BlendShapeSyncCount;
+            public int ParticleSystemCount;
             public AvatarPreprocessor.Mode Preprocess;
             public int OptimizerBlendShapeSettingsDisabled;
             public int ModularAvatarFallbackFixes;
@@ -219,6 +220,9 @@ namespace VRCast.Converter.Editor
                 // 許可リスト外のコンポーネント等を除去
                 report.Strip = ComponentStripper.Strip(clone);
                 report.IsHumanoid = clone.GetComponent<Animator>().isHuman;
+
+                // 書き出すパーティクルの数（アプリで ON/OFF できる）
+                report.ParticleSystemCount = clone.GetComponentsInChildren<ParticleSystem>(true).Length;
 
                 // ボーンを失ったメッシュ（頂点が原点へ伸びる）を警告
                 report.MissingBoneRenderers = ComponentStripper.WarnMissingBones(clone);

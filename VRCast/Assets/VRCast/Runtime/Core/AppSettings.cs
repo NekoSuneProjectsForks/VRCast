@@ -423,6 +423,33 @@ namespace VRCast.Core
         }
 
         /// <summary>
+        /// アバターのパーティクルの ON/OFF を返す（未記録なら空。一覧は複製）。
+        /// </summary>
+        public List<ParticleToggle> GetParticleToggles(string avatarPath)
+        {
+            int index = FindAvatarCamera(avatarPath);
+            return index >= 0
+                ? new List<ParticleToggle>(avatarCameras[index].particles)
+                : new List<ParticleToggle>();
+        }
+
+        /// <summary>
+        /// アバターのパーティクルの ON/OFF を記録する。カメラの視点を記録済みのアバターだけが対象（読込時に記録される）。
+        /// </summary>
+        public void SetParticleToggles(string avatarPath, List<ParticleToggle> toggles)
+        {
+            // 記録の無いアバターは対象外（視点の無い記録を作らない）
+            int index = FindAvatarCamera(avatarPath);
+            if (index < 0)
+            {
+                return;
+            }
+
+            // パスの無いものは除いて複製を持つ
+            avatarCameras[index].particles = toggles.FindAll(toggle => toggle != null && toggle.path != null);
+        }
+
+        /// <summary>
         /// アバターの一覧に出す画像のファイル名を返す（サムネイル用フォルダ内の名前。未設定・未記録なら空文字）。
         /// </summary>
         public string GetAvatarThumbnail(string avatarPath)
@@ -705,6 +732,10 @@ namespace VRCast.Core
                 // 表情のショートカットキーは壊れたもの・使えないキーを捨てる（旧版の設定には無いので空の一覧にする）
                 entry.expressionHotkeys ??= new List<ExpressionHotkey>();
                 entry.expressionHotkeys.RemoveAll(hotkey => hotkey == null || !hotkey.IsValid);
+
+                // パーティクルの ON/OFF はパスの無いものを捨てる（旧版の設定には無いので空の一覧にする）
+                entry.particles ??= new List<ParticleToggle>();
+                entry.particles.RemoveAll(toggle => toggle == null || toggle.path == null);
 
                 // 一覧の画像はフォルダの外を指しうる名前（手編集）を未設定にする（旧版の設定には無いので空にする）
                 entry.thumbnail = IsThumbnailFileName(entry.thumbnail) ? entry.thumbnail : string.Empty;

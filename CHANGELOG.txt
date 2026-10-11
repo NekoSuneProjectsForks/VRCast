@@ -11,11 +11,13 @@ Newest first. Each version is written in Japanese, then English.
 - 表示中のアバターの顔を撮り直して一覧の画像にする「顔を撮る」ボタンを追加
 - 書き出しツールで、VRCFury で改変したアバターを改変後の姿で書き出せるように対応（VRChat へのアップロード時と同じ処理を適用します）
 - トラッキングで目を開けているのにアバターが半目になる人向けに「目の開きの補正」を追加（トラッキングタブ。ジト目と判定されやすい問題も抑えます）
+- アバターのパーティクルを表示し、ポーズ・表情タブでエフェクトごとに ON/OFF できる機能を追加（アバターごとに保存。新しい書き出しツールで書き出し直したアバターで使えます）
 [English]
 - Added automatic face pictures for avatars without a list image when they are loaded
 - Added a "Capture face" button to retake the list image of the avatar being shown
 - Added support for exporting avatars customized with VRCFury with the changes applied (the same processing as uploading to VRChat)
 - Added "Eye open correction" (Tracking tab) for when the avatar's eyes look half-closed while yours are open (also keeps the "Half-closed eyes" expression from being detected by mistake)
+- Added support for avatar particles, with on/off switches for each effect in the Pose tab (saved per avatar; re-export the avatar with the new exporter to use this)
 
 ■ 1.16.7 (2026-10-10)
 

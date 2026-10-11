@@ -118,32 +118,32 @@ namespace VRCast.Converter.Editor
 
             EditorGUILayout.HelpBox(
                 T(
-                    "Only Unity built-in components (Transform, Animator, Renderers, MeshFilter) are exported. " +
+                    "Only Unity built-in components (Transform, Animator, Renderers, MeshFilter, Particle System) are exported. " +
                     "VRChat components, scripts and the Animator Controller are removed from the exported copy. " +
                     "The FX layer's default state (toggles etc.) is baked into the copy before removal. " +
                     "Avatar tools such as VRCFury and Modular Avatar are applied to the copy first, " +
                     "the same way as when uploading to VRChat. " +
                     "Outfits and accessories set up with MA Merge Armature / Bone Proxy that were not merged " +
                     "are attached to the avatar's bones by VRCast so that they follow the avatar.",
-                    "書き出されるのは Unity 標準のコンポーネント（Transform・Animator・Renderer・MeshFilter）だけです。" +
+                    "書き出されるのは Unity 標準のコンポーネント（Transform・Animator・Renderer・MeshFilter・Particle System）だけです。" +
                     "VRChat のコンポーネント・スクリプト・Animator Controller は書き出し用の複製から取り除かれます" +
                     "（元のアバターは変更しません）。取り除く前に、FX レイヤーの初期状態（トグルなど）を複製に焼き込みます。" +
                     "VRCFury・Modular Avatar などの改変は、VRChat へのアップロード時と同じく先に複製へ適用します。" +
                     "MA Merge Armature / Bone Proxy で付けた衣装・小物が統合されなかった場合は、" +
                     "VRCast がアバターのボーンに付け替えて体に追従させます。",
-                    "Unity 기본 컴포넌트(Transform, Animator, Renderer, MeshFilter)만 내보냅니다. " +
+                    "Unity 기본 컴포넌트(Transform, Animator, Renderer, MeshFilter, Particle System)만 내보냅니다. " +
                     "VRChat 컴포넌트, 스크립트, Animator Controller는 내보내기용 복제본에서 제거됩니다" +
                     "(원본 아바타는 변경하지 않습니다). 제거하기 전에 FX 레이어의 초기 상태(토글 등)를 복제본에 반영합니다. " +
                     "VRCFury, Modular Avatar 등의 개조는 VRChat 업로드 시와 같이 먼저 복제본에 적용합니다. " +
                     "MA Merge Armature / Bone Proxy로 붙인 의상·소품이 통합되지 않은 경우에는 " +
                     "VRCast가 아바타의 본에 다시 붙여 몸을 따라가게 합니다.",
-                    "只导出 Unity 内置组件（Transform、Animator、Renderer、MeshFilter）。" +
+                    "只导出 Unity 内置组件（Transform、Animator、Renderer、MeshFilter、Particle System）。" +
                     "VRChat 组件、脚本和 Animator Controller 会从导出用的副本中移除（不会修改原始虚拟形象）。" +
                     "移除前会把 FX 层的初始状态（开关等）烘焙到副本中。" +
                     "VRCFury、Modular Avatar 等改造会像上传到 VRChat 时一样先应用到副本。" +
                     "用 MA Merge Armature / Bone Proxy 添加的服装和小物如果未被合并，" +
                     "VRCast 会把它们重新挂到虚拟形象的骨骼上并跟随身体。",
-                    "只匯出 Unity 內建元件（Transform、Animator、Renderer、MeshFilter）。" +
+                    "只匯出 Unity 內建元件（Transform、Animator、Renderer、MeshFilter、Particle System）。" +
                     "VRChat 元件、腳本和 Animator Controller 會從匯出用的副本中移除（不會修改原始虛擬形象）。" +
                     "移除前會把 FX 層的初始狀態（開關等）烘焙到副本中。" +
                     "VRCFury、Modular Avatar 等改造會像上傳到 VRChat 時一樣先套用到副本。" +
@@ -641,6 +641,7 @@ namespace VRCast.Converter.Editor
                     "⚠ {0} 個表情因找不到要驅動的網格，不會出現在應用程式的表情列表中（名稱見 Console）。"),
                     report.UnresolvedExpressions) + "\n" + UnresolvedSamples(report)
                 : string.Empty;
+            string particles = L("Particle systems", "パーティクル", "파티클", "粒子系统", "粒子系統");
             string lipSync = L("Lip sync", "リップシンク", "립싱크", "口型同步", "口型同步");
             string blink = L("blink", "まばたき", "눈 깜빡임", "眨眼", "眨眼");
             string wink = L("wink", "ウインク", "윙크", "眨单眼", "眨單眼");
@@ -672,6 +673,7 @@ namespace VRCast.Converter.Editor
                 $"PhysBones: {report.PhysBoneCount}\n" +
                 $"Constraints: {report.ConstraintCount}\n" +
                 $"Blendshape Sync (MA): {report.BlendShapeSyncCount}\n" +
+                $"{particles}: {report.ParticleSystemCount}\n" +
                 $"{removed}: {report.Strip.RemovedComponents}, " +
                 $"{missing}: {report.Strip.RemovedMissingScripts}, " +
                 $"{editorOnly}: {report.Strip.RemovedEditorOnlyObjects}, " +

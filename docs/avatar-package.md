@@ -245,7 +245,8 @@ Remap カーブは対象外（値をそのまま写す）。不正な場合は�
 ## avatar.bundle
 
 - アバター Prefab を 1 つだけ含む。アセットパスは固定で `Assets/__VRCastExport/avatar.prefab`。
-- 含めるのは **Unity 標準コンポーネントのみ**: Transform, Animator, SkinnedMeshRenderer, MeshRenderer, MeshFilter。
+- 含めるのは **Unity 標準コンポーネントのみ**: Transform, Animator, SkinnedMeshRenderer, MeshRenderer, MeshFilter,
+  ParticleSystem, ParticleSystemRenderer（パーティクルは 1.17.7 以降の Converter から。以前の Runtime は読込時に除去する）。
   依存として Mesh, Material, Shader, Texture, Avatar (Humanoid) が含まれる。
 - Animator Controller は含めない（VRChat 固有の StateMachineBehaviour を含むため）。表情等は Milestone 3 で metadata 化する。
   代わりに FX レイヤーの初期状態（小物トグル・初期表情等）を書き出し時に GameObject / Renderer の有効状態、BlendShape、マテリアル差し替えへ焼き込む（Transform・ポーズは変更しない。BlendShape は既定ではシーン上の値を優先する）。

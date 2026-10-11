@@ -7,7 +7,7 @@ using VRCast.Core;
 namespace VRCast.UI
 {
     /// <summary>
-    /// Pose タブ（待機ポーズ・待機モーション・表情）。表示中アバターのコントローラーを操作する。
+    /// Pose タブ（待機ポーズ・待機モーション・パーティクル・表情）。表示中アバターのコントローラーを操作する。
     /// 表情ごとにショートカットキーを割り当てられる（クリックで割り当て開始、Esc でやめる、アバターごとに記録）。
     /// 割り当ては Windows のキーの状態で読む（テンキー・記号キー・左右の修飾キー単独も区別できる）。
     /// </summary>
@@ -31,6 +31,7 @@ namespace VRCast.UI
         private PoseController _pose;
         private ExpressionController _expressions;
         private IdleMotionController _idleMotion;
+        private AvatarParticles _particles;
 
         // 表情のショートカットキーの割り当て（対象 = プリセット、-1 = ニュートラル）
         private readonly KeyCaptureSession _capture = new KeyCaptureSession();
@@ -56,7 +57,61 @@ namespace VRCast.UI
 
             DrawPose();
             DrawIdleMotion();
+            DrawParticles();
             DrawExpressions();
+        }
+
+        private void DrawParticles()
+        {
+            // パーティクルが見つかったアバターだけに出す
+            if (_particles == null || _particles.Groups.Count == 0)
+            {
+                return;
+            }
+
+            GuiControls.BeginCard(Loc.T("Particles", "パーティクル", "파티클", "粒子", "粒子"));
+            GuiControls.Hint(Loc.T(
+                $"{_particles.Groups.Count} found ({_particles.EnabledCount} on). Turning one on also shows its hidden parent objects. Saved per avatar.",
+                $"{_particles.Groups.Count} 個見つかりました（{_particles.EnabledCount} 個 ON）。ON にすると、非表示の親のオブジェクトも表示します。アバターごとに保存されます。",
+                $"{_particles.Groups.Count}개 발견 ({_particles.EnabledCount}개 켜짐). 켜면 숨겨진 상위 오브젝트도 표시합니다. 아바타별로 저장됩니다.",
+                $"找到 {_particles.Groups.Count} 个（{_particles.EnabledCount} 个开启）。开启后也会显示被隐藏的父对象。按虚拟形象分别保存。",
+                $"找到 {_particles.Groups.Count} 個（{_particles.EnabledCount} 個開啟）。開啟後也會顯示被隱藏的父物件。依虛擬形象分別儲存。"));
+
+            // まとめて ON / OFF
+            bool changed = false;
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button(Loc.T("All on", "すべて ON", "모두 켜기", "全部开启", "全部開啟"), GuiControls.Shrinkable))
+            {
+                _particles.SetAll(true);
+                changed = true;
+            }
+
+            if (GUILayout.Button(Loc.T("All off", "すべて OFF", "모두 끄기", "全部关闭", "全部關閉"), GuiControls.Shrinkable))
+            {
+                _particles.SetAll(false);
+                changed = true;
+            }
+
+            GUILayout.EndHorizontal();
+
+            // まとまりごとの ON/OFF
+            foreach (AvatarParticles.Group group in _particles.Groups)
+            {
+                bool enabled = GUILayout.Toggle(group.Enabled, group.Label, GuiControls.Shrinkable);
+                if (enabled != group.Enabled)
+                {
+                    _particles.SetEnabled(group, enabled);
+                    changed = true;
+                }
+            }
+
+            // 変えたらこのアバターの分として記録する（保存は終了時）
+            if (changed && _session.Current != null)
+            {
+                _settings.SetParticleToggles(_session.Current.SourcePath, _particles.Export());
+            }
+
+            GuiControls.EndCard();
         }
 
         private bool RefreshControllers()
@@ -67,6 +122,7 @@ namespace VRCast.UI
                 _pose = _avatar.Get<PoseController>();
                 _expressions = _avatar.Get<ExpressionController>();
                 _idleMotion = _avatar.Get<IdleMotionController>();
+                _particles = _avatar.Get<AvatarParticles>();
                 BuildLabels();
 
                 // 別のアバターの表情へ割り当てないよう、割り当て中ならやめる
