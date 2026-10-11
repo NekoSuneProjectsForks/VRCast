@@ -16,6 +16,7 @@ Newest first. Each version is written in Japanese, then English.
 - Added a "Capture face" button to retake the list image of the avatar being shown
 - Added support for exporting avatars customized with VRCFury with the changes applied (the same processing as uploading to VRChat)
 - Added "Eye open correction" (Tracking tab) for when the avatar's eyes look half-closed while yours are open (also keeps the "Half-closed eyes" expression from being detected by mistake)
+
 ■ 1.16.7 (2026-10-10)
 
 [日本語]
