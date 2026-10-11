@@ -131,7 +131,7 @@
           介面會使用作業系統的語言（可在頂部的 <span class="ui">語言</span> 中切換）。</span></li>
   </ol>
   <p class="note zh-hant">不會修改原始虛擬形象。表情、口型同步、眨眼、物理擺動和 Constraint 的設定也會一併匯出。</p>
-  <p class="note zh-hant">場景中未啟用（取消勾選）的物件及其子物件不會被匯出。想要顯示的服裝和小物請先啟用再匯出。</p>
+  <p class="note zh-hant">開啟 <span class="ui">也匯出未啟用的物件</span>（預設開啟）時，場景中未啟用（取消勾選）的物件也會以關閉狀態匯出。可隨時在 VRCast 的 <span class="ui">物件</span> 分頁中開啟，因此匯出前無需開啟（檔案會變大）。關閉後，未啟用的物件及其子物件不會被匯出（粒子除外）。</p>
   <p class="note zh-hant">BlendShape 會按 Unity 場景中設定的值匯出（<span class="ui">優先使用場景中的 BlendShape 值</span>，預設開啟）。
     如果 FX 層會隨服裝切換驅動收縮用 BlendShape 等，關閉後會按進入 VRChat 時的初始狀態值匯出。</p>
   <p class="note zh-hant">FX 層中的表情剪輯會自動匯出。不在 FX 中的表情（例如舊虛擬形象附帶的表情動畫），
@@ -263,6 +263,15 @@
   <p class="zh-hant"><span class="ui">待機動作</span>（預設開啟，僅限 Humanoid）會在不使用攝影機時，稍微加上呼吸、身體搖擺和頭部晃動，避免虛擬形象完全靜止。
     關閉 <span class="ui">呼吸 · 身體搖擺</span> 後會停止。開啟時可以調整 <span class="ui">呼吸</span>、<span class="ui">身體搖擺</span>、<span class="ui">頭部晃動</span> 的強度（0～2，1 為標準）和 <span class="ui">速度</span>（0.5～2 倍）。
     臉部追蹤時會停止頭部晃動，跟隨本人的動作。</p>
+</section>
+
+<section id="objects">
+  <h2><span class="zh-hant">服裝與小物的開關（物件分頁）</span></h2>
+  <p class="zh-hant">虛擬形象的內容會按與 Unity 的 Hierarchy 相同的順序列出。勾選顯示，取消勾選則隱藏（與 Unity Inspector 的勾選相同）。切換依虛擬形象分別儲存。
+    在匯出工具中開啟 <span class="ui">也匯出未啟用的物件</span>（預設開啟）後匯出，在場景中關閉的服裝和小物也會以關閉狀態包含在內，可在這裡開啟（1.18.7 及以後的匯出工具）。</p>
+  <p class="zh-hant">開啟 <span class="ui">僅 VRChat 選單切換的物件</span> 後，只列出透過 VRChat Expression Menu（FX 開關）切換的服裝和小物（有此類物件的虛擬形象預設開啟）。
+    關閉後會以可用 <span class="ui">▶</span> / <span class="ui">▼</span> 展開和摺疊的樹狀顯示。<span class="ui">隱藏骨骼和空物件</span>（預設開啟）會省略沒有網格的行，<span class="ui">搜尋</span> 可按名稱的一部分尋找。
+    <span class="ui">復原變更</span> 會恢復為載入時的狀態。因父物件關閉而看不見的行會以淡色顯示。</p>
 </section>
 
 <section id="face">

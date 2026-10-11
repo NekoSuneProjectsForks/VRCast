@@ -139,7 +139,7 @@
         </li>
   </ol>
   <p class="note zh-hans">不会修改原始虚拟形象。表情、口型同步、眨眼、物理摆动和 Constraint 的设置也会一并导出。</p>
-  <p class="note zh-hans">场景中未激活（取消勾选）的对象及其子对象不会被导出。想要显示的服装和小物请先激活再导出。</p>
+  <p class="note zh-hans">开启 <span class="ui">也导出未激活的对象</span>（默认开启）时，场景中未激活（取消勾选）的对象也会以关闭状态导出。可随时在 VRCast 的 <span class="ui">对象</span> 标签页中开启，因此导出前无需开启（文件会变大）。关闭后，未激活的对象及其子对象不会被导出（粒子除外）。</p>
   <p class="note zh-hans">BlendShape 会按 Unity 场景中设置的值导出（<span class="ui">优先使用场景中的 BlendShape 值</span>，默认开启）。
     如果 FX 层会随服装切换驱动收缩用 BlendShape 等，关闭后会按进入 VRChat 时的初始状态值导出。</p>
   <p class="note zh-hans">FX 层中的表情剪辑会自动导出。不在 FX 中的表情（例如旧虚拟形象附带的表情动画），
@@ -297,6 +297,15 @@
   <p class="zh-hans"><span class="ui">待机动作</span>（默认开启，仅限 Humanoid）会在不使用摄像头时，稍微加上呼吸、身体摇摆和头部晃动，避免虚拟形象完全静止。
     关闭 <span class="ui">呼吸 · 身体摇摆</span> 后会停止。开启时可以调整 <span class="ui">呼吸</span>、<span class="ui">身体摇摆</span>、<span class="ui">头部晃动</span> 的强度（0～2，1 为标准）和 <span class="ui">速度</span>（0.5～2 倍）。
     面部追踪时会停止头部晃动，跟随本人的动作。</p>
+</section>
+
+<section id="objects">
+  <h2><span class="zh-hans">服装与小物的开关（对象标签页）</span></h2>
+  <p class="zh-hans">虚拟形象的内容会按与 Unity 的 Hierarchy 相同的顺序列出。勾选显示，取消勾选则隐藏（与 Unity Inspector 的勾选相同）。切换按虚拟形象分别保存。
+    在导出工具中开启 <span class="ui">也导出未激活的对象</span>（默认开启）后导出，在场景中关闭的服装和小物也会以关闭状态包含在内，可在这里开启（1.18.7 及以后的导出工具）。</p>
+  <p class="zh-hans">开启 <span class="ui">仅 VRChat 菜单切换的对象</span> 后，只列出通过 VRChat Expression Menu（FX 开关）切换的服装和小物（有此类对象的虚拟形象默认开启）。
+    关闭后会以可用 <span class="ui">▶</span> / <span class="ui">▼</span> 展开和折叠的树状显示。<span class="ui">隐藏骨骼和空对象</span>（默认开启）会省略没有网格的行，<span class="ui">搜索</span> 可按名称的一部分查找。
+    <span class="ui">撤销更改</span> 会恢复为加载时的状态。因父对象关闭而看不见的行会以淡色显示。</p>
 </section>
 
 <section id="face">

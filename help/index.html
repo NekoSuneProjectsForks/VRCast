@@ -182,11 +182,11 @@
   <p class="note ko">원본 아바타는 변경되지 않습니다. 표정·립싱크·눈 깜빡임·흔들림·Constraint 설정도 함께 내보내집니다.</p>
   <p class="note zh-hans">不会修改原始虚拟形象。表情、口型同步、眨眼、物理摆动和 Constraint 的设置也会一并导出。</p>
   <p class="note zh-hant">不會修改原始虛擬形象。表情、口型同步、眨眼、物理擺動和 Constraint 的設定也會一併匯出。</p>
-  <p class="note ja">シーン上で非アクティブ（チェックを外した）オブジェクトは、子も含めて書き出されません。表示したい衣装・小物はアクティブにしてから書き出してください。</p>
-  <p class="note en">Objects that are inactive in the scene (unchecked) are not exported, including their children. Make outfits and accessories you want to show active before exporting.</p>
-  <p class="note ko">씬에서 비활성(체크 해제)인 오브젝트는 자식을 포함해 내보내지지 않습니다. 표시하고 싶은 의상·소품은 활성화한 뒤 내보내세요.</p>
-  <p class="note zh-hans">场景中未激活（取消勾选）的对象及其子对象不会被导出。想要显示的服装和小物请先激活再导出。</p>
-  <p class="note zh-hant">場景中未啟用（取消勾選）的物件及其子物件不會被匯出。想要顯示的服裝和小物請先啟用再匯出。</p>
+  <p class="note ja"><span class="ui">非アクティブのオブジェクトも書き出す</span>（既定 ON）が ON なら、シーン上で非アクティブ（チェックを外した）オブジェクトも OFF のまま書き出されます。VRCast の <span class="ui">オブジェクト</span> タブでいつでも ON にできるので、書き出し前に ON にする必要はありません（ファイルは大きくなります）。OFF にすると、非アクティブのオブジェクトは子も含めて書き出されません（パーティクルを除く）。</p>
+  <p class="note en">With <span class="ui">Also export inactive objects</span> on (default), objects that are inactive in the scene (unchecked) are exported too, kept turned off. You can turn them on at any time in VRCast's <span class="ui">Objects</span> tab, so there is no need to turn them on before exporting (the file gets larger). When it is off, inactive objects and their children are not exported (except particles).</p>
+  <p class="note ko"><span class="ui">비활성 오브젝트도 내보내기</span>(기본 켜짐)가 켜져 있으면 씬에서 비활성(체크 해제)인 오브젝트도 꺼진 상태로 내보내집니다. VRCast의 <span class="ui">오브젝트</span> 탭에서 언제든 켤 수 있으므로 내보내기 전에 켤 필요가 없습니다 (파일이 커집니다). 끄면 비활성 오브젝트는 자식을 포함해 내보내지지 않습니다 (파티클 제외).</p>
+  <p class="note zh-hans">开启 <span class="ui">也导出未激活的对象</span>（默认开启）时，场景中未激活（取消勾选）的对象也会以关闭状态导出。可随时在 VRCast 的 <span class="ui">对象</span> 标签页中开启，因此导出前无需开启（文件会变大）。关闭后，未激活的对象及其子对象不会被导出（粒子除外）。</p>
+  <p class="note zh-hant">開啟 <span class="ui">也匯出未啟用的物件</span>（預設開啟）時，場景中未啟用（取消勾選）的物件也會以關閉狀態匯出。可隨時在 VRCast 的 <span class="ui">物件</span> 分頁中開啟，因此匯出前無需開啟（檔案會變大）。關閉後，未啟用的物件及其子物件不會被匯出（粒子除外）。</p>
   <p class="note ja">ブレンドシェイプは Unity のシーンで設定した値のまま書き出されます（<span class="ui">シーンのブレンドシェイプの値を優先する</span>、既定 ON）。
     衣装の切り替えに合わせて縮小用ブレンドシェイプを FX で動かしている場合などは、OFF にすると VRChat に入ったときの初期状態の値で書き出します。</p>
   <p class="note en">Blend shapes are exported with the values set in your Unity scene (<span class="ui">Keep blend shape values from the scene</span>, on by default).
@@ -571,6 +571,35 @@
     初始狀態與 VRChat 的初始狀態（FX 開關）一致，開啟時也會顯示被隱藏的父物件。需要用新的匯出工具重新匯出虛擬形象。
     匯出時關閉的粒子也會被匯出，因此匯出前無需全部開啟。在 VRChat 中一起開關的粒子（FX 開關、特效資料夾）會合併為一項顯示。
     可用 <span class="ui">重新命名</span> 設定顯示名稱（留空則恢復為 Unity 中的名稱），每行下方會顯示 Unity 中的路徑。</p>
+</section>
+
+<section id="objects">
+  <h2><span class="ja">衣装・小物の ON/OFF（オブジェクトタブ）</span><span class="en">Outfits &amp; accessories on/off (Objects tab)</span><span class="ko">의상·소품 켜고 끄기 (오브젝트 탭)</span><span class="zh-hans">服装与小物的开关（对象标签页）</span><span class="zh-hant">服裝與小物的開關（物件分頁）</span></h2>
+  <p class="ja">アバターの中身が Unity のヒエラルキーと同じ並びで出ます。チェックを入れると表示、外すと非表示になります（Unity のインスペクターのチェックと同じ）。切り替えはアバターごとに保存されます。
+    書き出しツールの <span class="ui">非アクティブのオブジェクトも書き出す</span>（既定 ON）を ON にして書き出すと、シーンで OFF にしていた衣装・小物も OFF のまま入るので、ここで ON にできます（1.18.7 以降の書き出しツール）。</p>
+  <p class="ja"><span class="ui">VRChat のメニューで切り替えるものだけ</span> を ON にすると、VRChat の Expression Menu（FX のトグル）で切り替えている衣装・小物だけが並びます（該当するものがあるアバターでは最初から ON）。
+    OFF にすると、<span class="ui">▶</span> / <span class="ui">▼</span> で開閉できる木の表示になります。<span class="ui">ボーン・空のオブジェクトを隠す</span>（既定 ON）でメッシュの無い行を省き、<span class="ui">検索</span> で名前の一部から探せます。
+    <span class="ui">変更を元に戻す</span> で読み込んだときの状態に戻ります。親が OFF のため見えていない行は薄く表示されます。</p>
+  <p class="en">The avatar's contents are listed in the same order as Unity's Hierarchy. Check an object to show it and uncheck it to hide it (like the checkbox in Unity's Inspector). Changes are saved per avatar.
+    If you export with <span class="ui">Also export inactive objects</span> (on by default) in the exporter, outfits and accessories that were turned off in the scene are included, turned off, so you can turn them on here (exporter 1.18.7 or later).</p>
+  <p class="en">With <span class="ui">Only objects toggled by VRChat menus</span> on, only the outfits and accessories switched by the VRChat Expression Menu (FX toggles) are listed (on by default for avatars that have them).
+    Turn it off to see a tree you can expand and collapse with <span class="ui">▶</span> / <span class="ui">▼</span>. <span class="ui">Hide bones and empty objects</span> (on by default) leaves out rows without meshes, and <span class="ui">Search</span> finds objects by part of their name.
+    <span class="ui">Undo changes</span> returns to the state when the avatar was loaded. Rows hidden because a parent is off are shown dimmed.</p>
+  <p class="ko">아바타의 내용이 Unity의 Hierarchy와 같은 순서로 나옵니다. 체크하면 표시, 해제하면 숨깁니다 (Unity Inspector의 체크와 같음). 전환은 아바타별로 저장됩니다.
+    내보내기 도구의 <span class="ui">비활성 오브젝트도 내보내기</span>(기본 켜짐)를 켜고 내보내면 씬에서 꺼 둔 의상·소품도 꺼진 상태로 들어가므로 여기서 켤 수 있습니다 (1.18.7 이후의 내보내기 도구).</p>
+  <p class="ko"><span class="ui">VRChat 메뉴로 전환하는 것만</span>을 켜면 VRChat Expression Menu(FX 토글)로 전환하는 의상·소품만 나열됩니다 (해당하는 것이 있는 아바타는 처음부터 켜짐).
+    끄면 <span class="ui">▶</span> / <span class="ui">▼</span>로 펼치고 접을 수 있는 트리 표시가 됩니다. <span class="ui">본·빈 오브젝트 숨기기</span>(기본 켜짐)로 메시가 없는 행을 생략하고, <span class="ui">검색</span>으로 이름 일부로 찾을 수 있습니다.
+    <span class="ui">변경 되돌리기</span>로 불러왔을 때의 상태로 돌아갑니다. 상위가 꺼져 보이지 않는 행은 흐리게 표시됩니다.</p>
+  <p class="zh-hans">虚拟形象的内容会按与 Unity 的 Hierarchy 相同的顺序列出。勾选显示，取消勾选则隐藏（与 Unity Inspector 的勾选相同）。切换按虚拟形象分别保存。
+    在导出工具中开启 <span class="ui">也导出未激活的对象</span>（默认开启）后导出，在场景中关闭的服装和小物也会以关闭状态包含在内，可在这里开启（1.18.7 及以后的导出工具）。</p>
+  <p class="zh-hans">开启 <span class="ui">仅 VRChat 菜单切换的对象</span> 后，只列出通过 VRChat Expression Menu（FX 开关）切换的服装和小物（有此类对象的虚拟形象默认开启）。
+    关闭后会以可用 <span class="ui">▶</span> / <span class="ui">▼</span> 展开和折叠的树状显示。<span class="ui">隐藏骨骼和空对象</span>（默认开启）会省略没有网格的行，<span class="ui">搜索</span> 可按名称的一部分查找。
+    <span class="ui">撤销更改</span> 会恢复为加载时的状态。因父对象关闭而看不见的行会以淡色显示。</p>
+  <p class="zh-hant">虛擬形象的內容會按與 Unity 的 Hierarchy 相同的順序列出。勾選顯示，取消勾選則隱藏（與 Unity Inspector 的勾選相同）。切換依虛擬形象分別儲存。
+    在匯出工具中開啟 <span class="ui">也匯出未啟用的物件</span>（預設開啟）後匯出，在場景中關閉的服裝和小物也會以關閉狀態包含在內，可在這裡開啟（1.18.7 及以後的匯出工具）。</p>
+  <p class="zh-hant">開啟 <span class="ui">僅 VRChat 選單切換的物件</span> 後，只列出透過 VRChat Expression Menu（FX 開關）切換的服裝和小物（有此類物件的虛擬形象預設開啟）。
+    關閉後會以可用 <span class="ui">▶</span> / <span class="ui">▼</span> 展開和摺疊的樹狀顯示。<span class="ui">隱藏骨骼和空物件</span>（預設開啟）會省略沒有網格的行，<span class="ui">搜尋</span> 可按名稱的一部分尋找。
+    <span class="ui">復原變更</span> 會恢復為載入時的狀態。因父物件關閉而看不見的行會以淡色顯示。</p>
 </section>
 
 <section id="face">
