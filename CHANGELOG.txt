@@ -4,7 +4,7 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
-■ 未リリース / Unreleased
+■ 1.18.8 (2026-10-12)
 
 [日本語]
 - zip を扱えない配布先（Jinxxy）向けに、EXE 1 つで VRCast と書き出しツールを展開できるセットアップ版を追加（既に VRCast が入っているフォルダーを選ぶと、設定はそのままで新しいバージョンに入れ替えます）
