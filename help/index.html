@@ -466,11 +466,11 @@
     <tr><th><span class="ja">項目</span><span class="en">Item</span><span class="ko">항목</span><span class="zh-hans">项目</span><span class="zh-hant">項目</span></th>
         <th><span class="ja">内容</span><span class="en">What it does</span><span class="ko">내용</span><span class="zh-hans">说明</span><span class="zh-hant">說明</span></th></tr>
     <tr><td><span class="ja">カメラ</span><span class="en">Camera</span><span class="ko">카메라</span><span class="zh-hans">相机</span><span class="zh-hant">相機</span></td>
-        <td><span class="ja">画角の変更とリセット。右ドラッグで回転、中ドラッグで移動、ホイールでズーム。カメラの位置と画角はアバターごとに記憶され、再起動後も戻ります。<span class="ui">カメラを固定</span> を ON にすると、マウスのドラッグ・ホイールで動かなくなります（画角とリセットは使えます）。</span>
-            <span class="en">Field of view and reset. Right-drag to rotate, middle-drag to pan, wheel to zoom. The camera position and field of view are remembered for each avatar, also after restarting. Turn on <span class="ui">Lock camera</span> to stop mouse drags and the wheel from moving it (field of view and reset still work).</span>
-            <span class="ko">화각 변경과 초기화. 오른쪽 드래그로 회전, 가운데 드래그로 이동, 휠로 확대·축소. 카메라 위치와 화각은 아바타마다 기억되며, 다시 시작한 후에도 유지됩니다. <span class="ui">카메라 고정</span>을 켜면 마우스 드래그·휠로 움직이지 않습니다 (화각과 초기화는 사용 가능).</span>
-            <span class="zh-hans">更改与重置视野。右键拖动旋转，中键拖动平移，滚轮缩放。相机位置和视野会按虚拟形象分别记住，重启后也会恢复。开启 <span class="ui">锁定相机</span> 后，鼠标拖动和滚轮不会再移动相机（仍可更改视野和重置）。</span>
-            <span class="zh-hant">變更與重設視野。右鍵拖曳旋轉，中鍵拖曳平移，滾輪縮放。相機位置和視野會依虛擬形象分別記住，重新啟動後也會恢復。開啟 <span class="ui">鎖定相機</span> 後，滑鼠拖曳和滾輪不會再移動相機（仍可變更視野和重設）。</span></td></tr>
+        <td><span class="ja">画角の変更とリセット。右ドラッグで回転、中ドラッグで移動、ホイールでズーム。カメラの位置と画角はアバターごとに記憶され、再起動後も戻ります。<span class="ui">カメラを固定</span> を ON にすると、マウスのドラッグ・ホイールで動かなくなります（画角とリセットは使えます）。<span class="ui">体に入り込まない</span>（既定は ON）の間は、近づけても体の手前でカメラが止まり、それ以上は画角を狭めて大写しにします（配信中に体の中が映るのを防ぎます）。</span>
+            <span class="en">Field of view and reset. Right-drag to rotate, middle-drag to pan, wheel to zoom. The camera position and field of view are remembered for each avatar, also after restarting. Turn on <span class="ui">Lock camera</span> to stop mouse drags and the wheel from moving it (field of view and reset still work). While <span class="ui">Don't go inside the avatar</span> is on (default), the camera stops in front of the body and zooms in by narrowing the view instead (so the inside of the body never shows on stream).</span>
+            <span class="ko">화각 변경과 초기화. 오른쪽 드래그로 회전, 가운데 드래그로 이동, 휠로 확대·축소. 카메라 위치와 화각은 아바타마다 기억되며, 다시 시작한 후에도 유지됩니다. <span class="ui">카메라 고정</span>을 켜면 마우스 드래그·휠로 움직이지 않습니다 (화각과 초기화는 사용 가능). <span class="ui">아바타 안으로 들어가지 않기</span>(기본은 켜짐)가 켜져 있으면 가까이 가도 몸 앞에서 카메라가 멈추고, 그 이상은 화각을 좁혀 클로즈업합니다.</span>
+            <span class="zh-hans">更改与重置视野。右键拖动旋转，中键拖动平移，滚轮缩放。相机位置和视野会按虚拟形象分别记住，重启后也会恢复。开启 <span class="ui">锁定相机</span> 后，鼠标拖动和滚轮不会再移动相机（仍可更改视野和重置）。开启 <span class="ui">不进入虚拟形象内部</span>（默认开启）时，靠近时相机会停在身体前方，继续放大则缩小视野来特写。</span>
+            <span class="zh-hant">變更與重設視野。右鍵拖曳旋轉，中鍵拖曳平移，滾輪縮放。相機位置和視野會依虛擬形象分別記住，重新啟動後也會恢復。開啟 <span class="ui">鎖定相機</span> 後，滑鼠拖曳和滾輪不會再移動相機（仍可變更視野和重設）。開啟 <span class="ui">不進入虛擬形象內部</span>（預設開啟）時，靠近時相機會停在身體前方，繼續放大則縮小視野來特寫。</span></td></tr>
     <tr><td><span class="ja">背景</span><span class="en">Background</span><span class="ko">배경</span><span class="zh-hans">背景</span><span class="zh-hant">背景</span></td>
         <td><span class="ja">背景色（既定はベージュ）と透過の切り替え。透過中も VRCast の画面では背景色が見えますが、OBS のゲームキャプチャでは抜けます。</span>
             <span class="en">Background color (beige by default) and transparency. While transparent, the VRCast window still shows the color but OBS Game Capture removes it.</span>
@@ -552,15 +552,25 @@
     關閉 <span class="ui">呼吸 · 身體搖擺</span> 後會停止。開啟時可以調整 <span class="ui">呼吸</span>、<span class="ui">身體搖擺</span>、<span class="ui">頭部晃動</span> 的強度（0～2，1 為標準）和 <span class="ui">速度</span>（0.5～2 倍）。
     臉部追蹤時會停止頭部晃動，跟隨本人的動作。</p>
   <p class="ja">アバターにパーティクル（Particle System）があると、<span class="ui">パーティクル</span> 欄が出ます。エフェクトごとのスイッチ、または <span class="ui">すべて ON</span> / <span class="ui">すべて OFF</span> で表示を切り替えられます（アバターごとに保存）。
-    最初は VRChat の初期状態（FX のトグル）どおりで、ON にすると非表示の親のオブジェクトも表示します。新しい書き出しツールで書き出し直したアバターで使えます。</p>
+    最初は VRChat の初期状態（FX のトグル）どおりで、ON にすると非表示の親のオブジェクトも表示します。新しい書き出しツールで書き出し直したアバターで使えます。
+    書き出し時に OFF のパーティクルも書き出されるので、書き出し前にすべて ON にする必要はありません。VRChat で一緒に ON/OFF するもの（FX のトグル・エフェクトのフォルダー）は 1 つにまとめて表示します。
+    <span class="ui">名前を変更</span> で表示名を付けられ（空にすると Unity 上の名前に戻ります）、各行の下に Unity 上の場所（パス）が出ます。</p>
   <p class="en">If the avatar has particles (Particle System), a <span class="ui">Particles</span> card appears. Turn each effect on or off with its switch, or use <span class="ui">All on</span> / <span class="ui">All off</span> (saved per avatar).
-    They start as in VRChat's default state (FX toggles), and turning one on also shows its hidden parent objects. Re-export the avatar with the new exporter to use this.</p>
+    They start as in VRChat's default state (FX toggles), and turning one on also shows its hidden parent objects. Re-export the avatar with the new exporter to use this.
+    Particles that are off are exported too, so you don't need to turn everything on before exporting. Particles switched together in VRChat (FX toggles and effect folders) are shown as one entry.
+    Use <span class="ui">Rename</span> to give an entry a name (leave it empty to use the name in Unity); its path in Unity is shown under each entry.</p>
   <p class="ko">아바타에 파티클(Particle System)이 있으면 <span class="ui">파티클</span> 항목이 나옵니다. 이펙트별 스위치나 <span class="ui">모두 켜기</span> / <span class="ui">모두 끄기</span>로 표시를 전환할 수 있습니다 (아바타별로 저장).
-    처음에는 VRChat의 초기 상태(FX 토글) 그대로이며, 켜면 숨겨진 상위 오브젝트도 표시합니다. 새 내보내기 도구로 다시 내보낸 아바타에서 사용할 수 있습니다.</p>
+    처음에는 VRChat의 초기 상태(FX 토글) 그대로이며, 켜면 숨겨진 상위 오브젝트도 표시합니다. 새 내보내기 도구로 다시 내보낸 아바타에서 사용할 수 있습니다.
+    꺼져 있는 파티클도 내보내므로 내보내기 전에 모두 켤 필요가 없습니다. VRChat에서 함께 켜고 끄는 것(FX 토글·이펙트 폴더)은 하나로 묶어 표시합니다.
+    <span class="ui">이름 변경</span>으로 표시 이름을 붙일 수 있고 (비워 두면 Unity의 이름으로 돌아감), 각 행 아래에 Unity의 경로가 나옵니다.</p>
   <p class="zh-hans">虚拟形象带有粒子（Particle System）时，会出现 <span class="ui">粒子</span> 栏。可以用每个特效的开关，或 <span class="ui">全部开启</span> / <span class="ui">全部关闭</span> 切换显示（按虚拟形象分别保存）。
-    初始状态与 VRChat 的初始状态（FX 开关）一致，开启时也会显示被隐藏的父对象。需要用新的导出工具重新导出虚拟形象。</p>
+    初始状态与 VRChat 的初始状态（FX 开关）一致，开启时也会显示被隐藏的父对象。需要用新的导出工具重新导出虚拟形象。
+    导出时关闭的粒子也会被导出，因此导出前无需全部开启。在 VRChat 中一起开关的粒子（FX 开关、特效文件夹）会合并为一项显示。
+    可用 <span class="ui">重命名</span> 设置显示名称（留空则恢复为 Unity 中的名称），每行下方会显示 Unity 中的路径。</p>
   <p class="zh-hant">虛擬形象帶有粒子（Particle System）時，會出現 <span class="ui">粒子</span> 欄。可以用每個特效的開關，或 <span class="ui">全部開啟</span> / <span class="ui">全部關閉</span> 切換顯示（依虛擬形象分別儲存）。
-    初始狀態與 VRChat 的初始狀態（FX 開關）一致，開啟時也會顯示被隱藏的父物件。需要用新的匯出工具重新匯出虛擬形象。</p>
+    初始狀態與 VRChat 的初始狀態（FX 開關）一致，開啟時也會顯示被隱藏的父物件。需要用新的匯出工具重新匯出虛擬形象。
+    匯出時關閉的粒子也會被匯出，因此匯出前無需全部開啟。在 VRChat 中一起開關的粒子（FX 開關、特效資料夾）會合併為一項顯示。
+    可用 <span class="ui">重新命名</span> 設定顯示名稱（留空則恢復為 Unity 中的名稱），每行下方會顯示 Unity 中的路徑。</p>
 </section>
 
 <section id="face">
@@ -646,7 +656,13 @@
         <span class="en">If the avatar's eyes look half-closed while yours are open, raise <span class="ui">Eye open correction</span> (0 by default). Eyes closed up to that amount count as open, and blinks still close fully (also applies to perfect sync and to detecting the "Half-closed eyes" expression; shown only while <span class="ui">Track blinks</span> is on).</span>
         <span class="ko">눈을 뜨고 있는데 아바타가 반쯤 감은 눈이 되면 <span class="ui">눈 뜨기 보정</span>(기본값 0)을 올립니다. 그 값까지 감긴 정도는 뜬 눈으로 취급하고, 깜빡임에서는 완전히 감깁니다 (퍼펙트 싱크와 표정 반영의 실눈 판정에도 적용되며, <span class="ui">눈 깜빡임 트래킹</span>이 켜져 있을 때만 표시됩니다).</span>
         <span class="zh-hans">睁着眼时虚拟形象却半闭眼时，请调高 <span class="ui">睁眼校正</span>（默认 0）。在该值以内的闭眼程度视为睁眼，眨眼时仍会完全闭上（对完美同步和表情反映的眯眼判定也有效；仅在 <span class="ui">追踪眨眼</span> 开启时显示）。</span>
-        <span class="zh-hant">睜著眼時虛擬形象卻半閉眼時，請調高 <span class="ui">睜眼校正</span>（預設 0）。在該值以內的閉眼程度視為睜眼，眨眼時仍會完全閉上（對完美同步和表情反映的瞇眼判定也有效；僅在 <span class="ui">追蹤眨眼</span> 開啟時顯示）。</span></li>    <li><span class="ja">閉じた目・ウインクが頭の傾きや腕と逆側になるときは、<span class="ui">動き</span> 欄の <span class="ui">顔の左右を入れ替える</span>（既定は OFF）を ON にします。顔（まばたき・パーフェクトシンク・視線）だけが入れ替わり、頭の向きと腕は <span class="ui">ミラー</span> の設定のままです。</span>
+        <span class="zh-hant">睜著眼時虛擬形象卻半閉眼時，請調高 <span class="ui">睜眼校正</span>（預設 0）。在該值以內的閉眼程度視為睜眼，眨眼時仍會完全閉上（對完美同步和表情反映的瞇眼判定也有效；僅在 <span class="ui">追蹤眨眼</span> 開啟時顯示）。</span></li>
+    <li><span class="ja">まばたきや横を向いたときに意図せずウインクになる・左右の開きがばらつくときは、<span class="ui">左右の目をそろえる</span>（既定は <span class="ui">なし</span>）を選びます。<span class="ui">常に</span> は左右の開きを常にそろえます（まばたきはできますが、ウインクはできません）。<span class="ui">横を向いたときだけ</span> は顔が横を向いたときだけそろえます（パーフェクトシンクにも効きます）。</span>
+        <span class="en">If you wink by mistake when blinking or turning your head, or your eyes open unevenly, choose <span class="ui">Match both eyes</span> (<span class="ui">Off</span> by default). <span class="ui">Always</span> keeps both eyes equally open (you can still blink, but not wink). <span class="ui">When turned</span> matches them only while your face is turned to the side (also applies to perfect sync).</span>
+        <span class="ko">눈을 깜빡이거나 옆을 볼 때 의도치 않게 윙크가 되거나 양쪽 눈의 뜨인 정도가 달라지면 <span class="ui">양쪽 눈 맞추기</span>(기본은 <span class="ui">끄기</span>)를 선택합니다. <span class="ui">항상</span>은 양쪽 눈을 항상 맞춥니다 (깜빡임은 되지만 윙크는 할 수 없습니다). <span class="ui">옆을 볼 때만</span>은 얼굴이 옆을 향할 때만 맞춥니다 (퍼펙트 싱크에도 적용).</span>
+        <span class="zh-hans">眨眼或转头时意外变成眨单眼、或双眼睁开程度不一致时，请选择 <span class="ui">双眼同步</span>（默认 <span class="ui">关闭</span>）。<span class="ui">始终</span> 会让双眼睁开程度始终一致（仍可眨眼，但无法眨单眼）。<span class="ui">仅侧脸时</span> 只在脸朝向侧面时同步（对完美同步也有效）。</span>
+        <span class="zh-hant">眨眼或轉頭時意外變成眨單眼、或雙眼睜開程度不一致時，請選擇 <span class="ui">雙眼同步</span>（預設 <span class="ui">關閉</span>）。<span class="ui">始終</span> 會讓雙眼睜開程度始終一致（仍可眨眼，但無法眨單眼）。<span class="ui">僅側臉時</span> 只在臉朝向側面時同步（對完美同步也有效）。</span></li>
+    <li><span class="ja">閉じた目・ウインクが頭の傾きや腕と逆側になるときは、<span class="ui">動き</span> 欄の <span class="ui">顔の左右を入れ替える</span>（既定は OFF）を ON にします。顔（まばたき・パーフェクトシンク・視線）だけが入れ替わり、頭の向きと腕は <span class="ui">ミラー</span> の設定のままです。</span>
         <span class="en">If the closed eye or wink appears on the wrong side compared with your head tilt and arms, turn on <span class="ui">Swap face left / right</span> under <span class="ui">Motion</span> (off by default). Only the face (blink, perfect sync, gaze) is swapped; head and arms keep following <span class="ui">Mirror</span>.</span>
         <span class="ko">감은 눈·윙크가 머리 기울기나 팔과 반대쪽이 될 때는 <span class="ui">움직임</span> 항목의 <span class="ui">얼굴 좌우 바꾸기</span>(기본은 꺼짐)를 켭니다. 얼굴 (눈 깜빡임·퍼펙트 싱크·시선)만 바뀌고, 머리 방향과 팔은 <span class="ui">미러</span> 설정 그대로입니다.</span>
         <span class="zh-hans">如果闭上的眼睛或单眼眨眼与头部倾斜、手臂方向相反，请开启 <span class="ui">动作</span> 栏中的 <span class="ui">交换面部左右</span>（默认关闭）。只交换面部（眨眼、完美同步、视线），头部朝向和手臂仍按 <span class="ui">镜像</span> 设置。</span>
