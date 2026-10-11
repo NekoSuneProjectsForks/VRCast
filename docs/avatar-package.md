@@ -28,7 +28,7 @@ MyAvatar.vrcaster
 ```
 
 上記以外のエントリ（サブディレクトリ、`.json` 以外の metadata（`perfect_sync_shapes.bin` を除く）、`..` / `\` / `:` を含む名前）を含むパッケージは拒否される。
-そのため `perfect_sync_shapes.bin` を含むパーフェクトシンク版は、この形式に対応する前の Runtime（2.2.0 より前）では開けない。
+そのため `perfect_sync_shapes.bin` を含むパーフェクトシンク版は、この形式に対応する前の Runtime（2.0.0 より前）では開けない。
 
 ## manifest.json
 
