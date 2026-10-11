@@ -140,7 +140,7 @@ namespace VRCast.UI
         private const int ThumbSize = 16;
 
         // スクロールバーの幅
-        private const int ScrollbarWidth = 12;
+        private const int ScrollbarWidth = 10;
 
         // 生成したテクスチャ（破棄用）
         private readonly List<Texture2D> _textures = new List<Texture2D>();
@@ -431,18 +431,19 @@ namespace VRCast.UI
 
         private void BuildScrollbar()
         {
-            // 縦スクロールバー（上下ボタンなし）。溝はスライダーの溝の色、つまみは地と見分けやすい薄い文字色、
+            // 縦スクロールバー（上下ボタンなし）。溝は一段濃い地の色、つまみは溝と薄い文字色の中間（目立ちすぎず溝と見分けられる）、
             // 触れている間はアクセント色にする
             int radius = ScrollbarWidth / 2 - 1;
+            Color thumb = Color.Lerp(TrackColor, TextDim, 0.35f);
             Skin.verticalScrollbar = new GUIStyle
             {
                 fixedWidth = ScrollbarWidth,
                 border = Offset(ScrollbarWidth / 2),
                 margin = new RectOffset(4, 0, 2, 2),
             };
-            Skin.verticalScrollbar.normal.background = Rounded(TrackColor, radius);
+            Skin.verticalScrollbar.normal.background = Rounded(Surface, radius);
             Skin.verticalScrollbarThumb = new GUIStyle { fixedWidth = ScrollbarWidth, border = Offset(ScrollbarWidth / 2) };
-            SetStates(Skin.verticalScrollbarThumb, Rounded(TextDim, radius),
+            SetStates(Skin.verticalScrollbarThumb, Rounded(thumb, radius),
                 Rounded(AccentHover, radius), Rounded(Accent, radius), TextColor);
             Skin.verticalScrollbarUpButton = new GUIStyle();
             Skin.verticalScrollbarDownButton = new GUIStyle();
