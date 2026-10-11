@@ -13,9 +13,8 @@ namespace VRCast.UI
     /// </summary>
     public class ObjectSection
     {
-        // 1 段の字下げと、開閉ボタンの幅
-        private const float IndentWidth = 14f;
-        private const float FoldButtonWidth = 24f;
+        // 1 段の字下げ
+        private const float IndentWidth = 18f;
 
         // 1 回に描く行の上限（多すぎると操作が重くなるため、超えた分は検索で絞り込んでもらう）
         private const int MaxRows = 400;
@@ -259,14 +258,15 @@ namespace VRCast.UI
         {
             GUILayout.BeginHorizontal();
 
-            // 木の表示では深さで字下げし、見える子があれば開閉ボタン、無ければ同じ幅を空ける
+            // 木の表示では深さで字下げし、見える子があれば開閉ボタン（▶ 閉 / ▼ 開）、無ければ同じ大きさの透明な枠で位置をそろえる
             if (tree)
             {
+                UiTheme theme = UiTheme.Current;
                 GUILayout.Space(node.Depth * IndentWidth);
                 if (HasShownChild(node))
                 {
                     bool expanded = _expanded.Contains(node.Index);
-                    if (GUILayout.Button(expanded ? "-" : "+", GUILayout.Width(FoldButtonWidth)))
+                    if (GUILayout.Button(expanded ? "▼" : "▶", theme != null ? theme.FoldButton : GUI.skin.button))
                     {
                         int index = node.Index;
                         _deferred.Add(() => SetExpanded(index, !expanded));
@@ -274,7 +274,7 @@ namespace VRCast.UI
                 }
                 else
                 {
-                    GUILayout.Space(FoldButtonWidth + GUI.skin.button.margin.horizontal);
+                    GUILayout.Label(GUIContent.none, theme != null ? theme.FoldSpacer : GUI.skin.label);
                 }
             }
 
