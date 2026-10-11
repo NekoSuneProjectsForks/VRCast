@@ -89,6 +89,43 @@ namespace VRCast.Converter.Editor
         }
 
         /// <summary>
+        /// FX のいずれかのクリップで表示 ON/OFF（m_IsActive）を動かしているオブジェクトを集める（ステートは問わない）。
+        /// movedObjects は Bake と同じく、付け替え前のパスで書かれたカーブの読み替えに使う。
+        /// </summary>
+        public static HashSet<Transform> CollectToggledObjects(
+            GameObject root,
+            AnimatorController controller,
+            IReadOnlyDictionary<string, Transform> movedObjects = null)
+        {
+            var toggled = new HashSet<Transform>();
+            foreach (AnimationClip clip in controller.animationClips)
+            {
+                // 同じクリップが複数のステートで使われることがあるため、null だけ除く
+                if (clip == null)
+                {
+                    continue;
+                }
+
+                foreach (EditorCurveBinding binding in AnimationUtility.GetCurveBindings(clip))
+                {
+                    // GameObject 自体の有効状態のカーブだけを対象にする
+                    if (binding.type != typeof(GameObject) || binding.propertyName != ActivePropertyName)
+                    {
+                        continue;
+                    }
+
+                    // 解決できたオブジェクトを登録（消えた・見つからないものは無視）
+                    if (ResolveAnimatedObject(root, binding, movedObjects) is GameObject go)
+                    {
+                        toggled.Add(go.transform);
+                    }
+                }
+            }
+
+            return toggled;
+        }
+
+        /// <summary>
         /// 1 レイヤー分のクリップの 0 秒時点の値を重みで混ぜ、見た目の ON/OFF に関わるものだけを適用する。
         /// SampleAnimation は Humanoid のマッスルを既定ポーズへ戻し、Constraint 前提の Transform 値も
         /// 書き込んでしまうため使わない。Transform・マッスル・マテリアルプロパティは対象外。

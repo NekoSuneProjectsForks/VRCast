@@ -250,8 +250,9 @@ namespace VRCast.UI
             var position = new Vector2(mouse.x / scale, (Screen.height - mouse.y) / scale);
             _orbit.InputBlocked = _visible && _windowRect.Contains(position);
 
-            // カメラの固定を反映（設定のリセットにも追従するよう毎フレーム）
+            // カメラの固定・体に入り込まない設定を反映（設定のリセットにも追従するよう毎フレーム）
             _orbit.Locked = _settings.cameraLocked;
+            _orbit.ZoomInsteadOfEntering = _settings.cameraZoomInsteadOfEntering;
         }
 
         private void SetVisible(bool visible)

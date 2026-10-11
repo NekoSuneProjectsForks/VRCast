@@ -455,12 +455,10 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 本人の左右の目の開きを閉じ具合へ（目の開きの補正分は開いているとみなす）
-            float offset = _settings.trackingEyeOpenOffset;
-            float personLeft = TrackingMath.OpenEyes(
-                1f - Mathf.InverseLerp(EyeClosedValue, EyeOpenedValue, _lastFrame.EyeOpenLeft), offset);
-            float personRight = TrackingMath.OpenEyes(
-                1f - Mathf.InverseLerp(EyeClosedValue, EyeOpenedValue, _lastFrame.EyeOpenRight), offset);
+            // 本人の左右の目の開きを閉じ具合へし、目の開きの補正・左右をそろえる補正をかける
+            float personLeft = 1f - Mathf.InverseLerp(EyeClosedValue, EyeOpenedValue, _lastFrame.EyeOpenLeft);
+            float personRight = 1f - Mathf.InverseLerp(EyeClosedValue, EyeOpenedValue, _lastFrame.EyeOpenRight);
+            CurrentEyeAdjustment().Apply(ref personLeft, ref personRight);
             _eyesClosed = (personLeft + personRight) * 0.5f;
 
             // 差が小さければ平均（ウインクは差が大きいときだけ）
@@ -491,6 +489,19 @@ namespace VRCast.Tracking
             SetMouth(IsPerfectSyncActive && _perfectSync.DrivesJaw ? 0f : _lastFrame.MouthOpen);
         }
 
+        private EyeAdjustment CurrentEyeAdjustment()
+        {
+            // 横を向いている度合いは、平滑化済みの正面からの頭の向き（前フレームの値）の左右の角度から求める
+            Vector3 forward = _current * Vector3.forward;
+            float yaw = Mathf.Atan2(forward.x, forward.z) * Mathf.Rad2Deg;
+            return new EyeAdjustment
+            {
+                OpenOffset = _settings.trackingEyeOpenOffset,
+                Sync = _settings.trackingBlinkSync,
+                Turned = EyeAdjustment.TurnedFromYaw(yaw),
+            };
+        }
+
         private void ApplyPerfectSync()
         {
             // 未初期化なら何もしない
@@ -503,7 +514,7 @@ namespace VRCast.Tracking
             if (IsPerfectSyncActive)
             {
                 _perfectSync.Apply(_lastFrame.BlendShapes, _lastFrame.BlendShapeRange, _settings.FaceMirror,
-                    Time.deltaTime, _settings.trackingBlink, _settings.trackingEyeOpenOffset);
+                    Time.deltaTime, _settings.trackingBlink, CurrentEyeAdjustment());
             }
             else
             {

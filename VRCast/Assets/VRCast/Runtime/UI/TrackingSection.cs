@@ -512,6 +512,23 @@ namespace VRCast.UI
                 "눈을 뜨고 있는데 아바타가 반쯤 감은 눈이 될 때 올립니다. 깜빡임에서는 완전히 감깁니다. 실눈 판정에도 적용됩니다.",
                 "睁着眼时虚拟形象却半闭眼时调高。眨眼时仍会完全闭上。也会用于眯眼的判定。",
                 "睜著眼時虛擬形象卻半閉眼時調高。眨眼時仍會完全閉上。也會用於瞇眼的判定。"));
+
+            // まばたきの左右をそろえる（検出のぶれ・横を向いたときに片目だけ閉じるのを防ぐ）
+            string[] syncLabels =
+            {
+                Loc.T("Off", "なし", "끄기", "关闭", "關閉"),
+                Loc.T("Always", "常に", "항상", "始终", "始終"),
+                Loc.T("When turned", "横を向いたときだけ", "옆을 볼 때만", "仅侧脸时", "僅側臉時"),
+            };
+            _settings.trackingBlinkSync = (BlinkSyncMode)GuiControls.EnumSelector(
+                Loc.T("Match both eyes", "左右の目をそろえる", "양쪽 눈 맞추기", "双眼同步", "雙眼同步"),
+                syncLabels, (int)_settings.trackingBlinkSync);
+            GuiControls.Hint(Loc.T(
+                "Keeps both eyes equally open so they don't wink by mistake. You can still blink, but not wink.",
+                "左右の目の開き具合をそろえ、誤ってウインクにならないようにします。まばたきはできますが、ウインクはできなくなります。",
+                "양쪽 눈이 뜨인 정도를 맞춰 실수로 윙크가 되지 않게 합니다. 눈 깜빡임은 되지만 윙크는 할 수 없습니다.",
+                "使双眼的睁开程度一致，避免误判为眨单眼。仍可眨眼，但无法眨单眼。",
+                "使雙眼的睜開程度一致，避免誤判為眨單眼。仍可眨眼，但無法眨單眼。"));
         }
 
         private void DrawPerfectSync()

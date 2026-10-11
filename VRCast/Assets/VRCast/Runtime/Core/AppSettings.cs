@@ -141,6 +141,9 @@ namespace VRCast.Core
         // カメラの固定（マウスの回転・移動・ズームを無視する。画角スライダーとリセットは使える）
         public bool cameraLocked;
 
+        // カメラを近づけてもアバターの体に入り込まない（手前で止め、それ以上は画角を狭めて拡大する）
+        public bool cameraZoomInsteadOfEntering = true;
+
         // 仮想カメラ（VRCast Camera）への出力と、Windows 11 の方式（Media Foundation。カメラ名は VRCast Camera (MF)）で出すか
         public bool virtualCameraEnabled;
         public bool virtualCameraMediaFoundation;
@@ -224,6 +227,9 @@ namespace VRCast.Core
 
         // 目の開きの補正（この閉じ具合までは開いた目とみなす。トラッキングで目が半開きになる人向け、0 = 補正なし）
         public float trackingEyeOpenOffset;
+
+        // まばたきの左右をそろえる（ウインクにしない。横を向いたときだけも選べる）
+        public BlinkSyncMode trackingBlinkSync = BlinkSyncMode.None;
 
         // 腕・手（指）のトラッキング（MediaPipe のみ）
         public bool trackingHands = true;
@@ -842,6 +848,12 @@ namespace VRCast.Core
             trackingGaze = Mathf.Clamp(trackingGaze, 0f, MaxTrackingGaze);
             // 目の開きの補正も同様
             trackingEyeOpenOffset = Mathf.Clamp(trackingEyeOpenOffset, 0f, MaxTrackingEyeOpenOffset);
+            // 未知のまばたきのそろえ方はそろえない扱いへ
+            if (!Enum.IsDefined(typeof(BlinkSyncMode), trackingBlinkSync))
+            {
+                trackingBlinkSync = BlinkSyncMode.None;
+            }
+
             // 表情のしきい値は範囲内に制限
             trackingExpressionThreshold = Mathf.Clamp(
                 trackingExpressionThreshold, MinExpressionThreshold, MaxExpressionThreshold);

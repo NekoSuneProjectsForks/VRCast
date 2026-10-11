@@ -81,6 +81,9 @@ namespace VRCast.App
 
             // 背景・解像度・ライト（Bootstrap 未実行時は既定値で動かす）
             _settings = AppBootstrap.Settings ?? new AppSettings();
+
+            // 最初のアバターの視点（画角による拡大を含む）を戻す前に、体に入り込まない設定を反映する
+            _orbit.ZoomInsteadOfEntering = _settings.cameraZoomInsteadOfEntering;
             _rendering = gameObject.AddComponent<RenderingController>();
             _rendering.Initialize(mainCamera, _settings);
 
@@ -226,7 +229,8 @@ namespace VRCast.App
             avatar.Instance.AddComponent<PhysBoneSimulator>().Initialize(avatar.Animator, avatar.PhysBones, _settings);
 
             // パーティクルの ON/OFF（このアバターで前回切り替えたもの）
-            avatar.Instance.AddComponent<AvatarParticles>().Initialize(root, _settings.GetParticleToggles(avatar.SourcePath));
+            avatar.Instance.AddComponent<AvatarParticles>().Initialize(
+                root, avatar.ParticleGroups.paths, _settings.GetParticleToggles(avatar.SourcePath));
 
             // 確認用の表示はアバターの腰の位置・向き・大きさに合わせて描く（非 Humanoid は足元基準・実寸）
             _skeleton.SetAnchor(root, avatar.Animator);

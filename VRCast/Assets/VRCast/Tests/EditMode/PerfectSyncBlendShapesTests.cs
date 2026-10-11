@@ -1,6 +1,7 @@
 using System;
 using NUnit.Framework;
 using UnityEngine;
+using VRCast.Core;
 using VRCast.Tracking;
 
 namespace VRCast.Tests
@@ -84,12 +85,19 @@ namespace VRCast.Tests
                 Assert.That(Weight(renderer, "eyeBlinkRight"), Is.EqualTo(100f).Within(0.01f));
 
                 // 目の開きの補正: 閉じ切ったまばたきは閉じたまま、補正分までの半目は開いた目になること
-                sync.Apply(scores, ArKitRange.MediaPipe, false, 10f, true, 0.5f);
+                var open = new EyeAdjustment { OpenOffset = 0.5f };
+                sync.Apply(scores, ArKitRange.MediaPipe, false, 10f, true, open);
                 Assert.That(Weight(renderer, "eyeBlinkRight"), Is.EqualTo(100f).Within(0.01f));
                 scores[Array.IndexOf(names, "eyeBlinkLeft")] = 0.35f;
-                sync.Apply(scores, ArKitRange.MediaPipe, false, 10f, true, 0.5f);
+                sync.Apply(scores, ArKitRange.MediaPipe, false, 10f, true, open);
                 Assert.That(Weight(renderer, "eyeBlinkRight"), Is.EqualTo(0f).Within(0.01f));
                 scores[Array.IndexOf(names, "eyeBlinkLeft")] = 1f;
+
+                // 左右をそろえる補正: 片目だけ閉じても両目が同じ閉じ具合（正面では平均）になること
+                sync.Apply(scores, ArKitRange.MediaPipe, false, 10f, true,
+                    new EyeAdjustment { Sync = BlinkSyncMode.Always });
+                Assert.That(Weight(renderer, "eyeBlinkRight"), Is.EqualTo(50f).Within(0.01f));
+                Assert.That(Weight(renderer, "eyeBlinkLeft"), Is.EqualTo(50f).Within(0.01f));
 
                 // まばたきを動かさない設定では、まばたきだけ元の値（0）へ戻り、ほかは書き続けること
                 sync.Apply(scores, ArKitRange.MediaPipe, false, 10f, false);

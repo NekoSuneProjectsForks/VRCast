@@ -147,10 +147,10 @@ namespace VRCast.Tracking
         /// <summary>
         /// 受信値を書き込む（毎フレーム呼ぶ）。range は入力元のまばたきの値の範囲。
         /// drivesBlink が false なら eyeBlinkLeft / Right は元の値へ戻して書かない（自動まばたきに任せる）。
-        /// eyeOpenOffset は開いているとみなす目の閉じ具合（0 = 補正なし）。
+        /// eyes はまばたきの補正（目の開きの補正・左右をそろえる補正。既定値なら補正なし）。
         /// </summary>
         public void Apply(
-            float[] scores, ArKitRange range, bool mirror, float deltaTime, bool drivesBlink, float eyeOpenOffset = 0f)
+            float[] scores, ArKitRange range, bool mirror, float deltaTime, bool drivesBlink, EyeAdjustment eyes = default)
         {
             // 要素数が合わない値は使わない
             if (scores == null || scores.Length != _targets.Length)
@@ -160,6 +160,11 @@ namespace VRCast.Tracking
 
             _active = true;
             float blend = 1f - Mathf.Exp(-Smoothing * deltaTime);
+
+            // まばたきは閉じ切るよう範囲を広げた閉じ具合にしてから、左右を一緒に補正する
+            float blinkLeft = range.BlinkToClosed(Mathf.Clamp01(scores[SourceIndex(EyeBlinkLeft, mirror)]));
+            float blinkRight = range.BlinkToClosed(Mathf.Clamp01(scores[SourceIndex(EyeBlinkRight, mirror)]));
+            eyes.Apply(ref blinkLeft, ref blinkRight);
             for (int i = 0; i < _targets.Length; i++)
             {
                 // アバターに無い名前は計算しない
@@ -181,12 +186,10 @@ namespace VRCast.Tracking
                     continue;
                 }
 
-                // 左右を合わせた値（まばたきは閉じ切るよう範囲を広げ、補正分は開いているとみなす）を平滑化して 0〜100 で書く
-                float target = Mathf.Clamp01(scores[SourceIndex(i, mirror)]);
-                if (blinkShape)
-                {
-                    target = TrackingMath.OpenEyes(range.BlinkToClosed(target), eyeOpenOffset);
-                }
+                // 左右を合わせた値（まばたきは補正済みの閉じ具合）を平滑化して 0〜100 で書く
+                float target = i == EyeBlinkLeft ? blinkLeft
+                    : i == EyeBlinkRight ? blinkRight
+                    : Mathf.Clamp01(scores[SourceIndex(i, mirror)]);
 
                 _current[i] = Mathf.Lerp(_current[i], target, blend);
                 Write(i, _current[i] * 100f);

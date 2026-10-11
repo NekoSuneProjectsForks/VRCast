@@ -6,22 +6,40 @@ namespace VRCast.Avatars
 {
     /// <summary>
     /// アバターに含まれるパーティクル（ParticleSystem）を見つけ、まとまりごとに表示を ON/OFF する。
-    /// まとまりは親にパーティクルを持たない ParticleSystem と、その子孫のパーティクル（子のエフェクト・サブエミッター）。
+    /// まとまりは、VRChat の FX で表示を ON/OFF しているオブジェクトのうちパーティクルに最も近いもの。
+    /// FX で切り替えないパーティクルは、ボーンを含まずパーティクルだけを描く親（エフェクトのフォルダー）までをまとめる。
     /// OFF は放出を止めて消し、描画もやめる（同じオブジェクトのメッシュ等は隠さない）。
     /// ON は FX の初期状態などで非表示のオブジェクトも表示してから再生する。
     /// </summary>
     public class AvatarParticles : MonoBehaviour
     {
+        // 利用者が付ける名前の長さの上限
+        public const int MaxNameLength = 64;
+
         /// <summary>
         /// ON/OFF の単位になるパーティクルのまとまり。
         /// </summary>
         public sealed class Group
         {
+            // アバターのルートからの相対パスと、Unity 上のオブジェクト名
             public string Path;
-            public string Label;
+            public string NodeName;
+
+            // 利用者が付けた名前（空なら Unity 上の名前を表示する）
+            public string CustomName = string.Empty;
             public bool Enabled;
-            internal ParticleSystem Root;
-            internal ParticleSystemRenderer[] Renderers;
+            internal readonly List<ParticleSystem> Systems = new List<ParticleSystem>();
+            internal readonly List<ParticleSystemRenderer> Renderers = new List<ParticleSystemRenderer>();
+
+            /// <summary>
+            /// 画面に出す名前（付けた名前があればそれ、無ければ Unity 上の名前）。
+            /// </summary>
+            public string Label => string.IsNullOrEmpty(CustomName) ? NodeName : CustomName;
+
+            /// <summary>
+            /// まとめたパーティクルの数。
+            /// </summary>
+            public int SystemCount => Systems.Count;
         }
 
         private readonly List<Group> _groups = new List<Group>();
@@ -51,37 +69,49 @@ namespace VRCast.Avatars
         }
 
         /// <summary>
-        /// アバター内のパーティクルを列挙し、記録済みの ON/OFF を当てる（記録の無いものは読込時の表示状態のまま）。
+        /// アバター内のパーティクルをまとまりに分け、記録済みの ON/OFF と名前を当てる（記録の無いものは読込時の表示状態のまま）。
+        /// fxGroupPaths は FX で表示を ON/OFF しているオブジェクトのパス（.vrcaster の metadata。無ければ空）。
         /// </summary>
-        public void Initialize(Transform root, List<ParticleToggle> toggles)
+        public void Initialize(Transform root, IReadOnlyCollection<string> fxGroupPaths, List<ParticleToggle> toggles)
         {
             _root = root;
+            HashSet<Transform> fxNodes = ResolveNodes(root, fxGroupPaths);
+            HashSet<Transform> bones = CollectBones(root);
+
+            // まとまりの単位のオブジェクトごとにパーティクルを集める（同じ単位のものは 1 つにまとめる）
+            var byNode = new Dictionary<Transform, Group>();
+            var folderCache = new Dictionary<Transform, bool>();
             foreach (ParticleSystem system in root.GetComponentsInChildren<ParticleSystem>(true))
             {
-                // 親側にパーティクルがあるものは、そのまとまりの一部として一緒に切り替える
-                if (HasParticleAncestor(system.transform))
+                Transform node = FindGroupNode(system.transform, fxNodes, bones, folderCache);
+                if (!byNode.TryGetValue(node, out Group group))
                 {
-                    continue;
+                    group = new Group { Path = TransformPath.Of(node, root), NodeName = node.name };
+                    byNode.Add(node, group);
+                    _groups.Add(group);
                 }
 
-                // 読込時に表示されていて描画も有効なものを ON とする
-                var renderers = system.GetComponentsInChildren<ParticleSystemRenderer>(true);
-                _groups.Add(new Group
+                group.Systems.Add(system);
+                ParticleSystemRenderer renderer = system.GetComponent<ParticleSystemRenderer>();
+                if (renderer != null)
                 {
-                    Path = TransformPath.Of(system.transform, root),
-                    Label = system.name,
-                    Enabled = system.gameObject.activeInHierarchy && AnyEnabled(renderers),
-                    Root = system,
-                    Renderers = renderers,
-                });
+                    group.Renderers.Add(renderer);
+                }
             }
 
-            // 記録済みの ON/OFF を当てる（見つからないパーティクルは無視）
+            // 読込時に表示されていて描画も有効なものが 1 つでもあれば ON とする
+            foreach (Group group in _groups)
+            {
+                group.Enabled = IsShowing(group);
+            }
+
+            // 記録済みの ON/OFF と名前を当てる（見つからないまとまりは無視）
             foreach (ParticleToggle toggle in toggles)
             {
                 Group group = _groups.Find(g => g.Path == toggle.path);
                 if (group != null)
                 {
+                    SetName(group, toggle.name);
                     SetEnabled(group, toggle.enabled, true);
                 }
             }
@@ -107,34 +137,64 @@ namespace VRCast.Avatars
         }
 
         /// <summary>
-        /// 保存用に、全てのまとまりの ON/OFF を書き出す。
+        /// まとまりに名前を付ける（前後の空白を除き、長すぎる分は切る。空なら Unity 上の名前に戻す）。
+        /// </summary>
+        public static void SetName(Group group, string name)
+        {
+            string trimmed = (name ?? string.Empty).Trim();
+            group.CustomName = trimmed.Length > MaxNameLength ? trimmed.Substring(0, MaxNameLength) : trimmed;
+        }
+
+        /// <summary>
+        /// 保存用に、全てのまとまりの ON/OFF と名前を書き出す。
         /// </summary>
         public List<ParticleToggle> Export()
         {
-            return _groups.ConvertAll(group => new ParticleToggle { path = group.Path, enabled = group.Enabled });
+            return _groups.ConvertAll(group => new ParticleToggle
+            {
+                path = group.Path,
+                enabled = group.Enabled,
+                name = group.CustomName,
+            });
         }
 
         private void SetEnabled(Group group, bool enabled, bool force)
         {
-            // 変わらないとき・破棄済みのときは何もしない（読込時の記録は状態をそろえるため必ず当てる）
-            if ((!force && group.Enabled == enabled) || group.Root == null)
+            // 変わらないときは何もしない（読込時の記録は状態をそろえるため必ず当てる）
+            if (!force && group.Enabled == enabled)
             {
                 return;
             }
 
             group.Enabled = enabled;
-            if (enabled)
+            foreach (ParticleSystem system in group.Systems)
             {
-                // 非表示のオブジェクト（自身と親）を表示し、描画を戻して最初から再生する
-                Activate(group.Root.transform);
-                SetRenderers(group, true);
-                group.Root.Play(true);
+                // 破棄済みのものは飛ばす
+                if (system == null)
+                {
+                    continue;
+                }
+
+                if (enabled)
+                {
+                    // 非表示のオブジェクト（自身と親）を表示し、最初から再生する（子は各自で再生する）
+                    Activate(system.transform);
+                    system.Play(false);
+                }
+                else
+                {
+                    // 放出を止めて出ている粒も消す（オブジェクトは隠さない）
+                    system.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
+                }
             }
-            else
+
+            // 描画をそろえる
+            foreach (ParticleSystemRenderer renderer in group.Renderers)
             {
-                // 放出を止めて出ている粒も消し、描画もやめる（オブジェクトは隠さない）
-                group.Root.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-                SetRenderers(group, false);
+                if (renderer != null)
+                {
+                    renderer.enabled = enabled;
+                }
             }
         }
 
@@ -150,43 +210,124 @@ namespace VRCast.Avatars
             }
         }
 
-        private static void SetRenderers(Group group, bool enabled)
+        private Transform FindGroupNode(
+            Transform particle, HashSet<Transform> fxNodes, HashSet<Transform> bones, Dictionary<Transform, bool> folderCache)
         {
-            // 破棄済みの描画は飛ばす
-            foreach (ParticleSystemRenderer renderer in group.Renderers)
+            // FX で切り替えるオブジェクトの中なら、パーティクルに最も近いものを単位にする
+            for (Transform node = particle; node != null && node != _root; node = node.parent)
             {
-                if (renderer != null)
+                if (fxNodes.Contains(node))
                 {
-                    renderer.enabled = enabled;
-                }
-            }
-        }
-
-        private bool HasParticleAncestor(Transform target)
-        {
-            // アバタールートより下の親だけを見る
-            for (Transform node = target.parent; node != null && node != _root; node = node.parent)
-            {
-                if (node.GetComponent<ParticleSystem>() != null)
-                {
-                    return true;
+                    return node;
                 }
             }
 
-            return false;
-        }
-
-        private static bool AnyEnabled(ParticleSystemRenderer[] renderers)
-        {
-            // 描画が 1 つでも有効なら表示中（描画の無いパーティクルは表示中扱い）
-            if (renderers.Length == 0)
+            // それ以外は、ボーンでもルートでもないエフェクトのフォルダーまで親をたどる
+            Transform current = particle;
+            while (current.parent != null && current.parent != _root && !bones.Contains(current.parent)
+                && IsEffectFolder(current.parent, fxNodes, bones, folderCache))
             {
-                return true;
+                current = current.parent;
             }
 
-            foreach (ParticleSystemRenderer renderer in renderers)
+            return current;
+        }
+
+        private static bool IsEffectFolder(
+            Transform node, HashSet<Transform> fxNodes, HashSet<Transform> bones, Dictionary<Transform, bool> folderCache)
+        {
+            // 同じ親を何度も調べないよう結果を覚える
+            if (folderCache.TryGetValue(node, out bool cached))
             {
-                if (renderer.enabled)
+                return cached;
+            }
+
+            // ボーン・FX の切り替え単位・パーティクル以外の描画を含まないものだけをエフェクトのフォルダーとみなす
+            bool result = true;
+            foreach (Transform child in node.GetComponentsInChildren<Transform>(true))
+            {
+                Renderer renderer = child.GetComponent<Renderer>();
+                if (bones.Contains(child) || fxNodes.Contains(child)
+                    || (renderer != null && !(renderer is ParticleSystemRenderer)))
+                {
+                    result = false;
+                    break;
+                }
+            }
+
+            folderCache.Add(node, result);
+            return result;
+        }
+
+        private static HashSet<Transform> ResolveNodes(Transform root, IReadOnlyCollection<string> paths)
+        {
+            // パスからオブジェクトを探す（ルート自身・見つからないものは除く）
+            var nodes = new HashSet<Transform>();
+            if (paths == null)
+            {
+                return nodes;
+            }
+
+            foreach (string path in paths)
+            {
+                Transform node = string.IsNullOrEmpty(path) ? null : root.Find(path);
+                if (node != null)
+                {
+                    nodes.Add(node);
+                }
+            }
+
+            return nodes;
+        }
+
+        private static HashSet<Transform> CollectBones(Transform root)
+        {
+            // メッシュが使うボーンと Humanoid のボーンを集める（エフェクトのフォルダーをたどる上限にする）
+            var bones = new HashSet<Transform>();
+            foreach (SkinnedMeshRenderer skinned in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                foreach (Transform bone in skinned.bones)
+                {
+                    if (bone != null)
+                    {
+                        bones.Add(bone);
+                    }
+                }
+
+                if (skinned.rootBone != null)
+                {
+                    bones.Add(skinned.rootBone);
+                }
+            }
+
+            Animator animator = root.GetComponent<Animator>();
+            if (animator != null && animator.isHuman)
+            {
+                for (HumanBodyBones bone = 0; bone < HumanBodyBones.LastBone; bone++)
+                {
+                    Transform boneTransform = animator.GetBoneTransform(bone);
+                    if (boneTransform != null)
+                    {
+                        bones.Add(boneTransform);
+                    }
+                }
+            }
+
+            return bones;
+        }
+
+        private static bool IsShowing(Group group)
+        {
+            // 表示中で描画も有効な（描画の無いものは表示中扱い）パーティクルが 1 つでもあれば表示中
+            foreach (ParticleSystem system in group.Systems)
+            {
+                if (system == null || !system.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                ParticleSystemRenderer renderer = system.GetComponent<ParticleSystemRenderer>();
+                if (renderer == null || renderer.enabled)
                 {
                     return true;
                 }

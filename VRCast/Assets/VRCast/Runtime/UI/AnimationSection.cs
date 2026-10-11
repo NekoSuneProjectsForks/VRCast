@@ -33,6 +33,10 @@ namespace VRCast.UI
         private IdleMotionController _idleMotion;
         private AvatarParticles _particles;
 
+        // 名前を変更中のパーティクルのまとまり（null = 変更していない）と、入力中の名前
+        private AvatarParticles.Group _renamingParticle;
+        private string _particleNameInput;
+
         // 表情のショートカットキーの割り当て（対象 = プリセット、-1 = ニュートラル）
         private readonly KeyCaptureSession _capture = new KeyCaptureSession();
 
@@ -71,11 +75,11 @@ namespace VRCast.UI
 
             GuiControls.BeginCard(Loc.T("Particles", "パーティクル", "파티클", "粒子", "粒子"));
             GuiControls.Hint(Loc.T(
-                $"{_particles.Groups.Count} found ({_particles.EnabledCount} on). Turning one on also shows its hidden parent objects. Saved per avatar.",
-                $"{_particles.Groups.Count} 個見つかりました（{_particles.EnabledCount} 個 ON）。ON にすると、非表示の親のオブジェクトも表示します。アバターごとに保存されます。",
-                $"{_particles.Groups.Count}개 발견 ({_particles.EnabledCount}개 켜짐). 켜면 숨겨진 상위 오브젝트도 표시합니다. 아바타별로 저장됩니다.",
-                $"找到 {_particles.Groups.Count} 个（{_particles.EnabledCount} 个开启）。开启后也会显示被隐藏的父对象。按虚拟形象分别保存。",
-                $"找到 {_particles.Groups.Count} 個（{_particles.EnabledCount} 個開啟）。開啟後也會顯示被隱藏的父物件。依虛擬形象分別儲存。"));
+                $"{_particles.Groups.Count} found ({_particles.EnabledCount} on). Particles switched together in VRChat are grouped. Turning one on also shows its hidden parent objects. Saved per avatar.",
+                $"{_particles.Groups.Count} 個見つかりました（{_particles.EnabledCount} 個 ON）。VRChat で一緒に ON/OFF するものは 1 つにまとめています。ON にすると、非表示の親のオブジェクトも表示します。アバターごとに保存されます。",
+                $"{_particles.Groups.Count}개 발견 ({_particles.EnabledCount}개 켜짐). VRChat에서 함께 켜고 끄는 것은 하나로 묶었습니다. 켜면 숨겨진 상위 오브젝트도 표시합니다. 아바타별로 저장됩니다.",
+                $"找到 {_particles.Groups.Count} 个（{_particles.EnabledCount} 个开启）。在 VRChat 中一起开关的粒子会合并为一项。开启后也会显示被隐藏的父对象。按虚拟形象分别保存。",
+                $"找到 {_particles.Groups.Count} 個（{_particles.EnabledCount} 個開啟）。在 VRChat 中一起開關的粒子會合併為一項。開啟後也會顯示被隱藏的父物件。依虛擬形象分別儲存。"));
 
             // まとめて ON / OFF
             bool changed = false;
@@ -94,15 +98,10 @@ namespace VRCast.UI
 
             GUILayout.EndHorizontal();
 
-            // まとまりごとの ON/OFF
+            // まとまりごとの ON/OFF・名前の変更と、Unity 上の場所
             foreach (AvatarParticles.Group group in _particles.Groups)
             {
-                bool enabled = GUILayout.Toggle(group.Enabled, group.Label, GuiControls.Shrinkable);
-                if (enabled != group.Enabled)
-                {
-                    _particles.SetEnabled(group, enabled);
-                    changed = true;
-                }
+                changed |= DrawParticleGroup(group);
             }
 
             // 変えたらこのアバターの分として記録する（保存は終了時）
@@ -114,6 +113,63 @@ namespace VRCast.UI
             GuiControls.EndCard();
         }
 
+        private bool DrawParticleGroup(AvatarParticles.Group group)
+        {
+            bool changed = false;
+
+            // ON/OFF（複数をまとめたものは数も出す）と、名前の変更ボタン
+            GUILayout.BeginHorizontal();
+            string label = group.SystemCount > 1 ? $"{group.Label} ({group.SystemCount})" : group.Label;
+            bool enabled = GUILayout.Toggle(group.Enabled, label, GuiControls.Shrinkable);
+            if (enabled != group.Enabled)
+            {
+                _particles.SetEnabled(group, enabled);
+                changed = true;
+            }
+
+            // 名前の入力を始める（今の名前から）
+            if (_renamingParticle != group
+                && GUILayout.Button(Loc.T("Rename", "名前を変更", "이름 변경", "重命名", "重新命名"),
+                    GUILayout.Width(KeyButtonWidth)))
+            {
+                _renamingParticle = group;
+                _particleNameInput = group.Label;
+            }
+
+            GUILayout.EndHorizontal();
+
+            // 名前の入力中: 決定で付ける（空なら Unity 上の名前に戻す）、取り消しで閉じる
+            if (_renamingParticle == group)
+            {
+                GUILayout.BeginHorizontal();
+                _particleNameInput = GUILayout.TextField(
+                    _particleNameInput ?? string.Empty, AvatarParticles.MaxNameLength, GuiControls.Shrinkable);
+                if (GUILayout.Button("OK", GUILayout.Width(ResetButtonWidth)))
+                {
+                    AvatarParticles.SetName(group, _particleNameInput);
+                    _renamingParticle = null;
+                    changed = true;
+                }
+
+                if (GUILayout.Button(Loc.T("Cancel", "取消", "취소", "取消", "取消"), GUILayout.Width(ResetButtonWidth)))
+                {
+                    _renamingParticle = null;
+                }
+
+                GUILayout.EndHorizontal();
+                GuiControls.Hint(Loc.T(
+                    "Leave empty to use the name in Unity.",
+                    "空にすると Unity 上の名前に戻ります。",
+                    "비워 두면 Unity의 이름으로 돌아갑니다.",
+                    "留空则恢复为 Unity 中的名称。",
+                    "留空則恢復為 Unity 中的名稱。"));
+            }
+
+            // Unity 上の場所（名前を変えたときは元の名前も分かるように）
+            GuiControls.Hint(Loc.T("Path: ", "場所: ", "경로: ", "路径: ", "路徑: ") + group.Path);
+            return changed;
+        }
+
         private bool RefreshControllers()
         {
             // アバターが替わったときだけ取り直す
@@ -123,6 +179,7 @@ namespace VRCast.UI
                 _expressions = _avatar.Get<ExpressionController>();
                 _idleMotion = _avatar.Get<IdleMotionController>();
                 _particles = _avatar.Get<AvatarParticles>();
+                _renamingParticle = null;
                 BuildLabels();
 
                 // 別のアバターの表情へ割り当てないよう、割り当て中ならやめる

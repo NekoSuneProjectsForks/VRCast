@@ -182,6 +182,11 @@ namespace VRCast.Converter.Editor
                 ConstraintSet constraints = ConstraintExtractor.Extract(clone);
                 report.ConstraintCount = constraints.constraints.Length;
 
+                // FX で表示 ON/OFF されるオブジェクト（パーティクルをまとめて切り替える単位にする）
+                HashSet<Transform> fxToggled = fx != null
+                    ? FxDefaultStateBaker.CollectToggledObjects(clone, fx, maFallback.MovedObjects)
+                    : new HashSet<Transform>();
+
                 // VRChat 上の初期状態に近づけるため、除去前に FX の既定状態を焼き込む
                 if (fx != null)
                 {
@@ -221,8 +226,9 @@ namespace VRCast.Converter.Editor
                 report.Strip = ComponentStripper.Strip(clone);
                 report.IsHumanoid = clone.GetComponent<Animator>().isHuman;
 
-                // 書き出すパーティクルの数（アプリで ON/OFF できる）
+                // 書き出すパーティクルの数（アプリで ON/OFF できる）と、まとめて切り替える単位
                 report.ParticleSystemCount = clone.GetComponentsInChildren<ParticleSystem>(true).Length;
+                ParticleGroupSet particleGroups = BuildParticleGroups(clone.transform, fxToggled);
 
                 // ボーンを失ったメッシュ（頂点が原点へ伸びる）を警告
                 report.MissingBoneRenderers = ComponentStripper.WarnMissingBones(clone);
@@ -296,6 +302,11 @@ namespace VRCast.Converter.Editor
                     metadata[AvatarPackageLayout.BlendShapeSyncEntry] = blendShapeSync;
                 }
 
+                if (particleGroups.paths.Length > 0)
+                {
+                    metadata[AvatarPackageLayout.ParticleGroupsEntry] = particleGroups;
+                }
+
                 foreach (KeyValuePair<string, IMetadata> entry in metadata)
                 {
                     string metadataError = entry.Value.Validate();
@@ -345,6 +356,37 @@ namespace VRCast.Converter.Editor
             }
 
             return merged;
+        }
+
+        private static ParticleGroupSet BuildParticleGroups(Transform root, HashSet<Transform> fxToggled)
+        {
+            // 除去の後も残っていて、パーティクルを含む FX の切り替え先だけを、パスの順に並べて書く
+            var paths = new List<string>();
+            foreach (Transform toggled in fxToggled)
+            {
+                // 消えたもの・ルート自身・パーティクルを含まないものは単位にしない
+                if (toggled == null || toggled == root || !toggled.IsChildOf(root)
+                    || toggled.GetComponentInChildren<ParticleSystem>(true) == null)
+                {
+                    continue;
+                }
+
+                // 長すぎるパスは検証で書き出し全体が失敗しないよう除く（その単位は Runtime の推定に任せる）
+                string path = ReflectionUtility.PathOf(toggled, root);
+                if (ExpressionSet.IsValidString(path, false))
+                {
+                    paths.Add(path);
+                }
+            }
+
+            // 書き出しのたびに内容が変わらないよう並びを固定し、上限を超える分は捨てる
+            paths.Sort(StringComparer.Ordinal);
+            if (paths.Count > ParticleGroupSet.MaxPaths)
+            {
+                paths.RemoveRange(ParticleGroupSet.MaxPaths, paths.Count - ParticleGroupSet.MaxPaths);
+            }
+
+            return new ParticleGroupSet { paths = paths.ToArray() };
         }
 
         private static void LogFaceEmo(List<string> trace, List<string> skipped)

@@ -1,6 +1,6 @@
 {
   "name": "com.vrcast.converter",
-  "version": "1.17.7",
+  "version": "1.18.7",
   "displayName": "VRCast Converter",
   "description": "Exports Unity / VRChat avatars to the VRCast avatar package format (.vrcaster). Includes the shared avatar format definitions used by the VRCast Runtime.",
   "unity": "2022.3",

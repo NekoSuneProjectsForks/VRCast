@@ -4,6 +4,19 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 1.18.7 (2026-10-11)
+
+[日本語]
+- パーティクルは書き出し時に OFF のものも含め、VRChat で一緒に ON/OFF するもの（FX の切り替え単位・エフェクトのフォルダー）を 1 つにまとめて表示するように対応（新しい書き出しツールで書き出し直したアバターで使えます）
+- パーティクルに名前を付けられる機能と、Unity 上の場所（パス）の表示を追加
+- トラッキングタブに「左右の目をそろえる」（なし / 常に / 横を向いたときだけ）を追加（まばたきはそのまま、意図しないウィンクや左右のばらつきを抑えます）
+- 表示タブに「体に入り込まない」を追加（カメラを近づけても体の手前で止まり、それ以上は画角を狭めて大写しにします。既定 ON）
+[English]
+- Added exporting of particles that are off, and grouping of particles switched together in VRChat (FX toggles and effect folders) into one entry (re-export the avatar with the new exporter to use this)
+- Added renaming of particles and showing where they are in Unity (path)
+- Added "Match both eyes" to the Tracking tab (Off / Always / When turned) to keep blinks while avoiding unintended winks and uneven eyes
+- Added "Don't go inside the avatar" to the Display tab (the camera stops in front of the body and zooms in by narrowing the view instead; on by default)
+
 ■ 1.17.7 (2026-10-11)
 
 [日本語]

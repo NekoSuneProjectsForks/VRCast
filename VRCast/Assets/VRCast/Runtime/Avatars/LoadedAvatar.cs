@@ -37,6 +37,9 @@ namespace VRCast.Avatars
         // BlendShape の同期（.vrcaster の Modular Avatar の Blendshape Sync。VRM は空）
         public BlendShapeSyncSet BlendShapeSync { get; private set; } = new BlendShapeSyncSet();
 
+        // パーティクルをまとめて切り替える単位（.vrcaster の FX で表示 ON/OFF されるもの。VRM は空）
+        public ParticleGroupSet ParticleGroups { get; private set; } = new ParticleGroupSet();
+
         // .vrcaster の manifest（VRM は null）
         public AvatarManifest Manifest { get; }
 
@@ -52,6 +55,7 @@ namespace VRCast.Avatars
             _bundle = bundle;
             Manifest = package.Manifest;
             BlendShapeSync = package.BlendShapeSync;
+            ParticleGroups = package.ParticleGroups;
         }
 
         public LoadedAvatar(GameObject instance, string sourcePath, VrmAvatarData vrm)

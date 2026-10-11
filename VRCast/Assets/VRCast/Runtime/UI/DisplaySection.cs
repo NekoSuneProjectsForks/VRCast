@@ -75,6 +75,18 @@ namespace VRCast.UI
                     "鎖定時仍可變更視野和重設相機。"));
             }
 
+            // 近づけても体に入り込まない（配信中に体の中が映る事故を防ぐ）
+            _settings.cameraZoomInsteadOfEntering = GUILayout.Toggle(_settings.cameraZoomInsteadOfEntering,
+                Loc.T("Don't go inside the avatar (zoom in instead)", "体に入り込まない（近づくと画角で拡大）",
+                    "아바타 안으로 들어가지 않기 (가까이 가면 화각으로 확대)", "不进入虚拟形象内部（靠近时用视野放大）",
+                    "不進入虛擬形象內部（靠近時用視野放大）"));
+            GuiControls.Hint(Loc.T(
+                "The camera stops before entering the body; zooming in further narrows the view for a close-up. Turn off to move the camera freely.",
+                "体に入り込む手前でカメラを止め、それ以上は画角を狭めて超アップにします。OFF にすると自由に近づけます。",
+                "몸 안으로 들어가기 전에 카메라를 멈추고, 더 확대하면 화각을 좁혀 클로즈업합니다. 끄면 자유롭게 다가갈 수 있습니다.",
+                "相机会在进入身体前停下，继续放大时会缩小视野来特写。关闭后可自由靠近。",
+                "相機會在進入身體前停下，繼續放大時會縮小視野來特寫。關閉後可自由靠近。"));
+
             _orbit.FieldOfView = GuiControls.Slider(
                 Loc.T("Field of view", "画角", "화각", "视野", "視野"), _orbit.FieldOfView, MinFov, MaxFov);
 

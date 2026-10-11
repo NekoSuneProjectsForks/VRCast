@@ -20,7 +20,8 @@ MyAvatar.vrcaster
     ├── descriptor.json  リップシンク・まぶた設定（どちらも無ければ省略）
     ├── physbones.json   揺れもの（PhysBone・コライダー、無ければ省略）
     ├── constraints.json Constraint（VRC / Unity 標準、無ければ省略）
-    └── blendshape_sync.json BlendShape の同期（Modular Avatar の Blendshape Sync、無ければ省略）
+    ├── blendshape_sync.json BlendShape の同期（Modular Avatar の Blendshape Sync、無ければ省略）
+    └── particle_groups.json パーティクルをまとめて切り替える単位（FX の切り替え、無ければ省略）
 ```
 
 上記以外のエントリ（サブディレクトリ、`.json` 以外の metadata、`..` / `\` / `:` を含む名前）を含むパッケージは拒否される。
@@ -242,16 +243,36 @@ Runtime はこの一覧で毎フレーム同期元の値を同期先へ写す（
 上限: bindings 4096。Converter は改変の適用後に無くなったメッシュ・BlendShape、同じ同期先の重複を除く。
 Remap カーブは対象外（値をそのまま写す）。不正な場合は警告のみで同期無しとして扱う。
 
+## metadata/particle_groups.json
+
+VRChat の FX のいずれかのクリップで表示 ON/OFF（GameObject の `m_IsActive`）を動かすオブジェクトのうち、
+書き出し後も残っていてパーティクル（ParticleSystem）を子孫に含むもの（1.18.7 以降の Converter）。
+Runtime は各パーティクルについて、この一覧のうち最も近い祖先（自身を含む）を単位としてまとめて ON/OFF する。
+一覧に無い（または旧版で書き出した）パーティクルは、ボーン・メッシュ等を含まない親（エフェクトのフォルダー）までをまとめる。
+
+```json
+{
+    "paths": [ "Effects/Aura", "Effects/Wings" ]
+}
+```
+
+| フィールド | 内容 |
+| :--- | :--- |
+| `paths` | アバタールートからの相対パス（ルート自身 = 空文字は不可、512 文字まで） |
+
+上限: paths 1024。Converter はパスの順に並べる。不正な場合は警告のみで空として扱う（Runtime の推定だけでまとめる）。
+
 ## avatar.bundle
 
 - アバター Prefab を 1 つだけ含む。アセットパスは固定で `Assets/__VRCastExport/avatar.prefab`。
 - 含めるのは **Unity 標準コンポーネントのみ**: Transform, Animator, SkinnedMeshRenderer, MeshRenderer, MeshFilter,
   ParticleSystem, ParticleSystemRenderer（パーティクルは 1.17.7 以降の Converter から。以前の Runtime は読込時に除去する）。
+  非アクティブなオブジェクトは書き出さないが、1.18.7 以降の Converter はパーティクルだけを非アクティブのまま残す（その親は Transform のみ。アプリで ON にできるように）。
   依存として Mesh, Material, Shader, Texture, Avatar (Humanoid) が含まれる。
 - Animator Controller は含めない（VRChat 固有の StateMachineBehaviour を含むため）。表情等は Milestone 3 で metadata 化する。
   代わりに FX レイヤーの初期状態（小物トグル・初期表情等）を書き出し時に GameObject / Renderer の有効状態、BlendShape、マテリアル差し替えへ焼き込む（Transform・ポーズは変更しない。BlendShape は既定ではシーン上の値を優先する）。
 - VRChat コンポーネント（Avatar Descriptor, PhysBone, Constraint 等）・自作 MonoBehaviour は含めない。
-  Runtime で使う設定は Converter が `metadata/*.json` に変換する（Descriptor・PhysBone・Constraint・MA Blendshape Sync）。
+  Runtime で使う設定は Converter が `metadata/*.json` に変換する（Descriptor・PhysBone・Constraint・MA Blendshape Sync・パーティクルの切り替え単位）。
 
 ## Runtime 側の検証
 

@@ -331,6 +331,32 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Extract_WithParticleGroups_ParsesPaths()
+        {
+            // FX で切り替えるパーティクルのまとまりを同梱
+            var groups = new ParticleGroupSet { paths = new[] { "Effects/Aura" } };
+            string path = WritePackage(CreateManifest(DummyBundle), DummyBundle,
+                AvatarPackageLayout.ParticleGroupsEntry, JsonUtility.ToJson(groups));
+
+            AvatarPackage package = AvatarPackageReader.Extract(path, _cacheRoot);
+
+            Assert.That(package.ParticleGroups.paths, Is.EqualTo(new[] { "Effects/Aura" }));
+        }
+
+        [Test]
+        public void Extract_ParticleGroupsWithEmptyPath_IgnoredAsEmpty()
+        {
+            // ルート自身（空のパス）を含む particle_groups.json は全体が空扱いになること
+            var groups = new ParticleGroupSet { paths = new[] { string.Empty } };
+            string path = WritePackage(CreateManifest(DummyBundle), DummyBundle,
+                AvatarPackageLayout.ParticleGroupsEntry, JsonUtility.ToJson(groups));
+
+            AvatarPackage package = AvatarPackageReader.Extract(path, _cacheRoot);
+
+            Assert.That(package.ParticleGroups.paths, Is.Empty);
+        }
+
+        [Test]
         public void Extract_WithoutExpressions_ReturnsEmpty()
         {
             string path = WritePackage(CreateManifest(DummyBundle), DummyBundle);

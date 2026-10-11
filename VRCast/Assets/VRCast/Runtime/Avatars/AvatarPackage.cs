@@ -27,12 +27,16 @@ namespace VRCast.Avatars
         // BlendShape の同期（Modular Avatar の Blendshape Sync。無い・不正な場合は空）
         public BlendShapeSyncSet BlendShapeSync { get; }
 
+        // パーティクルをまとめて切り替える単位（FX で表示 ON/OFF されるもの。無い・不正な場合は空）
+        public ParticleGroupSet ParticleGroups { get; }
+
         public AvatarPackage(
             AvatarManifest manifest, string sourcePath, string bundlePath,
             ExpressionSet expressions, AvatarDescriptorData descriptor, PhysBoneSet physBones, ConstraintSet constraints,
-            BlendShapeSyncSet blendShapeSync)
+            BlendShapeSyncSet blendShapeSync, ParticleGroupSet particleGroups = null)
         {
             BlendShapeSync = blendShapeSync ?? new BlendShapeSyncSet();
+            ParticleGroups = particleGroups ?? new ParticleGroupSet();
             Manifest = manifest;
             SourcePath = sourcePath;
             BundlePath = bundlePath;

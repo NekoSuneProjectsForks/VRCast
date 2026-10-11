@@ -61,10 +61,19 @@ namespace VRCast.Converter.Editor
         /// FX の初期状態で表示されるものも含め、書き出しには一切含めない。
         /// ただし残るメッシュがボーンとして使う Transform は消さず、コンポーネントだけを外して残す
         /// （消すとそのボーンに乗った頂点が原点へ伸びる。VRChat では非アクティブでもボーンとして動くため）。
+        /// パーティクルは非アクティブのまま残す（アプリで ON にできるように。メッシュ等の他の表示物は外す）。
         /// </summary>
         public static int RemoveInactiveObjects(GameObject root)
         {
             return RemoveObjects(root, go => !go.activeSelf, true);
+        }
+
+        /// <summary>
+        /// 非アクティブなオブジェクトを消しても残すコンポーネントなら true（パーティクルの本体と描画）。
+        /// </summary>
+        private static bool IsKeptParticleComponent(Component component)
+        {
+            return component is ParticleSystem || component is ParticleSystemRenderer;
         }
 
         /// <summary>
@@ -118,8 +127,8 @@ namespace VRCast.Converter.Editor
                 }
             }
 
-            // 残るメッシュが使うボーンとその親（指定時のみ）
-            HashSet<Transform> usedBones = keepUsedBones ? CollectUsedBones(root, targets) : new HashSet<Transform>();
+            // 残るメッシュが使うボーンとパーティクル、およびその親（指定時のみ）
+            HashSet<Transform> usedBones = keepUsedBones ? CollectKeptNodes(root, targets) : new HashSet<Transform>();
 
             // 親が先に消えた子は null になるのでスキップ
             int count = 0;
@@ -130,7 +139,7 @@ namespace VRCast.Converter.Editor
                     continue;
                 }
 
-                // 使用中のボーンを含むなら、ボーンの Transform だけを残す
+                // 使用中のボーン・パーティクルを含むなら、それらだけを残す
                 if (usedBones.Contains(go.transform))
                 {
                     PruneKeepingBones(go.transform, usedBones);
@@ -146,10 +155,17 @@ namespace VRCast.Converter.Editor
             return count;
         }
 
-        private static HashSet<Transform> CollectUsedBones(GameObject root, List<GameObject> removing)
+        private static HashSet<Transform> CollectKeptNodes(GameObject root, List<GameObject> removing)
         {
             var used = new HashSet<Transform>();
             Transform rootTransform = root.transform;
+
+            // パーティクルは非アクティブでも残す（アクティブなものも、親が消えないよう登録）
+            foreach (ParticleSystem particle in root.GetComponentsInChildren<ParticleSystem>(true))
+            {
+                AddWithAncestors(used, particle.transform, rootTransform);
+            }
+
             foreach (SkinnedMeshRenderer renderer in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
             {
                 // 一緒に消えるメッシュのボーンは不要
@@ -220,13 +236,14 @@ namespace VRCast.Converter.Editor
                 }
             }
 
-            // 表示物・揺れもの等は書き出さないため Transform 以外を外す（RequireComponent の依存順で繰り返す）
+            // 表示物・揺れもの等は書き出さないため Transform とパーティクル以外を外す（RequireComponent の依存順で繰り返す）
             for (int pass = 0; pass < MaxPasses; pass++)
             {
                 int removed = 0;
                 foreach (Component component in kept.GetComponents<Component>())
                 {
-                    if (component != null && !(component is Transform) && CanRemove(component))
+                    if (component != null && !(component is Transform) && !IsKeptParticleComponent(component)
+                        && CanRemove(component))
                     {
                         Object.DestroyImmediate(component);
                         removed++;

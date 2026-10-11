@@ -35,6 +35,9 @@ namespace VRCast.AvatarFormat
         // 任意エントリ: BlendShape の同期（Modular Avatar の Blendshape Sync）
         public const string BlendShapeSyncEntry = MetadataPrefix + "blendshape_sync.json";
 
+        // 任意エントリ: パーティクルをまとめて切り替える単位（FX で表示を ON/OFF しているオブジェクト）
+        public const string ParticleGroupsEntry = MetadataPrefix + "particle_groups.json";
+
         // metadata 1 ファイルの上限サイズ（1 MiB）
         public const long MaxMetadataBytes = 1024 * 1024;
 
