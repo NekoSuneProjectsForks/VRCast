@@ -15,10 +15,11 @@ using VRCast.Tracking;
 namespace VRCast.UI
 {
     /// <summary>
-    /// IMGUI の操作パネル。左のタブ（Start / Avatar / Pose / Objects / Face / Shape keys / Tracking / Display / Output / OSC / HTTP / Settings / Log / Credits / Discord）で
+    /// IMGUI の操作パネル。左のタブ（Start / Avatar / Pose / Objects / Face / Shape keys / Perfect sync / Tracking / Display / Output / OSC / HTTP / Settings / Log / Credits / Discord）で
     /// 表示するセクションを切り替え、内容は縦スクロールする。下部にはリセットボタン・アンケート欄・動作状況を常に表示する。
     /// 画面に収まる高さに制限し、Tab キーで表示切替（隠している間は背景も透過）。
     /// 表示言語（見出しの下のボタンでいつでも切替）と UI の大きさは設定に従う。見出しの「?」でヘルプページを開く。
+    /// パーフェクトシンク化の編集中は、このパネルの代わりに編集画面（PerfectSyncEditor）を出す。
     /// </summary>
     public class MainPanel : MonoBehaviour
     {
@@ -51,6 +52,7 @@ namespace VRCast.UI
             Objects,
             Face,
             ShapeKeys,
+            PerfectSync,
             Tracking,
             Display,
             Output,
@@ -77,6 +79,8 @@ namespace VRCast.UI
         private ObjectSection _objectSection;
         private FaceSection _faceSection;
         private ShapeKeySection _shapeKeySection;
+        private PerfectSyncSection _perfectSyncSection;
+        private PerfectSyncEditor _perfectSyncEditor;
         private TrackingSection _trackingSection;
         private DisplaySection _displaySection;
         private OutputSection _outputSection;
@@ -123,6 +127,8 @@ namespace VRCast.UI
             _objectSection = new ObjectSection(session, settings);
             _faceSection = new FaceSection(session, microphone, settings);
             _shapeKeySection = new ShapeKeySection(session, settings);
+            _perfectSyncEditor = new PerfectSyncEditor(session, orbit);
+            _perfectSyncSection = new PerfectSyncSection(session, _perfectSyncEditor);
             _trackingSection = new TrackingSection(session, tracker, trackerProcess, skeleton, settings);
             _displaySection = new DisplaySection(orbit, rendering, settings);
             _outputSection = new OutputSection(virtualCamera, spout, rendering);
@@ -251,11 +257,22 @@ namespace VRCast.UI
             float scale = _settings.uiScale;
             Vector3 mouse = Input.mousePosition;
             var position = new Vector2(mouse.x / scale, (Screen.height - mouse.y) / scale);
-            _orbit.InputBlocked = _visible && _windowRect.Contains(position);
 
             // カメラの固定・体に入り込まない設定を反映（設定のリセットにも追従するよう毎フレーム）
             _orbit.Locked = _settings.cameraLocked;
             _orbit.ZoomInsteadOfEntering = _settings.cameraZoomInsteadOfEntering;
+
+            // パーフェクトシンク化の編集中は、編集画面のパネルで判定し、顔を見回せるようカメラの固定を外す
+            if (_perfectSyncEditor.IsOpen)
+            {
+                bool overPanel = _visible && _perfectSyncEditor.PanelRect.Contains(position);
+                _orbit.InputBlocked = overPanel;
+                _orbit.Locked = false;
+                _perfectSyncEditor.Update(_visible && !overPanel);
+                return;
+            }
+
+            _orbit.InputBlocked = _visible && _windowRect.Contains(position);
         }
 
         private void SetVisible(bool visible)
@@ -296,10 +313,18 @@ namespace VRCast.UI
             GUI.skin = _theme.Skin;
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
 
-            FitToScreen(Screen.width / scale, Screen.height / scale);
-            _windowRect = GUILayout.Window(
-                WindowId, _windowRect, DrawWindow, GUIContent.none, _theme.Skin.window,
-                GUILayout.Width(_windowRect.width), GUILayout.Height(_windowRect.height));
+            // パーフェクトシンク化の編集中は、メインのパネルの代わりに編集画面を出す
+            if (_perfectSyncEditor.IsOpen)
+            {
+                _perfectSyncEditor.OnGUI(scale);
+            }
+            else
+            {
+                FitToScreen(Screen.width / scale, Screen.height / scale);
+                _windowRect = GUILayout.Window(
+                    WindowId, _windowRect, DrawWindow, GUIContent.none, _theme.Skin.window,
+                    GUILayout.Width(_windowRect.width), GUILayout.Height(_windowRect.height));
+            }
 
             GUI.matrix = previousMatrix;
             GUI.skin = previousSkin;
@@ -534,6 +559,9 @@ namespace VRCast.UI
                 case Tab.ShapeKeys:
                     _shapeKeySection.Draw();
                     break;
+                case Tab.PerfectSync:
+                    _perfectSyncSection.Draw();
+                    break;
                 case Tab.Tracking:
                     _trackingSection.Draw();
                     break;
@@ -578,6 +606,8 @@ namespace VRCast.UI
                     return Loc.T("Face", "顔", "얼굴", "面部", "臉部");
                 case Tab.ShapeKeys:
                     return Loc.T("Shape key setup", "シェイプキー設定", "셰이프 키 설정", "形态键设置", "形態鍵設定");
+                case Tab.PerfectSync:
+                    return Loc.T("Perfect sync setup", "パーフェクトシンク化", "퍼펙트 싱크화", "完美同步化", "完美同步化");
                 case Tab.Tracking:
                     return Loc.T("Tracking", "トラッキング", "트래킹", "追踪", "追蹤");
                 case Tab.Display:

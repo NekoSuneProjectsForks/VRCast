@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using UnityEngine;
 using VRCast.Animations;
+using VRCast.AvatarFormat;
 using VRCast.Core;
 
 namespace VRCast.Tracking
@@ -205,7 +207,8 @@ namespace VRCast.Tracking
 
         public void Initialize(
             Animator animator, IFaceTrackingProvider provider, IBodyTrackingProvider body, BlinkController blink,
-            LipSyncController lipSync, ExpressionController expressions, AppSettings settings)
+            LipSyncController lipSync, ExpressionController expressions, AppSettings settings,
+            IReadOnlyList<PerfectSyncBinding> perfectSyncBindings = null)
         {
             _provider = provider;
             _body = body;
@@ -214,8 +217,9 @@ namespace VRCast.Tracking
             _expressions = expressions;
             _settings = settings;
 
-            // ARKit 名の BlendShape を探しておく（Humanoid でなくても顔は動かせる）
-            _perfectSync = PerfectSyncBlendShapes.Create(transform);
+            // ARKit 名の BlendShape（パーフェクトシンク化で割り当てた既存の BlendShape を含む）を探しておく
+            // （Humanoid でなくても顔は動かせる）
+            _perfectSync = PerfectSyncBlendShapes.Create(transform, perfectSyncBindings);
 
             // Humanoid のみ頭を動かす（非 Humanoid はまばたき・口だけ）
             if (animator == null || !animator.isHuman)
@@ -243,6 +247,24 @@ namespace VRCast.Tracking
             _rightEye = animator.GetBoneTransform(HumanBodyBones.RightEye);
             _leftEyeRest = RestOf(_leftEye);
             _rightEyeRest = RestOf(_rightEye);
+        }
+
+        /// <summary>
+        /// パーフェクトシンクの書き込みを元の値へ戻す（メッシュを差し替える前に呼び、差し替えた後に RebuildPerfectSync で作り直す）。
+        /// </summary>
+        public void ReleasePerfectSync()
+        {
+            _perfectSync?.Release();
+        }
+
+        /// <summary>
+        /// パーフェクトシンクの書き込み先を探し直す（パーフェクトシンク化の編集で、メッシュの形状や割り当てが変わったとき）。
+        /// </summary>
+        public void RebuildPerfectSync(IReadOnlyList<PerfectSyncBinding> bindings)
+        {
+            // 今の書き込みを元の値へ戻してから作り直す（次のフレームから新しい書き込み先で動く）
+            _perfectSync?.Release();
+            _perfectSync = PerfectSyncBlendShapes.Create(transform, bindings);
         }
 
         /// <summary>

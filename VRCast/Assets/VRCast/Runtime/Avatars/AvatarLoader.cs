@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine;
 using VRCast.AvatarFormat;
 using VRCast.Core;
+using VRCast.PerfectSync;
 using Object = UnityEngine.Object;
 
 namespace VRCast.Avatars
@@ -57,6 +58,12 @@ namespace VRCast.Avatars
             }
 
             var loaded = new LoadedAvatar(instance, bundle, package);
+
+            // パーフェクトシンク版なら、生成した形状をメッシュの複製へ足す（表情・まばたき等の初期化より前に）
+            if (package.PerfectSyncShapes.Shapes.Count > 0)
+            {
+                loaded.PerfectSyncMeshes = PerfectSyncMeshes.Apply(instance.transform, package.PerfectSyncShapes);
+            }
 
             // Humanoid でない場合はトラッキング等が使えないため警告
             if (!loaded.IsHumanoid)

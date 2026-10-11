@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using VRCast.AvatarFormat;
+using VRCast.PerfectSync;
 using Object = UnityEngine.Object;
 
 namespace VRCast.Avatars
@@ -43,6 +44,13 @@ namespace VRCast.Avatars
         // FX で表示 ON/OFF されるオブジェクト（.vrcaster のもの。VRM は空）
         public FxToggleSet FxToggles { get; private set; } = new FxToggleSet();
 
+        // パーフェクトシンク化の設定と生成した形状（.vrcaster のパーフェクトシンク版のもの。それ以外は空）
+        public PerfectSyncSet PerfectSync { get; private set; } = new PerfectSyncSet();
+        public PerfectSyncShapeData PerfectSyncShapes { get; private set; } = new PerfectSyncShapeData();
+
+        // 生成した形状を足したメッシュの差し替え（足していなければ null）。破棄時に複製のメッシュも破棄する
+        public PerfectSyncMeshes PerfectSyncMeshes { get; set; }
+
         // .vrcaster の manifest（VRM は null）
         public AvatarManifest Manifest { get; }
 
@@ -60,6 +68,8 @@ namespace VRCast.Avatars
             BlendShapeSync = package.BlendShapeSync;
             ParticleGroups = package.ParticleGroups;
             FxToggles = package.FxToggles;
+            PerfectSync = package.PerfectSync;
+            PerfectSyncShapes = package.PerfectSyncShapes;
         }
 
         public LoadedAvatar(GameObject instance, string sourcePath, VrmAvatarData vrm)
@@ -199,6 +209,10 @@ namespace VRCast.Avatars
 
         public void Dispose()
         {
+            // パーフェクトシンクの形状を足した複製のメッシュ（アバターと一緒には破棄されない）
+            PerfectSyncMeshes?.Restore(false);
+            PerfectSyncMeshes = null;
+
             // 生成したオブジェクトを破棄（VRM はこれで読み込んだメッシュ・テクスチャ等も解放される）
             if (Instance != null)
             {

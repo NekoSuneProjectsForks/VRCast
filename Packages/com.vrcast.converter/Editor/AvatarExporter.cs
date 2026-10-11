@@ -61,6 +61,7 @@ namespace VRCast.Converter.Editor
             public int RemovedInactiveObjects;
             public int FxToggleCount;
             public int MissingBoneRenderers;
+            public int ReadableMeshes;
             public ComponentStripper.Result Strip;
         }
 
@@ -277,6 +278,9 @@ namespace VRCast.Converter.Editor
 
                 // AssetBundle 化のため一時 Prefab として保存
                 AssetDatabase.CreateFolder(TempFolderParent, TempFolderName);
+
+                // アプリのパーフェクトシンク化で頂点を読めるよう、BlendShape を持つメッシュを読み書きできる複製にする
+                report.ReadableMeshes = ReadableMeshCopier.Apply(clone, tempFolder);
                 PrefabUtility.SaveAsPrefabAsset(clone, AvatarPackageLayout.PrefabAssetPath, out bool saved);
                 if (!saved)
                 {

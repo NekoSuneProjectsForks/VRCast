@@ -33,11 +33,20 @@ namespace VRCast.Avatars
         // FX で表示 ON/OFF されるオブジェクト（無い・不正な場合は空）
         public FxToggleSet FxToggles { get; }
 
+        // パーフェクトシンク化の設定（パーフェクトシンク版でなければ空）
+        public PerfectSyncSet PerfectSync { get; }
+
+        // パーフェクトシンク化で生成した形状（パーフェクトシンク版でなければ空）
+        public PerfectSyncShapeData PerfectSyncShapes { get; }
+
         public AvatarPackage(
             AvatarManifest manifest, string sourcePath, string bundlePath,
             ExpressionSet expressions, AvatarDescriptorData descriptor, PhysBoneSet physBones, ConstraintSet constraints,
-            BlendShapeSyncSet blendShapeSync, ParticleGroupSet particleGroups = null, FxToggleSet fxToggles = null)
+            BlendShapeSyncSet blendShapeSync, ParticleGroupSet particleGroups = null, FxToggleSet fxToggles = null,
+            PerfectSyncSet perfectSync = null, PerfectSyncShapeData perfectSyncShapes = null)
         {
+            PerfectSync = perfectSync ?? new PerfectSyncSet();
+            PerfectSyncShapes = perfectSyncShapes ?? new PerfectSyncShapeData();
             BlendShapeSync = blendShapeSync ?? new BlendShapeSyncSet();
             ParticleGroups = particleGroups ?? new ParticleGroupSet();
             FxToggles = fxToggles ?? new FxToggleSet();

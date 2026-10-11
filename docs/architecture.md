@@ -97,6 +97,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `Audio/` | マイク入力（音量） | Milestone 3 (済) |
 | `Dynamics/` | PhysBone 相当（揺れもの）、Constraint | Milestone 4 / 7 (済) |
 | `Tracking/` | Tracking Provider と Driver（顔・腕・手） | Milestone 5 (済) |
+| `PerfectSync/` | パーフェクトシンク化（目印・顔の座標系・形状の生成・既存 BlendShape の割り当て・別名保存・読込時の適用） | パーフェクトシンク化 (済) |
 | `OSC/` | OSC 入出力 | Milestone 6 |
 | `Output/` | 仮想カメラ出力（UnityCapture） | Milestone 8 (仮想カメラ済) |
 | `Platform/` | OS 機能（ウィンドウへのファイルのドロップ、ファイル選択ダイアログ。Win32 P/Invoke） | 操作パネルの刷新 (済) |
@@ -169,11 +170,18 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `TrackingReceiver` | `127.0.0.1` のみで UDP を受信する Provider（顔・腕手）。入力元に合わせて解析を切替。途絶検出・再 bind・受信 fps。診断ログ: 最初のパケットの送信元、途絶（3 秒）・待ち受けから 15 秒無受信の警告、不正パケットの原因推定（入力元の設定違い・プロトコル版の不一致。10 秒に 1 回）、詳細ログ ON 時は 5 秒ごとの受信統計と顔の検出 / 見失い（集計は整数の加算のみ） |
 | `TrackerProcess` | 同梱（ビルドでは `StreamingAssets/`、エディターではプロジェクト直下の `Trackers/` の `MediaPipeTracker/` / `OpenSeeFace/`）または指定されたトラッカーの自動起動・再試行・停止、カメラ一覧（`-l 1`）の取得・解析、デバイス名 → 番号の解決。入力元・手の ON/OFF・トラッカーの動作（MediaPipe）・軽量モード（OpenSeeFace）の変更で再起動。MediaPipe 版へはトラッカーの動作（`TrackerMode`、`MediaPipeModeArgument`）に応じて「ぬるぬる」= `--pose-every 2 --hand-search-every 2 --hand-every-frame`、「なめらか」= `--pose-every 2 --hand-search-every 2`、「エコ」= `--max-fps 20 --pose-every 3 --hand-search-every 3` を、軽量モードでは OpenSeeFace へ `--model 2` を渡す。MediaPipe 版へは自分の PID（`--parent-pid`）を渡し、異常終了時もトラッカーを残さない。起動したトラッカーは `ProcessTuning` で Windows の電力調整（EcoQoS）から外し（VRCast が背面にある間に推定が遅れて手を見失わないように）、設定の優先度（`processPriority`）と使うコア（`CpuTopology.CoreMaskFor`）にする。どちらの変更も再起動せずに反映。診断ログ: 起動コマンドライン・PID、終了コードの意味（`DescribeExitCode`。知らない引数で止まったときは `IsOutdatedTracker` でトラッカーが古いと出す）と動作時間、一覧の取得時間、同じ警告は状態が変わったときだけ。出力行は `ClassifyOutput` で重要度へ振り分け（`STATS:` → DEBUG、`WARN:` / glog `W` → WARN、`ERROR:` / glog `E`/`F` / Traceback → ERROR）、INFO は毎秒 30 行までに制限し、超過分は件数を 5 秒ごとに警告。仮想カメラ・赤外線カメラらしい名前（`IsLikelyUnusableCamera`）は既定の選択で避け（`ChooseDefaultCamera`）、選ばれていれば起動時に警告 |
 | `FaceTrackingDriver` | 頭の向きを首・頭ボーンへ、頭の位置を背骨・胸の傾き / 腰の移動（`BodyMotion` で切替）へ、両肩が映っていれば（`trackingTorso`・腕・手 ON）`TorsoPose` の肩の線のひねり（`trackingTorsoLockTwist` なら 0）・左右の傾きを背骨・胸へ（左右の傾きは頭の位置による傾きと 0.3 秒で切り替え、正面はキャリブレーション後の最初の肩の線、頭は首で打ち消して絶対の向きを保つ）、視線を目ボーンへ、まばたき（左右別、`trackingEyeOpenOffset` までの閉じ具合は開いた目とみなす（パーフェクトシンクの eyeBlink と、`ArKitFace.AdjustExpression` で求め直すジト目・ウインクの判定も同様）、`trackingBlink` OFF なら渡さず自動まばたきへ）・口を `BlinkController` / `LipSyncController` へ適用。キャリブレーション・鏡像。表情反映（MediaPipe・設定 ON のみ）は `ExpressionDetector` の結果か割り当てが変わったときだけ `ExpressionController.Apply`（手動で固定中は当てず、固定が外れたら今の判定結果をすぐ当て直す）、無効化・途絶時は自動で当てた表情だけをニュートラルへ。パーフェクトシンク（MediaPipe・設定 ON・対応アバター）は `PerfectSyncBlendShapes` へ値を渡し、その間は表情反映を止め、ARKit 名で目・口を動かせるなら通常のまばたき（開いたままの外部入力）・カメラの口の開きを重ねない |
-| `PerfectSyncBlendShapes` | パーフェクトシンク。アバター内の全 `SkinnedMeshRenderer` から ARKit 名（`MediaPipePacket.BlendShapeNames` の 51 種）の BlendShape を探し（大文字小文字・区切り記号・`blendShape1.` 等の接頭辞を無視、末尾 L / R も可）、20 種類以上あれば対応とみなす（`IsAvailableFor(anyShape)` で設定の「1 種類でも」にも対応）。受信値（左右は映像基準）を Mirror に合わせて左右を入れ替え、平滑化して `BlendShapeOverlay` で書く（eyeBlink は 0.15〜0.65 を 0〜1 へ広げる）。解除時は一度だけ元の値へ戻す |
+| `PerfectSyncBlendShapes` | パーフェクトシンク。アバター内の全 `SkinnedMeshRenderer` から ARKit 名（`MediaPipePacket.BlendShapeNames` の 51 種）の BlendShape を探し（大文字小文字・区切り記号・`blendShape1.` 等の接頭辞を無視、末尾 L / R も可）、20 種類以上あれば対応とみなす（`IsAvailableFor(anyShape)` で設定の「1 種類でも」にも対応）。受信値（左右は映像基準）を Mirror に合わせて左右を入れ替え、平滑化して `BlendShapeOverlay` で書く（eyeBlink は 0.15〜0.65 を 0〜1 へ広げる）。解除時は一度だけ元の値へ戻す。`Create` に `PerfectSyncBinding`（パーフェクトシンク化の既存 BlendShape の割り当て）を渡すと、その ARKit 名は割り当て先へ強さを掛けて書き、名前の照合より優先する。`FaceTrackingDriver.RebuildPerfectSync` で編集中に作り直す |
+| `FaceLandmarks` / `FaceMeshGeometry` | 目印の種類（`LandmarkId`、番号は保存するので固定）・細かさごとの並び・左右の対応 / 顔メッシュの頂点・法線・三角形（目印 = 三角形の番号と重心座標の位置、Möller–Trumbore の光線判定、最も近い表面の点、面での反転） |
+| `FaceRig` | 目印から顔の座標系（左 = 左右の組の差の平均、上 = あご → 眉、前 = 上 × 左を法線・鼻先で向きを確認、原点と大きさ = 両目の中心と間隔）を作り、打っていない目印を推定して補う。左右対称の面の推定 |
+| `FaceRegions` / `FaceShapeMath` | 目（まぶたの輪郭の折れ線）・眉・口（唇の線・顎の範囲と回転）の領域と、なめらかな重みの計算 |
+| `PerfectSyncGenerator` | `FaceRig` と領域から ARKit 51 種の頂点の移動量を作る（強さ 0 は作らない。歯・舌のメッシュは顎の形状だけ。顔の大きさの 1e-4 未満の移動は省く） |
+| `PerfectSyncAutoMapper` | 既存の BlendShape 名（Viseme・まばたき・笑顔・眉・ジト目・ぷくー等。接頭辞・記号を除いて完全一致）から ARKit 名への割り当てを推定 |
+| `PerfectSyncPackageWriter` | 元の `.vrcaster` の全エントリを複製（古いパーフェクトシンクのデータは除き、manifest の名前は保存名に）して `perfect_sync.json` / `perfect_sync_shapes.bin` を足し、一時ファイル経由で別名保存（元と同じパスは拒否）。既定の保存名は `元の名前_PerfectSync.vrcaster` |
+| `PerfectSyncMeshes` | 保存した形状を、読めるメッシュの複製の末尾へ `AddBlendShapeFrame` で足してレンダラーを差し替える（既存の番号・値は保つ）。`Restore` で元へ戻して複製を破棄。`AvatarLoader` が読込時に適用し、`LoadedAvatar.Dispose` で破棄 |
 | `TorsoPose` | 両肩（`ArmTrackingData.HasShoulder`）の線から上半身のひねり（縦軸まわり）・左右の傾き（前後軸まわり）を度で求める（鏡像は腕と同じ対応、肩幅 0.1 m 未満は求めない） |
 | `HandTrackingDriver` | 腕（上腕・前腕）と手首・指 15 節を、子ボーンへの向きがトラッキングの点の向きに一致するよう回転（手首は曲げ 80°・ひねり 100° までに制限）。映っていない腕は待機ポーズへフェード、未使用時はボーンに触れない。鏡像。届いた値（受信番号 `BodyTrackingFrame.Sequence` で判定）へ `PointSmoother` で描画の毎フレーム寄せる（腕 0.07 秒・手 0.05 秒） |
 | `PointSmoother` | 不定期に届く点の列を、点ごとに速度を持つバネ（`Vector3.SmoothDamp`）で最新の値へ寄せる（届く間隔が揺れても止まったり跳ねたりしない）。見失ったら次の値に合わせる |
-| `MainPanel` | IMGUI パネル。左のタブ（Start / Avatar / Pose / Objects / Face / Shape keys / Tracking / Display / Output / OSC / HTTP / Settings / Log / Credits / Discord）で選んだセクションだけを縦スクロール領域に描画（内容の幅は見えている幅に固定し、横並びのボタンは `GuiControls.Shrinkable` で縮めて右へはみ出さないようにする）。高さを画面内に制限し位置を画面内に保つ。見出しでドラッグ移動、Tab で表示切替（隠している間は背景も透過）、「?」でヘルプ。見出しの下に表示言語の切り替えボタンを常に横並びで表示（代替フォントの字形が下へはみ出しても切らない `UiTheme.OverflowButton`。選択肢の表示名は `Loc.LanguageLabels` を Settings と共有）。新しいバージョンがあればその下に通知（GitHub / BOOTH からダウンロード、更新履歴（GitHub の `CHANGELOG.txt`）を開く）。描画前に表示言語・テーマ・UI 倍率（`GUI.matrix`）を適用し、パネル上のマウス操作中はカメラ操作を止める。全設定のリセット後に、変更時にしか反映しない機能（描画・仮想カメラ・ポーズ・ポート入力欄）へ反映し直す |
+| `MainPanel` | IMGUI パネル。左のタブ（Start / Avatar / Pose / Objects / Face / Shape keys / Perfect sync / Tracking / Display / Output / OSC / HTTP / Settings / Log / Credits / Discord）で選んだセクションだけを縦スクロール領域に描画（パーフェクトシンク化の編集中は代わりに `PerfectSyncEditor` を描き、その範囲でカメラ操作を止める）（内容の幅は見えている幅に固定し、横並びのボタンは `GuiControls.Shrinkable` で縮めて右へはみ出さないようにする）。高さを画面内に制限し位置を画面内に保つ。見出しでドラッグ移動、Tab で表示切替（隠している間は背景も透過）、「?」でヘルプ。見出しの下に表示言語の切り替えボタンを常に横並びで表示（代替フォントの字形が下へはみ出しても切らない `UiTheme.OverflowButton`。選択肢の表示名は `Loc.LanguageLabels` を Settings と共有）。新しいバージョンがあればその下に通知（GitHub / BOOTH からダウンロード、更新履歴（GitHub の `CHANGELOG.txt`）を開く）。描画前に表示言語・テーマ・UI 倍率（`GUI.matrix`）を適用し、パネル上のマウス操作中はカメラ操作を止める。全設定のリセット後に、変更時にしか反映しない機能（描画・仮想カメラ・ポーズ・ポート入力欄）へ反映し直す |
 | `ResetActions` | リセットの実行と表示名（顔の向き = `FaceTrackingDriver.Calibrate`、視線 = `CalibrateGaze`、表情 = `ExpressionController.ResetToNeutral`、カメラ = `OrbitCameraController.ResetView`）。`CanRun` で実行できるか（受信中・表情が出ているか）を返す。`ResetBar` と `ResetHotkeyListener` で共用 |
 | `ResetBar` | パネル下部に常に表示するリセットボタン（`ResetActions` の各操作。2 行目に `AppSettings.GetResetHotkey` のキー名。使えない間は無効表示） |
 | `SurveyBar` | リセットボタンと動作状況の間に常に表示するアンケート欄（次に対応してほしい機能などの募集）。`UiTheme.SurveyCard`（ほかのカードと同じ地と角丸）に置き、GitHub の Issue（#11）/ Google フォームを通常のボタンで開く |
@@ -212,6 +220,9 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `HotkeyBinding` / `ExpressionHotkey` / `ResetHotkey` | 保存用のキーの組み合わせ（共通の基底）と、表情（プリセット名）・リセット（`ResetAction`: 顔の向き / 視線 / 表情 / カメラ）ごとの割り当て。リセットは `AppSettings` の `GetResetHotkey` / `SetResetHotkey`（同じ組み合わせのほかのリセットは外す）/ `TryFindResetHotkey`、読込時に欠けた種類は既定で補い重複は外す |
 | `GlobalKeyboard` | ウィンドウが前面に無くても読めるキーの状態（`GetAsyncKeyState`。キーは奪わない）と、仮想キーの表示名（記号キーは `GetKeyNameText` でキーボード配列の名前） |
 | `FaceSection` | Face タブ（PhysBone、Auto blink、表情中のまばたき停止、カメラ目線（`trackingLookAtCamera`。目ボーンが無ければ `FaceTrackingDriver.HasEyes` で注記）、Lip sync、表情中の口の停止（マイク・トラッキングの 2 つのトグル）、マイク選択・感度・メーター） |
+| `PerfectSyncSection` | Perfect sync タブ（使える ARKit の形状の数・編集できるメッシュの数・始められない理由（未読込・VRM・書き出し直しが必要）・パーフェクトシンク版かどうか、編集を始めるボタン） |
+| `PerfectSyncEditor` | パーフェクトシンク化の編集画面（右側のパネル。描画は `PerfectSyncEditor.Panel.cs`）。開くと読込時に足した形状を外し、顔を正面から映す。毎フレーム顔メッシュを `BakeMesh` して光線で目印を打つ・ドラッグで動かす（左右対称なら右側を反転位置の最も近い表面に置く）。生成して `PerfectSyncMeshes` で試し、形状ごとの出どころ・強さ・割り当てを選び、`PerfectSyncPackageWriter` で別名保存。重い処理はボタンの次の Update で行う。閉じると形状・アバター自身のパーフェクトシンク・視点を戻す |
+| `PerfectSyncOverlay` / `PerfectSyncLabels` | 顔メッシュの線と目印を OnGUI の Repaint で画面の画素座標に GL で描く（カメラの映像には映らない。顔の中心より奥の三角形は描かない） / 目印・細かさ・出どころの表示名（5 言語）と案内図の位置 |
 | `ShapeKeySection` | Shape keys タブ（BlendShape の上限。トラッキングの表情には上限をかけないかのスイッチ（全アバター共通）、顔（まばたき・口・表情・パーフェクトシンクで動くもの）/ その他の切り替え・検索・上限付きだけの表示。全件を専用のスクロール欄に出し、見えている行だけを描く（行の高さ固定、上下は空白で高さだけ確保）。絞り込み結果は条件・上限付きの数・顔の数が変わったときだけ作り直し、表示名は `BlendShapeLimiter` が列挙時に作る。変えたらアバターごとに記録。口パク中に揺れる Face タブの母音表示と分けるため別タブ） |
 | `TrackingSection` | Tracking タブ（ON/OFF、入力元の切替（入力元ごとのスイッチを縦に並べ、右（前回の描画で測った行の幅に収まらない言語ではスイッチの下）に推奨（MediaPipe）と PC 負荷の目安（MediaPipe は腕・手の ON/OFF で高 / 中、OpenSeeFace は中、スマートフォンからの受信は低）を表示）、腕と手の ON/OFF と状態、まばたきのトラッキングの ON/OFF、表情反映の ON/OFF・しきい値・表情ごとの割り当て（Auto / None / プリセット）と判定中の表情、カメラ選択・一覧更新・再起動、同梱版が無いときのトラッカーのパス、ポート、受信状態 / Mirror、体の動かし方と強さ、視線の強さ（カメラ目線は Face タブ） / キャリブレーションの案内と頭の移動量 / Raw view と顔の数値） |
 | `DisplaySection` | Display タブ（カメラの FOV・リセット、背景・背景色（ベージュに戻すボタン）、解像度プリセット、ライトのプリセット・環境光・太陽光の強さ・色温度・向き） |
@@ -248,9 +259,12 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `PathListSet` | パスの一覧だけを持つ metadata の基底（`paths`、1024 件まで、ルート自身 = 空と長すぎるパスを拒否） |
 | `ParticleGroupSet` | `metadata/particle_groups.json`（パーティクルをまとめて切り替える単位 = FX で表示 ON/OFF するオブジェクトのうちパーティクルを含むもののパス）のモデル（`PathListSet`） |
 | `FxToggleSet` | `metadata/fx_toggles.json`（FX で表示 ON/OFF するオブジェクトすべてのパス。Objects タブの印と絞り込みに使う）のモデル（`PathListSet`） |
+| `PerfectSyncSet` | `metadata/perfect_sync.json`（パーフェクトシンク化の目印・細かさ・形状ごとの出どころと強さ・既存 BlendShape の割り当て）のモデルと検証。Converter は書き出さず、Runtime が別名保存で足す |
+| `PerfectSyncShapeData` | `metadata/perfect_sync_shapes.bin`（生成した形状の動く頂点の番号と移動量）のバイナリの読み書きと検証（不正は `InvalidDataException`） |
+| `ReadableMeshCopier` | 書き出し用の複製で、BlendShape のある SkinnedMeshRenderer のメッシュを Read/Write 有効の複製（一時フォルダのアセット）へ差し替える（同じメッシュは 1 回だけ複製、BlendShape の値は引き継ぐ）。パーフェクトシンク化で頂点を読むため |
 | `BlendShapeSyncExtractor` | NDMF 実行前に MA Blendshape Sync（リフレクション。参照は MA の `AvatarObjectReference.Get`、無ければ `referencePath`）を Transform で控え、改変・除去の後のパスで BlendShapeSyncSet にする。消えたメッシュ・BlendShape、同じ同期先の重複は除外 |
 | `ReflectionUtility` | SDK 型をアセンブリ参照なしで読むためのフィールド取得（float / bool / Vector3）・型名検索・アバタールートからの相対パス |
-| `AvatarExporter` | 複製 → MA 設定の控え → 改変ツールの適用（`AvatarPreprocessor`） → MA 未適用分の付け替え → 複製からメタデータ抽出 → FX 既定状態の焼き込み・表情抽出 → 除去 → 一時 Prefab → AssetBundle → ZIP の書き出し |
+| `AvatarExporter` | 複製 → MA 設定の控え → 改変ツールの適用（`AvatarPreprocessor`） → MA 未適用分の付け替え → 複製からメタデータ抽出 → FX 既定状態の焼き込み・表情抽出 → 除去 → 読めるメッシュへの差し替え（`ReadableMeshCopier`） → 一時 Prefab → AssetBundle → ZIP の書き出し |
 | `AvatarPreprocessor` | VRChat SDK の `VRCBuildPipelineCallbacks.OnPreprocessAvatar` をリフレクションで複製に呼び、アップロード時と同じ前処理（VRCFury・NDMF 等）をすべて適用。SDK が無い・Avatar Descriptor が無いときは `NdmfProcessor` だけを適用。前処理が false を返したら例外で書き出しを中断 |
 | `NdmfProcessor` | NDMF（Modular Avatar 等）の `AvatarProcessor.ProcessAvatar` をリフレクションで複製に適用（`AvatarPreprocessor` が SDK の前処理を呼べないときの代わり）。書き出し中に `Assets/ZZZ_GeneratedAssets` へ増えた生成アセットだけを後始末 |
 | `ExporterLoc` | エクスポーターの表示言語（英日韓・中国語簡体/繁体）。アプリの `Loc` と同じく 5 言語の組で書く `T(...)`。選択は EditorPrefs に保存し、既定は OS の言語。変換パッケージはアプリのアセンブリを参照できないため別実装 |
@@ -285,6 +299,11 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `VirtualCameraInstallerTests` | regsvr32 の引数（登録はデバイス名付きで 64 → 32 bit、解除は /u）、同梱ドライバーの探索（32 / 64 bit の両方が必要） |
 | `OpenSeeFacePacketTests` | OpenSeeFace パケットの値の位置・四元数の座標変換・長さ不足・非有限値・長さ 0 四元数の拒否 |
 | `PerfectSyncBlendShapesTests` | ARKit 名の照合（大文字小文字・区切り記号・L / R 表記・FBX の接頭辞、無関係な名前の拒否）、Mirror による左右の対応、メッシュからの検出と書き込み・解除 |
+| `PerfectSyncDataTests` | 形状のバイナリの往復・壊れたデータの拒否・形状と設定の検証 |
+| `PerfectSyncGeneratorTests` | 目印の段階と左右の対応、平らな顔（`PerfectSyncTestFace`）からの顔の座標系・推定・足りない目印、光線の判定・最も近い表面の点・対称の面、生成した形状の範囲（まばたきは片側だけ・口を開くとあごが下がる）・強さ・歯と舌は顎の形状だけ |
+| `PerfectSyncAutoMapperTests` | 名前の正規化、Viseme・まばたき・笑顔の割り当て、先の候補の優先と ARKit 名の除外 |
+| `PerfectSyncPackageWriterTests` | 既定の保存名、元のファイルを変えずに読み込める別名ファイルを作ること、パーフェクトシンク版からの保存で置き換わること、同じパス・不正な内容の拒否 |
+| `PerfectSyncMeshesTests` | 形状をメッシュの複製に足して戻すこと（同じ名前・合わない頂点は飛ばす）、割り当てによる `PerfectSyncBlendShapes` の書き込み |
 | `BlendShapeLimiterTests` | BlendShape の列挙と記録済みの上限の適用、上乗せを作った BlendShape だけが「顔」になること、上限付きだけを切る `Limit`、上乗せ書き込みが上限内に収まり解除で戻ること、書き出しとすべて解除 |
 | `BlendShapeSyncTests` | 同期元の値が同期先へ写ること、見つからないメッシュ・BlendShape の無視、同期先の上限 |
 | `TorsoPoseTests` | 正面で 0、ひねり・傾きの符号（通常 / 鏡像）、肩の欠け・肩幅不足の拒否、回転後の右向きが肩の線に一致 |

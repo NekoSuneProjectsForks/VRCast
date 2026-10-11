@@ -63,6 +63,8 @@ namespace VRCast.Avatars
                     var blendShapeSync = ReadMetadata<BlendShapeSyncSet>(zip, AvatarPackageLayout.BlendShapeSyncEntry);
                     var particleGroups = ReadMetadata<ParticleGroupSet>(zip, AvatarPackageLayout.ParticleGroupsEntry);
                     var fxToggles = ReadMetadata<FxToggleSet>(zip, AvatarPackageLayout.FxTogglesEntry);
+                    var perfectSync = ReadMetadata<PerfectSyncSet>(zip, AvatarPackageLayout.PerfectSyncEntry);
+                    PerfectSyncShapeData perfectSyncShapes = ReadPerfectSyncShapes(zip);
 
                     // bundle をキャッシュへ展開（ハッシュ検証込み）
                     string bundlePath = ExtractBundle(zip, manifest, cacheRoot);
@@ -75,7 +77,7 @@ namespace VRCast.Avatars
                     }
 
                     return new AvatarPackage(manifest, info.FullName, bundlePath, expressions, descriptor, physBones, constraints,
-                        blendShapeSync, particleGroups, fxToggles);
+                        blendShapeSync, particleGroups, fxToggles, perfectSync, perfectSyncShapes);
                 }
             }
             catch (InvalidDataException e)
@@ -139,6 +141,12 @@ namespace VRCast.Avatars
 
             // metadata ディレクトリ自体のエントリ
             if (name == AvatarPackageLayout.MetadataPrefix)
+            {
+                return true;
+            }
+
+            // パーフェクトシンク化で生成した形状（metadata 内の唯一のバイナリ）
+            if (name == AvatarPackageLayout.PerfectSyncShapesEntry)
             {
                 return true;
             }
@@ -223,6 +231,45 @@ namespace VRCast.Avatars
                 // サイズ超過や JSON 構文エラーも警告のみ
                 VRCastLog.Warning(LogCategory, $"Ignored unreadable {entryName}: {e.Message}");
                 return new T();
+            }
+        }
+
+        private static PerfectSyncShapeData ReadPerfectSyncShapes(ZipArchive zip)
+        {
+            // 任意エントリのため、無ければ空
+            var empty = new PerfectSyncShapeData();
+            ZipArchiveEntry entry = zip.GetEntry(AvatarPackageLayout.PerfectSyncShapesEntry);
+            if (entry == null)
+            {
+                return empty;
+            }
+
+            try
+            {
+                // 上限付きで読み込み、形式と内容を検証する
+                return PerfectSyncShapeData.FromBytes(ReadBytesEntry(entry, AvatarPackageLayout.MaxPerfectSyncShapesBytes));
+            }
+            catch (Exception e) when (e is AvatarPackageException || e is InvalidDataException)
+            {
+                // 壊れていてもアバターは表示できるよう警告のみ（生成した形状なしで読む）
+                VRCastLog.Warning(LogCategory, $"Ignored unreadable {entry.FullName}: {e.Message}");
+                return empty;
+            }
+        }
+
+        private static byte[] ReadBytesEntry(ZipArchiveEntry entry, long maxBytes)
+        {
+            // 申告サイズで先に弾き、申告サイズ以上は読まない（ヘッダ偽装対策）
+            if (entry.Length > maxBytes)
+            {
+                throw new AvatarPackageException($"{entry.FullName} is too large.");
+            }
+
+            using (Stream source = entry.Open())
+            using (var buffer = new MemoryStream())
+            {
+                CopyWithLimit(source, buffer, entry.Length, entry.FullName);
+                return buffer.ToArray();
             }
         }
 

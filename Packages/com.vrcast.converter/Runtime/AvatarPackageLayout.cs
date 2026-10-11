@@ -41,8 +41,17 @@ namespace VRCast.AvatarFormat
         // 任意エントリ: FX で表示を ON/OFF しているオブジェクト（衣装・小物の切り替え等）
         public const string FxTogglesEntry = MetadataPrefix + "fx_toggles.json";
 
+        // 任意エントリ: パーフェクトシンク化の設定（打った目印・形状ごとの元と強さ・既存 BlendShape の割り当て。アプリが書く）
+        public const string PerfectSyncEntry = MetadataPrefix + "perfect_sync.json";
+
+        // 任意エントリ: パーフェクトシンク化で生成した形状（頂点の移動量のバイナリ。アプリが書く）
+        public const string PerfectSyncShapesEntry = MetadataPrefix + "perfect_sync_shapes.bin";
+
         // metadata 1 ファイルの上限サイズ（1 MiB）
         public const long MaxMetadataBytes = 1024 * 1024;
+
+        // 生成した形状のバイナリの上限サイズ（64 MiB）
+        public const long MaxPerfectSyncShapesBytes = 64L * 1024 * 1024;
 
         // bundle 内のアバター Prefab のアセットパス（Exporter が一時的にこのパスへ保存する）
         public const string PrefabAssetPath = "Assets/__VRCastExport/avatar.prefab";

@@ -73,6 +73,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | iFacialMocap からの顔トラッキング（独自形式の受信） | 済 |
 | 表情反映（MediaPipe・VMC・iFacialMocap のみ。笑顔・驚き・怒り・悲しみ → 表情プリセット） | 済 |
 | パーフェクトシンク（MediaPipe・VMC・iFacialMocap のみ。ARKit 名の BlendShape を直接動かす） | 済 |
+| パーフェクトシンク化（顔に目印を打って ARKit 51 種を自動生成・既存の BlendShape を割り当て、別名の .vrcaster に保存。.vrcaster のみ） | 済 |
 | 表示言語（英語 / 日本語 / 韓国語 / 中国語 簡体字・繁体字）・クレジットタブ | 済 |
 | デバッグログタブ（重要度・カテゴリ・文字列の絞り込み、環境の要約、コピー） | 済 |
 | Constraint（VRC / Unity 標準の Position・Rotation・Scale・Parent・Aim・LookAt） | 済 |
@@ -113,6 +114,7 @@ VRM（VRoid Studio などで作った `.vrm`）は書き出し不要で、その
 
 - 書き出されるのは Unity 標準コンポーネント（Transform / Animator / Renderer / MeshFilter / Particle System）とそのメッシュ・マテリアル・シェーダー・テクスチャのみ。
 - VRChat コンポーネント・スクリプト・Animator Controller は書き出し用の複製から除去される（元のアバターは変更されない）。
+- BlendShape のあるメッシュは、頂点を読み取れる（Read/Write を有効にした）複製に差し替えて書き出す（アプリの **Perfect sync setup** で顔の形を読むため。元のメッシュ・インポート設定は変更しない）。
 - **Also export inactive objects**（非アクティブのオブジェクトも書き出す、既定 ON。EditorPrefs に保存）:
   ON なら、シーン上で非アクティブ（インスペクターのチェックを外した）オブジェクトも OFF のまま書き出す。
   FX の初期状態で表示されるものも OFF にそろえる（アプリの **Objects** タブで ON にできるので、書き出し前に ON にする必要は無い。ファイルは大きくなる）。
@@ -192,7 +194,7 @@ VRM（VRoid Studio などで作った `.vrm`）は書き出し不要で、その
 | 割り当てたキー | 表情プリセット切替 / ニュートラル（Pose タブで表情ごとに割り当て。テンキー・記号キー・修飾キー単独・Ctrl / Alt / Shift の組み合わせ可、既定は未割り当て、背面でも有効） |
 | テンキー 1〜5 | リセット（1 顔の向き / 2 視線 / 3 表情 / 4 カメラ）と 5 カメラ目線の ON / OFF。パネル下部のボタンと同じ。Settings タブで変更・解除可、NumLock ON、背面でも有効 |
 
-操作パネルは左のタブ（Start / Avatar / Pose / Face / Shape key setup / Tracking / Display / Output / Settings / Debug log / Credits / Official Discord）で項目を切り替え、内容は縦にスクロールする。
+操作パネルは左のタブ（Start / Avatar / Pose / Objects / Face / Shape key setup / Perfect sync setup / Tracking / Display / Output / Settings / Debug log / Credits / Official Discord）で項目を切り替え、内容は縦にスクロールする。
 配色は背景のベージュに合わせた濃いめのベージュ（焦げ茶の文字、キャラメル色のアクセント）。
 パネル下部には、どのタブでも押せるリセットボタン（**Head** 顔の向き / **Gaze** 視線 / **Expression** 表情をニュートラルへ / **Camera** カメラ）と、**Look at camera**（カメラ目線。ON の間は押し込んだ表示）を常に表示する。
 同じ操作はショートカットキーでも行える（パネルを隠していても有効。既定はテンキー 1〜5 で、**Settings** の **Shortcut keys (reset / look at camera)** で変更・解除・既定に戻す・背面でも使うかを選べる。割り当て方は表情のショートカットキーと同じ）。各ボタンの 2 行目に割り当て中のキー（例: `キー: Num 1`、未割り当てなら「未割り当て」）を表示する。
@@ -369,6 +371,25 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
 名前で検索・上限を付けたものだけの表示ができる（顔と体が 1 つのメッシュでも役割で分かれる）。
 一覧は件数に関係なく全件を専用のスクロール欄に出す（見えている行だけを描くので、BlendShape が多いアバターでも重くならない）。
 まばたき・口パク・表情・パーフェクトシンクのどれで動かしても上限を超えず、どの処理も動かさない固定の値も上限で切る。上限はアバターごとに保存される。
+
+**Perfect sync setup**（パーフェクトシンク化）タブでは、ARKit 名の BlendShape を持たないアバターをパーフェクトシンクに対応させる。
+タブには今使える ARKit の形状の数と編集できるメッシュの数を出し、**Start editing**（編集を始める）で編集画面へ切り替える。
+
+- 対象は .vrcaster のみ（VRM は非対応）。顔の形を読むため、BlendShape のあるメッシュを読み取れる形で書き出した .vrcaster が必要（古い書き出しツールで書き出したアバターは書き出し直す）。
+- 編集画面では顔を正面から大きく映し、顔メッシュの線を重ねる（線と目印は画面にだけ描き、仮想カメラ・Spout には映らない。カメラのアップは映る）。
+  右側のパネルで顔メッシュ・目印の細かさ（**Minimal** 約 10 点 / **Standard** 約 20 点 / **Detailed** 約 40 点）を選び、案内図と一覧で示す目印を左クリックで打つ。
+  目印はドラッグで動かせ、Delete キーで消せる。右ドラッグで回転・ホイールで拡大・中ドラッグで移動（Display タブの「カメラを固定」は編集中は無視）。
+- 左右はアバターから見た左右。「左側の目印を右側にも反映」（既定 ON）なら、左側を打つと右側を左右対称の位置に自動で置く（右側を手で動かすとそれを優先）。
+- 少ない段階で打たない目印（目頭・目尻・鼻先・頬・エラなど）は、打った目印から推定する。生成には最小の段階の目印（両目の上下・眉・口角・上下の唇・あご）が必要。
+- **Generate and preview**（生成して試す）で ARKit の 51 種を作り、アバターに足して試す。形状ごとに「自動生成」「既存の BlendShape」「なし」と強さ（0〜2）を選べる。
+  既存の BlendShape は名前（VRChat の Viseme・まばたき・笑顔・眉・ジト目など）から自動で割り当て、目の動き（eyeLook*）は目のボーンで動かすため既定で「なし」。
+  ARKit 名の BlendShape が元からある形状はそのまま使う。形状の名前を押すとスライダーで動かして確かめられ、既存の BlendShape を検索して選べる。
+- 「歯・舌のメッシュも顎と一緒に動かす」（既定 ON）では、名前に teeth / tooth / tongue / 歯 / 舌 を含み BlendShape のあるメッシュにも顎の形状（jawOpen など）を作る。
+- **Save as new file...**（別名で保存）で、元のファイルと同じフォルダの `元の名前_PerfectSync.vrcaster` を既定として保存する（元のファイルは変更しない）。
+  保存後は **Load the saved avatar** でそのまま読み込める。**Close**（閉じる）は保存していない変更を捨て、アバターと視点を元に戻す。
+- 保存したファイルには目印と設定（`metadata/perfect_sync.json`）と、作った形状の頂点の移動量（`metadata/perfect_sync_shapes.bin`）が入る。
+  読み込むと形状をメッシュの複製に足し（既存の BlendShape の番号は変わらない）、割り当てと合わせてパーフェクトシンクで動かす。
+  そのファイルで編集を始めると、保存した目印と設定の続きから編集できる。パーフェクトシンク版のファイルは、この機能に対応していない古い VRCast では開けない。
 
 **Vowel mouth shapes (A I U E O)**（既定 ON）では、VRChat と同じく声の母音に合わせて Viseme の aa / ih / ou / E / oh を切り替える
 （あ = aa、い = ih、う = ou、え = E、お = oh）。

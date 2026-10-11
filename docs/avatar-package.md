@@ -22,10 +22,13 @@ MyAvatar.vrcaster
     ├── constraints.json Constraint（VRC / Unity 標準、無ければ省略）
     ├── blendshape_sync.json BlendShape の同期（Modular Avatar の Blendshape Sync、無ければ省略）
     ├── particle_groups.json パーティクルをまとめて切り替える単位（FX の切り替え、無ければ省略）
-    └── fx_toggles.json  FX で表示を ON/OFF するオブジェクト（無ければ省略）
+    ├── fx_toggles.json  FX で表示を ON/OFF するオブジェクト（無ければ省略）
+    ├── perfect_sync.json        パーフェクトシンク化の目印と設定（アプリで保存したパーフェクトシンク版のみ）
+    └── perfect_sync_shapes.bin  パーフェクトシンク化で作った形状の頂点の移動量（同上）
 ```
 
-上記以外のエントリ（サブディレクトリ、`.json` 以外の metadata、`..` / `\` / `:` を含む名前）を含むパッケージは拒否される。
+上記以外のエントリ（サブディレクトリ、`.json` 以外の metadata（`perfect_sync_shapes.bin` を除く）、`..` / `\` / `:` を含む名前）を含むパッケージは拒否される。
+そのため `perfect_sync_shapes.bin` を含むパーフェクトシンク版は、この形式に対応する前の Runtime では開けない。
 
 ## manifest.json
 
@@ -276,6 +279,62 @@ Runtime はオブジェクトの一覧（Objects タブ）でこれらに印を�
 }
 ```
 
+## metadata/perfect_sync.json
+
+Converter は書き出さない。Runtime の **Perfect sync setup**（パーフェクトシンク化）で、元の `.vrcaster` の全エントリを複製し、
+このファイルと `perfect_sync_shapes.bin` を足して別名で保存したもの（manifest の `name` は保存したファイル名にする。元のファイルは変更しない）。
+目印と設定を持つので、同じファイルから編集を再開できる。
+
+```json
+{
+    "version": 1,
+    "sourceName": "MyAvatar.vrcaster",
+    "sourceBundleSha256": "64 桁の小文字 16 進",
+    "detail": 1,
+    "mirror": true,
+    "includeMouthParts": true,
+    "facePath": "Body",
+    "landmarks": [ { "id": 0, "triangle": 1234, "u": 0.25, "v": 0.4 } ],
+    "shapes": [ { "name": "jawOpen", "source": 0, "strength": 1.0 } ],
+    "bindings": [ { "name": "eyeBlinkLeft", "path": "Body", "blendShape": "blink_L", "weight": 1.0 } ]
+}
+```
+
+| フィールド | 内容 |
+| :--- | :--- |
+| `version` | `1` |
+| `sourceName` / `sourceBundleSha256` | 元のファイル名と bundle の SHA-256（表示用。空可） |
+| `detail` | 目印の細かさ `0` 最小（約 10 点）/ `1` 標準（約 20 点）/ `2` 詳細（約 40 点） |
+| `mirror` / `includeMouthParts` | 左右対称で打つか / 歯・舌のメッシュにも顎の形状を作るか（編集の再開用） |
+| `facePath` | 目印を打った顔メッシュ（アバタールートからの相対パス、空 = ルート） |
+| `landmarks[].id` | 目印の種類（0〜255。最小 0〜10、標準 20〜30、詳細 40〜55。未定義の番号は再開時に無視） |
+| `landmarks[].triangle` / `u` / `v` | 顔メッシュの三角形の番号と、その中の重心座標（点 = 頂点0 ×(1−u−v) + 頂点1 × u + 頂点2 × v。u, v, u+v は 0〜1） |
+| `shapes[].name` / `source` / `strength` | ARKit 名ごとの出どころ（`0` 自動生成 / `1` 既存の BlendShape / `2` なし）と強さ 0〜2 |
+| `bindings[].name` | 既存の BlendShape を割り当てる ARKit 名（51 種のいずれか。知らない名前は無視） |
+| `bindings[].path` / `blendShape` / `weight` | 割り当てる SkinnedMeshRenderer・BlendShape 名・強さ 0〜2（ARKit の値 × 強さで書く） |
+
+上限: landmarks 128、shapes 64、bindings 512。不正な場合は警告のみで空として扱う。
+割り当てた ARKit 名は名前の照合（ARKit 名の BlendShape）より優先し、割り当ての無い ARKit 名は従来どおり名前で探す。
+
+## metadata/perfect_sync_shapes.bin
+
+パーフェクトシンク化で作った形状（ARKit 名の BlendShape）の、動く頂点の番号と移動量。
+生成の処理を後で改良しても保存済みのアバターの見た目が変わらないよう、目印からの再計算ではなく結果を保存する。
+little-endian のバイナリ（.NET の `BinaryWriter`。文字列は 7 ビット可変長の長さ + UTF-8）。
+
+| 順 | 型 | 内容 |
+| :--- | :--- | :--- |
+| 1 | int32 | 識別子 `0x53504356`（"VCPS"） |
+| 2 | int32 | 版 `1` |
+| 3 | int32 | 形状の数（0〜1024） |
+| 形状ごと | string, string | メッシュのパス（アバタールートからの相対パス）と ARKit 名 |
+| | int32 | 動く頂点の数（0〜1048576） |
+| 頂点ごと | int32, float32 ×3 | 頂点番号（0 以上）と移動量 x, y, z（メッシュの座標系、±10000 以内） |
+
+上限: 64 MiB。途中で切れている・範囲外の値を含む場合は警告のみで形状無しとして扱う。
+Runtime は読み込み時、メッシュを複製して形状を末尾に足し（`AddBlendShapeFrame`、重み 100 で 1 フレーム）、レンダラーの参照を差し替える
+（既存の BlendShape の番号は変わらない）。読めないメッシュ・見つからないメッシュ・同じ名前が既にある形状・頂点番号が合わない形状は飛ばす。
+
 ## avatar.bundle
 
 - アバター Prefab を 1 つだけ含む。アセットパスは固定で `Assets/__VRCastExport/avatar.prefab`。
@@ -285,6 +344,8 @@ Runtime はオブジェクトの一覧（Objects タブ）でこれらに印を�
   （FX の初期状態で表示されるものも非アクティブにそろえる。Runtime の Objects タブで ON にできる）。
   OFF（と 1.18.7 より前の Converter）では書き出さず、パーティクルだけを非アクティブのまま残す（その親は Transform のみ。パーティクルは 1.17.7 以降）。
   依存として Mesh, Material, Shader, Texture, Avatar (Humanoid) が含まれる。
+  BlendShape のある SkinnedMeshRenderer のメッシュは、書き出し時に頂点を読み取れる（Read/Write 有効の）複製へ差し替える
+  （パーフェクトシンク化で顔の形を読むため。1.18.8 より後の Converter）。
 - Animator Controller は含めない（VRChat 固有の StateMachineBehaviour を含むため）。表情等は Milestone 3 で metadata 化する。
   代わりに FX レイヤーの初期状態（小物トグル・初期表情等）を書き出し時に GameObject / Renderer の有効状態、BlendShape、マテリアル差し替えへ焼き込む（Transform・ポーズは変更しない。BlendShape は既定ではシーン上の値を優先する）。
 - VRChat コンポーネント（Avatar Descriptor, PhysBone, Constraint 等）・自作 MonoBehaviour は含めない。
@@ -300,6 +361,7 @@ Runtime はオブジェクトの一覧（Objects タブ）でこれらに印を�
 | manifest.json | 64 KiB 以下、JSON として有効、全必須フィールドが妥当 |
 | avatar.bundle | ZIP 上のサイズ = `bundleSize`、展開量を `bundleSize` で打ち切り、SHA-256 = `bundleSha256` |
 | metadata/*.json | 1 MiB 以下、展開量を申告サイズで打ち切り。内容は `IMetadata.Validate` で検証（失敗は警告のみ） |
+| metadata/perfect_sync_shapes.bin | 64 MiB 以下、展開量を申告サイズで打ち切り。形式と値の範囲を検証（失敗は警告のみ） |
 | 生成後 | 許可リスト外のコンポーネントを破棄（Missing Script は件数を警告） |
 
 展開先: `Application.temporaryCachePath/avatars/<bundleSha256>/avatar.bundle`。同じハッシュのファイルがあれば再利用する。

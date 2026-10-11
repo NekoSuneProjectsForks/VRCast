@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using VRCast.Animations;
+using VRCast.AvatarFormat;
 
 namespace VRCast.Tracking
 {
@@ -34,7 +35,7 @@ namespace VRCast.Tracking
         private static readonly int JawOpen = ArKitFace.JawOpen;
 
         // ARKit の各名前に対応するアバター側の書き込み先（無ければ null）
-        private readonly List<BlendShapeOverlay>[] _targets;
+        private readonly List<Target>[] _targets;
 
         // 平滑化済みの値（0〜1、アバター側の左右）
         private readonly float[] _current;
@@ -42,7 +43,22 @@ namespace VRCast.Tracking
         // 書き込み中なら true（解除時に一度だけ元の値へ戻すため）
         private bool _active;
 
-        private PerfectSyncBlendShapes(List<BlendShapeOverlay>[] targets, int matched)
+        /// <summary>
+        /// 書き込み先 1 つと、その強さ（割り当てた既存の BlendShape は強さを変えられる。名前で見つけたものは 1）。
+        /// </summary>
+        private readonly struct Target
+        {
+            public readonly BlendShapeOverlay Overlay;
+            public readonly float Scale;
+
+            public Target(BlendShapeOverlay overlay, float scale)
+            {
+                Overlay = overlay;
+                Scale = scale;
+            }
+        }
+
+        private PerfectSyncBlendShapes(List<Target>[] targets, int matched)
         {
             _targets = targets;
             _current = new float[targets.Length];
@@ -80,11 +96,19 @@ namespace VRCast.Tracking
 
         /// <summary>
         /// root 以下の全 SkinnedMeshRenderer から ARKit 名の BlendShape を探す。
+        /// bindings（パーフェクトシンク化で既存の BlendShape を ARKit 名に割り当てたもの）があれば、その ARKit 名は割り当てを使い、
+        /// 残りの ARKit 名を名前の照合で探す。
         /// </summary>
-        public static PerfectSyncBlendShapes Create(Transform root)
+        public static PerfectSyncBlendShapes Create(Transform root, IReadOnlyList<PerfectSyncBinding> bindings = null)
         {
-            var targets = new List<BlendShapeOverlay>[ArKitFace.BlendShapeNames.Length];
-            int matched = 0;
+            var targets = new List<Target>[ArKitFace.BlendShapeNames.Length];
+            int matched = AddBindings(root, bindings, targets);
+            var bound = new bool[targets.Length];
+            for (int i = 0; i < targets.Length; i++)
+            {
+                bound[i] = targets[i] != null;
+            }
+
             foreach (SkinnedMeshRenderer renderer in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
             {
                 // メッシュの無いレンダラーは対象外
@@ -96,9 +120,9 @@ namespace VRCast.Tracking
 
                 for (int shape = 0; shape < mesh.blendShapeCount; shape++)
                 {
-                    // ARKit 名でなければ対象外
+                    // ARKit 名でない・割り当て済みの ARKit 名は対象外
                     int index = Match(mesh.GetBlendShapeName(shape));
-                    if (index < 0)
+                    if (index < 0 || bound[index])
                     {
                         continue;
                     }
@@ -106,15 +130,52 @@ namespace VRCast.Tracking
                     // 初めて見つかった名前なら種類数を数える
                     if (targets[index] == null)
                     {
-                        targets[index] = new List<BlendShapeOverlay>();
+                        targets[index] = new List<Target>();
                         matched++;
                     }
 
-                    targets[index].Add(BlendShapeOverlay.Create(renderer, shape));
+                    targets[index].Add(new Target(BlendShapeOverlay.Create(renderer, shape), 1f));
                 }
             }
 
             return new PerfectSyncBlendShapes(targets, matched);
+        }
+
+        private static int AddBindings(Transform root, IReadOnlyList<PerfectSyncBinding> bindings, List<Target>[] targets)
+        {
+            // 割り当てが無ければ何もしない
+            int matched = 0;
+            if (bindings == null)
+            {
+                return matched;
+            }
+
+            foreach (PerfectSyncBinding binding in bindings)
+            {
+                // 知らない ARKit 名・見つからない BlendShape・強さ 0 は飛ばす
+                int index = binding != null ? Array.IndexOf(ArKitFace.BlendShapeNames, binding.name) : -1;
+                if (index < 0 || binding.weight <= 0f)
+                {
+                    continue;
+                }
+
+                BlendShapeOverlay overlay = BlendShapeOverlay.Create(root, binding.path, binding.blendShape);
+                if (overlay == null)
+                {
+                    continue;
+                }
+
+                // 初めて割り当てた名前なら種類数を数える
+                if (targets[index] == null)
+                {
+                    targets[index] = new List<Target>();
+                    matched++;
+                }
+
+                targets[index].Add(new Target(overlay, binding.weight));
+            }
+
+            return matched;
         }
 
         /// <summary>
@@ -221,10 +282,10 @@ namespace VRCast.Tracking
 
         private void Write(int index, float weight)
         {
-            // 同じ名前の全メッシュへ書く
-            foreach (BlendShapeOverlay overlay in _targets[index])
+            // 同じ名前の全メッシュへ、それぞれの強さを掛けて書く
+            foreach (Target target in _targets[index])
             {
-                overlay.Write(weight);
+                target.Overlay.Write(weight * target.Scale);
             }
         }
 
