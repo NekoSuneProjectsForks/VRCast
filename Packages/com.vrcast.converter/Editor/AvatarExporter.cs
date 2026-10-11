@@ -52,7 +52,7 @@ namespace VRCast.Converter.Editor
             public int PhysBoneCount;
             public int ConstraintCount;
             public int BlendShapeSyncCount;
-            public bool NdmfApplied;
+            public AvatarPreprocessor.Mode Preprocess;
             public int OptimizerBlendShapeSettingsDisabled;
             public int ModularAvatarFallbackFixes;
             public int RemovedInactiveObjects;
@@ -154,8 +154,8 @@ namespace VRCast.Converter.Editor
                 // 表情の BlendShape が最適化で消えないよう、最適化ツールの BlendShape の削除を複製でだけ止める
                 report.OptimizerBlendShapeSettingsDisabled = OptimizerGuard.KeepBlendShapes(clone);
 
-                // Modular Avatar 等の改変を VRChat のアップロード時と同じく複製へ適用（NDMF が無ければ何もしない）
-                report.NdmfApplied = NdmfProcessor.Process(clone);
+                // VRCFury・Modular Avatar 等の改変を VRChat のアップロード時と同じく複製へ適用（どれも無ければ何もしない）
+                report.Preprocess = AvatarPreprocessor.Process(clone);
 
                 // NDMF で統合されなかった衣装・小物のボーンをアバターのボーンへ付け替え、追従させる
                 ModularAvatarFallback.Result maFallback = ModularAvatarFallback.Apply(maPlan);

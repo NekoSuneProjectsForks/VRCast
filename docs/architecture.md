@@ -185,7 +185,8 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `LogSection` | Debug log タブ。環境の要約（バージョン・OS・CPU・GPU・トラッカー / 受信の状態・カメラ一覧）と `LogBuffer` のログを、重要度（DEBUG / INFO / WARN / ERROR、件数付き）・カテゴリ・検索文字列・並び順で絞り込んで表示（最新 300 件まで。エラーはスタックトレースの先頭数行。まとめた行は ×N）。詳細ログのスイッチ。一覧は Layout イベントの時だけ、ログの追加では 0.25 秒に 1 回まで作り直す（Layout と Repaint で要素数を変えない）。表示中のログを環境と一緒にコピー、消去、Player.log のフォルダをエクスプローラーで開く |
 | `CreditsSection` | Credits タブ（開発者・協力者のリンク、開発者の Twitch チャンネルを開く応援カード、ライセンス・NOTICE は GitHub のファイルを開くボタン）。人の行は `GuiControls.LabeledButtons`（固定幅ラベル + 名前 = X、右に YouTube 等のボタン。リンクの無い人は名前のボタンが行いっぱい）、その他の行は `GuiControls.LabeledButton` |
 | `AvatarSection` | Avatar タブ（ドロップ・Browse・パス入力による読み込み、Reload / Unload、最近使ったアバター 10 件の画像付きタイルでの切り替え・画像の設定・削除、読込状態・アバター情報）。タイルには入れた日時（`AvatarEntry.addedAt`。初めての記録時と、ドロップ・Browse・Load で入れ直したときに更新。日時の無い以前の記録はファイルの更新日時で補う。文字列はファイルの有無の確認と一緒に 2 秒ごとに作り直す）を出す。読み込む前に空・拡張子違い・存在しないファイルを確認し、表示言語に合わせたエラーを出す。アバター以外の画像がドロップされたら表示中のアバターの画像にする |
-| `AvatarThumbnails` | 最近使ったアバターの画像（PNG / JPG / GIF、20 MB まで）。選んだ画像を `persistentDataPath/Thumbnails` へ新しい名前でコピーし、`AvatarEntry.thumbnail` にファイル名を記録。表示時に裏のスレッドで読み、長辺 256 px に縮小。GIF はコマを切り替えてアニメーションする。起動時に記録に無い画像を消す |
+| `AvatarThumbnails` | 最近使ったアバターの画像（PNG / JPG / GIF、20 MB まで）。選んだ画像を `persistentDataPath/Thumbnails` へ新しい名前でコピーし、`AvatarEntry.thumbnail` にファイル名を記録。表示時に裏のスレッドで読み、長辺 256 px に縮小。GIF はコマを切り替えてアニメーションする。起動時に記録に無い画像を消す。`SetPng` で撮った PNG も同じ形で保存する |
+| `AvatarFaceCapture` | アバターの顔を一時カメラで 256 px 四方の PNG に撮る（`LoadedAvatar.CalculateFaceFrame` の顔の中心と範囲へ、アバターの正面から画角 25° で向ける。背景は画面と同じ色の不透明）。`AvatarSection` が画像の無いアバターの読込 1 秒後と「顔を撮る」で使う。画面・仮想カメラ・Spout の出力には影響しない |
 | `GifDecoder` | Unity が読めない GIF の展開（LZW・インターレース・透過色・コマの消し方）。合成したコマを縮小し、下の行から並べた RGBA で返す。Unity の API を使わないので別スレッドで動く |
 | `AvatarFiles` | 読み込み対象（拡張子 `.vrcaster` / `.vrm`）の判定と、複数パスからの最初の対象の選択 |
 | `UpdateChecker` | 起動時（設定 ON のとき）に `https://coffin299.github.io/VRCast/version.json`（`webpage` ブランチ）を `UnityWebRequest` で 1 回取得し、`VersionUtility` で `Application.version` と比較。失敗は静かに諦める。更新履歴は `ChangelogUrl`（GitHub の `CHANGELOG.txt`）を開く。ダウンロードページは GitHub（`url`）と BOOTH（`boothUrl`）の 2 つで、それぞれ許可した接頭辞の URL のみ使い、それ以外は既定のページを開く。`update`（`zipUrl` / `size` / `sha256`）が正しければ `Package` として自動更新に渡す。入手先と「今すぐ更新」・進み具合のボタンは `UpdateDownloadButtons` で通知と Settings が共有 |
@@ -243,8 +244,9 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `BlendShapeSyncSet` | `metadata/blendshape_sync.json`（MA Blendshape Sync の同期元・同期先）のモデルと検証 |
 | `BlendShapeSyncExtractor` | NDMF 実行前に MA Blendshape Sync（リフレクション。参照は MA の `AvatarObjectReference.Get`、無ければ `referencePath`）を Transform で控え、改変・除去の後のパスで BlendShapeSyncSet にする。消えたメッシュ・BlendShape、同じ同期先の重複は除外 |
 | `ReflectionUtility` | SDK 型をアセンブリ参照なしで読むためのフィールド取得（float / bool / Vector3）・型名検索・アバタールートからの相対パス |
-| `AvatarExporter` | 複製 → MA 設定の控え → NDMF 適用 → MA 未適用分の付け替え → 複製からメタデータ抽出 → FX 既定状態の焼き込み・表情抽出 → 除去 → 一時 Prefab → AssetBundle → ZIP の書き出し |
-| `NdmfProcessor` | NDMF（Modular Avatar 等）の `AvatarProcessor.ProcessAvatar` をリフレクションで複製に適用。書き出し中に `Assets/ZZZ_GeneratedAssets` へ増えた生成アセットだけを後始末 |
+| `AvatarExporter` | 複製 → MA 設定の控え → 改変ツールの適用（`AvatarPreprocessor`） → MA 未適用分の付け替え → 複製からメタデータ抽出 → FX 既定状態の焼き込み・表情抽出 → 除去 → 一時 Prefab → AssetBundle → ZIP の書き出し |
+| `AvatarPreprocessor` | VRChat SDK の `VRCBuildPipelineCallbacks.OnPreprocessAvatar` をリフレクションで複製に呼び、アップロード時と同じ前処理（VRCFury・NDMF 等）をすべて適用。SDK が無い・Avatar Descriptor が無いときは `NdmfProcessor` だけを適用。前処理が false を返したら例外で書き出しを中断 |
+| `NdmfProcessor` | NDMF（Modular Avatar 等）の `AvatarProcessor.ProcessAvatar` をリフレクションで複製に適用（`AvatarPreprocessor` が SDK の前処理を呼べないときの代わり）。書き出し中に `Assets/ZZZ_GeneratedAssets` へ増えた生成アセットだけを後始末 |
 | `ExporterLoc` | エクスポーターの表示言語（英日韓・中国語簡体/繁体）。アプリの `Loc` と同じく 5 言語の組で書く `T(...)`。選択は EditorPrefs に保存し、既定は OS の言語。変換パッケージはアプリのアセンブリを参照できないため別実装 |
 | `ModularAvatarFallback` | NDMF 実行前に MA Merge Armature / Bone Proxy の統合元・統合先を控え、実行後もアバターのボーンの子になっていない衣装・小物を MA と同じ規則（prefix/suffix 付きボーン名の対応、Bone Proxy の配置モード）で付け替える。MA の処理はエラーを投げずに失敗し得るため、その保険。移動したオブジェクトの元パスを返し、`FxDefaultStateBaker` が古いパスのカーブを読み替える |
 | `ExpressionExtractor` | FaceEmo の表情（優先・BlendShape 部分のみ）、FX コントローラー、追加指定のクリップから BlendShape のみのクリップを表情プリセットとして抽出（FX と同じクリップは除き、名前の重複には番号を付ける。FaceEmo は同じクリップでもモード名が違えば別の表情にし、BlendShape があれば見送らない。FX の表情でないクリップは BlendShape 部分だけを `hidden` として最後に取り込む） |

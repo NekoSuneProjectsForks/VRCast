@@ -17,6 +17,10 @@ namespace VRCast.Avatars
         private const float WidthRatio = 0.5f;
         private const float DepthRatio = 0.3f;
 
+        // 顔の写真の範囲（頭の大きさに対する半分の高さの倍率。髪や首元が少し入る程度）と、骨格が無いときの全高に対する比
+        private const float FaceFrameScale = 0.9f;
+        private const float NonHumanoidFaceRatio = 0.12f;
+
         // .vrcaster の bundle（VRM は null。VRM のアセットはアバター本体の破棄と一緒に解放される）
         private AssetBundle _bundle;
 
@@ -122,6 +126,38 @@ namespace VRCast.Avatars
             var center = new Vector3(hips.position.x, (top + bottom) * 0.5f, hips.position.z);
             bounds = new Bounds(center, new Vector3(height * WidthRatio, height, height * DepthRatio));
             return true;
+        }
+
+        /// <summary>
+        /// 顔を写すときの中心と、写す範囲の半分の高さ（ワールド座標・メートル）。
+        /// Humanoid は頭（目があれば両目の間）、それ以外は全 Renderer の上端付近を使う。
+        /// </summary>
+        public void CalculateFaceFrame(out Vector3 center, out float halfHeight)
+        {
+            Transform head = IsHumanoid ? Animator.GetBoneTransform(HumanBodyBones.Head) : null;
+            if (head != null)
+            {
+                // 頭の大きさは「首→頭」の長さの倍で近似（フレーミングと同じ）
+                Transform neck = Animator.GetBoneTransform(HumanBodyBones.Neck);
+                float headSize = neck != null
+                    ? Vector3.Distance(neck.position, head.position) * HeadTopScale
+                    : DefaultHeadSize;
+
+                // 両目があればその間、無ければ頭のボーンから頭の大きさの半分ほど上を顔の中心にする
+                Transform leftEye = Animator.GetBoneTransform(HumanBodyBones.LeftEye);
+                Transform rightEye = Animator.GetBoneTransform(HumanBodyBones.RightEye);
+                center = leftEye != null && rightEye != null
+                    ? (leftEye.position + rightEye.position) * 0.5f
+                    : head.position + Vector3.up * headSize * 0.5f;
+                halfHeight = Mathf.Max(headSize, DefaultHeadSize) * FaceFrameScale;
+                return;
+            }
+
+            // 骨格が無ければ、全体の上端から少し下を中心に、高さの一部を写す
+            Bounds bounds = CalculateRendererBounds();
+            float height = Mathf.Max(bounds.size.y, DefaultHeadSize);
+            center = new Vector3(bounds.center.x, bounds.max.y - height * NonHumanoidFaceRatio, bounds.center.z);
+            halfHeight = height * NonHumanoidFaceRatio;
         }
 
         private static float LowerY(Transform bone, float current)

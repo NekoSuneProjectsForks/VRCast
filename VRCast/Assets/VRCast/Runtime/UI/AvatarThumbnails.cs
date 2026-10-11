@@ -94,20 +94,40 @@ namespace VRCast.UI
                 return $"The image is too large (max {MaxFileBytes / (1024 * 1024)} MB)";
             }
 
-            // 同じ名前の別画像と取り違えないよう、毎回新しい名前でコピーする
-            string fileName = Guid.NewGuid().ToString("N") + info.Extension.ToLowerInvariant();
+            // 選んだ画像をそのままコピーする
+            return Store(avatarPath, info.Extension, fileName => File.Copy(imagePath, fileName));
+        }
+
+        /// <summary>
+        /// 撮った PNG をアバターの画像として設定する（前の画像は消す）。失敗したら理由（英語）を返し、成功なら null。
+        /// </summary>
+        public string SetPng(string avatarPath, byte[] png)
+        {
+            // 撮れなかった画像は断る
+            if (png == null || png.Length == 0)
+            {
+                return "Could not capture the image";
+            }
+
+            return Store(avatarPath, ".png", fileName => File.WriteAllBytes(fileName, png));
+        }
+
+        private string Store(string avatarPath, string extension, Action<string> write)
+        {
+            // 同じ名前の別画像と取り違えないよう、毎回新しい名前で書き込む
+            string fileName = Guid.NewGuid().ToString("N") + extension.ToLowerInvariant();
             try
             {
                 Directory.CreateDirectory(_folder);
-                File.Copy(imagePath, Path.Combine(_folder, fileName));
+                write(Path.Combine(_folder, fileName));
             }
             catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
             {
-                VRCastLog.Warning(LogCategory, $"Could not copy the image: {e.Message}");
+                VRCastLog.Warning(LogCategory, $"Could not save the image: {e.Message}");
                 return e.Message;
             }
 
-            // 記録の無いアバター（読み込んだことが無い）は対象外。コピーした画像は使わないので消す
+            // 記録の無いアバター（読み込んだことが無い）は対象外。書き込んだ画像は使わないので消す
             string previous = _settings.GetAvatarThumbnail(avatarPath);
             if (!_settings.SetAvatarThumbnail(avatarPath, fileName))
             {

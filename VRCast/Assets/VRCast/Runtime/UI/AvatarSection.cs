@@ -1,9 +1,11 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using VRCast.Avatars;
 using VRCast.Core;
 using VRCast.Platform;
+using VRCast.Rendering;
 
 namespace VRCast.UI
 {
@@ -39,6 +41,9 @@ namespace VRCast.UI
 
         // ファイルが見つからないアバターの画像の濃さ
         private const float MissingImageAlpha = 0.4f;
+
+        // 読み込んでから顔を撮るまでの待ち時間（秒。待機ポーズ・揺れものが落ち着くまで）
+        private const float CaptureDelaySeconds = 1f;
 
         private readonly AvatarSession _session;
         private readonly AppSettings _settings;
@@ -80,6 +85,41 @@ namespace VRCast.UI
             _settings = settings;
             _thumbnails = new AvatarThumbnails(settings);
             _pathInput = initialPath ?? string.Empty;
+
+            // 画像の無いアバターは、読み込んだら顔を撮って一覧の画像にする
+            _session.AvatarLoaded += OnAvatarLoaded;
+        }
+
+        private void OnAvatarLoaded(LoadedAvatar avatar)
+        {
+            // 自分で選んだ画像・撮った画像があれば上書きしない
+            if (!_thumbnails.Has(avatar.SourcePath))
+            {
+                _session.StartCoroutine(CaptureFace(avatar, true));
+            }
+        }
+
+        private IEnumerator CaptureFace(LoadedAvatar avatar, bool automatic)
+        {
+            // 読み込み直後は待機ポーズ・揺れものが落ち着いていないので少し待つ
+            if (automatic)
+            {
+                yield return new WaitForSecondsRealtime(CaptureDelaySeconds);
+            }
+
+            // 画面の描画が終わってから撮る
+            yield return new WaitForEndOfFrame();
+
+            // 待つ間に別のアバターへ切り替わった・自分で画像を選んだなら撮らない
+            if (_session.Current != avatar || (automatic && _thumbnails.Has(avatar.SourcePath)))
+            {
+                yield break;
+            }
+
+            // 背景は画面と同じ色にする（カメラが無ければ既定の灰色）
+            UnityEngine.Camera main = UnityEngine.Camera.main;
+            Color background = main != null ? main.backgroundColor : Color.gray;
+            _thumbnailError = _thumbnails.SetPng(avatar.SourcePath, AvatarFaceCapture.CapturePng(avatar, background));
         }
 
         public void Draw()
@@ -187,14 +227,19 @@ namespace VRCast.UI
                 "最近使用的虛擬形象"));
             GuiControls.Hint(Loc.T(
                 "Click to switch. Camera, light and pose are remembered for each avatar. The date is when you added it (drop / Browse / Load). "
+                + "Avatars without an image get a picture of their face when loaded. "
                 + "\"Image\" sets a picture (PNG / JPG / GIF) for the list; you can also drop an image onto the window for the avatar being shown.",
                 "クリックで切り替えます。カメラ・ライト・待機ポーズはアバターごとに記憶されます。日時は入れた（ドロップ・参照・読み込みボタン）日時です。"
+                + "画像の無いアバターは、読み込むと顔を撮って一覧の画像にします。"
                 + "「画像」で一覧の画像（PNG / JPG / GIF）を設定できます。表示中のアバターには、画像をウィンドウにドロップしても設定できます。",
                 "클릭하여 전환합니다. 카메라·조명·대기 포즈는 아바타마다 기억됩니다. 날짜는 넣은 (드롭·찾아보기·불러오기) 날짜입니다. "
+                + "이미지가 없는 아바타는 불러올 때 얼굴을 촬영해 목록 이미지로 사용합니다. "
                 + "\"이미지\"로 목록의 이미지(PNG / JPG / GIF)를 설정할 수 있습니다. 표시 중인 아바타는 이미지를 창에 드롭해도 설정됩니다.",
                 "点击即可切换。相机、灯光和待机姿势会按虚拟形象分别记住。日期为加入（拖放、浏览、加载）的时间。"
+                + "没有图片的虚拟形象在加载时会拍摄脸部作为列表图片。"
                 + "用“图片”可设置列表中的图片（PNG / JPG / GIF）。也可将图片拖放到窗口，设置给正在显示的虚拟形象。",
                 "點擊即可切換。相機、燈光和待機姿勢會依虛擬形象分別記住。日期為加入（拖放、瀏覽、載入）的時間。"
+                + "沒有圖片的虛擬形象在載入時會拍攝臉部作為清單圖片。"
                 + "用「圖片」可設定清單中的圖片（PNG / JPG / GIF）。也可將圖片拖放到視窗，設定給正在顯示的虛擬形象。"));
 
             DrawTiles(recent);
@@ -564,7 +609,7 @@ namespace VRCast.UI
                 string renderers = Loc.T("Renderers", "レンダラー", "렌더러", "渲染器", "渲染器");
                 GuiControls.Hint($"Humanoid: {humanoid}    {renderers}: {avatar.RendererCount}");
                 DrawSource(avatar);
-                DrawThumbnailButtons(avatar.SourcePath);
+                DrawThumbnailButtons(avatar);
             }
             else
             {
@@ -592,9 +637,17 @@ namespace VRCast.UI
             GuiControls.Hint("VRM " + avatar.Vrm.specVersion + authors);
         }
 
-        private void DrawThumbnailButtons(string avatarPath)
+        private void DrawThumbnailButtons(LoadedAvatar avatar)
         {
+            string avatarPath = avatar.SourcePath;
             GUILayout.BeginHorizontal();
+
+            // 今の顔（表情・向き）を撮り直して一覧の画像にする
+            if (GUILayout.Button(Loc.T("Capture face", "顔を撮る", "얼굴 촬영", "拍摄脸部", "拍攝臉部"),
+                    GuiControls.Shrinkable))
+            {
+                _session.StartCoroutine(CaptureFace(avatar, false));
+            }
 
             // 最近使ったアバターの一覧に出す画像を選ぶ
             GUI.enabled = FileDialog.IsSupported;

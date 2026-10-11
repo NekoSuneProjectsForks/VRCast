@@ -121,31 +121,32 @@ namespace VRCast.Converter.Editor
                     "Only Unity built-in components (Transform, Animator, Renderers, MeshFilter) are exported. " +
                     "VRChat components, scripts and the Animator Controller are removed from the exported copy. " +
                     "The FX layer's default state (toggles etc.) is baked into the copy before removal. " +
-                    "If NDMF is installed, Modular Avatar and other NDMF tools are applied to the copy first. " +
+                    "Avatar tools such as VRCFury and Modular Avatar are applied to the copy first, " +
+                    "the same way as when uploading to VRChat. " +
                     "Outfits and accessories set up with MA Merge Armature / Bone Proxy that were not merged " +
                     "are attached to the avatar's bones by VRCast so that they follow the avatar.",
                     "書き出されるのは Unity 標準のコンポーネント（Transform・Animator・Renderer・MeshFilter）だけです。" +
                     "VRChat のコンポーネント・スクリプト・Animator Controller は書き出し用の複製から取り除かれます" +
                     "（元のアバターは変更しません）。取り除く前に、FX レイヤーの初期状態（トグルなど）を複製に焼き込みます。" +
-                    "NDMF が入っていれば、Modular Avatar などの改変を先に複製へ適用します。" +
+                    "VRCFury・Modular Avatar などの改変は、VRChat へのアップロード時と同じく先に複製へ適用します。" +
                     "MA Merge Armature / Bone Proxy で付けた衣装・小物が統合されなかった場合は、" +
                     "VRCast がアバターのボーンに付け替えて体に追従させます。",
                     "Unity 기본 컴포넌트(Transform, Animator, Renderer, MeshFilter)만 내보냅니다. " +
                     "VRChat 컴포넌트, 스크립트, Animator Controller는 내보내기용 복제본에서 제거됩니다" +
                     "(원본 아바타는 변경하지 않습니다). 제거하기 전에 FX 레이어의 초기 상태(토글 등)를 복제본에 반영합니다. " +
-                    "NDMF가 설치되어 있으면 Modular Avatar 등의 개조를 먼저 복제본에 적용합니다. " +
+                    "VRCFury, Modular Avatar 등의 개조는 VRChat 업로드 시와 같이 먼저 복제본에 적용합니다. " +
                     "MA Merge Armature / Bone Proxy로 붙인 의상·소품이 통합되지 않은 경우에는 " +
                     "VRCast가 아바타의 본에 다시 붙여 몸을 따라가게 합니다.",
                     "只导出 Unity 内置组件（Transform、Animator、Renderer、MeshFilter）。" +
                     "VRChat 组件、脚本和 Animator Controller 会从导出用的副本中移除（不会修改原始虚拟形象）。" +
                     "移除前会把 FX 层的初始状态（开关等）烘焙到副本中。" +
-                    "如果安装了 NDMF，会先把 Modular Avatar 等改造应用到副本。" +
+                    "VRCFury、Modular Avatar 等改造会像上传到 VRChat 时一样先应用到副本。" +
                     "用 MA Merge Armature / Bone Proxy 添加的服装和小物如果未被合并，" +
                     "VRCast 会把它们重新挂到虚拟形象的骨骼上并跟随身体。",
                     "只匯出 Unity 內建元件（Transform、Animator、Renderer、MeshFilter）。" +
                     "VRChat 元件、腳本和 Animator Controller 會從匯出用的副本中移除（不會修改原始虛擬形象）。" +
                     "移除前會把 FX 層的初始狀態（開關等）烘焙到副本中。" +
-                    "如果安裝了 NDMF，會先把 Modular Avatar 等改造套用到副本。" +
+                    "VRCFury、Modular Avatar 等改造會像上傳到 VRChat 時一樣先套用到副本。" +
                     "用 MA Merge Armature / Bone Proxy 新增的服裝和小物如果未被合併，" +
                     "VRCast 會把它們重新掛到虛擬形象的骨骼上並跟隨身體。"),
                 MessageType.Info);
@@ -581,8 +582,16 @@ namespace VRCast.Converter.Editor
             // 補間文字列の {} 内で改行できない（C# 9）ため、項目名は先に変数へ取り出す
             string exported = L("Exported", "出力先", "출력 위치", "输出位置", "輸出位置");
             string size = L("Size", "サイズ", "크기", "大小", "大小");
-            string ndmf = L("NDMF (Modular Avatar) applied", "NDMF（Modular Avatar）の適用", "NDMF(Modular Avatar) 적용",
-                "已应用 NDMF（Modular Avatar）", "已套用 NDMF（Modular Avatar）");
+            string preprocess = L("Avatar tools (VRCFury / Modular Avatar)", "改変ツール（VRCFury・Modular Avatar）の適用",
+                "개조 도구(VRCFury·Modular Avatar) 적용", "已应用改造工具（VRCFury / Modular Avatar）",
+                "已套用改造工具（VRCFury / Modular Avatar）");
+            // 適用した前処理の種類を表示用の文言にする
+            string preprocessMode = report.Preprocess == AvatarPreprocessor.Mode.VrcSdk
+                ? L("all (VRChat SDK upload processing)", "すべて（VRChat SDK のアップロード時の処理）",
+                    "전체(VRChat SDK 업로드 시 처리)", "全部（VRChat SDK 上传时的处理）", "全部（VRChat SDK 上傳時的處理）")
+                : report.Preprocess == AvatarPreprocessor.Mode.NdmfOnly
+                    ? L("NDMF only", "NDMF のみ", "NDMF만", "仅 NDMF", "僅 NDMF")
+                    : L("none", "なし", "없음", "无", "無");
             string attached = L("Outfits / accessories attached by VRCast", "VRCast が付け替えた衣装・小物",
                 "VRCast가 다시 붙인 의상·소품", "VRCast 重新挂接的服装和小物", "VRCast 重新掛接的服裝和小物");
             string baked = L("Baked FX default clips", "焼き込んだ FX 初期状態のクリップ", "반영한 FX 초기 상태 클립",
@@ -648,7 +657,7 @@ namespace VRCast.Converter.Editor
                 $"{exported}: {report.OutputPath}\n" +
                 $"{size}: {report.Manifest.bundleSize / (1024f * 1024f):F1} MB\n" +
                 $"Humanoid: {report.IsHumanoid}\n" +
-                $"{ndmf}: {report.NdmfApplied}" +
+                $"{preprocess}: {preprocessMode}" +
                 (report.OptimizerBlendShapeSettingsDisabled > 0 ? " (AAO BlendShape optimization: off)" : string.Empty) +
                 "\n" +
                 $"{attached}: {report.ModularAvatarFallbackFixes}\n" +
