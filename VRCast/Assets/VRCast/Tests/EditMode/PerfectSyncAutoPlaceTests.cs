@@ -52,7 +52,7 @@ namespace VRCast.Tests
             Assert.That(estimate.Points[LandmarkId.LipLower].y, Is.EqualTo(-0.4f).Within(Tolerance));
             Assert.That(estimate.Points[LandmarkId.LipUpper].y, Is.GreaterThan(-0.4f));
             Assert.That(estimate.Points[LandmarkId.Chin].y, Is.EqualTo(-0.9f).Within(Tolerance));
-            Assert.That(estimate.Guessed, Does.Not.Contain(LandmarkId.Chin));
+            Assert.That(estimate.Guessed.Contains(LandmarkId.Chin), Is.False);
 
             // 口角: 「う」が無ければ「あ」で下がる部分の横の端
             Assert.That(estimate.Points[LandmarkId.MouthCornerLeft].x, Is.EqualTo(0.2f).Within(Tolerance));
@@ -60,8 +60,8 @@ namespace VRCast.Tests
 
             // 鼻先は目と口の間で最も前の頂点、眉は形状が無いので上まぶたの上に推定
             AssertPoint(estimate, LandmarkId.NoseTip, new Vector3(0f, 0f, 0.1f));
-            Assert.That(estimate.Guessed, Does.Contain(LandmarkId.BrowMidLeft));
-            Assert.That(estimate.Guessed, Does.Contain(LandmarkId.BrowMidRight));
+            Assert.That(estimate.Guessed.Contains(LandmarkId.BrowMidLeft), Is.True);
+            Assert.That(estimate.Guessed.Contains(LandmarkId.BrowMidRight), Is.True);
             Assert.That(estimate.Points[LandmarkId.BrowMidLeft].y, Is.GreaterThan(0.35f));
         }
 
