@@ -88,6 +88,7 @@
   <a href="#spout"><span class="ko">Spout2</span></a>
   <a href="#look"><span class="ko">외형·조명</span></a>
   <a href="#face"><span class="ko">립싱크·눈 깜빡임</span></a>
+  <a href="#perfectsync"><span class="ko">퍼펙트 싱크화</span></a>
   <a href="#tracking"><span class="ko">트래킹</span></a>
   <a href="#settings"><span class="ko">설정·초기화</span></a>
   <a href="#keys"><span class="ko">조작 목록</span></a>
@@ -335,6 +336,18 @@
         <span class="ko"><span class="ui">셰이프 키 설정</span> 탭의 <span class="ui">BlendShape 상한</span>에서 BlendShape마다 움직이는 최대값(100 = 제한 없음)을 정할 수 있습니다. 눈을 깜빡일 때 눈이 사라지거나 입을 벌리면 얼굴이 깨질 때는 해당 BlendShape를 낮춰 주세요.
         <span class="ui">대상</span>에서 <span class="ui">얼굴 (눈 깜빡임·입·표정)</span>(눈 깜빡임·립싱크·표정·퍼펙트 싱크로 움직이는 것) 또는 <span class="ui">기타</span>(체형·옷 등)를 고르고 <span class="ui">검색</span>으로 좁힐 수 있습니다. 설정은 아바타별로 저장됩니다. <span class="ui">트래킹 표정에는 상한을 적용하지 않기</span>(기본 켜짐)가 켜져 있으면 트래킹 탭의 <span class="ui">표정 반영</span>으로 바뀐 표정은 상한 없이 움직입니다 (직접 고른 표정·눈 깜빡임·립싱크·퍼펙트 싱크에는 상한이 적용됩니다).</span>
         </li>
+  </ul>
+</section>
+
+<section id="perfectsync">
+  <h2><span class="ko">퍼펙트 싱크화 (퍼펙트 싱크화 탭)</span></h2>
+  <p class="ko">ARKit 이름의 BlendShape가 없는 아바타도 얼굴에 표시를 찍으면 퍼펙트 싱크용 51종의 형상을 자동으로 만들 수 있습니다. 원래 있는 BlendShape('아'·눈 깜빡임·웃음 등)는 자동으로 할당해 사용합니다. 결과는 새 <code>.vrcaster</code>로 다른 이름으로 저장하며 원본 파일은 바꾸지 않습니다.</p>
+  <ul>
+    <li><span class="ko">메시의 정점을 읽기 때문에 최신 내보내기 도구로 다시 내보낸 <code>.vrcaster</code>가 필요합니다 (VRM은 대상 외). 탭의 <span class="ui">편집 시작</span>으로 편집 화면으로 이동합니다. 편집 중에는 출력에도 얼굴 클로즈업이 나옵니다.</span></li>
+    <li><span class="ko"><span class="ui">1. 표시</span>: <span class="ui">얼굴 메시</span>와 <span class="ui">세밀도</span>(<span class="ui">최소 (약 10점)</span> / <span class="ui">표준 (약 20점)</span> / <span class="ui">상세 (약 40점)</span>)를 고르고, 그림에서 빛나는 표시를 얼굴 위에서 왼쪽 클릭해 찍습니다. 드래그로 움직이고 Delete로 지울 수 있습니다 (오른쪽 드래그로 회전·휠로 확대·가운데 드래그로 이동).
+        <span class="ui">왼쪽 표시를 오른쪽에도 반영 (좌우 대칭)</span>이 켜져 있으면 오른쪽은 자동으로 놓입니다. '아바타의 왼쪽'은 정면에서 볼 때 오른쪽입니다. 최소 표시(눈·눈썹·입꼬리·입술·턱)가 갖춰지면 <span class="ui">생성해서 확인</span>을 누릅니다.</span></li>
+    <li><span class="ko"><span class="ui">2. 형상</span>: 형상마다 <span class="ui">자동 생성</span> / <span class="ui">기존 BlendShape</span> / <span class="ui">없음</span>과 <span class="ui">강도</span>를 고르고 <span class="ui">반영</span>으로 확인합니다. 눈의 움직임(eyeLook)은 눈 본이 시선으로 움직이므로 기본값은 <span class="ui">없음</span>입니다.</span></li>
+    <li><span class="ko"><span class="ui">다른 이름으로 저장...</span>(기본값: '원래 이름_PerfectSync.vrcaster')으로 저장하고 <span class="ui">저장한 아바타 불러오기</span>로 열면 트래킹 탭의 <span class="ui">퍼펙트 싱크</span>로 얼굴이 움직입니다. 퍼펙트 싱크 버전을 다시 편집하면 저장한 표시에서 이어서 고칠 수 있습니다. 이 파일은 이전 버전의 VRCast에서는 열 수 없습니다.</span></li>
   </ul>
 </section>
 
