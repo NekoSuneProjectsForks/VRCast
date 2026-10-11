@@ -724,7 +724,8 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.
 - セットアップ EXE: `dist\VRCast-<バージョン>-win64-setup.exe`。Jinxxy は zip などの圧縮ファイルを置けず、
   ビルドにトラッカーの `base_library.zip` があるためフォルダごとのアップロードもできないので、こちらを Jinxxy に置く。
   `Tools/Setup` の展開プログラム（C# / .NET Framework 4.8。Visual Studio 2022 付属の C# コンパイラーでビルド。無ければ警告を出して EXE だけ作らない）の
-  末尾に同じ zip（と大きさ・SHA-256）を連結したもの。起動すると選んだフォルダ（既定は EXE と同じ場所）に zip と同じ `VRCast\` と `VRCast-Converter\` を展開する。
+  末尾に同じ zip（と大きさ・SHA-256）を連結したもの。起動すると選んだフォルダ（既定は EXE と同じ場所に新しく作る `VRCast-<バージョン>-win64`。zip をエクスプローラーで展開したときと同じ名前）に
+  zip と同じ `VRCast\` と `VRCast-Converter\` を展開する。
   既に VRCast が入っていれば `%LOCALAPPDATA%\VRCast\update\VRCast` へ展開し、アップデーターに差し替えを任せて終わるまで待ち、結果を画面に出す
   （`--pid 0 --restart no`。待つプロセスは無く、差し替え後に VRCast を起動しない）。どちらの場合も VRCast は起動せず、展開するだけ。
   画面は VRCast 本体と同じ 5 言語（OS の表示言語で選ぶ。それ以外は英語）。

@@ -56,8 +56,12 @@ namespace VRCast.Setup
 
             AddWide(layout, new Label { Text = Texts.Intro, AutoSize = true, MaximumSize = new Size(width, 0) });
 
-            // 展開先（既定は EXE の場所）と参照ボタン
-            _folder = new TextBox { Text = DefaultFolder(), Anchor = AnchorStyles.Left | AnchorStyles.Right };
+            // 展開先（既定は EXE の場所に作る VRCast-x.y.z-win64 フォルダ）と参照ボタン
+            _folder = new TextBox
+            {
+                Text = Path.Combine(DefaultFolder(), Installer.DefaultFolderName(version)),
+                Anchor = AnchorStyles.Left | AnchorStyles.Right,
+            };
             _browse = new Button { Text = Texts.Browse, AutoSize = true };
             _browse.Click += OnBrowse;
             layout.Controls.Add(_folder, 0, layout.RowCount);
@@ -126,7 +130,7 @@ namespace VRCast.Setup
 
         private static string DefaultFolder()
         {
-            // 既定は EXE と同じ場所（zip を展開したときと同じ感覚）。ブラウザーの一時フォルダから直接開かれたらデスクトップ
+            // 新しいフォルダを作る場所。EXE と同じ場所で、ブラウザーの一時フォルダから直接開かれたらデスクトップ
             string folder = Path.GetDirectoryName(Application.ExecutablePath) ?? string.Empty;
             string temp = Path.GetFullPath(Path.GetTempPath());
             return folder.StartsWith(temp, StringComparison.OrdinalIgnoreCase)
@@ -136,10 +140,13 @@ namespace VRCast.Setup
 
         private void OnBrowse(object sender, EventArgs e)
         {
+            // まだ無いフォルダ（既定の VRCast-x.y.z-win64）は選択できないので、1 つ上を開く
+            string current = _folder.Text.Trim();
+            string start = Directory.Exists(current) ? current : Path.GetDirectoryName(current) ?? string.Empty;
             using (var dialog = new FolderBrowserDialog
             {
                 Description = Texts.BrowseDescription,
-                SelectedPath = _folder.Text,
+                SelectedPath = start,
                 ShowNewFolderButton = true,
             })
             {
