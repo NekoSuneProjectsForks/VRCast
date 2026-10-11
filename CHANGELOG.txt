@@ -7,9 +7,9 @@ Newest first. Each version is written in Japanese, then English.
 ■ 1.18.8 (2026-10-12)
 
 [日本語]
-- zip を扱えない配布先（Jinxxy）向けに、EXE 1 つで VRCast と書き出しツールを展開できるセットアップ版を追加（既に VRCast が入っているフォルダーを選ぶと、設定はそのままで新しいバージョンに入れ替えます）
+- zip を扱えない配布先（Jinxxy）向けに、EXE 1 つで VRCast と書き出しツールを展開できるセットアップ版を追加（展開するだけで VRCast は起動しません。既に VRCast が入っているフォルダーを選ぶと、設定はそのままで新しいバージョンに入れ替えます。画面は 5 言語に対応）
 [English]
-- Added a setup EXE for stores that do not accept zip files (Jinxxy) that extracts VRCast and the exporter from a single file (choosing a folder that already has VRCast updates it and keeps your settings)
+- Added a setup EXE for stores that do not accept zip files (Jinxxy) that extracts VRCast and the exporter from a single file (it only extracts and does not start VRCast; choosing a folder that already has VRCast updates it and keeps your settings; available in 5 languages)
 
 ■ 1.18.7 (2026-10-11)
 

@@ -16,6 +16,7 @@ namespace VRCast.Setup
     {
         Verifying,
         Extracting,
+        Updating,
     }
 
     /// <summary>
@@ -32,7 +33,8 @@ namespace VRCast.Setup
     /// <summary>
     /// 配布 zip と同じ構成（選んだフォルダの下に VRCast と VRCast-Converter）で展開する。
     /// 既に VRCast が入っていれば、新しい版を自動更新と同じ作業フォルダへ展開し、
-    /// 同梱のアップデーターに差し替え（使用中の DLL の退避・失敗時の巻き戻し）と起動し直しを任せる。
+    /// 同梱のアップデーターに差し替え（使用中の DLL の退避・失敗時の巻き戻し）を任せて終わるまで待つ。
+    /// どちらの場合も VRCast は起動しない（展開するだけ）。
     /// </summary>
     internal sealed class Installer
     {
@@ -110,7 +112,7 @@ namespace VRCast.Setup
         }
 
         /// <summary>
-        /// 検証してから展開する。更新のときはアップデーターを起動して true を返す（呼び出し側はすぐ終了すること）。
+        /// 検証してから展開する。既に入っていた VRCast を新しい版に入れ替えたときは true。
         /// report には段階と進み具合（0〜1）を渡す（別スレッドから呼ばれる）。
         /// </summary>
         public bool Run(string parent, Action<InstallStage, double> report)
@@ -130,20 +132,6 @@ namespace VRCast.Setup
                     return Extract(zip, parent, report);
                 }
             }
-        }
-
-        /// <summary>
-        /// VRCast を起動する（新しく展開したとき）。
-        /// </summary>
-        public static void StartApp(string parent)
-        {
-            string folder = AppFolder(parent);
-            var info = new ProcessStartInfo(Path.Combine(folder, ExeName))
-            {
-                UseShellExecute = false,
-                WorkingDirectory = folder,
-            };
-            Process.Start(info)?.Dispose();
         }
 
         /// <summary>
@@ -183,10 +171,11 @@ namespace VRCast.Setup
             RemoveOldConverterPackages(converter);
             UpdatePackage.ExtractFolder(zip, UpdatePackage.ConverterFolderPrefix, converter, progress);
 
-            // 本体の差し替えはアップデーターに任せる（このプロセスの終了を待ってから始まる）
+            // 本体の差し替えはアップデーターに任せ、終わるまで待つ
             if (update)
             {
-                StartUpdater(app, AppFolder(parent));
+                report(InstallStage.Updating, 0);
+                RunUpdater(app, AppFolder(parent));
             }
 
             return update;
@@ -218,7 +207,7 @@ namespace VRCast.Setup
             }
         }
 
-        private static void StartUpdater(string staging, string target)
+        private static void RunUpdater(string staging, string target)
         {
             // 新しい版に入っているアップデーターを作業フォルダへ写して使う（インストール先の分も差し替えられるように）
             string data = Path.GetFileNameWithoutExtension(ExeName) + "_Data";
@@ -234,20 +223,46 @@ namespace VRCast.Setup
             string result = Path.Combine(work, UpdatePackage.UpdaterResultFileName);
             File.Copy(source, updater, true);
 
-            // 前回の結果を消す（VRCast は次の起動時に今回の結果を読んで表示する）
+            // 前回の結果を消す（今回の結果はこの画面で表示する）
             if (File.Exists(result))
             {
                 File.Delete(result);
             }
 
-            string arguments = UpdatePackage.BuildUpdaterArguments(Process.GetCurrentProcess().Id, staging, target,
-                ExeName, Path.Combine(work, UpdatePackage.UpdaterLogFileName), result);
+            // 待つプロセスは無く（VRCast が終了済みなのは確認済み）、差し替え後に VRCast を起動しない
+            string arguments = UpdatePackage.BuildUpdaterArguments(0, staging, target, ExeName,
+                Path.Combine(work, UpdatePackage.UpdaterLogFileName), result, false);
             var info = new ProcessStartInfo(updater, arguments)
             {
                 UseShellExecute = false,
                 WorkingDirectory = work,
             };
-            Process.Start(info)?.Dispose();
+            using (Process process = Process.Start(info))
+            {
+                process?.WaitForExit();
+            }
+
+            // 結果（1 行目 ok / failed、2 行目に理由）を読んで消す。VRCast が次の起動時にもう一度表示しないようにする
+            string[] lines = File.Exists(result) ? File.ReadAllLines(result) : new string[0];
+            if (File.Exists(result))
+            {
+                File.Delete(result);
+            }
+
+            if (lines.Length == 0 || lines[0].Trim() != "ok")
+            {
+                throw new SetupException(Texts.UpdateFailed(lines.Length > 1 ? lines[1].Trim() : string.Empty));
+            }
+
+            // 展開した新しい版はもう要らない（退避した旧ファイルは VRCast が次の起動時に消す）
+            try
+            {
+                Directory.Delete(staging, true);
+            }
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+            {
+                // 消せなくても VRCast が次の起動時に消す
+            }
         }
     }
 }

@@ -725,7 +725,9 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.
   ビルドにトラッカーの `base_library.zip` があるためフォルダごとのアップロードもできないので、こちらを Jinxxy に置く。
   `Tools/Setup` の展開プログラム（C# / .NET Framework 4.8。Visual Studio 2022 付属の C# コンパイラーでビルド。無ければ警告を出して EXE だけ作らない）の
   末尾に同じ zip（と大きさ・SHA-256）を連結したもの。起動すると選んだフォルダ（既定は EXE と同じ場所）に zip と同じ `VRCast\` と `VRCast-Converter\` を展開する。
-  既に VRCast が入っていれば `%LOCALAPPDATA%\VRCast\update\VRCast` へ展開してアップデーターに差し替えを任せる（自動更新と同じ手順・結果表示）。
+  既に VRCast が入っていれば `%LOCALAPPDATA%\VRCast\update\VRCast` へ展開し、アップデーターに差し替えを任せて終わるまで待ち、結果を画面に出す
+  （`--pid 0 --restart no`。待つプロセスは無く、差し替え後に VRCast を起動しない）。どちらの場合も VRCast は起動せず、展開するだけ。
+  画面は VRCast 本体と同じ 5 言語（OS の表示言語で選ぶ。それ以外は英語）。
   展開の検証は本体の `UpdatePackage.cs` と `HashUtility.cs` を共有する。管理者権限は求めない（Program Files 等には展開しない）。
 - 書き出しツールの unitypackage だけを作る場合は `Tools\Package\unitypackage.bat`（Unity 不要、出力 `dist\VRCast-Converter-<バージョン>.unitypackage`）。
   `Packages/com.vrcast.converter` を `Assets/VRCast/Converter/` に入るよう詰める。GUID はリポジトリの `.meta` を使うため版をまたいで同じ

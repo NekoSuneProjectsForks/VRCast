@@ -220,10 +220,11 @@ namespace VRCast.Platform
         }
 
         /// <summary>
-        /// アップデーター（Tools/Updater）の起動引数。
+        /// アップデーター（Tools/Updater）の起動引数。pid が 0 なら終了を待つプロセスは無く、
+        /// restart が false なら差し替え後に VRCast を起動しない（セットアップ EXE が使う）。
         /// </summary>
         public static string BuildUpdaterArguments(int pid, string source, string target, string exeName,
-            string logPath, string resultPath)
+            string logPath, string resultPath, bool restart = true)
         {
             var builder = new StringBuilder();
             builder.Append("--pid ").Append(pid);
@@ -232,6 +233,13 @@ namespace VRCast.Platform
             builder.Append(" --exe ").Append(Quote(exeName));
             builder.Append(" --log ").Append(Quote(logPath));
             builder.Append(" --result ").Append(Quote(resultPath));
+
+            // 起動し直さないときだけ付ける（付けない引数は古いアップデーターでも読める）
+            if (!restart)
+            {
+                builder.Append(" --restart no");
+            }
+
             return builder.ToString();
         }
 

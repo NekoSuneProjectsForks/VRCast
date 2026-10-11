@@ -19,14 +19,13 @@ namespace VRCast.Setup
         private readonly Payload _payload;
         private readonly TextBox _folder;
         private readonly Button _browse;
-        private readonly CheckBox _startApp;
         private readonly CheckBox _openFolder;
         private readonly ProgressBar _progress;
         private readonly Label _status;
         private readonly Button _install;
         private readonly Button _cancel;
         private bool _busy;
-        private int _lastPercent = int.MinValue;
+        private int _lastReport = int.MinValue;
 
         public SetupForm(Payload payload, string version)
         {
@@ -73,10 +72,8 @@ namespace VRCast.Setup
                 ForeColor = SystemColors.GrayText,
             });
 
-            // 完了後の動作（更新のときはアップデーターが VRCast を起動し直すので「起動する」は使わない）
-            _startApp = new CheckBox { Text = Texts.StartApp, AutoSize = true, Checked = true };
+            // 完了後にフォルダを開くか（VRCast は起動しない。展開するだけ）
             _openFolder = new CheckBox { Text = Texts.OpenFolder, AutoSize = true, Checked = true };
-            AddWide(layout, _startApp);
             AddWide(layout, _openFolder);
 
             // 進み具合と状態
@@ -87,8 +84,11 @@ namespace VRCast.Setup
 
             // 右寄せのボタン
             _install = new Button { Text = Texts.Install, AutoSize = true };
-            _cancel = new Button { Text = Texts.Cancel, AutoSize = true, DialogResult = DialogResult.Cancel };
+            _cancel = new Button { Text = Texts.Cancel, AutoSize = true };
             _install.Click += OnInstall;
+
+            // DialogResult はモーダル表示でしか閉じないため、キャンセル・閉じるは明示的に閉じる
+            _cancel.Click += (sender, e) => Close();
             var buttons = new FlowLayoutPanel
             {
                 FlowDirection = FlowDirection.RightToLeft,
@@ -178,11 +178,10 @@ namespace VRCast.Setup
 
             // 画面の操作を止めて、別スレッドで展開する（完了時の処理は画面のスレッドで行う）
             SetBusy(true);
-            bool startApp = _startApp.Checked;
             bool openFolder = _openFolder.Checked;
             var installer = new Installer(_payload);
             Task.Run(() => installer.Run(parent, Report))
-                .ContinueWith(task => OnFinished(task, parent, startApp, openFolder),
+                .ContinueWith(task => OnFinished(task, parent, openFolder),
                     TaskScheduler.FromCurrentSynchronizationContext());
         }
 
@@ -210,23 +209,26 @@ namespace VRCast.Setup
         private void Report(InstallStage stage, double progress)
         {
             // ファイルごとに呼ばれるので、表示が変わるとき（1% 単位・段階の切り替え）だけ画面へ送る
-            int percent = stage == InstallStage.Verifying ? -1 : (int)(progress * 100);
-            if (percent == _lastPercent)
+            bool extracting = stage == InstallStage.Extracting;
+            int percent = extracting ? (int)(progress * 100) : 0;
+            int key = (int)stage * 1000 + percent;
+            if (key == _lastReport)
             {
                 return;
             }
 
-            _lastPercent = percent;
+            _lastReport = key;
             BeginInvoke(new Action(() =>
             {
-                // 確認中は終わりが分からないので流れる表示、展開中は割合
-                _progress.Style = percent < 0 ? ProgressBarStyle.Marquee : ProgressBarStyle.Continuous;
+                // 確認中・入れ替え中は終わりが分からないので流れる表示、展開中は割合
+                _progress.Style = extracting ? ProgressBarStyle.Continuous : ProgressBarStyle.Marquee;
                 _progress.Value = Math.Max(0, Math.Min(100, percent));
-                _status.Text = percent < 0 ? Texts.Verifying : Texts.Extracting;
+                _status.Text = stage == InstallStage.Verifying ? Texts.Verifying
+                    : extracting ? Texts.Extracting : Texts.Updating;
             }));
         }
 
-        private void OnFinished(Task<bool> task, string parent, bool startApp, bool openFolder)
+        private void OnFinished(Task<bool> task, string parent, bool openFolder)
         {
             SetBusy(false);
 
@@ -238,39 +240,24 @@ namespace VRCast.Setup
                 _status.Text = string.Empty;
                 _progress.Style = ProgressBarStyle.Continuous;
                 _progress.Value = 0;
-                _lastPercent = int.MinValue;
+                _lastReport = int.MinValue;
                 MessageBox.Show(this, message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            bool update = task.Result;
             if (openFolder)
             {
                 Try(() => Installer.OpenFolder(parent));
             }
 
-            // 更新: アップデーターがこのプロセスの終了を待っているので、すぐに閉じる
-            if (update)
-            {
-                _status.Text = Texts.Updating;
-                Close();
-                return;
-            }
-
-            // 新しく展開した: VRCast を起動し、完了の案内を残して閉じるボタンだけにする
-            if (startApp)
-            {
-                Try(() => Installer.StartApp(parent));
-            }
-
+            // 完了の案内（新しく展開した / 入れ替えた）を残して、閉じるボタンだけにする
             _progress.Style = ProgressBarStyle.Continuous;
             _progress.Value = 100;
-            _status.Text = Texts.Done;
+            _status.Text = task.Result ? Texts.Updated : Texts.Done;
             _install.Visible = false;
             _cancel.Text = Texts.Close;
             _folder.Enabled = false;
             _browse.Enabled = false;
-            _startApp.Enabled = false;
             _openFolder.Enabled = false;
             AcceptButton = _cancel;
         }
@@ -281,7 +268,6 @@ namespace VRCast.Setup
             _busy = busy;
             _folder.Enabled = !busy;
             _browse.Enabled = !busy;
-            _startApp.Enabled = !busy;
             _openFolder.Enabled = !busy;
             _install.Enabled = !busy;
             _cancel.Enabled = !busy;
@@ -289,7 +275,7 @@ namespace VRCast.Setup
 
         private void Try(Action action)
         {
-            // 起動・フォルダを開くのに失敗しても展開は済んでいるので、理由だけ伝える
+            // フォルダを開くのに失敗しても展開は済んでいるので、理由だけ伝える
             try
             {
                 action();

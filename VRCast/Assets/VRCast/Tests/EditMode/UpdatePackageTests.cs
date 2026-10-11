@@ -185,6 +185,16 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void BuildUpdaterArguments_NoRestart_AddsRestartNo()
+        {
+            // 起動し直さない指定は末尾に --restart no を付けること
+            string arguments = UpdatePackage.BuildUpdaterArguments(0, @"C:\src", @"D:\VRCast", "VRCast.exe",
+                @"C:\log.txt", @"C:\result.txt", false);
+            Assert.That(arguments, Does.StartWith("--pid 0 "));
+            Assert.That(arguments, Does.EndWith(" --restart no"));
+        }
+
+        [Test]
         public void Quote_TrailingBackslash_IsDoubled()
         {
             // 末尾の \ が閉じの " を打ち消さないこと（"C:\" → "C:\\"）

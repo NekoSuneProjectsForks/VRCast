@@ -4,9 +4,11 @@
 // 他のアプリ（OBS・Discord 等）が読み込み中の仮想カメラの DLL は削除・上書きできないが名前の変更はできるため、
 // 旧ファイルは同じドライブの退避フォルダへ移動してから新しいファイルを置く（中身が同じファイルは触らない）。
 //
-// 使い方（VRCast が渡す。直接起動したときは説明を出して終了する）:
+// 使い方（VRCast・セットアップ EXE が渡す。直接起動したときは説明を出して終了する）:
 //   VRCastUpdater.exe --pid <VRCast のプロセス ID> --source <展開した新しい VRCast フォルダ>
 //                     --target <インストール先> --exe <起動し直す exe 名> --log <ログ> --result <結果ファイル>
+//                     [--restart no]
+//   --pid 0 は終了を待つプロセスが無いとき（セットアップ EXE）。--restart no なら差し替え後に VRCast を起動しない。
 
 #include <windows.h>
 #include <shellapi.h>
@@ -47,6 +49,8 @@ namespace
         std::wstring exe;
         std::wstring log;
         std::wstring result;
+        bool hasPid = false;
+        bool restart = true;
     };
 
     // 差し替えで動かしたファイル（インストール先からの相対パス）。失敗時に元へ戻すために記録する
@@ -396,8 +400,8 @@ namespace
 
     bool WaitForExit(const Options& options)
     {
-        // VRCast 本体の終了を待つ（既に終了していれば開けないのでそのまま進む）
-        HANDLE process = OpenProcess(SYNCHRONIZE, FALSE, options.pid);
+        // VRCast 本体の終了を待つ（待つプロセスが無い・既に終了していれば開けないのでそのまま進む）
+        HANDLE process = options.pid != 0 ? OpenProcess(SYNCHRONIZE, FALSE, options.pid) : nullptr;
         if (process != nullptr)
         {
             DWORD wait = WaitForSingleObject(process, ExitTimeout);
@@ -626,6 +630,13 @@ namespace
             if (name == L"--pid")
             {
                 options.pid = DWORD(wcstoul(value.c_str(), nullptr, 10));
+                options.hasPid = true;
+            }
+            else if (name == L"--restart")
+            {
+                // yes / no 以外は不正
+                valid = value == L"yes" || value == L"no";
+                options.restart = value != L"no";
             }
             else if (name == L"--source")
             {
@@ -654,7 +665,7 @@ namespace
         }
 
         LocalFree(args);
-        return valid && options.pid != 0 && !options.source.empty() && !options.target.empty() && !options.exe.empty()
+        return valid && options.hasPid && !options.source.empty() && !options.target.empty() && !options.exe.empty()
             && !options.log.empty() && !options.result.empty();
     }
 
@@ -715,9 +726,9 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
         }
     }
 
-    // 結果を残して VRCast を起動し直す（失敗時は元の版が起動して理由を表示する）
+    // 結果を残して VRCast を起動し直す（失敗時は元の版が起動して理由を表示する。起動しない指定なら結果だけ）
     WriteResult(options.result, ok, error);
-    if (exited)
+    if (exited && options.restart)
     {
         Launch(options);
     }
