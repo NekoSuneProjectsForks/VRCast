@@ -40,7 +40,8 @@ namespace VRCast.AvatarFormat
 
             foreach (PerfectSyncShape shape in Shapes)
             {
-                string error = shape?.Validate() ?? "A shape is missing.";
+                // 空の要素はエラー、それ以外は形状ごとの検証（問題が無ければ null）
+                string error = shape == null ? "A shape is missing." : shape.Validate();
                 if (error != null)
                 {
                     return error;

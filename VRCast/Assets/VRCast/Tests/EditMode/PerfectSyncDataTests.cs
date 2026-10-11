@@ -56,6 +56,17 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void ShapeData_Validate_AcceptsValidShapesAndRejectsNull()
+        {
+            // 正しい形状だけなら保存でき、空の要素があれば不正
+            var data = new PerfectSyncShapeData();
+            data.Shapes.Add(new PerfectSyncShape("Body", "jawOpen", new[] { 0 }, new[] { 0f, -0.01f, 0f }));
+            Assert.That(data.Validate(), Is.Null);
+            data.Shapes.Add(null);
+            Assert.That(data.Validate(), Is.Not.Null);
+        }
+
+        [Test]
         public void Set_Validate_ChecksRanges()
         {
             // 既定の空の設定は有効で、パーフェクトシンク版ではない扱い
