@@ -139,6 +139,9 @@ namespace VRCast.UI
         // 顔メッシュと一緒に動かせる歯・舌のメッシュの数（0 なら「歯・舌も動かす」は選べない）
         private int _mouthPartCount;
 
+        // 視点を顔の正面に固定するか（開くたびに ON。拡大・移動はできる）
+        private bool _lockView = true;
+
         // 次に打つ（選択中の）目印と、ドラッグ中か・そのドラッグで新しく打ったか
         private LandmarkId? _selected;
         private bool _dragging;
@@ -305,6 +308,7 @@ namespace VRCast.UI
             _dirty = true;
             _selected = NextUnplaced();
             _savedPose = _orbit.Pose;
+            _lockView = true;
             FocusFace();
         }
 
@@ -339,6 +343,9 @@ namespace VRCast.UI
                 return;
             }
 
+            // 視点の向きの固定（回転だけ止める）
+            _orbit.RotationLocked = _lockView;
+
             // 今の姿勢の顔メッシュと顔の中心
             BakeFace();
             _avatar.CalculateFaceFrame(out _faceCenter, out float _);
@@ -356,6 +363,7 @@ namespace VRCast.UI
         {
             StopPreview();
             CancelDetection();
+            _orbit.RotationLocked = false;
             if (avatarAlive)
             {
                 // 試しに足した形状を外し、アバター自身のパーフェクトシンク（読み込んだファイルの内容）を足し直す

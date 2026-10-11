@@ -182,23 +182,38 @@ namespace VRCast.UI
             GuiControls.BeginCard(Loc.T("Place points on the face", "顔に目印を打つ", "얼굴에 표시 찍기", "在脸上放置标记", "在臉上放置標記"));
             GuiControls.Hint(Loc.T(
                 "Left-click the face to place the highlighted point, and drag a point to move it. " +
-                "Right-drag rotates, the wheel zooms and middle-drag pans. Ctrl+Z undoes, and Delete removes the selected point " +
+                "The wheel zooms and middle-drag pans (right-drag rotates when the view is not kept facing the face). " +
+                "Ctrl+Z undoes, and Delete removes the selected point " +
                 "(or the one you just placed). " +
                 "Left and right are the avatar's own (its left is on the right of the screen from the front).",
                 "顔を左クリックすると、選択中の目印を打てます。目印はドラッグで動かせます。" +
-                "右ドラッグで回転、ホイールで拡大、中ドラッグで移動。Ctrl+Z で元に戻し、Delete キーで選択中の目印" +
+                "ホイールで拡大、中ドラッグで移動（正面の固定を外すと右ドラッグで回転）。Ctrl+Z で元に戻し、Delete キーで選択中の目印" +
                 "（打っていなければ直前に打った目印）を消せます。" +
                 "左右はアバターから見た左右です（正面から見ると画面の右がアバターの左）。",
                 "얼굴을 왼쪽 클릭하면 선택한 표시를 찍습니다. 표시는 드래그로 옮길 수 있습니다. " +
-                "오른쪽 드래그로 회전, 휠로 확대, 가운데 드래그로 이동. Ctrl+Z로 되돌리고, Delete 키로 선택한 표시" +
+                "휠로 확대, 가운데 드래그로 이동(정면 고정을 끄면 오른쪽 드래그로 회전). Ctrl+Z로 되돌리고, Delete 키로 선택한 표시" +
                 "(찍지 않았다면 방금 찍은 표시)를 지웁니다. " +
                 "좌우는 아바타 기준입니다(정면에서 보면 화면 오른쪽이 아바타의 왼쪽).",
                 "左键点击脸部即可放置当前选中的标记，拖动可移动标记。" +
-                "右键拖动旋转，滚轮缩放，中键拖动平移。Ctrl+Z 撤销，Delete 键删除选中的标记（未放置时删除刚放置的标记）。" +
+                "滚轮缩放，中键拖动平移（取消正面固定后可右键拖动旋转）。Ctrl+Z 撤销，Delete 键删除选中的标记（未放置时删除刚放置的标记）。" +
                 "左右以虚拟形象自身为准（从正面看，屏幕右侧是形象的左侧）。",
                 "左鍵點擊臉部即可放置目前選取的標記，拖曳可移動標記。" +
-                "右鍵拖曳旋轉，滾輪縮放，中鍵拖曳平移。Ctrl+Z 復原，Delete 鍵刪除選取的標記（未放置時刪除剛放置的標記）。" +
+                "滾輪縮放，中鍵拖曳平移（取消正面固定後可右鍵拖曳旋轉）。Ctrl+Z 復原，Delete 鍵刪除選取的標記（未放置時刪除剛放置的標記）。" +
                 "左右以虛擬形象自身為準（從正面看，螢幕右側是形象的左側）。"));
+
+            // 視点を顔の正面に固定（ON にしたら正面へ戻す。OFF なら右ドラッグで回せる）
+            bool lockView = GUILayout.Toggle(_lockView, Loc.T(
+                "Keep the view facing the face (zoom and pan still work)", "視点を顔の正面に固定（拡大・移動はできます）",
+                "시점을 얼굴 정면에 고정 (확대·이동은 가능)", "将视角固定在脸部正面（仍可缩放·平移）",
+                "將視角固定在臉部正面（仍可縮放·平移）"));
+            if (lockView != _lockView)
+            {
+                _lockView = lockView;
+                if (lockView)
+                {
+                    FocusFace();
+                }
+            }
 
             // 顔メッシュ（替えたら目印は打ち直し）
             int face = GuiControls.Selector(Loc.T("Face mesh", "顔メッシュ", "얼굴 메시", "面部网格", "臉部網格"),
@@ -683,10 +698,10 @@ namespace VRCast.UI
 
         private void DrawFooter(UiTheme theme)
         {
-            // 直前の結果（失敗は赤、成功は緑）
+            // 直前の結果（失敗は赤、成功は緑。長い文がパネルの幅を広げないよう折り返す）
             if (!string.IsNullOrEmpty(_message))
             {
-                GUIStyle style = theme == null ? GUI.skin.label : _messageIsError ? theme.ErrorText : theme.Success;
+                GUIStyle style = theme == null ? GUI.skin.label : _messageIsError ? theme.ErrorWrapped : theme.SuccessWrapped;
                 GUILayout.Label(_message, style);
             }
 

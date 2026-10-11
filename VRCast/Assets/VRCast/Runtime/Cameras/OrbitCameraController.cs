@@ -69,6 +69,11 @@ namespace VRCast.Cameras
         public bool Locked { get; set; }
 
         /// <summary>
+        /// 向きだけを固定する（右ドラッグの回転を無視し、拡大・移動はできる）ときに true にする。
+        /// </summary>
+        public bool RotationLocked { get; set; }
+
+        /// <summary>
         /// 体に入り込む手前で止め、それ以上は画角を狭めて拡大するなら true。OFF にすると拡大を戻す。
         /// </summary>
         public bool ZoomInsteadOfEntering
@@ -193,8 +198,8 @@ namespace VRCast.Cameras
             float dx = Input.GetAxis("Mouse X");
             float dy = Input.GetAxis("Mouse Y");
 
-            // 右ドラッグで注視点まわりに回転
-            if (Input.GetMouseButton(1))
+            // 右ドラッグで注視点まわりに回転（向きを固定中は回さない）
+            if (!RotationLocked && Input.GetMouseButton(1))
             {
                 _yaw += dx * RotateSpeed;
                 _pitch = Mathf.Clamp(_pitch - dy * RotateSpeed, MinPitch, MaxPitch);

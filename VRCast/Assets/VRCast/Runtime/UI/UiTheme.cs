@@ -209,6 +209,10 @@ namespace VRCast.UI
         public GUIStyle WarningText { get; private set; }
         public GUIStyle ErrorText { get; private set; }
 
+        // 長い結果の文（成功は緑・失敗は赤の太字で、幅に合わせて折り返す）
+        public GUIStyle SuccessWrapped { get; private set; }
+        public GUIStyle ErrorWrapped { get; private set; }
+
         /// <summary>
         /// テーマを作成する（OnGUI 内で呼ぶ）。language は解決済みの表示言語（フォントの優先順に使う）、dark はダークモードの配色にするか。
         /// </summary>
@@ -338,6 +342,8 @@ namespace VRCast.UI
             WarningText.normal.textColor = WarningColor;
             ErrorText = new GUIStyle(Success);
             ErrorText.normal.textColor = DangerColor;
+            SuccessWrapped = new GUIStyle(Success) { wordWrap = true };
+            ErrorWrapped = new GUIStyle(ErrorText) { wordWrap = true };
         }
 
         private void BuildButton()
