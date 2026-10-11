@@ -21,6 +21,9 @@ namespace VRCast.Converter.Editor
         // 「シーンの BlendShape の値を優先」の選択を保持する EditorPrefs キー
         private const string KeepSceneBlendShapesKey = "VRCast.Converter.KeepSceneBlendShapes";
 
+        // 「非アクティブのオブジェクトも書き出す」の選択を保持する EditorPrefs キー
+        private const string IncludeInactiveObjectsKey = "VRCast.Converter.IncludeInactiveObjects";
+
         // ダイアログ・進捗バーのタイトル（製品名なので訳さない）
         private const string Title = "VRCast Exporter";
 
@@ -121,8 +124,7 @@ namespace VRCast.Converter.Editor
                     "Only Unity built-in components (Transform, Animator, Renderers, MeshFilter, Particle System) are exported. " +
                     "VRChat components, scripts and the Animator Controller are removed from the exported copy. " +
                     "The FX layer's default state (toggles etc.) is baked into the copy before removal. " +
-                    "Inactive objects are not exported, except particles, which are kept turned off " +
-                    "so they can be turned on in the app (no need to turn them all on before exporting). " +
+                    "Inactive objects are handled as chosen in \"Also export inactive objects\" below. " +
                     "Avatar tools such as VRCFury and Modular Avatar are applied to the copy first, " +
                     "the same way as when uploading to VRChat. " +
                     "Outfits and accessories set up with MA Merge Armature / Bone Proxy that were not merged " +
@@ -130,36 +132,35 @@ namespace VRCast.Converter.Editor
                     "書き出されるのは Unity 標準のコンポーネント（Transform・Animator・Renderer・MeshFilter・Particle System）だけです。" +
                     "VRChat のコンポーネント・スクリプト・Animator Controller は書き出し用の複製から取り除かれます" +
                     "（元のアバターは変更しません）。取り除く前に、FX レイヤーの初期状態（トグルなど）を複製に焼き込みます。" +
-                    "非アクティブなオブジェクトは書き出しませんが、パーティクルだけは OFF のまま書き出し、アプリで ON にできます" +
-                    "（書き出し前にすべて ON にする必要はありません）。" +
+                    "非アクティブなオブジェクトの扱いは、下の「非アクティブのオブジェクトも書き出す」で選べます。" +
                     "VRCFury・Modular Avatar などの改変は、VRChat へのアップロード時と同じく先に複製へ適用します。" +
                     "MA Merge Armature / Bone Proxy で付けた衣装・小物が統合されなかった場合は、" +
                     "VRCast がアバターのボーンに付け替えて体に追従させます。",
                     "Unity 기본 컴포넌트(Transform, Animator, Renderer, MeshFilter, Particle System)만 내보냅니다. " +
                     "VRChat 컴포넌트, 스크립트, Animator Controller는 내보내기용 복제본에서 제거됩니다" +
                     "(원본 아바타는 변경하지 않습니다). 제거하기 전에 FX 레이어의 초기 상태(토글 등)를 복제본에 반영합니다. " +
-                    "비활성 오브젝트는 내보내지 않지만, 파티클만은 꺼진 상태로 내보내 앱에서 켤 수 있습니다 " +
-                    "(내보내기 전에 모두 켤 필요가 없습니다). " +
+                    "비활성 오브젝트의 처리는 아래의 '비활성 오브젝트도 내보내기'에서 고를 수 있습니다. " +
                     "VRCFury, Modular Avatar 등의 개조는 VRChat 업로드 시와 같이 먼저 복제본에 적용합니다. " +
                     "MA Merge Armature / Bone Proxy로 붙인 의상·소품이 통합되지 않은 경우에는 " +
                     "VRCast가 아바타의 본에 다시 붙여 몸을 따라가게 합니다.",
                     "只导出 Unity 内置组件（Transform、Animator、Renderer、MeshFilter、Particle System）。" +
                     "VRChat 组件、脚本和 Animator Controller 会从导出用的副本中移除（不会修改原始虚拟形象）。" +
                     "移除前会把 FX 层的初始状态（开关等）烘焙到副本中。" +
-                    "未激活的对象不会导出，但粒子会以关闭状态导出，可在应用中开启（导出前无需全部开启）。" +
+                    "未激活对象的处理方式可在下方的“也导出未激活的对象”中选择。" +
                     "VRCFury、Modular Avatar 等改造会像上传到 VRChat 时一样先应用到副本。" +
                     "用 MA Merge Armature / Bone Proxy 添加的服装和小物如果未被合并，" +
                     "VRCast 会把它们重新挂到虚拟形象的骨骼上并跟随身体。",
                     "只匯出 Unity 內建元件（Transform、Animator、Renderer、MeshFilter、Particle System）。" +
                     "VRChat 元件、腳本和 Animator Controller 會從匯出用的副本中移除（不會修改原始虛擬形象）。" +
                     "移除前會把 FX 層的初始狀態（開關等）烘焙到副本中。" +
-                    "未啟用的物件不會匯出，但粒子會以關閉狀態匯出，可在應用程式中開啟（匯出前無需全部開啟）。" +
+                    "未啟用物件的處理方式可在下方的「也匯出未啟用的物件」中選擇。" +
                     "VRCFury、Modular Avatar 等改造會像上傳到 VRChat 時一樣先套用到副本。" +
                     "用 MA Merge Armature / Bone Proxy 新增的服裝和小物如果未被合併，" +
                     "VRCast 會把它們重新掛到虛擬形象的骨骼上並跟隨身體。"),
                 MessageType.Info);
 
             DrawBlendShapeOption();
+            DrawInactiveObjectsOption();
             DrawExtraExpressions();
 
             using (new EditorGUI.DisabledScope(error != null))
@@ -197,6 +198,38 @@ namespace VRCast.Converter.Editor
                     "(의상 전환에 맞춰 축소용 블렌드셰이프도 움직이는 경우 등).",
                     "关闭后，FX 层驱动的 BlendShape 会以初始状态的值导出（例如切换服装时同时驱动收缩用 BlendShape）。",
                     "關閉後，FX 層驅動的 BlendShape 會以初始狀態的值匯出（例如切換服裝時同時驅動收縮用 BlendShape）。"),
+                MessageType.None);
+        }
+
+        private static void DrawInactiveObjectsOption()
+        {
+            // 既定は書き出す（アプリの「オブジェクト」タブで後から ON にできるように）
+            bool include = EditorPrefs.GetBool(IncludeInactiveObjectsKey, true);
+            bool changed = EditorGUILayout.ToggleLeft(
+                T("Also export inactive objects", "非アクティブのオブジェクトも書き出す",
+                    "비활성 오브젝트도 내보내기", "也导出未激活的对象", "也匯出未啟用的物件"),
+                include);
+            if (changed != include)
+            {
+                EditorPrefs.SetBool(IncludeInactiveObjectsKey, changed);
+            }
+
+            // ON / OFF それぞれの挙動を補足
+            EditorGUILayout.HelpBox(
+                T(
+                    "On: objects turned off in the scene are exported, kept turned off, and can be turned on " +
+                    "in the app's Objects tab (the file gets larger). " +
+                    "Off: they are not exported, except particles, which are kept turned off.",
+                    "ON: シーンで OFF にしたオブジェクトも OFF のまま書き出し、アプリの「オブジェクト」タブで ON にできます" +
+                    "（ファイルは大きくなります）。" +
+                    "OFF: 書き出しません（パーティクルだけは OFF のまま書き出します）。",
+                    "ON: 씬에서 꺼 둔 오브젝트도 꺼진 상태로 내보내 앱의 '오브젝트' 탭에서 켤 수 있습니다 " +
+                    "(파일이 커집니다). " +
+                    "OFF: 내보내지 않습니다 (파티클만 꺼진 상태로 내보냅니다).",
+                    "开启：在场景中关闭的对象也以关闭状态导出，可在应用的“对象”标签页中开启（文件会变大）。" +
+                    "关闭：不导出（只有粒子会以关闭状态导出）。",
+                    "開啟：在場景中關閉的物件也以關閉狀態匯出，可在應用程式的「物件」分頁中開啟（檔案會變大）。" +
+                    "關閉：不匯出（只有粒子會以關閉狀態匯出）。"),
                 MessageType.None);
         }
 
@@ -544,7 +577,8 @@ namespace VRCast.Converter.Editor
                     0.5f);
                 AvatarExporter.Report report = AvatarExporter.Export(
                     _avatar, path, EditorPrefs.GetBool(KeepSceneBlendShapesKey, true),
-                    ExtraExpressionClips.Collect(_extraEntries));
+                    ExtraExpressionClips.Collect(_extraEntries),
+                    EditorPrefs.GetBool(IncludeInactiveObjectsKey, true));
 
                 // Console のログは問い合わせ時に読みやすいよう英語固定、ダイアログは表示言語
                 Debug.Log("[VRCast][Exporter] " + BuildSummary(report, true).Replace("\n", " / "));
@@ -659,8 +693,14 @@ namespace VRCast.Converter.Editor
                 "Missing Script");
             string editorOnly = L("EditorOnly objects", "EditorOnly オブジェクト", "EditorOnly 오브젝트", "EditorOnly 对象",
                 "EditorOnly 物件");
-            string inactive = L("inactive objects", "非アクティブのオブジェクト", "비활성 오브젝트", "未激活的对象",
-                "未啟用的物件");
+            string inactive = report.IncludedInactiveObjects
+                ? L("Inactive objects (exported off)", "非アクティブのオブジェクト（OFF で書き出し）",
+                    "비활성 오브젝트 (꺼진 상태로 내보냄)", "未激活的对象（以关闭状态导出）", "未啟用的物件（以關閉狀態匯出）")
+                : L("Inactive objects (removed)", "非アクティブのオブジェクト（取り除いた数）",
+                    "비활성 오브젝트 (제거함)", "未激活的对象（已移除）", "未啟用的物件（已移除）");
+            int inactiveCount = report.IncludedInactiveObjects ? report.InactiveObjects : report.RemovedInactiveObjects;
+            string fxToggles = L("Objects toggled by FX", "FX で切り替えるオブジェクト", "FX로 전환하는 오브젝트",
+                "由 FX 切换的对象", "由 FX 切換的物件");
 
             return
                 $"{exported}: {report.OutputPath}\n" +
@@ -682,10 +722,10 @@ namespace VRCast.Converter.Editor
                 $"Constraints: {report.ConstraintCount}\n" +
                 $"Blendshape Sync (MA): {report.BlendShapeSyncCount}\n" +
                 $"{particles}: {report.ParticleSystemCount}\n" +
+                $"{inactive}: {inactiveCount}, {fxToggles}: {report.FxToggleCount}\n" +
                 $"{removed}: {report.Strip.RemovedComponents}, " +
                 $"{missing}: {report.Strip.RemovedMissingScripts}, " +
-                $"{editorOnly}: {report.Strip.RemovedEditorOnlyObjects}, " +
-                $"{inactive}: {report.RemovedInactiveObjects}";
+                $"{editorOnly}: {report.Strip.RemovedEditorOnlyObjects}";
         }
     }
 }

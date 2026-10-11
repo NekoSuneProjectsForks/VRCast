@@ -40,6 +40,9 @@ namespace VRCast.Avatars
         // パーティクルをまとめて切り替える単位（.vrcaster の FX で表示 ON/OFF されるもの。VRM は空）
         public ParticleGroupSet ParticleGroups { get; private set; } = new ParticleGroupSet();
 
+        // FX で表示 ON/OFF されるオブジェクト（.vrcaster のもの。VRM は空）
+        public FxToggleSet FxToggles { get; private set; } = new FxToggleSet();
+
         // .vrcaster の manifest（VRM は null）
         public AvatarManifest Manifest { get; }
 
@@ -56,6 +59,7 @@ namespace VRCast.Avatars
             Manifest = package.Manifest;
             BlendShapeSync = package.BlendShapeSync;
             ParticleGroups = package.ParticleGroups;
+            FxToggles = package.FxToggles;
         }
 
         public LoadedAvatar(GameObject instance, string sourcePath, VrmAvatarData vrm)

@@ -38,6 +38,9 @@ namespace VRCast.AvatarFormat
         // 任意エントリ: パーティクルをまとめて切り替える単位（FX で表示を ON/OFF しているオブジェクト）
         public const string ParticleGroupsEntry = MetadataPrefix + "particle_groups.json";
 
+        // 任意エントリ: FX で表示を ON/OFF しているオブジェクト（衣装・小物の切り替え等）
+        public const string FxTogglesEntry = MetadataPrefix + "fx_toggles.json";
+
         // metadata 1 ファイルの上限サイズ（1 MiB）
         public const long MaxMetadataBytes = 1024 * 1024;
 

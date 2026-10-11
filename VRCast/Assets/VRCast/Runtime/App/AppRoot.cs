@@ -228,6 +228,10 @@ namespace VRCast.App
             // 揺れもの（静止姿勢を記録するため待機ポーズ適用後に初期化）
             avatar.Instance.AddComponent<PhysBoneSimulator>().Initialize(avatar.Animator, avatar.PhysBones, _settings);
 
+            // オブジェクトの表示の ON/OFF（このアバターで前回切り替えたもの）。パーティクルの ON が非表示の親を表示できるよう先に当てる
+            avatar.Instance.AddComponent<AvatarObjects>().Initialize(
+                root, avatar.FxToggles.paths, _settings.GetObjectToggles(avatar.SourcePath));
+
             // パーティクルの ON/OFF（このアバターで前回切り替えたもの）
             avatar.Instance.AddComponent<AvatarParticles>().Initialize(
                 root, avatar.ParticleGroups.paths, _settings.GetParticleToggles(avatar.SourcePath));

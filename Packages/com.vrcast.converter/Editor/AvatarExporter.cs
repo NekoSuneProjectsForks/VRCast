@@ -56,7 +56,10 @@ namespace VRCast.Converter.Editor
             public AvatarPreprocessor.Mode Preprocess;
             public int OptimizerBlendShapeSettingsDisabled;
             public int ModularAvatarFallbackFixes;
+            public bool IncludedInactiveObjects;
+            public int InactiveObjects;
             public int RemovedInactiveObjects;
+            public int FxToggleCount;
             public int MissingBoneRenderers;
             public ComponentStripper.Result Strip;
         }
@@ -108,9 +111,10 @@ namespace VRCast.Converter.Editor
         /// keepSceneBlendShapes が true なら、FX の初期状態ではなくシーン上の BlendShape の値を書き出す。
         /// extraExpressionClips は FX に無い表情として追加するクリップ（BlendShape だけを動かすものを取り込む）。
         /// シーンに FaceEmo の設定があれば、その表情を FaceEmo の名前で優先して取り込む。
+        /// includeInactiveObjects が true なら、エディタで非アクティブにしたものも OFF のまま書き出す（false なら消す）。
         /// </summary>
         public static Report Export(GameObject source, string outputPath, bool keepSceneBlendShapes = true,
-            IReadOnlyList<AnimationClip> extraExpressionClips = null)
+            IReadOnlyList<AnimationClip> extraExpressionClips = null, bool includeInactiveObjects = true)
         {
             // 事前検証に失敗したら例外で中断
             string error = Validate(source);
@@ -125,7 +129,12 @@ namespace VRCast.Converter.Editor
                 outputPath += AvatarPackageLayout.Extension;
             }
 
-            var report = new Report { OutputPath = outputPath, KeptSceneBlendShapes = keepSceneBlendShapes };
+            var report = new Report
+            {
+                OutputPath = outputPath,
+                KeptSceneBlendShapes = keepSceneBlendShapes,
+                IncludedInactiveObjects = includeInactiveObjects,
+            };
             GameObject clone = null;
             string bundleDir = FileUtil.GetUniqueTempPathInProject();
             string tempFolder = $"{TempFolderParent}/{TempFolderName}";
@@ -145,8 +154,15 @@ namespace VRCast.Converter.Editor
                 clone.name = source.name;
                 clone.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
 
-                // エディタで非アクティブにしたものは書き出さない（FX の焼き込みで表示状態が変わる前、改変の適用前に消す）
-                report.RemovedInactiveObjects = ComponentStripper.RemoveInactiveObjects(clone);
+                // エディタで非アクティブにしたもの（FX の焼き込みで表示状態が変わる前、改変の適用前に扱う）は、
+                // 書き出す指定なら控えて後で OFF に戻し、書き出さない指定ならここで消す（パーティクルは OFF のまま残す）
+                List<GameObject> sceneInactive = includeInactiveObjects
+                    ? ComponentStripper.CollectInactiveObjects(clone)
+                    : new List<GameObject>();
+                if (!includeInactiveObjects)
+                {
+                    report.RemovedInactiveObjects = ComponentStripper.RemoveInactiveObjects(clone);
+                }
 
                 // NDMF が MA コンポーネントを消す前に、衣装・小物の統合先を控える
                 ModularAvatarFallback.Plan maPlan = ModularAvatarFallback.Capture(clone);
@@ -195,6 +211,9 @@ namespace VRCast.Converter.Editor
                         keepSceneBlendShapes);
                 }
 
+                // エディタで非アクティブにしたものは、FX の初期状態で表示されるものも OFF にそろえる（アプリで ON にできる）
+                report.InactiveObjects = ComponentStripper.Deactivate(sceneInactive);
+
                 // 改変適用後の Expression Menu の FaceEmo の下から、VRChat と同じ道筋で表情を読む（名前・パスとも VRChat と同じ）
                 List<ExpressionExtractor.NamedClip> menuClips =
                     ExpressionMenuReader.Read(descriptor, fx, faceEmoTrace);
@@ -228,7 +247,14 @@ namespace VRCast.Converter.Editor
 
                 // 書き出すパーティクルの数（アプリで ON/OFF できる）と、まとめて切り替える単位
                 report.ParticleSystemCount = clone.GetComponentsInChildren<ParticleSystem>(true).Length;
-                ParticleGroupSet particleGroups = BuildParticleGroups(clone.transform, fxToggled);
+                ParticleGroupSet particleGroups = new ParticleGroupSet
+                {
+                    paths = BuildToggledPaths(clone.transform, fxToggled, true),
+                };
+
+                // FX で切り替えるオブジェクト（アプリのオブジェクトの一覧で目立たせ、絞り込めるようにする）
+                FxToggleSet fxToggles = new FxToggleSet { paths = BuildToggledPaths(clone.transform, fxToggled, false) };
+                report.FxToggleCount = fxToggles.paths.Length;
 
                 // ボーンを失ったメッシュ（頂点が原点へ伸びる）を警告
                 report.MissingBoneRenderers = ComponentStripper.WarnMissingBones(clone);
@@ -307,6 +333,11 @@ namespace VRCast.Converter.Editor
                     metadata[AvatarPackageLayout.ParticleGroupsEntry] = particleGroups;
                 }
 
+                if (fxToggles.paths.Length > 0)
+                {
+                    metadata[AvatarPackageLayout.FxTogglesEntry] = fxToggles;
+                }
+
                 foreach (KeyValuePair<string, IMetadata> entry in metadata)
                 {
                     string metadataError = entry.Value.Validate();
@@ -358,20 +389,20 @@ namespace VRCast.Converter.Editor
             return merged;
         }
 
-        private static ParticleGroupSet BuildParticleGroups(Transform root, HashSet<Transform> fxToggled)
+        private static string[] BuildToggledPaths(Transform root, HashSet<Transform> fxToggled, bool particlesOnly)
         {
-            // 除去の後も残っていて、パーティクルを含む FX の切り替え先だけを、パスの順に並べて書く
+            // 除去の後も残っている FX の切り替え先（particlesOnly ならパーティクルを含むものだけ）を、パスの順に並べて書く
             var paths = new List<string>();
             foreach (Transform toggled in fxToggled)
             {
-                // 消えたもの・ルート自身・パーティクルを含まないものは単位にしない
+                // 消えたもの・ルート自身・（指定時は）パーティクルを含まないものは対象にしない
                 if (toggled == null || toggled == root || !toggled.IsChildOf(root)
-                    || toggled.GetComponentInChildren<ParticleSystem>(true) == null)
+                    || (particlesOnly && toggled.GetComponentInChildren<ParticleSystem>(true) == null))
                 {
                     continue;
                 }
 
-                // 長すぎるパスは検証で書き出し全体が失敗しないよう除く（その単位は Runtime の推定に任せる）
+                // 長すぎるパスは検証で書き出し全体が失敗しないよう除く（その分は Runtime の推定に任せる）
                 string path = ReflectionUtility.PathOf(toggled, root);
                 if (ExpressionSet.IsValidString(path, false))
                 {
@@ -381,12 +412,12 @@ namespace VRCast.Converter.Editor
 
             // 書き出しのたびに内容が変わらないよう並びを固定し、上限を超える分は捨てる
             paths.Sort(StringComparer.Ordinal);
-            if (paths.Count > ParticleGroupSet.MaxPaths)
+            if (paths.Count > PathListSet.MaxPaths)
             {
-                paths.RemoveRange(ParticleGroupSet.MaxPaths, paths.Count - ParticleGroupSet.MaxPaths);
+                paths.RemoveRange(PathListSet.MaxPaths, paths.Count - PathListSet.MaxPaths);
             }
 
-            return new ParticleGroupSet { paths = paths.ToArray() };
+            return paths.ToArray();
         }
 
         private static void LogFaceEmo(List<string> trace, List<string> skipped)

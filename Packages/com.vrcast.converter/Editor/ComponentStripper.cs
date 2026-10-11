@@ -58,6 +58,7 @@ namespace VRCast.Converter.Editor
 
         /// <summary>
         /// 非アクティブ（エディタでチェックを外した）オブジェクトを子ごと削除し、削除した数を返す（ルートは残す）。
+        /// 非アクティブのものを書き出さない指定のときに使う。
         /// FX の初期状態で表示されるものも含め、書き出しには一切含めない。
         /// ただし残るメッシュがボーンとして使う Transform は消さず、コンポーネントだけを外して残す
         /// （消すとそのボーンに乗った頂点が原点へ伸びる。VRChat では非アクティブでもボーンとして動くため）。
@@ -66,6 +67,47 @@ namespace VRCast.Converter.Editor
         public static int RemoveInactiveObjects(GameObject root)
         {
             return RemoveObjects(root, go => !go.activeSelf, true);
+        }
+
+        /// <summary>
+        /// 非アクティブ（エディタでチェックを外した）オブジェクトを集める（ルートは除く）。
+        /// 非アクティブのものも書き出す指定のときに使い、FX の焼き込みの後に <see cref="Deactivate"/> で OFF に戻す。
+        /// </summary>
+        public static List<GameObject> CollectInactiveObjects(GameObject root)
+        {
+            var inactive = new List<GameObject>();
+            foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
+            {
+                // ルート自体は対象外
+                if (t.gameObject != root && !t.gameObject.activeSelf)
+                {
+                    inactive.Add(t.gameObject);
+                }
+            }
+
+            return inactive;
+        }
+
+        /// <summary>
+        /// 集めておいたオブジェクトを非アクティブに戻し、書き出しに残った数を返す
+        /// （FX の初期状態で表示されるものも OFF にそろえる。改変・最適化で消えたものは数えない）。
+        /// </summary>
+        public static int Deactivate(List<GameObject> objects)
+        {
+            int count = 0;
+            foreach (GameObject go in objects)
+            {
+                // 改変・最適化で破棄されたものは飛ばす
+                if (go == null)
+                {
+                    continue;
+                }
+
+                go.SetActive(false);
+                count++;
+            }
+
+            return count;
         }
 
         /// <summary>

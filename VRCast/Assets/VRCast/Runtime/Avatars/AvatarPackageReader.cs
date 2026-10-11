@@ -62,6 +62,7 @@ namespace VRCast.Avatars
                     var constraints = ReadMetadata<ConstraintSet>(zip, AvatarPackageLayout.ConstraintsEntry);
                     var blendShapeSync = ReadMetadata<BlendShapeSyncSet>(zip, AvatarPackageLayout.BlendShapeSyncEntry);
                     var particleGroups = ReadMetadata<ParticleGroupSet>(zip, AvatarPackageLayout.ParticleGroupsEntry);
+                    var fxToggles = ReadMetadata<FxToggleSet>(zip, AvatarPackageLayout.FxTogglesEntry);
 
                     // bundle をキャッシュへ展開（ハッシュ検証込み）
                     string bundlePath = ExtractBundle(zip, manifest, cacheRoot);
@@ -74,7 +75,7 @@ namespace VRCast.Avatars
                     }
 
                     return new AvatarPackage(manifest, info.FullName, bundlePath, expressions, descriptor, physBones, constraints,
-                        blendShapeSync, particleGroups);
+                        blendShapeSync, particleGroups, fxToggles);
                 }
             }
             catch (InvalidDataException e)

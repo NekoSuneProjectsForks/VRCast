@@ -15,7 +15,7 @@ using VRCast.Tracking;
 namespace VRCast.UI
 {
     /// <summary>
-    /// IMGUI の操作パネル。左のタブ（Start / Avatar / Pose / Face / Shape keys / Tracking / Display / Output / OSC / HTTP / Settings / Log / Credits / Discord）で
+    /// IMGUI の操作パネル。左のタブ（Start / Avatar / Pose / Objects / Face / Shape keys / Tracking / Display / Output / OSC / HTTP / Settings / Log / Credits / Discord）で
     /// 表示するセクションを切り替え、内容は縦スクロールする。下部にはリセットボタン・アンケート欄・動作状況を常に表示する。
     /// 画面に収まる高さに制限し、Tab キーで表示切替（隠している間は背景も透過）。
     /// 表示言語（見出しの下のボタンでいつでも切替）と UI の大きさは設定に従う。見出しの「?」でヘルプページを開く。
@@ -48,6 +48,7 @@ namespace VRCast.UI
             Start,
             Avatar,
             Pose,
+            Objects,
             Face,
             ShapeKeys,
             Tracking,
@@ -73,6 +74,7 @@ namespace VRCast.UI
         private StartSection _startSection;
         private AvatarSection _avatarSection;
         private AnimationSection _animationSection;
+        private ObjectSection _objectSection;
         private FaceSection _faceSection;
         private ShapeKeySection _shapeKeySection;
         private TrackingSection _trackingSection;
@@ -118,6 +120,7 @@ namespace VRCast.UI
             _avatarSection = new AvatarSection(session, settings, initialPath);
             _startSection = new StartSection(session, _avatarSection, rendering, virtualCamera, OpenLink);
             _animationSection = new AnimationSection(session, settings);
+            _objectSection = new ObjectSection(session, settings);
             _faceSection = new FaceSection(session, microphone, settings);
             _shapeKeySection = new ShapeKeySection(session, settings);
             _trackingSection = new TrackingSection(session, tracker, trackerProcess, skeleton, settings);
@@ -522,6 +525,9 @@ namespace VRCast.UI
                 case Tab.Pose:
                     _animationSection.Draw();
                     break;
+                case Tab.Objects:
+                    _objectSection.Draw();
+                    break;
                 case Tab.Face:
                     _faceSection.Draw();
                     break;
@@ -566,6 +572,8 @@ namespace VRCast.UI
                     return Loc.T("Avatar", "アバター", "아바타", "虚拟形象", "虛擬形象");
                 case Tab.Pose:
                     return Loc.T("Pose", "ポーズ・表情", "포즈·표정", "姿势·表情", "姿勢·表情");
+                case Tab.Objects:
+                    return Loc.T("Objects", "オブジェクト", "오브젝트", "对象", "物件");
                 case Tab.Face:
                     return Loc.T("Face", "顔", "얼굴", "面部", "臉部");
                 case Tab.ShapeKeys:

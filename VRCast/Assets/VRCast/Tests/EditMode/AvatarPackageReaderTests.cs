@@ -357,6 +357,19 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Extract_WithFxToggles_ParsesPaths()
+        {
+            // FX で切り替えるオブジェクトを同梱し、無いパッケージでは空になること
+            var toggles = new FxToggleSet { paths = new[] { "Outfit/Jacket", "Hat" } };
+            string path = WritePackage(CreateManifest(DummyBundle), DummyBundle,
+                AvatarPackageLayout.FxTogglesEntry, JsonUtility.ToJson(toggles));
+
+            AvatarPackage package = AvatarPackageReader.Extract(path, _cacheRoot);
+
+            Assert.That(package.FxToggles.paths, Is.EqualTo(new[] { "Outfit/Jacket", "Hat" }));
+        }
+
+        [Test]
         public void Extract_WithoutExpressions_ReturnsEmpty()
         {
             string path = WritePackage(CreateManifest(DummyBundle), DummyBundle);

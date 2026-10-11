@@ -143,6 +143,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `PoseController` | アバターの向き（Body yaw）と、Humanoid の待機ポーズ。読込時姿勢の筋肉値から肘の曲げだけを補間し、腕は上腕ボーンを真下（外側へ 12°）へ向けて回す。既定は気を付け（0 / 0 で元の姿勢を復元）。`Reapply` で設定値から反映し直す |
 | `IdleMotionController` | 待機モーション（呼吸・体の揺れ・頭のゆらぎ、既定 ON）。Humanoid の背骨・胸・上胸・肩・首・頭をアバタールート基準で少しだけ回して上乗せ（揺れ・ひねりは上半身で等分、呼吸は胸の反りと肩の上げ、上半身の傾きの 6 割を首で打ち消す）。前フレームの上乗せは、ボーンが書いたままなら外し、他（待機ポーズの変更・トラッキング）が書き直していればその回転を新しい基準にする。ON/OFF と顔のトラッキングの開始・終了は 0.5 秒で出し入れし（トラッキング中は頭のゆらぎを止める）、止まり切った後はボーンを触らない。実行順 -95（`FaceTrackingDriver` の後、`HandTrackingDriver`・Constraint・揺れものの前） |
 | `AvatarParticles` | アバターの ParticleSystem をまとまりごとに ON/OFF する。まとまりは、`metadata/particle_groups.json`（FX で `m_IsActive` を動かすオブジェクトのうちパーティクルを含むもの）のうちパーティクルに最も近い祖先（自身を含む）。該当が無ければ、親がルート・ボーン（SkinnedMeshRenderer のボーンと Humanoid のボーン）でなく、子孫にボーン・FX の単位・パーティクル以外の Renderer を含まない（エフェクトのフォルダー）間だけ親へたどる。同じ単位のものは 1 つにまとめる。初期状態は読込時の表示（FX の初期状態、1 つでも表示中なら ON）、記録（`AvatarEntry.particles`、パス単位で ON/OFF と利用者が付けた名前 `name`、空なら Unity 上の名前、64 文字まで）があれば当てる。OFF は各パーティクルの `StopEmittingAndClear` と ParticleSystemRenderer の無効化（オブジェクトは隠さない）、ON は各パーティクルのアバタールートまでの非表示の親を表示して描画を戻し `Play(false)` |
+| `AvatarObjects` | アバターの階層（ルート自身を除く子孫）を深さ優先の行（パス・名前・深さ・親と子孫の範囲・子孫に Renderer があるか・`metadata/fx_toggles.json` に載っているか・読込時の `activeSelf`）にし、行ごとに `SetActive` する。読込時の状態と違うものだけを記録（`AvatarEntry.objects`、パス単位で ON/OFF）し、読込時に当て直す（同じパスが複数あれば先頭。見つからないパスは無視）。`ResetAll` は記録したものだけを読込時の状態へ戻す（パーティクルの ON で表示した親などは触らない）。`AvatarParticles` より先に初期化し、記録済みのパーティクルの ON が非表示の親を表示できるようにする |
 | `IdleMotion` | 待機モーションの角度を時刻と強さから求める状態の無い計算（呼吸 4.5 秒で吸う 4 割・吐く 6 割、揺れ 9 秒 + 小さい波、ひねり 13 秒、頭は Perlin ノイズ。強さ 1 で 1〜2 度） |
 | `ExpressionController` | 表情プリセットを BlendShape に適用。切替時は前の表情から次の表情へ 0.2 秒かけてモーフィング（プリセットに無い BlendShape は読込時の値へ。変化中のフレームだけ書き込むので、まばたき・口パクの上乗せと両立）。表情ごとのショートカットキー（`KeyCombo`。ニュートラル含む、既定は未割り当て、1 組み合わせ 1 表情、押した瞬間だけ反応。押下判定は `HotkeyPoller`）。`TryFindHotkey` でリセットのショートカットキーとの競合を調べられる。手動の選択（ボタン・キー・外部操作）は `Select` で固定（`IsManual`）し、トラッキングの自動検出で上書きしない。`toggle` 付きで固定中の同じ表情を選ぶか `ReleaseManual` / `ResetToNeutral` で固定を外す |
 | `ExpressionMapping` | 検出した表情（笑顔・驚き・怒り・悲しみ・ウインク・ジト目・ふくれっ面）→ 表情プリセットの対応付け。設定に保存したプリセット名（空欄 = 自動、`<none>` = 割り当てなし）で解決し、無ければプリセット名のキーワードで推定。割り当て先がある表情のビット列（`Candidates`）も求める。表情ごとのしきい値の読み書き（未設定なら共通の `trackingExpressionThreshold`） |
@@ -172,7 +173,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `TorsoPose` | 両肩（`ArmTrackingData.HasShoulder`）の線から上半身のひねり（縦軸まわり）・左右の傾き（前後軸まわり）を度で求める（鏡像は腕と同じ対応、肩幅 0.1 m 未満は求めない） |
 | `HandTrackingDriver` | 腕（上腕・前腕）と手首・指 15 節を、子ボーンへの向きがトラッキングの点の向きに一致するよう回転（手首は曲げ 80°・ひねり 100° までに制限）。映っていない腕は待機ポーズへフェード、未使用時はボーンに触れない。鏡像。届いた値（受信番号 `BodyTrackingFrame.Sequence` で判定）へ `PointSmoother` で描画の毎フレーム寄せる（腕 0.07 秒・手 0.05 秒） |
 | `PointSmoother` | 不定期に届く点の列を、点ごとに速度を持つバネ（`Vector3.SmoothDamp`）で最新の値へ寄せる（届く間隔が揺れても止まったり跳ねたりしない）。見失ったら次の値に合わせる |
-| `MainPanel` | IMGUI パネル。左のタブ（Start / Avatar / Pose / Face / Shape keys / Tracking / Display / Output / OSC / HTTP / Settings / Log / Credits / Discord）で選んだセクションだけを縦スクロール領域に描画（内容の幅は見えている幅に固定し、横並びのボタンは `GuiControls.Shrinkable` で縮めて右へはみ出さないようにする）。高さを画面内に制限し位置を画面内に保つ。見出しでドラッグ移動、Tab で表示切替（隠している間は背景も透過）、「?」でヘルプ。見出しの下に表示言語の切り替えボタンを常に横並びで表示（代替フォントの字形が下へはみ出しても切らない `UiTheme.OverflowButton`。選択肢の表示名は `Loc.LanguageLabels` を Settings と共有）。新しいバージョンがあればその下に通知（GitHub / BOOTH からダウンロード、更新履歴（GitHub の `CHANGELOG.txt`）を開く）。描画前に表示言語・テーマ・UI 倍率（`GUI.matrix`）を適用し、パネル上のマウス操作中はカメラ操作を止める。全設定のリセット後に、変更時にしか反映しない機能（描画・仮想カメラ・ポーズ・ポート入力欄）へ反映し直す |
+| `MainPanel` | IMGUI パネル。左のタブ（Start / Avatar / Pose / Objects / Face / Shape keys / Tracking / Display / Output / OSC / HTTP / Settings / Log / Credits / Discord）で選んだセクションだけを縦スクロール領域に描画（内容の幅は見えている幅に固定し、横並びのボタンは `GuiControls.Shrinkable` で縮めて右へはみ出さないようにする）。高さを画面内に制限し位置を画面内に保つ。見出しでドラッグ移動、Tab で表示切替（隠している間は背景も透過）、「?」でヘルプ。見出しの下に表示言語の切り替えボタンを常に横並びで表示（代替フォントの字形が下へはみ出しても切らない `UiTheme.OverflowButton`。選択肢の表示名は `Loc.LanguageLabels` を Settings と共有）。新しいバージョンがあればその下に通知（GitHub / BOOTH からダウンロード、更新履歴（GitHub の `CHANGELOG.txt`）を開く）。描画前に表示言語・テーマ・UI 倍率（`GUI.matrix`）を適用し、パネル上のマウス操作中はカメラ操作を止める。全設定のリセット後に、変更時にしか反映しない機能（描画・仮想カメラ・ポーズ・ポート入力欄）へ反映し直す |
 | `ResetActions` | リセットの実行と表示名（顔の向き = `FaceTrackingDriver.Calibrate`、視線 = `CalibrateGaze`、表情 = `ExpressionController.ResetToNeutral`、カメラ = `OrbitCameraController.ResetView`）。`CanRun` で実行できるか（受信中・表情が出ているか）を返す。`ResetBar` と `ResetHotkeyListener` で共用 |
 | `ResetBar` | パネル下部に常に表示するリセットボタン（`ResetActions` の各操作。2 行目に `AppSettings.GetResetHotkey` のキー名。使えない間は無効表示） |
 | `SurveyBar` | リセットボタンと動作状況の間に常に表示するアンケート欄（次に対応してほしい機能などの募集）。`UiTheme.SurveyCard`（ほかのカードと同じ地と角丸）に置き、GitHub の Issue（#11）/ Google フォームを通常のボタンで開く |
@@ -196,6 +197,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `UnityWindow` | メインスレッドの Unity のプレイヤーウィンドウ（`UnityWndClass`）のハンドルを探す。タイトルの変更（`SetWindowTextW`） |
 | `FileDropReceiver` | Windows のスタンドアロン実行時に Unity のウィンドウへ `DragAcceptFiles` でドロップを許可し、メインスレッドの `WH_GETMESSAGE` フックで `WM_DROPFILES` を取り出してパスを `Update` で通知 |
 | `FileDialog` | Windows の「ファイルを開く」「名前を付けて保存」ダイアログ（`GetOpenFileNameW` / `GetSaveFileNameW`、モーダル。複数の拡張子を 1 つのフィルターで指定。保存は上書きの確認付き） |
+| `ObjectSection` | Objects タブ。`AvatarObjects` の行を、`+` / `-` で開閉する木（字下げ、既定はルートの子だけ）か、平らな一覧（検索中・「VRChat のメニューで切り替えるものだけ」のとき。行の下にパス）で描き、チェックで表示を ON/OFF する。「ボーン・空のオブジェクトを隠す」（既定 ON）は子孫にも Renderer の無い行を省く。FX で切り替えるものが分かるアバターは「VRChat のメニューで切り替えるものだけ」から始め、その行には `[VRChat]` を付ける。親が OFF で見えていない行は薄く出す。1 回に描くのは 400 行まで。行の数が変わる操作（開閉・絞り込み・検索）は次の Layout イベントで当てる（Layout と他のイベントで配置を食い違わせないため）。変更は `AppSettings.SetObjectToggles` へ記録、「変更を元に戻す」で読込時の状態へ |
 | `AnimationSection` | Pose タブ（向き・待機ポーズ、表情。表情ごとに 1 行で「表情ボタン・キーの割り当てボタン（押すと割り当て待ち、Esc でやめる）・リセット」。割り当てはアバターごとに `AppSettings.SetExpressionHotkeys` へ記録。リセットのショートカットキーと同じなら行の下に警告）。表情ボタンは固定中の表情を押し直すと自動検出へ戻し、固定中は「自動検出に戻す」を出す |
 | `ExpressionHotkey` | アバターごとの表情のショートカットキー（プリセット名・Windows の仮想キー番号・Ctrl / Alt / Shift。ニュートラルは `<neutral>`） |
 | `RemoteControl` | 外部操作（設定で ON のときだけ）。OSC（UDP）と HTTP を `127.0.0.1` にのみ bind し、スレッドを使わず Update でポーリングして表示中のアバターの `ExpressionController` を操作。HTTP は `Origin` / 別サイトの `Sec-Fetch-Site` 付き（Web ページからの送信）を 403 で拒否し、CORS ヘッダーは付けない。bind 失敗は 3 秒ごとに再試行 |
@@ -243,7 +245,9 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `ConstraintSet` | `metadata/constraints.json`（Constraint とソース）のモデルと検証 |
 | `ConstraintExtractor` | VRC Constraint（リフレクション）と Unity 標準 Constraint を ConstraintSet へ変換。アバター外のソース・範囲外の値は除外 |
 | `BlendShapeSyncSet` | `metadata/blendshape_sync.json`（MA Blendshape Sync の同期元・同期先）のモデルと検証 |
-| `ParticleGroupSet` | `metadata/particle_groups.json`（パーティクルをまとめて切り替える単位 = FX で表示 ON/OFF するオブジェクトのパス）のモデルと検証 |
+| `PathListSet` | パスの一覧だけを持つ metadata の基底（`paths`、1024 件まで、ルート自身 = 空と長すぎるパスを拒否） |
+| `ParticleGroupSet` | `metadata/particle_groups.json`（パーティクルをまとめて切り替える単位 = FX で表示 ON/OFF するオブジェクトのうちパーティクルを含むもののパス）のモデル（`PathListSet`） |
+| `FxToggleSet` | `metadata/fx_toggles.json`（FX で表示 ON/OFF するオブジェクトすべてのパス。Objects タブの印と絞り込みに使う）のモデル（`PathListSet`） |
 | `BlendShapeSyncExtractor` | NDMF 実行前に MA Blendshape Sync（リフレクション。参照は MA の `AvatarObjectReference.Get`、無ければ `referencePath`）を Transform で控え、改変・除去の後のパスで BlendShapeSyncSet にする。消えたメッシュ・BlendShape、同じ同期先の重複は除外 |
 | `ReflectionUtility` | SDK 型をアセンブリ参照なしで読むためのフィールド取得（float / bool / Vector3）・型名検索・アバタールートからの相対パス |
 | `AvatarExporter` | 複製 → MA 設定の控え → 改変ツールの適用（`AvatarPreprocessor`） → MA 未適用分の付け替え → 複製からメタデータ抽出 → FX 既定状態の焼き込み・表情抽出 → 除去 → 一時 Prefab → AssetBundle → ZIP の書き出し |
@@ -259,7 +263,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `ExtraExpressionClips` | 書き出し画面の「追加の表情」の指定（AnimationClip / フォルダ）。アバターの GlobalObjectId ごとに GUID を EditorPrefs へ保存し、フォルダはサブフォルダ内のクリップまで展開 |
 | `VrcDescriptorReader` | VRChat SDK 非依存（リフレクション）で `VRCAvatarDescriptor` の FX コントローラー、Expression Parameters 既定値、Lip Sync・Eyelids 設定を取得 |
 | `FxDefaultStateBaker` | FX の各レイヤーで既定値により到達するステートのモーション（BlendTree は重み付き、1D は補間）から、表示 ON/OFF・BlendShape・マテリアル差し替えの 0 秒時点の値を複製へ適用。BlendShape はシーンの値を優先する設定（既定）では適用しない。`CollectToggledObjects` は FX の全クリップから `m_IsActive` を動かすオブジェクトを集め、`AvatarExporter` がそのうち除去後も残りパーティクルを含むものを `metadata/particle_groups.json` に書く |
-| `ComponentStripper` | 許可リスト外コンポーネント・Missing Script・EditorOnly オブジェクト・Animator Controller の除去。非アクティブのオブジェクトの除去（`RemoveInactiveObjects`。`AvatarExporter` が複製直後、NDMF の適用と FX の焼き込みより前に呼び、FX の初期状態で表示されるものも書き出さない。残るメッシュがボーンとして使う Transform はコンポーネントだけ外して残す。パーティクルは非アクティブのまま ParticleSystem / ParticleSystemRenderer と親の Transform だけを残し、アプリで ON にできるようにする）。ボーンを失った SkinnedMeshRenderer の警告（`WarnMissingBones`） |
+| `ComponentStripper` | 許可リスト外コンポーネント・Missing Script・EditorOnly オブジェクト・Animator Controller の除去。非アクティブのオブジェクトは書き出しウィンドウの「非アクティブのオブジェクトも書き出す」（`AvatarExporter.Export` の `includeInactiveObjects`、既定 ON、EditorPrefs に保存）で扱いを変える。ON: `AvatarExporter` が複製直後（NDMF の適用と FX の焼き込みより前）に `CollectInactiveObjects` で控え、FX の焼き込みの後に `Deactivate` で非アクティブに戻す（FX の初期状態で表示されるものも OFF にそろえ、アプリの Objects タブで ON にできるようにする。改変・最適化で消えたものは数えない）。OFF: 同じ時点で `RemoveInactiveObjects` で子ごと除去（残るメッシュがボーンとして使う Transform はコンポーネントだけ外して残す。パーティクルは非アクティブのまま ParticleSystem / ParticleSystemRenderer と親の Transform だけを残す）。ボーンを失った SkinnedMeshRenderer の警告（`WarnMissingBones`） |
 | `AvatarExporterWindow` | `VRCast > Avatar Exporter` ウィンドウ |
 
 ## Editor
@@ -288,5 +292,6 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `ExpressionDetectorTests` | 表情判定の保持時間・しきい値未満・ヒステリシス・最も強い表情の選択・発話中の笑顔の抑制・しきい値・リセット |
 | `ExpressionMappingTests` | プリセット名のキーワード推定（英語・日本語）、保存した名前の優先、空欄・他アバターの名前は推定へ、割り当てなし・ニュートラル |
 | `VrmMetadataBuilderTests` | VRM の表情の変換（重み・空の除外・同名の番号付け）、まばたき（最も多いメッシュ・ウインク・左右のみ・無し）、口の形（母音の位置・無し）、SpringBone の変換（関節の追従・ignore・pull / spring・半径のカーブ・カプセル・コライダー番号）、途切れた鎖・関節 1 つの除外 |
-| `AvatarPackageReaderTests` | 正常展開、キャッシュ再利用、ハッシュ不一致・manifest 欠落・未対応バージョン・パストラバーサル・非 ZIP の拒否、エントリ名判定、表情・descriptor・physbones・constraints・blendshape_sync・particle_groups データの読込・不正時の空扱い |
+| `AvatarPackageReaderTests` | 正常展開、キャッシュ再利用、ハッシュ不一致・manifest 欠落・未対応バージョン・パストラバーサル・非 ZIP の拒否、エントリ名判定、表情・descriptor・physbones・constraints・blendshape_sync・particle_groups・fx_toggles データの読込・不正時の空扱い |
+| `AvatarObjectsTests` | 階層の行の並び（ルートを除く深さ優先）・子孫の範囲・Renderer と FX の印、読込時と違うものだけの記録、記録の復元（見つからないパス・ルートは無視）、記録したものだけを戻す `ResetAll` |
 | `ConstraintEvaluatorTests` | Constraint の重み付き平均・軸マスク・重み 0 の静止値・無効時の非適用・Parent のオフセット・Aim / LookAt の向き・評価順の並べ替え・検証 |
