@@ -13,6 +13,14 @@ namespace VRCast.AvatarFormat
         {
             // ファイル全体をストリームで読みながらハッシュを計算
             using (FileStream stream = File.OpenRead(filePath))
+            {
+                return ComputeSha256Hex(stream);
+            }
+        }
+
+        public static string ComputeSha256Hex(Stream stream)
+        {
+            // 現在位置から終わりまでを読みながらハッシュを計算（ストリームは閉じない）
             using (SHA256 sha = SHA256.Create())
             {
                 return ToLowerHex(sha.ComputeHash(stream));

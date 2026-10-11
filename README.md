@@ -577,6 +577,7 @@ OBS のウィンドウキャプチャは透過に対応していないため、�
 ├── Tools/
 │   ├── MediaPipeTracker/         同梱トラッカー (Python + MediaPipe、build.ps1 / build.bat で exe 化)
 │   ├── Package/                  配布用 zip・書き出しツールの unitypackage の作成 (一括 release.bat / package.bat / unitypackage.bat、同梱 README.txt)
+│   ├── Setup/                    Jinxxy 向けセットアップ EXE の展開プログラム (C# / .NET Framework 4.8。package.bat が zip を連結)
 │   ├── Spout/                    Spout2 送信プラグインの取得スクリプト (fetch.ps1)
 │   ├── UnityCapture/             仮想カメラ DLL の取得スクリプト (fetch.ps1)
 │   ├── Updater/                  自動更新のアップデーター (C++。build.ps1 / build.bat で VRCastUpdater.exe をビルド)
@@ -691,7 +692,7 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Spout\fetch.ps1
 MediaPipe トラッカーのビルド → ビルド済みの `VRCast\Builds\Windows` の StreamingAssets へトラッカーを上書きコピー（Unity で再ビルドしなくても新しいトラッカーが入る）
 → Windows 11 の仮想カメラ DLL のビルド → ビルドの `VRCast_Data\Plugins\x86_64` へコピー
 → アップデーター（`VRCastUpdater.exe`）のビルド → ビルドの `VRCast_Data\StreamingAssets\Updater` へコピー
-→ 書き出しツールの unitypackage（`dist\`）→ 配布 zip と自動更新用の `dist\version.json` を順に作る。
+→ 書き出しツールの unitypackage（`dist\`）→ 配布 zip と自動更新用の `dist\version.json`・Jinxxy 向けのセットアップ EXE を順に作る。
 開始時に VRCast.exe の有無と、ビルドのバージョンと書き出しツールのバージョンの不一致を確認する。
 
 - 仮想カメラ DLL とアップデーターのビルドには Visual Studio 2022 の「C++ によるデスクトップ開発」が要る。
@@ -720,6 +721,12 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.
 - 中身: `VRCast\` フォルダにビルド一式 + `LICENSE.txt` / `NOTICE.txt` / `CHANGELOG.txt` / `README.txt`（利用者向けの日英の説明、`Tools/Package/README.txt`）。
   本体と取り違えないよう、別の `VRCast-Converter\` フォルダに書き出しツール `VRCast-Converter-<package.json の version>.unitypackage` と、
   「アバターのプロジェクトにインポートする」ことをファイル名で伝える説明（`Tools/Package/Converter/` の中身をそのまま複製）を入れる。
+- セットアップ EXE: `dist\VRCast-<バージョン>-win64-setup.exe`。Jinxxy は zip などの圧縮ファイルを置けず、
+  ビルドにトラッカーの `base_library.zip` があるためフォルダごとのアップロードもできないので、こちらを Jinxxy に置く。
+  `Tools/Setup` の展開プログラム（C# / .NET Framework 4.8。Visual Studio 2022 付属の C# コンパイラーでビルド。無ければ警告を出して EXE だけ作らない）の
+  末尾に同じ zip（と大きさ・SHA-256）を連結したもの。起動すると選んだフォルダ（既定は EXE と同じ場所）に zip と同じ `VRCast\` と `VRCast-Converter\` を展開する。
+  既に VRCast が入っていれば `%LOCALAPPDATA%\VRCast\update\VRCast` へ展開してアップデーターに差し替えを任せる（自動更新と同じ手順・結果表示）。
+  展開の検証は本体の `UpdatePackage.cs` と `HashUtility.cs` を共有する。管理者権限は求めない（Program Files 等には展開しない）。
 - 書き出しツールの unitypackage だけを作る場合は `Tools\Package\unitypackage.bat`（Unity 不要、出力 `dist\VRCast-Converter-<バージョン>.unitypackage`）。
   `Packages/com.vrcast.converter` を `Assets/VRCast/Converter/` に入るよう詰める。GUID はリポジトリの `.meta` を使うため版をまたいで同じ
   （上書きインポートで更新できる）。ファイルを追加したら Unity で一度開いて `.meta` を作り、一緒にコミットする（無いと中止する）。

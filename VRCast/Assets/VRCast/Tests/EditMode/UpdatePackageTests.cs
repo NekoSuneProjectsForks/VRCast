@@ -131,6 +131,42 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void TryGetRelativePath_ConverterFolder_ReturnsRelativePath()
+        {
+            // 書き出しツールのフォルダを指定すれば、その中のファイルだけが対象になること
+            Assert.That(UpdatePackage.TryGetRelativePath("VRCast-Converter/x.unitypackage",
+                UpdatePackage.ConverterFolderPrefix, out string relative), Is.True);
+            Assert.That(relative, Is.EqualTo("x.unitypackage"));
+            Assert.That(UpdatePackage.TryGetRelativePath("VRCast/VRCast.exe",
+                UpdatePackage.ConverterFolderPrefix, out _), Is.False);
+        }
+
+        [Test]
+        public void ExtractFolder_KeepsOtherFilesAndReportsProgress()
+        {
+            // 展開先にある他のファイルは残し、書き出したバイト数を知らせること
+            string zipPath = WriteZip(("VRCast-Converter/x.unitypackage", "xyz"), ("VRCast/VRCast.exe", "exe"));
+            string destination = Path.Combine(_directory, "out");
+            Directory.CreateDirectory(destination);
+            File.WriteAllText(Path.Combine(destination, "keep.txt"), "keep");
+            long written = 0;
+
+            int count;
+            using (FileStream stream = File.OpenRead(zipPath))
+            using (var zip = new ZipArchive(stream, ZipArchiveMode.Read))
+            {
+                count = UpdatePackage.ExtractFolder(zip, UpdatePackage.ConverterFolderPrefix, destination,
+                    bytes => written += bytes);
+            }
+
+            Assert.That(count, Is.EqualTo(1));
+            Assert.That(written, Is.EqualTo(3));
+            Assert.That(File.ReadAllText(Path.Combine(destination, "x.unitypackage")), Is.EqualTo("xyz"));
+            Assert.That(File.Exists(Path.Combine(destination, "keep.txt")), Is.True);
+            Assert.That(File.Exists(Path.Combine(destination, "VRCast.exe")), Is.False);
+        }
+
+        [Test]
         public void HasAppFiles_MissingData_ReturnsFalse()
         {
             // exe だけで _Data が無ければ起動できないので使わないこと

@@ -8,6 +8,7 @@ namespace VRCast.Platform
     /// <summary>
     /// 自動更新の配布 zip（GitHub Releases の VRCast-x.y.z-win64.zip）の検証・展開と、アップデーターへ渡す引数。
     /// zip には VRCast/（本体）と VRCast-Converter/（書き出しツール）が入っており、本体の分だけを展開する。
+    /// Unity に依存しないため、セットアップ EXE（Tools/Setup）もこのファイルをそのままコンパイルして使う。
     /// </summary>
     public static class UpdatePackage
     {
@@ -17,8 +18,32 @@ namespace VRCast.Platform
         // zip 内の本体のフォルダ（この中身をインストール先へ置く）
         public const string AppFolderPrefix = "VRCast/";
 
+        // zip 内の書き出しツールのフォルダ（セットアップ EXE が本体の隣へ置く）
+        public const string ConverterFolderPrefix = "VRCast-Converter/";
+
+        // 同梱のアップデーター（StreamingAssets 内のフォルダとファイル名）
+        public const string UpdaterFolder = "Updater";
+        public const string UpdaterFileName = "VRCastUpdater.exe";
+
+        // 作業フォルダ（%LOCALAPPDATA%\VRCast\update）内の名前（展開先・アップデーターのログと結果）
+        public const string StagingFolderName = "VRCast";
+        public const string UpdaterLogFileName = "updater.log";
+        public const string UpdaterResultFileName = "result.txt";
+
         // SHA-256 の 16 進表記の長さ
         private const int Sha256HexLength = 64;
+
+        // 作業フォルダの名前（%LOCALAPPDATA%\VRCast の下）
+        private const string WorkFolderName = "update";
+
+        // インストール先に書き込めるかを確かめる一時ファイル
+        private const string WriteTestFileName = ".vrcast-write-test";
+
+        /// <summary>
+        /// 自動更新の作業フォルダ（%LOCALAPPDATA%\VRCast\update）。VRCast とセットアップ EXE が同じ場所を使う。
+        /// </summary>
+        public static string WorkFolder => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VRCast", WorkFolderName);
 
         /// <summary>
         /// version.json の update の内容が自動更新に使えれば true（許可された URL・正の大きさ・SHA-256）。
@@ -70,16 +95,25 @@ namespace VRCast.Platform
         /// </summary>
         public static bool TryGetAppRelativePath(string entryName, out string relative)
         {
+            return TryGetRelativePath(entryName, AppFolderPrefix, out relative);
+        }
+
+        /// <summary>
+        /// zip のエントリ名から folderPrefix（"VRCast/" 等）のフォルダ内の相対パス（区切りは OS のもの）を得る。
+        /// そのフォルダの外・フォルダのエントリは false。不正な名前（上位参照・絶対パス等）は InvalidDataException。
+        /// </summary>
+        public static bool TryGetRelativePath(string entryName, string folderPrefix, out string relative)
+        {
             relative = null;
 
-            // 本体フォルダの外（VRCast-Converter/ 等）は展開しない
-            if (string.IsNullOrEmpty(entryName) || !entryName.StartsWith(AppFolderPrefix, StringComparison.Ordinal))
+            // 指定のフォルダの外は展開しない
+            if (string.IsNullOrEmpty(entryName) || !entryName.StartsWith(folderPrefix, StringComparison.Ordinal))
             {
                 return false;
             }
 
             // フォルダのエントリはファイルの展開時に作るので飛ばす
-            string path = entryName.Substring(AppFolderPrefix.Length);
+            string path = entryName.Substring(folderPrefix.Length);
             if (path.Length == 0 || path.EndsWith("/", StringComparison.Ordinal))
             {
                 return false;
@@ -114,35 +148,45 @@ namespace VRCast.Platform
                 Directory.Delete(destination, true);
             }
 
-            Directory.CreateDirectory(destination);
-            string root = Path.GetFullPath(destination).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
-            int count = 0;
             using (FileStream stream = File.OpenRead(zipPath))
             using (var zip = new ZipArchive(stream, ZipArchiveMode.Read))
             {
-                foreach (ZipArchiveEntry entry in zip.Entries)
+                return ExtractFolder(zip, AppFolderPrefix, destination, null);
+            }
+        }
+
+        /// <summary>
+        /// zip の folderPrefix のフォルダの中身を destination へ展開する（同じ名前のファイルは上書きし、それ以外は残す）。
+        /// 展開したファイル数を返す。progress には書き出したバイト数をファイルごとに渡す（null なら知らせない）。
+        /// </summary>
+        public static int ExtractFolder(ZipArchive zip, string folderPrefix, string destination, Action<long> progress)
+        {
+            Directory.CreateDirectory(destination);
+            string root = Path.GetFullPath(destination).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            int count = 0;
+            foreach (ZipArchiveEntry entry in zip.Entries)
+            {
+                if (!TryGetRelativePath(entry.FullName, folderPrefix, out string relative))
                 {
-                    if (!TryGetAppRelativePath(entry.FullName, out string relative))
-                    {
-                        continue;
-                    }
-
-                    // 名前の検査に加え、解決後のパスが展開先の中にあることも確かめる
-                    string path = Path.GetFullPath(Path.Combine(root, relative));
-                    if (!path.StartsWith(root, StringComparison.OrdinalIgnoreCase))
-                    {
-                        throw new InvalidDataException($"Invalid entry: {entry.FullName}");
-                    }
-
-                    Directory.CreateDirectory(Path.GetDirectoryName(path) ?? root);
-                    using (Stream input = entry.Open())
-                    using (FileStream output = File.Create(path))
-                    {
-                        input.CopyTo(output);
-                    }
-
-                    count++;
+                    continue;
                 }
+
+                // 名前の検査に加え、解決後のパスが展開先の中にあることも確かめる
+                string path = Path.GetFullPath(Path.Combine(root, relative));
+                if (!path.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidDataException($"Invalid entry: {entry.FullName}");
+                }
+
+                Directory.CreateDirectory(Path.GetDirectoryName(path) ?? root);
+                using (Stream input = entry.Open())
+                using (FileStream output = File.Create(path))
+                {
+                    input.CopyTo(output);
+                }
+
+                count++;
+                progress?.Invoke(entry.Length);
             }
 
             return count;
@@ -155,6 +199,24 @@ namespace VRCast.Platform
         {
             string data = Path.GetFileNameWithoutExtension(exeName) + "_Data";
             return File.Exists(Path.Combine(folder, exeName)) && Directory.Exists(Path.Combine(folder, data));
+        }
+
+        /// <summary>
+        /// folder にファイルを作って消せれば true（Program Files 等は管理者権限が無いと失敗する）。
+        /// </summary>
+        public static bool CanWrite(string folder)
+        {
+            string path = Path.Combine(folder, WriteTestFileName);
+            try
+            {
+                File.WriteAllBytes(path, Array.Empty<byte>());
+                File.Delete(path);
+                return true;
+            }
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+            {
+                return false;
+            }
         }
 
         /// <summary>

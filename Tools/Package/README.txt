@@ -7,6 +7,8 @@ VRChat のアバターを単体で表示し、OBS などの配信ソフトや Di
 
 ■ はじめかた
 1. このフォルダの VRCast.exe を起動します（フォルダごと好きな場所に置けます）。
+   セットアップ版（VRCast-(バージョン)-win64-setup.exe）を入手した場合は、それを起動して展開先を選ぶと、
+   zip を展開したときと同じ VRCast フォルダと VRCast-Converter フォルダができます。
 2. 左のパネルの「はじめに」タブが、アバターの読み込みから OBS に映すまでを案内します。
 3. アバターは Unity で .vrcaster ファイルに書き出してから、VRCast のウィンドウにドラッグ＆ドロップします。
 4. Web カメラのトラッキング（MediaPipe）では、笑顔・驚き・怒り・悲しみがアバターの表情に反映されます。
@@ -18,10 +20,11 @@ VRChat のアバターを単体で表示し、OBS などの配信ソフトや Di
 （最新のバージョン番号を読むためだけに Web サイトへ接続します。「設定」タブで OFF にできます）。
 お知らせの「今すぐ更新」を押すと、GitHub からダウンロードしてファイルを入れ替え、VRCast が自動で起動し直します（設定はそのまま）。
 このフォルダを Program Files など管理者権限の必要な場所に置いた場合は自動更新できないため、zip から入れ替えてください。
+セットアップ版で、このフォルダの 1 つ上のフォルダを展開先に選んでも、設定はそのままで新しいバージョンに入れ替えられます。
 
 ■ 書き出しツールの導入（アバターの Unity プロジェクト側）
 1. VCC からアバターの入ったプロジェクトを開きます。
-2. zip を展開したときにこの VRCast フォルダの隣にできる VRCast-Converter フォルダの
+2. zip（またはセットアップ版）を展開したときにこの VRCast フォルダの隣にできる VRCast-Converter フォルダの
    VRCast-Converter-(バージョン).unitypackage をダブルクリック（または Unity にドラッグ＆ドロップ）して「Import」を押します。
 3. メニュー「VRCast」→「Avatar Exporter」で、シーン上のアバターを指定して「書き出す...」で .vrcaster を保存します。
    画面は OS の言語で表示されます（上部の「言語」で切り替えられます）。
@@ -60,6 +63,8 @@ VRCast shows a VRChat avatar on its own and sends it to streaming software such 
 
 - Getting started
 1. Run VRCast.exe in this folder (you can put the folder anywhere).
+   If you got the setup version (VRCast-(version)-win64-setup.exe), run it and choose where to put VRCast;
+   it creates the same VRCast and VRCast-Converter folders as the zip.
 2. The "Start" tab in the left panel guides you from loading your avatar to showing it in OBS.
 3. Export your avatar to a .vrcaster file in Unity, then drag and drop it onto the VRCast window.
 4. With webcam tracking (MediaPipe), your smile, surprise, anger and sadness switch the avatar's expressions.
@@ -72,11 +77,12 @@ VRCast checks for a new version at startup and shows a notice at the top of the 
 Press "Update now" in the notice to download it from GitHub, replace the files and restart VRCast automatically (your settings are kept).
 If you put this folder somewhere that needs administrator rights (such as Program Files), automatic update is not available;
 replace the folder with the one in the zip instead.
+You can also update with the setup version by choosing the folder that contains this folder (your settings are kept).
 
 - Installing the exporter (in your avatar's Unity project)
 1. Open the project with your avatar from VCC.
 2. Double-click VRCast-Converter-(version).unitypackage in the VRCast-Converter folder, which sits next to this VRCast folder
-   when you extract the zip (or drag it into Unity), and click "Import".
+   when you extract the zip (or run the setup version) (or drag it into Unity), and click "Import".
 3. Open "VRCast" > "Avatar Exporter", pick your avatar in the scene and click "Export..." to save a .vrcaster file.
    The window follows your OS language (switch it with "Language" at the top).
 Your original avatar is never modified. Avatars customized with VRCFury or Modular Avatar are exported with the changes applied (beta).

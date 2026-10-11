@@ -22,22 +22,14 @@ namespace VRCast.Platform
         private const string LogCategory = "Update";
 
         // 同梱のアップデーター（StreamingAssets 内のフォルダとファイル名）
-        public const string UpdaterFolder = "Updater";
-        public const string UpdaterFileName = "VRCastUpdater.exe";
+        public const string UpdaterFolder = UpdatePackage.UpdaterFolder;
+        public const string UpdaterFileName = UpdatePackage.UpdaterFileName;
 
-        // 作業フォルダ内の名前（ダウンロードした zip・展開先・アップデーターのログと結果）
-        private const string WorkFolderName = "update";
+        // 作業フォルダ内の名前（ダウンロードした zip。展開先・ログ・結果はセットアップ EXE と共通で UpdatePackage にある）
         private const string DownloadFileName = "VRCast-update.zip";
-        private const string StagingFolderName = "VRCast";
-        private const string LogFileName = "updater.log";
-        private const string ResultFileName = "result.txt";
 
         // アップデーターが旧ファイルを退避するフォルダ（インストール先の直下。Tools/Updater と同じ名前）
         private const string BackupFolderName = ".vrcast-update-backup";
-
-        // インストール先に書き込めるかを確かめる一時ファイル
-        private const string WriteTestFileName = ".vrcast-write-test";
-
         // ダウンロードが進まないまま諦めるまでの秒数
         private const float StallSeconds = 60f;
 
@@ -133,8 +125,7 @@ namespace VRCast.Platform
         public string PreviousDetail { get; private set; } = string.Empty;
 
         // %LOCALAPPDATA%\VRCast\update
-        private static string WorkFolder => Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VRCast", WorkFolderName);
+        private static string WorkFolder => UpdatePackage.WorkFolder;
 
         // 同梱のアップデーター
         private static string UpdaterSource =>
@@ -185,7 +176,7 @@ namespace VRCast.Platform
                 {
                     _availability = Availability.UpdaterMissing;
                 }
-                else if (folder == null || !CanWrite(folder))
+                else if (folder == null || !UpdatePackage.CanWrite(folder))
                 {
                     _availability = Availability.NotWritable;
                 }
@@ -313,7 +304,7 @@ namespace VRCast.Platform
             State = InstallState.Preparing;
             string exe = GpuSelection.ExecutablePath();
             string exeName = Path.GetFileName(exe ?? string.Empty);
-            string staging = Path.Combine(work, StagingFolderName);
+            string staging = Path.Combine(work, UpdatePackage.StagingFolderName);
             Task<string> prepare = Task.Run(() => Prepare(zipPath, package.size, package.sha256, staging, exeName));
             while (!prepare.IsCompleted)
             {
@@ -371,7 +362,7 @@ namespace VRCast.Platform
         private string Launch(string work, string staging, string exeName)
         {
             string updater = Path.Combine(work, UpdaterFileName);
-            string resultPath = Path.Combine(work, ResultFileName);
+            string resultPath = Path.Combine(work, UpdatePackage.UpdaterResultFileName);
             try
             {
                 // 前回の結果を消してから、同梱のアップデーターを写して起動する
@@ -382,7 +373,7 @@ namespace VRCast.Platform
                 }
 
                 string arguments = UpdatePackage.BuildUpdaterArguments(NativeProcess.CurrentProcessId, staging,
-                    InstallFolder(), exeName, Path.Combine(work, LogFileName), resultPath);
+                    InstallFolder(), exeName, Path.Combine(work, UpdatePackage.UpdaterLogFileName), resultPath);
                 NativeProcess.Start(updater, arguments, work).Dispose();
                 return null;
             }
@@ -405,7 +396,7 @@ namespace VRCast.Platform
         private void ReadPreviousResult()
         {
             // アップデーターの結果（1 行目 ok / failed、2 行目に理由）を読んで消す
-            string path = Path.Combine(WorkFolder, ResultFileName);
+            string path = Path.Combine(WorkFolder, UpdatePackage.UpdaterResultFileName);
             try
             {
                 if (!File.Exists(path))
@@ -428,7 +419,7 @@ namespace VRCast.Platform
         private static void CleanUp(string installFolder, string workFolder)
         {
             // 展開したファイルと zip、退避した旧ファイル（他のアプリが読み込み中の DLL は消せないので次回に持ち越す）
-            DeleteFolder(Path.Combine(workFolder, StagingFolderName));
+            DeleteFolder(Path.Combine(workFolder, UpdatePackage.StagingFolderName));
             DeleteFile(Path.Combine(workFolder, DownloadFileName));
             if (installFolder != null)
             {
@@ -476,22 +467,6 @@ namespace VRCast.Platform
             catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
             {
                 return e.Message;
-            }
-        }
-
-        private static bool CanWrite(string folder)
-        {
-            // 一時ファイルを作って消せれば書き込める（Program Files 等は管理者権限が無いと失敗する）
-            string path = Path.Combine(folder, WriteTestFileName);
-            try
-            {
-                File.WriteAllBytes(path, Array.Empty<byte>());
-                File.Delete(path);
-                return true;
-            }
-            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
-            {
-                return false;
             }
         }
 
