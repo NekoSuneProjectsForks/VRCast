@@ -194,6 +194,9 @@ namespace VRCast.UI
         // 短い文字のボタン（言語の切替など。代替フォントの字形が下へはみ出しても切らない）
         public GUIStyle OverflowButton { get; private set; }
 
+        // 長い文字のボタン（幅に収まらなければ折り返して高くする。目印の名前が入るボタンなど）
+        public GUIStyle WrapButton { get; private set; }
+
         // 木の表示の開閉ボタン（スイッチと同じ高さ・余白で横に並べる）と、開閉の無い行で同じ幅を空ける透明な枠
         public GUIStyle FoldButton { get; private set; }
         public GUIStyle FoldSpacer { get; private set; }
@@ -354,6 +357,7 @@ namespace VRCast.UI
                 Rounded(ControlActive, ControlRadius), TextColor);
             SetOnStates(Skin.button, Rounded(Accent, ControlRadius), Rounded(AccentHover, ControlRadius), OnAccent);
             OverflowButton = new GUIStyle(Skin.button) { clipping = TextClipping.Overflow };
+            WrapButton = new GUIStyle(Skin.button) { wordWrap = true };
 
             // 開閉ボタン（記号が削れないよう余白を無くし、スイッチと同じ高さ・上下の余白にして縦位置をそろえる）
             FoldButton = new GUIStyle(Skin.button)

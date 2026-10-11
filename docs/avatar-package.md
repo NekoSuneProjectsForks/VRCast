@@ -295,7 +295,7 @@ Converter は書き出さない。Runtime の **Perfect sync setup**（パーフ
     "includeMouthParts": true,
     "absentParts": 0,
     "facePath": "Body",
-    "landmarks": [ { "id": 0, "triangle": 1234, "u": 0.25, "v": 0.4 } ],
+    "landmarks": [ { "id": 0, "triangle": 1234, "u": 0.25, "v": 0.4, "mirrored": false } ],
     "shapes": [ { "name": "jawOpen", "source": 0, "strength": 1.0 } ],
     "bindings": [ { "name": "eyeBlinkLeft", "path": "Body", "blendShape": "blink_L", "weight": 1.0 } ]
 }
@@ -311,6 +311,7 @@ Converter は書き出さない。Runtime の **Perfect sync setup**（パーフ
 | `facePath` | 目印を打った顔メッシュ（アバタールートからの相対パス、空 = ルート） |
 | `landmarks[].id` | 目印の種類（0〜255。最小 0〜10、標準 20〜30、詳細 40〜55。未定義の番号は再開時に無視） |
 | `landmarks[].triangle` / `u` / `v` | 顔メッシュの三角形の番号と、その中の重心座標（点 = 頂点0 ×(1−u−v) + 頂点1 × u + 頂点2 × v。u, v, u+v は 0〜1） |
+| `landmarks[].mirrored` | 左右対称で左側から自動で決めた右側なら `true`（省略時 `false`。再開後も左側に合わせて置き直す。`mirror` が `false` なら無視） |
 | `shapes[].name` / `source` / `strength` | ARKit 名ごとの出どころ（`0` 自動生成 / `1` 既存の BlendShape / `2` なし）と強さ 0〜2 |
 | `bindings[].name` | 既存の BlendShape を割り当てる ARKit 名（51 種のいずれか。知らない名前は無視） |
 | `bindings[].path` / `blendShape` / `weight` | 割り当てる SkinnedMeshRenderer・BlendShape 名・強さ 0〜2（ARKit の値 × 強さで書く） |

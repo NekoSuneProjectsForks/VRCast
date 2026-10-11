@@ -137,6 +137,37 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Geometry_NearestSkipsBackFacesAndPlaneUsesFallback()
+        {
+            // 前向き（+Z）の三角形と、その少し前にある裏向き（-Z）の三角形
+            var vertices = new[]
+            {
+                new Vector3(-1f, -1f, 0f), new Vector3(1f, -1f, 0f), new Vector3(-1f, 1f, 0f),
+                new Vector3(-1f, -1f, 0.05f), new Vector3(-1f, 1f, 0.05f), new Vector3(1f, -1f, 0.05f),
+            };
+            var geometry = new FaceMeshGeometry(vertices, null, new[] { 0, 1, 2, 3, 4, 5 });
+            var candidates = new[] { 0, 1 };
+            var target = new Vector3(-0.5f, -0.5f, 0.1f);
+
+            // 向きを問わなければ近い裏向きの面、前向きを求めれば前向きの面を選ぶこと
+            Assert.That(geometry.Nearest(vertices, candidates, target, Vector3.zero, 0).triangle, Is.EqualTo(1));
+            Assert.That(geometry.Nearest(vertices, candidates, target, Vector3.forward, 0).triangle, Is.EqualTo(0));
+            Assert.That(geometry.Nearest(vertices, new[] { 1 }, target, Vector3.forward, 0), Is.Null);
+            Assert.That(Vector3.Dot(geometry.TriangleNormal(vertices, 0), Vector3.forward), Is.GreaterThan(0f));
+
+            // 面での向きの反転は法線方向の成分だけ逆にすること
+            Vector3 flipped = FaceMeshGeometry.ReflectDirection(new Vector3(1f, 0f, 1f), Vector3.right);
+            Assert.That(Vector3.Distance(flipped, new Vector3(-1f, 0f, 1f)), Is.LessThan(1e-5f));
+
+            // 左右の組も中央の目印も無ければ、渡した点と向きの面になること
+            var single = new Dictionary<LandmarkId, Vector3> { { LandmarkId.EyeUpperLeft, new Vector3(-0.3f, 0f, 0f) } };
+            var center = new Vector3(0.2f, 1f, 0f);
+            FaceRig.EstimateSymmetryPlane(single, center, Vector3.forward, out Vector3 planePoint, out Vector3 planeNormal);
+            Assert.That(planePoint, Is.EqualTo(center));
+            Assert.That(planeNormal, Is.EqualTo(Vector3.forward));
+        }
+
+        [Test]
         public void Generate_MovesTheRightRegions()
         {
             FaceMeshGeometry geometry = PerfectSyncTestFace.CreateGeometry();

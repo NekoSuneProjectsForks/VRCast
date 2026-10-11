@@ -41,6 +41,11 @@ VRCast から同じ手順で起動・カメラ一覧取得ができる。
 
 終了コード（VRCast 側 TrackerProcess.DescribeExitCode と一致させる）:
     0 正常終了 / 1 カメラが開けない・エラー / 2 カメラからフレームが届かなくなった
+
+--face-image（パーフェクトシンク化の「画像認識で自動で置く」用。カメラは開かない）:
+    画像 1 枚から顔の 478 点を推定し、次の 1 行を標準出力に出して終了する（VRCast 側は MediaPipeFaceMap）。
+    FACE_POINTS: {"face": 顔が見つかったか, "points": [x0, y0, x1, y1, ...]}
+    x, y は画像の幅・高さに対する 0〜1（左上原点）。読めない画像は終了コード 1。
 """
 
 import argparse
@@ -62,6 +67,7 @@ os.environ["OPENCV_OPENCL_CACHE_ENABLE"] = "0"
 
 import cv2  # noqa: E402
 import mediapipe as mp  # noqa: E402
+import numpy as np  # noqa: E402
 from mediapipe.tasks.python import BaseOptions  # noqa: E402
 from mediapipe.tasks.python import vision  # noqa: E402
 
@@ -164,6 +170,13 @@ FACE_COVER_RELEASE = 0.05
 # かぶっている間、頭の向きを止めておく最長の秒数（手を当てたまま顔を動かす場合に備える）
 FACE_COVER_MAX_HOLD = 3.0
 
+# --face-image で顔とみなす確からしさ（MediaPipe の既定は 0.5）。
+# アバターのアニメ調の顔は実写より低く出やすいため下げる
+FACE_IMAGE_CONFIDENCE = 0.3
+
+# --face-image の結果の行の先頭（VRCast 側 MediaPipeFaceMap.OutputPrefix と一致させる）
+FACE_POINTS_PREFIX = "FACE_POINTS: "
+
 
 def parse_arguments():
     """コマンドライン引数を解析する（facetracker と同じ短縮名を使う）。"""
@@ -197,6 +210,8 @@ def parse_arguments():
     # カメラの映像を 1 枚 JPEG で保存する先（トラッカーに何が映っているかの確認用。
     # 手動実行専用で VRCast からは渡さない。1 回の起動で 1 枚・同じファイルに上書き）
     parser.add_argument("--save-frame", default="")
+    # 画像 1 枚の顔の点を出して終了する（パーフェクトシンク化の自動配置用。カメラは開かない）
+    parser.add_argument("--face-image", default="")
     return parser.parse_args()
 
 
@@ -708,6 +723,51 @@ def create_landmarkers(use_hands):
     return face, pose, hands
 
 
+def detect_face_image(path):
+    """画像 1 枚から顔の 478 点を推定し、FACE_POINTS の行を出す（終了コードを返す）。"""
+    # 日本語を含むパスでも読めるよう、バイト列で読んでから復号する
+    try:
+        with open(path, "rb") as file:
+            data = np.frombuffer(file.read(), np.uint8)
+    except OSError as error:
+        log("ERROR", f"failed to read the image {path}: {error}")
+        return 1
+    frame = cv2.imdecode(data, cv2.IMREAD_COLOR)
+    # 画像として読めなければ失敗
+    if frame is None:
+        log("ERROR", f"not an image: {path}")
+        return 1
+
+    # 静止画モードの推定器で 1 回だけ推定する（アニメ調の顔に備えて閾値を下げる）
+    landmarker = vision.FaceLandmarker.create_from_options(
+        vision.FaceLandmarkerOptions(
+            base_options=BaseOptions(
+                model_asset_buffer=load_model(FACE_MODEL)),
+            running_mode=vision.RunningMode.IMAGE,
+            num_faces=1,
+            min_face_detection_confidence=FACE_IMAGE_CONFIDENCE,
+            min_face_presence_confidence=FACE_IMAGE_CONFIDENCE,
+        )
+    )
+    try:
+        # OpenCV の BGR を MediaPipe の RGB 画像へ
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        result = landmarker.detect(
+            mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb))
+    finally:
+        landmarker.close()
+
+    # 見つかった顔の点を x, y の繰り返しにする（見つからなければ空）
+    points = []
+    if result.face_landmarks:
+        for landmark in result.face_landmarks[0]:
+            points.extend((landmark.x, landmark.y))
+    payload = {"face": bool(points), "points": rounded(points)}
+    print(FACE_POINTS_PREFIX + json.dumps(payload, separators=(",", ":")))
+    sys.stdout.flush()
+    return 0
+
+
 def open_camera(index, width, height, fps):
     """DirectShow でカメラを開く。開けなければ None。"""
     capture = cv2.VideoCapture(index, cv2.CAP_DSHOW)
@@ -1114,6 +1174,14 @@ def main():
     if arguments.list_cameras > 0:
         list_cameras()
         return 0
+    # 画像 1 枚の顔の点を出すモード（カメラ・送信は使わない）
+    if arguments.face_image:
+        try:
+            return detect_face_image(arguments.face_image)
+        except (OSError, RuntimeError, ValueError) as error:
+            # モデル欠け・推定器の初期化失敗などは理由を表示して終了
+            log("ERROR", f"Face image error: {error}")
+            return 1
     # 調査用にトラッカー・ライブラリの版と引数を記録する
     log("INFO",
         f"VRCast MediaPipe tracker (protocol {PROTOCOL_VERSION}), "

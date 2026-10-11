@@ -343,6 +343,9 @@ namespace VRCast.UI
             BakeFace();
             _avatar.CalculateFaceFrame(out _faceCenter, out float _);
 
+            // 画像認識が終わっていれば目印を置く
+            PollDetection();
+
             // 目印の操作と、試している形状の書き込み
             HandleMouse(pointerFree);
             HandleKeys();
@@ -352,6 +355,7 @@ namespace VRCast.UI
         private void Shutdown(bool avatarAlive)
         {
             StopPreview();
+            CancelDetection();
             if (avatarAlive)
             {
                 // 試しに足した形状を外し、アバター自身のパーフェクトシンク（読み込んだファイルの内容）を足し直す
@@ -572,10 +576,19 @@ namespace VRCast.UI
                     && (FacePartRules.Landmark((LandmarkId)landmark.id) & _absent) == 0
                     && _geometry.TryGetPoint(landmark, out _))
                 {
-                    _landmarks[(LandmarkId)landmark.id] = Copy(landmark);
+                    var id = (LandmarkId)landmark.id;
+                    _landmarks[id] = Copy(landmark);
+
+                    // 左右対称で自動で決めた右側は、再開後も左側に合わせて動く「自動」として戻す
+                    if (_mirror && landmark.mirrored && FaceLandmarks.IsRight(id))
+                    {
+                        _autoMirrored.Add(id);
+                    }
                 }
             }
 
+            // 自動の右側を今の左側から置き直す（左側が無い自動の右側はここで消える）
+            Remirror(null);
             _selected = NextUnplaced();
         }
 
@@ -774,7 +787,13 @@ namespace VRCast.UI
 
         private void BakeFace()
         {
-            // 今の姿勢の顔メッシュを作り、ワールド座標にする（拡大縮小なしで作り、位置と向きだけ掛ける）
+            // 今の姿勢の顔メッシュのワールド座標（配列は使い回す）
+            _world = BakeWorld(_world);
+        }
+
+        private Vector3[] BakeWorld(Vector3[] reuse)
+        {
+            // 今の姿勢・BlendShape の顔メッシュを作り、ワールド座標にする（拡大縮小なしで作り、位置と向きだけ掛ける）
             if (_baked == null)
             {
                 _baked = new Mesh { hideFlags = HideFlags.HideAndDontSave };
@@ -782,16 +801,25 @@ namespace VRCast.UI
 
             _face.BakeMesh(_baked, false);
             _baked.GetVertices(_bakedVertices);
-            if (_world.Length != _bakedVertices.Count)
-            {
-                _world = new Vector3[_bakedVertices.Count];
-            }
+            Vector3[] world = reuse != null && reuse.Length == _bakedVertices.Count
+                ? reuse
+                : new Vector3[_bakedVertices.Count];
 
             Matrix4x4 matrix = Matrix4x4.TRS(_face.transform.position, _face.transform.rotation, Vector3.one);
-            for (int i = 0; i < _world.Length; i++)
+            for (int i = 0; i < world.Length; i++)
             {
-                _world[i] = matrix.MultiplyPoint3x4(_bakedVertices[i]);
+                world[i] = matrix.MultiplyPoint3x4(_bakedVertices[i]);
             }
+
+            return world;
+        }
+
+        private FaceAxes CurrentAxes()
+        {
+            // 顔の中心（両目の間）とアバターの左・上・前
+            _avatar.CalculateFaceFrame(out Vector3 center, out float _);
+            Transform root = _avatar.Instance.transform;
+            return new FaceAxes(center, -root.right, root.up, root.forward);
         }
 
         private void BuildRegion()
@@ -1102,17 +1130,33 @@ namespace VRCast.UI
                 return;
             }
 
-            // 手で打った目印の取り込み時の位置から、左右対称の面を推定する
+            // 今の姿勢（画面に見えている形）で求める。元のメッシュには BlendShape で隠した部品が重なっていることがあり、
+            // そこへ吸い付かないようにする（今の姿勢がまだ無ければ取り込み時の形）
+            bool posed = _world.Length == _geometry.Vertices.Length && _region.Count > 0;
+            Vector3[] positions = posed ? _world : _geometry.Vertices;
+
+            // 手で打った目印から左右対称の面を推定する。左右の組が無ければアバターの左右の向き、
+            // 組も中央の目印も無ければ顔の中心（両目の間）を通る面にする
             var manual = new Dictionary<LandmarkId, Vector3>();
             foreach (KeyValuePair<LandmarkId, PerfectSyncLandmark> pair in _landmarks)
             {
-                if (!_autoMirrored.Contains(pair.Key) && _geometry.TryGetPoint(pair.Value, out Vector3 point))
+                if (!_autoMirrored.Contains(pair.Key) && _geometry.TryGetPoint(pair.Value, out Vector3 point, positions))
                 {
                     manual[pair.Key] = point;
                 }
             }
 
-            FaceRig.EstimateSymmetryPlane(manual, out Vector3 planePoint, out Vector3 planeNormal);
+            Vector3 fallbackPoint = Vector3.zero;
+            Vector3 fallbackNormal = Vector3.right;
+            if (posed)
+            {
+                FaceAxes axes = CurrentAxes();
+                fallbackPoint = axes.Center;
+                fallbackNormal = axes.Left;
+            }
+
+            FaceRig.EstimateSymmetryPlane(manual, fallbackPoint, fallbackNormal, out Vector3 planePoint,
+                out Vector3 planeNormal);
 
             // 右側の目印を、左側を面で反転した位置の最も近い表面に置く（手で打った右側はそのまま）
             foreach (LandmarkId id in FaceLandmarks.For(LandmarkDetail.Detailed))
@@ -1139,9 +1183,41 @@ namespace VRCast.UI
                     continue;
                 }
 
-                _landmarks[id] = _geometry.Nearest(FaceMeshGeometry.Reflect(leftPoint, planePoint, planeNormal), (int)id);
+                _landmarks[id] = MirrorOf(_landmarks[left], leftPoint, planePoint, planeNormal, positions, posed, id);
                 _autoMirrored.Add(id);
             }
+        }
+
+        private void MarkRightsAutomatic()
+        {
+            // 左側を打ってある右側の目印を、左側から自動で決めるものにする
+            foreach (LandmarkId id in _landmarks.Keys)
+            {
+                if (FaceLandmarks.IsRight(id) && FaceLandmarks.TryGetMirror(id, out LandmarkId left)
+                    && _landmarks.ContainsKey(left))
+                {
+                    _autoMirrored.Add(id);
+                }
+            }
+        }
+
+        private PerfectSyncLandmark MirrorOf(PerfectSyncLandmark left, Vector3 leftPoint, Vector3 planePoint,
+            Vector3 planeNormal, Vector3[] positions, bool posed, LandmarkId id)
+        {
+            // 左側の位置を面で反転した点
+            Vector3 target = FaceMeshGeometry.Reflect(leftPoint, planePoint, planeNormal);
+            if (posed)
+            {
+                // 顔のまわりの三角形のうち、左側の面の向きを反転した向きを向く（裏側でない）面の最も近い点
+                Vector3 facing = FaceMeshGeometry.ReflectDirection(_geometry.TriangleNormal(positions, left.triangle),
+                    planeNormal);
+                PerfectSyncLandmark mirrored = _geometry.Nearest(positions, _region, target, facing, (int)id)
+                    ?? _geometry.Nearest(positions, _region, target, Vector3.zero, (int)id);
+                return mirrored;
+            }
+
+            // 今の姿勢が無ければ、取り込み時の形の全体から探す
+            return _geometry.Nearest(target, (int)id);
         }
 
         private LandmarkId? NextUnplaced()
@@ -1422,7 +1498,10 @@ namespace VRCast.UI
             {
                 if (_landmarks.TryGetValue(id, out PerfectSyncLandmark landmark))
                 {
-                    landmarks.Add(Copy(landmark));
+                    // 自動で決めた右側かどうかも記録する（再開後も左側に合わせて動かすため）
+                    PerfectSyncLandmark copy = Copy(landmark);
+                    copy.mirrored = _autoMirrored.Contains(id);
+                    landmarks.Add(copy);
                 }
             }
 
@@ -1586,7 +1665,14 @@ namespace VRCast.UI
 
         private static PerfectSyncLandmark Copy(PerfectSyncLandmark landmark)
         {
-            return new PerfectSyncLandmark { id = landmark.id, triangle = landmark.triangle, u = landmark.u, v = landmark.v };
+            return new PerfectSyncLandmark
+            {
+                id = landmark.id,
+                triangle = landmark.triangle,
+                u = landmark.u,
+                v = landmark.v,
+                mirrored = landmark.mirrored,
+            };
         }
     }
 }

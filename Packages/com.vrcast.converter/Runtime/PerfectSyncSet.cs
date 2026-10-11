@@ -180,6 +180,9 @@ namespace VRCast.AvatarFormat
         public int triangle;
         public float u;
         public float v;
+
+        // 左右対称で左側から自動で決めた右側なら true（再開後も左側に合わせて動かす）
+        public bool mirrored;
     }
 
     /// <summary>

@@ -114,6 +114,16 @@ namespace VRCast.PerfectSync
         public static void EstimateSymmetryPlane(IReadOnlyDictionary<LandmarkId, Vector3> points,
             out Vector3 planePoint, out Vector3 planeNormal)
         {
+            EstimateSymmetryPlane(points, Vector3.zero, Vector3.right, out planePoint, out planeNormal);
+        }
+
+        /// <summary>
+        /// 左右対称の面。左右の組が無ければ法線を fallbackNormal に、組も中央の目印も無ければ面上の点を fallbackPoint にする
+        /// （左右対称で打つと右側は全部自動で決まり、手で打った組ができないため、アバターの左右の向きと顔の中心を渡す）。
+        /// </summary>
+        public static void EstimateSymmetryPlane(IReadOnlyDictionary<LandmarkId, Vector3> points, Vector3 fallbackPoint,
+            Vector3 fallbackNormal, out Vector3 planePoint, out Vector3 planeNormal)
+        {
             // 両側を打った組の「左 − 右」の平均を法線、中点の平均を面上の点にする
             Vector3 normal = Vector3.zero;
             Vector3 middle = Vector3.zero;
@@ -143,15 +153,16 @@ namespace VRCast.PerfectSync
                 }
             }
 
-            // 組が無ければメッシュの X = 0 の面（多くのアバターは左右対称に作られている）
-            planeNormal = pairs > 0 && normal.sqrMagnitude > 1e-12f ? normal.normalized : Vector3.right;
+            // 組が無ければ渡された向き・点の面（多くのアバターは左右対称に作られている）
+            planeNormal = pairs > 0 && normal.sqrMagnitude > 1e-12f ? normal.normalized
+                : fallbackNormal.sqrMagnitude > 1e-12f ? fallbackNormal.normalized : Vector3.right;
             if (pairs > 0 || centers > 0)
             {
                 planePoint = (middle + center) / (pairs + centers);
             }
             else
             {
-                planePoint = Vector3.zero;
+                planePoint = fallbackPoint;
             }
         }
 

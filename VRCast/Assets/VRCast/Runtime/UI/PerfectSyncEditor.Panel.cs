@@ -227,11 +227,13 @@ namespace VRCast.UI
                 // 切り替え前を履歴に積む（目印が増減するため元に戻せるようにする）
                 PushUndo(Snapshot());
 
-                // ON にしたら右側を決め直す。OFF にしたら自動で決めた右側は手で打ったものとして残す
+                // ON にしたら、左側を打ってある右側を自動に戻して決め直す（元に戻すで戻せる）。
+                // OFF にしたら自動で決めた右側は手で打ったものとして残す
                 _mirror = mirror;
                 _dirty = true;
                 if (mirror)
                 {
+                    MarkRightsAutomatic();
                     Remirror(null);
                 }
                 else
@@ -265,18 +267,21 @@ namespace VRCast.UI
             // アバターに無い部位（その部位の目印は打たず、形状は既定で「なし」にする）
             GUILayout.Label(Loc.T("Parts this avatar doesn't have", "このアバターに無い部位", "이 아바타에 없는 부위",
                 "此形象没有的部位", "此形象沒有的部位"), hint);
+            GUIStyle wrap = WrapButton(theme);
             GUILayout.BeginHorizontal();
             foreach (FaceParts part in FacePartRules.Selectable)
             {
                 bool absent = (_absent & part) != 0;
-                if (GUILayout.Toggle(absent, PerfectSyncLabels.FacePart(part), GUI.skin.button, GuiControls.Shrinkable)
-                    != absent)
+                if (GUILayout.Toggle(absent, PerfectSyncLabels.FacePart(part), wrap, GuiControls.Shrinkable) != absent)
                 {
                     SetPartAbsent(part, !absent);
                 }
             }
 
             GUILayout.EndHorizontal();
+
+            // 自動で置く（打っていない目印だけ。画像認識の結果を待つ間は押せない）
+            DrawAutoPlace(hint, wrap);
 
             // 進み具合と案内図
             int placed = PlacedCount(out int total);
@@ -285,10 +290,10 @@ namespace VRCast.UI
             DrawDiagram();
 
             // 元に戻す・目印を消す（間違えて打ったときにすぐ押せるよう、長い一覧より上に置く）
-            GUILayout.BeginHorizontal();
+            // 消すボタンには目印の名前が入って長くなるので、1 行ずつ並べて折り返す
             GUI.enabled = _undo.Count > 0;
             if (GUILayout.Button(Loc.T("Undo (Ctrl+Z)", "元に戻す（Ctrl+Z）", "실행 취소 (Ctrl+Z)", "撤销（Ctrl+Z）", "復原（Ctrl+Z）"),
-                    GuiControls.Shrinkable))
+                    wrap))
             {
                 Undo();
             }
@@ -297,19 +302,18 @@ namespace VRCast.UI
             GUI.enabled = target.HasValue;
             string removeLabel = Loc.T("Remove (Delete)", "消す（Delete）", "지우기 (Delete)", "删除（Delete）", "刪除（Delete）");
             if (GUILayout.Button(target.HasValue ? $"{removeLabel}: {PerfectSyncLabels.Landmark(target.Value)}" : removeLabel,
-                    GuiControls.Shrinkable))
+                    wrap))
             {
                 RemoveDeleteTarget();
             }
 
             GUI.enabled = true;
-            GUILayout.EndHorizontal();
 
             // 目印の一覧（押すと選択）
             foreach (LandmarkId landmark in ActiveLandmarks())
             {
                 GUILayout.BeginHorizontal();
-                if (GUILayout.Toggle(_selected == landmark, PerfectSyncLabels.Landmark(landmark), GUI.skin.button,
+                if (GUILayout.Toggle(_selected == landmark, PerfectSyncLabels.Landmark(landmark), wrap,
                         GuiControls.Shrinkable) && _selected != landmark)
                 {
                     _selected = landmark;
@@ -351,6 +355,40 @@ namespace VRCast.UI
                 GuiControls.Hint(Loc.T("To generate, also place: ", "生成には次の目印も必要です: ", "생성하려면 다음 표시도 필요합니다: ",
                     "生成还需要以下标记: ", "生成還需要以下標記: ") + string.Join(", ", missing.ConvertAll(PerfectSyncLabels.Landmark)));
             }
+        }
+
+        private void DrawAutoPlace(GUIStyle hint, GUIStyle wrap)
+        {
+            GUILayout.Label(Loc.T(
+                "Place automatically (only points not placed yet; check and drag any that are off):",
+                "自動で置く（まだ打っていない目印だけ。ずれた目印はドラッグで直してください）:",
+                "자동으로 찍기(아직 찍지 않은 표시만. 어긋난 표시는 드래그로 고치세요):",
+                "自动放置（仅限尚未放置的标记，偏移的请拖动修正）:",
+                "自動放置（僅限尚未放置的標記，偏移的請拖曳修正）:"), hint);
+            GUI.enabled = !IsDetecting;
+
+            // BlendShape から（まばたき・口・眉で動く頂点から求める。重いので次のフレームで実行）
+            if (GUILayout.Button(Loc.T("From blend shapes (blink, mouth, brows)", "BlendShape から（まばたき・口・眉）",
+                    "BlendShape에서 (눈 깜빡임·입·눈썹)", "从 BlendShape（眨眼·嘴·眉毛）", "從 BlendShape（眨眼·嘴·眉毛）"), wrap))
+            {
+                _deferred = AutoPlaceFromShapes;
+            }
+
+            // 画像認識（今の視点の顔を MediaPipe で認識する。正面に向けてから押す）
+            if (GUILayout.Button(Loc.T("Image recognition (MediaPipe, face the camera first)",
+                    "画像認識（MediaPipe。顔を正面に向けてから）", "이미지 인식 (MediaPipe, 얼굴을 정면으로 한 뒤)",
+                    "图像识别（MediaPipe，请先正对脸部）", "影像辨識（MediaPipe，請先正對臉部）"), wrap))
+            {
+                _deferred = StartImageDetection;
+            }
+
+            GUI.enabled = true;
+        }
+
+        private static GUIStyle WrapButton(UiTheme theme)
+        {
+            // 幅に収まらない文字を折り返すボタン（テーマが無ければ通常のボタン）
+            return theme != null ? theme.WrapButton : GUI.skin.button;
         }
 
         private void DrawDiagram()
@@ -493,7 +531,8 @@ namespace VRCast.UI
             }
 
             if (GUILayout.Button(Loc.T("Auto-assign existing shapes", "既存の BlendShape を自動で割り当て",
-                    "기존 BlendShape 자동 할당", "自动分配现有 BlendShape", "自動分配現有 BlendShape"), GuiControls.Shrinkable))
+                    "기존 BlendShape 자동 할당", "自动分配现有 BlendShape", "自動分配現有 BlendShape"), WrapButton(theme),
+                    GuiControls.Shrinkable))
             {
                 StopPreview();
                 AutoAssign();
@@ -627,7 +666,7 @@ namespace VRCast.UI
                 }
 
                 shown++;
-                if (GUILayout.Toggle(shape.Binding == c, candidate.Label, GUI.skin.button) && shape.Binding != c)
+                if (GUILayout.Toggle(shape.Binding == c, candidate.Label, WrapButton(theme)) && shape.Binding != c)
                 {
                     shape.Binding = c;
                     _dirty = true;

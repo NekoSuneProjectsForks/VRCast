@@ -103,7 +103,9 @@ namespace VRCast.PerfectSync
             float bestTriangle = float.MaxValue;
             foreach (int triangle in _vertexTriangles[nearest])
             {
-                Vector3 closest = ClosestOnTriangle(triangle, point, out float u, out float v);
+                int i = triangle * 3;
+                Vector3 closest = ClosestOnTriangle(Vertices[Triangles[i]], Vertices[Triangles[i + 1]],
+                    Vertices[Triangles[i + 2]], point, out float u, out float v);
                 float distance = (closest - point).sqrMagnitude;
                 if (distance < bestTriangle)
                 {
@@ -115,6 +117,52 @@ namespace VRCast.PerfectSync
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// positions（姿勢を付けた形など）の candidates の三角形のうち、point に最も近い表面上の点を目印にする。
+        /// facing が 0 でなければ、面の向きが facing と逆の三角形（まぶたの裏・口の中の面など）は除く。
+        /// 当てはまる三角形が無ければ null。
+        /// </summary>
+        public PerfectSyncLandmark Nearest(Vector3[] positions, IReadOnlyList<int> candidates, Vector3 point,
+            Vector3 facing, int id)
+        {
+            PerfectSyncLandmark result = null;
+            float best = float.MaxValue;
+            bool checkFacing = facing.sqrMagnitude > 1e-12f;
+            foreach (int triangle in candidates)
+            {
+                // 向きが逆の面は飛ばす
+                int i = triangle * 3;
+                Vector3 a = positions[Triangles[i]];
+                Vector3 b = positions[Triangles[i + 1]];
+                Vector3 c = positions[Triangles[i + 2]];
+                if (checkFacing && Vector3.Dot(Vector3.Cross(b - a, c - a), facing) <= 0f)
+                {
+                    continue;
+                }
+
+                // より近い点を残す
+                Vector3 closest = ClosestOnTriangle(a, b, c, point, out float u, out float v);
+                float distance = (closest - point).sqrMagnitude;
+                if (distance < best)
+                {
+                    best = distance;
+                    result = new PerfectSyncLandmark { id = id, triangle = triangle, u = u, v = v };
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 三角形の面の向き（positions の座標系。頂点の並びから求め、長さは 1 にしない）。
+        /// </summary>
+        public Vector3 TriangleNormal(Vector3[] positions, int triangle)
+        {
+            int i = triangle * 3;
+            Vector3 a = positions[Triangles[i]];
+            return Vector3.Cross(positions[Triangles[i + 1]] - a, positions[Triangles[i + 2]] - a);
         }
 
         /// <summary>
@@ -155,6 +203,16 @@ namespace VRCast.PerfectSync
             return point - 2f * Vector3.Dot(point - planePoint, normal) * normal;
         }
 
+        /// <summary>
+        /// 対称面（法線 planeNormal）で向き direction を反転したもの。
+        /// </summary>
+        public static Vector3 ReflectDirection(Vector3 direction, Vector3 planeNormal)
+        {
+            // 法線方向の成分だけ逆にする
+            Vector3 normal = planeNormal.normalized;
+            return direction - 2f * Vector3.Dot(direction, normal) * normal;
+        }
+
         private static bool Intersect(Ray ray, Vector3 a, Vector3 b, Vector3 c, out float t, out float u, out float v)
         {
             t = u = v = 0f;
@@ -191,13 +249,8 @@ namespace VRCast.PerfectSync
             return t > 0f;
         }
 
-        private Vector3 ClosestOnTriangle(int triangle, Vector3 point, out float u, out float v)
+        private static Vector3 ClosestOnTriangle(Vector3 a, Vector3 b, Vector3 c, Vector3 point, out float u, out float v)
         {
-            int i = triangle * 3;
-            Vector3 a = Vertices[Triangles[i]];
-            Vector3 b = Vertices[Triangles[i + 1]];
-            Vector3 c = Vertices[Triangles[i + 2]];
-
             // 面へ投影した点の重心座標を求め、三角形の内側へ収める
             Vector3 ab = b - a;
             Vector3 ac = c - a;
