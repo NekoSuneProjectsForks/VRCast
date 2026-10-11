@@ -34,6 +34,8 @@ OBS (Window Capture / Game Capture / Spout2) / 仮想カメラ (Discord / Zoom �
 
 利用者は Unity Editor・VCC・VRChat 用プロジェクトを常時起動しておく必要がない設計とする。
 
+**アプリ内は多言語対応**: English / 日本語 / 한국어 / 简体中文 / 繁體中文（既定は「自動」で OS の言語に合わせる。画面上部のボタンでいつでも切り替え可能）
+
 - Web サイト（概要・ヘルプ、日本語 / 英語 / 韓国語 / 中国語 簡体字・繁体字。既定はブラウザの言語に合わせる。ライト / ダーク）: <https://coffin299.github.io/VRCast/>
   （ソースは [`webpage` ブランチ](https://github.com/coffin299/VRCast/tree/webpage)。GitHub Pages でブランチのルートを公開）
 - 公式 Discord（VRCast Community。質問・要望・不具合の報告など）: <https://discord.gg/vM5RH52HdF>
