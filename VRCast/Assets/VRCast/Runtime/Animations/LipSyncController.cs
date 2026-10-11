@@ -51,6 +51,11 @@ namespace VRCast.Animations
         public float ExternalLevel { get; set; }
 
         /// <summary>
+        /// true の間はマイク・外部入力とも止めて口を元の形にする（パーフェクトシンク化の編集中など）。
+        /// </summary>
+        public bool Suspended { get; set; }
+
+        /// <summary>
         /// expressions は表情中に口を止める設定のために見る（無ければ止めない）。
         /// </summary>
         public void Initialize(Transform root, LipSyncData data, MicrophoneInput microphone, AppSettings settings,
@@ -125,13 +130,13 @@ namespace VRCast.Animations
             // 表情を出しているか（止める設定ごとに使う）
             bool expressionShown = _expressions != null && _expressions.Current >= 0;
 
-            // 無効時・マイク無し・表情中にマイクを止める設定ならマイク分 0
-            bool active = _settings.lipSyncEnabled && _microphone != null
+            // 無効時・一時停止中・マイク無し・表情中にマイクを止める設定ならマイク分 0
+            bool active = _settings.lipSyncEnabled && !Suspended && _microphone != null
                 && !(expressionShown && _settings.lipSyncPausedByExpression);
             float level = active ? _microphone.Level : 0f;
 
-            // 表情中にトラッキングの口を止める設定なら外部入力分 0
-            float external = expressionShown && _settings.trackingMouthPausedByExpression
+            // 一時停止中・表情中にトラッキングの口を止める設定なら外部入力分 0
+            float external = Suspended || (expressionShown && _settings.trackingMouthPausedByExpression)
                 ? 0f
                 : Mathf.Clamp01(ExternalLevel);
 

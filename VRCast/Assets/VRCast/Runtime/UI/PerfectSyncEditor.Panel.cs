@@ -134,11 +134,14 @@ namespace VRCast.UI
                 theme != null ? theme.SectionTitle : GUI.skin.label);
             GUILayout.Label(_avatar.Name, theme != null ? theme.Hint : GUI.skin.label);
             GuiControls.Warning(Loc.T(
-                "While editing, the output shows this close-up. The original file is not changed.",
-                "編集中は出力にもこのアップが映ります。元のファイルは変更しません。",
-                "편집 중에는 출력에도 이 클로즈업이 나옵니다. 원본 파일은 변경하지 않습니다.",
-                "编辑期间输出画面也会显示此特写。不会修改原文件。",
-                "編輯期間輸出畫面也會顯示此特寫。不會修改原檔案。"));
+                "While editing, the output shows this close-up, and physics, idle motion, tracking, blinking and lip sync " +
+                "are paused. The original file is not changed.",
+                "編集中は出力にもこのアップが映り、揺れもの・待機モーション・トラッキング・まばたき・口パクは止まります。" +
+                "元のファイルは変更しません。",
+                "편집 중에는 출력에도 이 클로즈업이 나오고, 흔들림·대기 모션·트래킹·눈 깜빡임·립싱크는 멈춥니다. " +
+                "원본 파일은 변경하지 않습니다.",
+                "编辑期间输出画面也会显示此特写，物理摆动、待机动作、追踪、眨眼和口型同步会暂停。不会修改原文件。",
+                "編輯期間輸出畫面也會顯示此特寫，物理擺動、待機動作、追蹤、眨眼和口型同步會暫停。不會修改原檔案。"));
 
             // 段階の切替（目印 / 形状）
             GUILayout.BeginHorizontal();

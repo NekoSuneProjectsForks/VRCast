@@ -121,6 +121,11 @@ namespace VRCast.Tracking
         /// </summary>
         public bool IsTracking { get; private set; }
 
+        /// <summary>
+        /// true の間は受信していないものとして扱い、腕・手を待機ポーズへ戻す（パーフェクトシンク化の編集中など）。
+        /// </summary>
+        public bool Suspended { get; set; }
+
         public void Initialize(Animator animator, IBodyTrackingProvider provider, AppSettings settings)
         {
             _provider = provider;
@@ -220,8 +225,8 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 有効（腕・手を受信できる入力元で腕・手が ON）かつ受信中のときだけ値を使う
-            bool enabled = _settings.trackingEnabled && _settings.trackingHands
+            // 有効（腕・手を受信できる入力元で腕・手が ON、一時停止中でない）かつ受信中のときだけ値を使う
+            bool enabled = !Suspended && _settings.trackingEnabled && _settings.trackingHands
                 && TrackingSourceInfo.HasArms(_settings.trackingSource);
             BodyTrackingFrame frame = default;
             bool received = enabled && _provider != null && _provider.TryGetBody(out frame);

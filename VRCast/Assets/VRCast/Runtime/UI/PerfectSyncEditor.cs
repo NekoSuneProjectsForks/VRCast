@@ -7,6 +7,7 @@ using VRCast.AvatarFormat;
 using VRCast.Avatars;
 using VRCast.Cameras;
 using VRCast.Core;
+using VRCast.Dynamics;
 using VRCast.PerfectSync;
 using VRCast.Platform;
 using VRCast.Tracking;
@@ -222,6 +223,9 @@ namespace VRCast.UI
             _avatar = avatar;
             _faceDriver = avatar.Instance.GetComponent<FaceTrackingDriver>();
 
+            // 顔の線と目印がずれないよう、揺れもの・待機モーション・トラッキング・まばたき・口パクを止める（閉じたら戻す）
+            SetMotionSuspended(true);
+
             // 読み込み時に足した形状を外し、元のメッシュから編集する（閉じたら足し直す）
             // （書き込みを先に戻す。差し替えた後のメッシュには足した形状の番号が無いため）
             _faceDriver?.ReleasePerfectSync();
@@ -321,6 +325,9 @@ namespace VRCast.UI
 
                 _faceDriver?.RebuildPerfectSync(_avatar.PerfectSync.bindings);
                 _orbit.SetPose(_savedPose);
+
+                // 止めていた動きを設定どおりに戻す
+                SetMotionSuspended(false);
             }
             else
             {
@@ -351,6 +358,51 @@ namespace VRCast.UI
             _faceDriver = null;
             _avatar = null;
             _dragging = false;
+        }
+
+        private void SetMotionSuspended(bool suspended)
+        {
+            GameObject root = _avatar.Instance;
+
+            // 揺れもの（無いアバターでは付いていない）
+            var physics = root.GetComponent<PhysBoneSimulator>();
+            if (physics != null)
+            {
+                physics.Suspended = suspended;
+            }
+
+            // 待機モーション（呼吸・体の揺れ・頭のゆらぎ）
+            var idle = root.GetComponent<IdleMotionController>();
+            if (idle != null)
+            {
+                idle.Suspended = suspended;
+            }
+
+            // 顔のトラッキング（頭・視線・カメラ目線・自動で当てた表情）
+            if (_faceDriver != null)
+            {
+                _faceDriver.Suspended = suspended;
+            }
+
+            // 腕・手のトラッキング（待機ポーズへ戻す）
+            var hands = root.GetComponent<HandTrackingDriver>();
+            if (hands != null)
+            {
+                hands.Suspended = suspended;
+            }
+
+            // まばたき（目を開いたまま）と口パク（口を閉じたまま）。目印を打つまぶた・唇の形を変えない
+            var blink = root.GetComponent<BlinkController>();
+            if (blink != null)
+            {
+                blink.Suspended = suspended;
+            }
+
+            var lipSync = root.GetComponent<LipSyncController>();
+            if (lipSync != null)
+            {
+                lipSync.Suspended = suspended;
+            }
         }
 
         private static bool IsEditable(SkinnedMeshRenderer renderer)

@@ -186,6 +186,12 @@ namespace VRCast.Tracking
         public bool IsTracking { get; private set; }
 
         /// <summary>
+        /// true の間は受信していないものとして扱い（正面の基準は保つ）、頭・視線（カメラ目線も）を正面へ戻して止める
+        /// （パーフェクトシンク化の編集中など）。
+        /// </summary>
+        public bool Suspended { get; set; }
+
+        /// <summary>
         /// 正面位置からの頭の位置の差分（平滑化・鏡像適用済み、Provider の単位。UI での強さ調整用）。
         /// </summary>
         public Vector3 HeadOffset => _currentOffset;
@@ -305,8 +311,9 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 有効かつ受信中のときだけ値を使う
-            bool received = _settings.trackingEnabled && _provider != null && _provider.TryGetFrame(out _lastFrame);
+            // 有効かつ受信中のときだけ値を使う（一時停止中は見失ったときと同じ扱い）
+            bool received = !Suspended && _settings.trackingEnabled && _provider != null
+                && _provider.TryGetFrame(out _lastFrame);
 
             // 無効化中や入力元・カメラの変更後は、次に映ったときに正面を取り直す
             // （顔を見失っただけなら正面は保持する。再検出直後の不正確な向きで取り直すと以後ずっとずれるため）
@@ -588,10 +595,10 @@ namespace VRCast.Tracking
             _currentOffset = Vector3.Lerp(_currentOffset, targetOffset, blend);
             UpdateTorso(usable);
 
-            // 無効化後に正面へ戻り切ったらボーンを触らない（待機ポーズ等の変更を妨げない）
+            // 無効化・一時停止の後に正面へ戻り切ったらボーンを触らない（待機ポーズ等の変更を妨げない）
             bool settled = Quaternion.Angle(_current, Quaternion.identity) < 0.01f && _currentOffset.sqrMagnitude < 1e-6f
                 && _torsoWeight <= 0f;
-            if (!_settings.trackingEnabled && settled)
+            if ((!_settings.trackingEnabled || Suspended) && settled)
             {
                 _current = Quaternion.identity;
                 _currentOffset = Vector3.zero;
@@ -776,7 +783,8 @@ namespace VRCast.Tracking
 
             // 目標の視線。カメラ目線ならカメラの方向（トラッキングの有無によらない）、
             // それ以外は途絶時・正面の未設定時・再検出直後は正面、目を閉じている間・視線なしのフレームは直前の値を保持
-            Camera view = _settings.trackingLookAtCamera ? Camera.main : null;
+            // （一時停止中はカメラ目線も止める。視点を回すたびに目が動かないように）
+            Camera view = _settings.trackingLookAtCamera && !Suspended ? Camera.main : null;
             if (view != null)
             {
                 _gazeTarget = CalculateGazeTo(view.transform.position, headFrame);
@@ -794,7 +802,7 @@ namespace VRCast.Tracking
             _currentGaze = Vector2.Lerp(_currentGaze, _gazeTarget, blend);
 
             // 無効化後に正面へ戻り切ったらボーンを触らない（カメラ目線の間は動かし続ける）
-            if (!_settings.trackingEnabled && view == null && _currentGaze.sqrMagnitude < 1e-4f)
+            if ((!_settings.trackingEnabled || Suspended) && view == null && _currentGaze.sqrMagnitude < 1e-4f)
             {
                 _currentGaze = Vector2.zero;
                 return;

@@ -30,6 +30,11 @@ namespace VRCast.Dynamics
 
         public bool IsAvailable => _chains.Count > 0;
 
+        /// <summary>
+        /// true の間は設定に関係なく静止姿勢で止める（パーフェクトシンク化の編集中など）。
+        /// </summary>
+        public bool Suspended { get; set; }
+
         public void Initialize(Animator animator, PhysBoneSet set, AppSettings settings)
         {
             _settings = settings;
@@ -104,8 +109,8 @@ namespace VRCast.Dynamics
                 return;
             }
 
-            // OFF にされたら静止姿勢へ戻して停止
-            if (!_settings.physicsEnabled)
+            // OFF・一時停止中は静止姿勢へ戻して停止
+            if (!_settings.physicsEnabled || Suspended)
             {
                 if (_wasEnabled)
                 {

@@ -56,6 +56,11 @@ namespace VRCast.Animations
         public bool HasWink { get; private set; }
 
         /// <summary>
+        /// true の間はトラッキング・自動とも止めて目を開いたままにする（パーフェクトシンク化の編集中など）。
+        /// </summary>
+        public bool Suspended { get; set; }
+
+        /// <summary>
         /// expressions は表情中にまばたきを止める設定のために見る（無ければ止めない）。
         /// </summary>
         public void Initialize(Transform root, EyelidData data, AppSettings settings, ExpressionController expressions)
@@ -132,8 +137,8 @@ namespace VRCast.Animations
                 return;
             }
 
-            // 表情中に止める設定なら、トラッキング・自動とも開いたまま（表情の目の形をそのまま見せる）
-            if (IsPausedByExpression)
+            // 一時停止中・表情中に止める設定なら、トラッキング・自動とも開いたまま（表情の目の形をそのまま見せる）
+            if (Suspended || IsPausedByExpression)
             {
                 SuspendAuto();
                 Write(0f, 0f);

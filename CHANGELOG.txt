@@ -7,10 +7,10 @@ Newest first. Each version is written in Japanese, then English.
 ■ 2.0.0 (2026-10-12)
 
 [日本語]
-- 「パーフェクトシンク化」タブを追加（顔のメッシュに目印をクリックで打つと、ARKit の顔の形状 51 種を自動で作り、アバターに元からある BlendShape も割り当てます。目印の数は最小・標準・詳細から選べ、試してから別名の .vrcaster として保存します。元のファイルは変更しません。保存したファイルを開くと続きから編集できます）
+- 「パーフェクトシンク化」タブを追加（顔のメッシュに目印をクリックで打つと、ARKit の顔の形状 51 種を自動で作り、アバターに元からある BlendShape も割り当てます。目印の数は最小・標準・詳細から選べ、試してから別名の .vrcaster として保存します。元のファイルは変更しません。保存したファイルを開くと続きから編集できます。編集中は揺れもの・待機モーション・トラッキング・まばたき・口パクを止めます）
 - 書き出しツールで、BlendShape のあるメッシュを読み取れる形で書き出すように変更（パーフェクトシンク化に必要です。既存のアバターで使うには書き出し直してください）
 [English]
-- Added the Perfect sync setup tab (click points on the face mesh to generate the 51 ARKit face shapes automatically and assign blend shapes the avatar already has; choose Minimal, Standard or Detailed points, test the result, then save it as a new .vrcaster file; the original file is not changed, and opening the saved file lets you continue editing)
+- Added the Perfect sync setup tab (click points on the face mesh to generate the 51 ARKit face shapes automatically and assign blend shapes the avatar already has; choose Minimal, Standard or Detailed points, test the result, then save it as a new .vrcaster file; the original file is not changed, and opening the saved file lets you continue editing; physics, idle motion, tracking, blinking and lip sync are paused while editing)
 - Changed the exporter to export meshes with blend shapes in a readable form (needed for perfect sync setup; re-export existing avatars to use it)
 
 ■ 1.18.8 (2026-10-12)

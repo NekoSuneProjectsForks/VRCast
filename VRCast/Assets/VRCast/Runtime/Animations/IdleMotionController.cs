@@ -58,6 +58,11 @@ namespace VRCast.Animations
         public bool IsAvailable => _all.Count > 0;
 
         /// <summary>
+        /// true の間は設定に関係なく動きを止める（OFF と同じく 0.5 秒かけて止める。パーフェクトシンク化の編集中など）。
+        /// </summary>
+        public bool Suspended { get; set; }
+
+        /// <summary>
         /// isHeadTracked が true の間（顔のトラッキング中）は頭のゆらぎを止め、本人の頭の動きに任せる。
         /// </summary>
         public void Initialize(Animator animator, AppSettings settings, Func<bool> isHeadTracked)
@@ -128,7 +133,9 @@ namespace VRCast.Animations
 
             // ON/OFF と、顔のトラッキング中かどうかを滑らかに切り替える
             float step = Time.deltaTime / FadeSeconds;
-            _weight = Mathf.MoveTowards(_weight, _settings.idleMotionEnabled ? 1f : 0f, step);
+            // 一時停止中は OFF と同じく止める
+            bool active = _settings.idleMotionEnabled && !Suspended;
+            _weight = Mathf.MoveTowards(_weight, active ? 1f : 0f, step);
             bool headTracked = _isHeadTracked != null && _isHeadTracked();
             _headWeight = Mathf.MoveTowards(_headWeight, headTracked ? 0f : 1f, step);
 
