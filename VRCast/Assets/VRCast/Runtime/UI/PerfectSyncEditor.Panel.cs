@@ -148,7 +148,9 @@ namespace VRCast.UI
             if (GUILayout.Toggle(_step == Step.Points,
                     Loc.T("1. Points", "1. 目印", "1. 표시", "1. 标记", "1. 標記"), GUI.skin.button) && _step != Step.Points)
             {
+                // 形状の段階の検索欄から入力の焦点を外し、Delete・Ctrl+Z を目印の操作に使えるようにする
                 _step = Step.Points;
+                GUIUtility.keyboardControl = 0;
             }
 
             if (GUILayout.Toggle(_step == Step.Shapes,
@@ -180,19 +182,22 @@ namespace VRCast.UI
             GuiControls.BeginCard(Loc.T("Place points on the face", "顔に目印を打つ", "얼굴에 표시 찍기", "在脸上放置标记", "在臉上放置標記"));
             GuiControls.Hint(Loc.T(
                 "Left-click the face to place the highlighted point, and drag a point to move it. " +
-                "Right-drag rotates, the wheel zooms and middle-drag pans. Delete removes the selected point. " +
+                "Right-drag rotates, the wheel zooms and middle-drag pans. Ctrl+Z undoes, and Delete removes the selected point " +
+                "(or the one you just placed). " +
                 "Left and right are the avatar's own (its left is on the right of the screen from the front).",
                 "顔を左クリックすると、選択中の目印を打てます。目印はドラッグで動かせます。" +
-                "右ドラッグで回転、ホイールで拡大、中ドラッグで移動、Delete キーで選択中の目印を消せます。" +
+                "右ドラッグで回転、ホイールで拡大、中ドラッグで移動。Ctrl+Z で元に戻し、Delete キーで選択中の目印" +
+                "（打っていなければ直前に打った目印）を消せます。" +
                 "左右はアバターから見た左右です（正面から見ると画面の右がアバターの左）。",
                 "얼굴을 왼쪽 클릭하면 선택한 표시를 찍습니다. 표시는 드래그로 옮길 수 있습니다. " +
-                "오른쪽 드래그로 회전, 휠로 확대, 가운데 드래그로 이동, Delete 키로 선택한 표시를 지웁니다. " +
+                "오른쪽 드래그로 회전, 휠로 확대, 가운데 드래그로 이동. Ctrl+Z로 되돌리고, Delete 키로 선택한 표시" +
+                "(찍지 않았다면 방금 찍은 표시)를 지웁니다. " +
                 "좌우는 아바타 기준입니다(정면에서 보면 화면 오른쪽이 아바타의 왼쪽).",
                 "左键点击脸部即可放置当前选中的标记，拖动可移动标记。" +
-                "右键拖动旋转，滚轮缩放，中键拖动平移，Delete 键删除选中的标记。" +
+                "右键拖动旋转，滚轮缩放，中键拖动平移。Ctrl+Z 撤销，Delete 键删除选中的标记（未放置时删除刚放置的标记）。" +
                 "左右以虚拟形象自身为准（从正面看，屏幕右侧是形象的左侧）。",
                 "左鍵點擊臉部即可放置目前選取的標記，拖曳可移動標記。" +
-                "右鍵拖曳旋轉，滾輪縮放，中鍵拖曳平移，Delete 鍵刪除選取的標記。" +
+                "右鍵拖曳旋轉，滾輪縮放，中鍵拖曳平移。Ctrl+Z 復原，Delete 鍵刪除選取的標記（未放置時刪除剛放置的標記）。" +
                 "左右以虛擬形象自身為準（從正面看，螢幕右側是形象的左側）。"));
 
             // 顔メッシュ（替えたら目印は打ち直し）
@@ -219,6 +224,9 @@ namespace VRCast.UI
                 "왼쪽 표시를 오른쪽에도 반영 (좌우 대칭)", "将左侧标记镜像到右侧（左右对称）", "將左側標記鏡像到右側（左右對稱）"));
             if (mirror != _mirror)
             {
+                // 切り替え前を履歴に積む（目印が増減するため元に戻せるようにする）
+                PushUndo(Snapshot());
+
                 // ON にしたら右側を決め直す。OFF にしたら自動で決めた右側は手で打ったものとして残す
                 _mirror = mirror;
                 _dirty = true;
@@ -232,15 +240,43 @@ namespace VRCast.UI
                 }
             }
 
-            // 歯・舌のメッシュも顎と一緒に動かす
-            bool mouth = GUILayout.Toggle(_includeMouthParts, Loc.T(
+            // 歯・舌のメッシュも顎と一緒に動かす（別のメッシュが見つからなければ選べない）
+            GUIStyle hint = theme != null ? theme.Hint : GUI.skin.label;
+            GUI.enabled = _mouthPartCount > 0;
+            bool mouth = GUILayout.Toggle(_includeMouthParts && _mouthPartCount > 0, Loc.T(
                 "Also move teeth and tongue meshes with the jaw", "歯・舌のメッシュも顎と一緒に動かす",
                 "치아·혀 메시도 턱과 함께 움직이기", "牙齿·舌头网格也随下巴一起移动", "牙齒·舌頭網格也隨下巴一起移動"));
-            if (mouth != _includeMouthParts)
+            GUI.enabled = true;
+            if (_mouthPartCount == 0)
+            {
+                GUILayout.Label(Loc.T(
+                    "Separate teeth/tongue meshes not found (if they are part of the face mesh, they move with it).",
+                    "別の歯・舌のメッシュは見つかりません（顔メッシュに含まれていれば、顔と一緒に動きます）。",
+                    "별도의 치아·혀 메시를 찾을 수 없습니다(얼굴 메시에 포함되어 있으면 함께 움직입니다).",
+                    "未找到单独的牙齿·舌头网格（若包含在面部网格中，会随面部一起移动）。",
+                    "找不到單獨的牙齒·舌頭網格（若包含在臉部網格中，會隨臉部一起移動）。"), hint);
+            }
+            else if (mouth != _includeMouthParts)
             {
                 _includeMouthParts = mouth;
                 _dirty = true;
             }
+
+            // アバターに無い部位（その部位の目印は打たず、形状は既定で「なし」にする）
+            GUILayout.Label(Loc.T("Parts this avatar doesn't have", "このアバターに無い部位", "이 아바타에 없는 부위",
+                "此形象没有的部位", "此形象沒有的部位"), hint);
+            GUILayout.BeginHorizontal();
+            foreach (FaceParts part in FacePartRules.Selectable)
+            {
+                bool absent = (_absent & part) != 0;
+                if (GUILayout.Toggle(absent, PerfectSyncLabels.FacePart(part), GUI.skin.button, GuiControls.Shrinkable)
+                    != absent)
+                {
+                    SetPartAbsent(part, !absent);
+                }
+            }
+
+            GUILayout.EndHorizontal();
 
             // 進み具合と案内図
             int placed = PlacedCount(out int total);
@@ -248,9 +284,29 @@ namespace VRCast.UI
                 $"已放置 {placed}/{total}", $"已放置 {placed}/{total}"), placed == total);
             DrawDiagram();
 
+            // 元に戻す・目印を消す（間違えて打ったときにすぐ押せるよう、長い一覧より上に置く）
+            GUILayout.BeginHorizontal();
+            GUI.enabled = _undo.Count > 0;
+            if (GUILayout.Button(Loc.T("Undo (Ctrl+Z)", "元に戻す（Ctrl+Z）", "실행 취소 (Ctrl+Z)", "撤销（Ctrl+Z）", "復原（Ctrl+Z）"),
+                    GuiControls.Shrinkable))
+            {
+                Undo();
+            }
+
+            LandmarkId? target = DeleteTarget();
+            GUI.enabled = target.HasValue;
+            string removeLabel = Loc.T("Remove (Delete)", "消す（Delete）", "지우기 (Delete)", "删除（Delete）", "刪除（Delete）");
+            if (GUILayout.Button(target.HasValue ? $"{removeLabel}: {PerfectSyncLabels.Landmark(target.Value)}" : removeLabel,
+                    GuiControls.Shrinkable))
+            {
+                RemoveDeleteTarget();
+            }
+
+            GUI.enabled = true;
+            GUILayout.EndHorizontal();
+
             // 目印の一覧（押すと選択）
-            GUIStyle hint = theme != null ? theme.Hint : GUI.skin.label;
-            foreach (LandmarkId landmark in FaceLandmarks.For(_detail))
+            foreach (LandmarkId landmark in ActiveLandmarks())
             {
                 GUILayout.BeginHorizontal();
                 if (GUILayout.Toggle(_selected == landmark, PerfectSyncLabels.Landmark(landmark), GUI.skin.button,
@@ -263,21 +319,12 @@ namespace VRCast.UI
                 GUILayout.EndHorizontal();
             }
 
-            // 選択中の目印を消す・全部消す・顔へ寄り直す
+            // 全部消す（元に戻せる）・顔へ寄り直す
             GUILayout.BeginHorizontal();
-            GUI.enabled = _selected.HasValue && _landmarks.ContainsKey(_selected.Value);
-            if (GUILayout.Button(Loc.T("Remove point", "目印を消す", "표시 지우기", "删除标记", "刪除標記"), GuiControls.Shrinkable))
-            {
-                RemoveLandmark(_selected.Value);
-            }
-
             GUI.enabled = _landmarks.Count > 0;
             if (GuiControls.DangerButton(Loc.T("Clear all", "全部消す", "모두 지우기", "全部清除", "全部清除"), GuiControls.Shrinkable))
             {
-                _landmarks.Clear();
-                _autoMirrored.Clear();
-                _dirty = true;
-                _selected = NextUnplaced();
+                ClearAllLandmarks();
             }
 
             GUI.enabled = true;
@@ -298,14 +345,11 @@ namespace VRCast.UI
             }
 
             GUI.enabled = true;
-            if (!HasRequiredLandmarks())
+            List<LandmarkId> missing = MissingRequired();
+            if (missing.Count > 0)
             {
-                GuiControls.Hint(Loc.T(
-                    "Place at least the minimal points (eyes, brows, mouth corners, lips and chin) to generate.",
-                    "生成には最小の目印（目・眉・口角・唇・あご）が必要です。",
-                    "생성하려면 최소 표시(눈·눈썹·입꼬리·입술·턱)가 필요합니다.",
-                    "生成至少需要最少的标记（眼睛·眉毛·嘴角·嘴唇·下巴）。",
-                    "生成至少需要最少的標記（眼睛·眉毛·嘴角·嘴唇·下巴）。"));
+                GuiControls.Hint(Loc.T("To generate, also place: ", "生成には次の目印も必要です: ", "생성하려면 다음 표시도 필요합니다: ",
+                    "生成还需要以下标记: ", "生成還需要以下標記: ") + string.Join(", ", missing.ConvertAll(PerfectSyncLabels.Landmark)));
             }
         }
 
@@ -319,7 +363,7 @@ namespace VRCast.UI
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
 
-            List<LandmarkId> ids = FaceLandmarks.For(_detail);
+            List<LandmarkId> ids = ActiveLandmarks();
             float radius = DiagramSize * 0.45f;
 
             // 押した位置に最も近い目印を選ぶ
@@ -382,16 +426,8 @@ namespace VRCast.UI
 
         private bool HasRequiredLandmarks()
         {
-            // 最小の段階の目印が全部あるか
-            foreach (LandmarkId landmark in FaceLandmarks.Required)
-            {
-                if (!_landmarks.ContainsKey(landmark))
-                {
-                    return false;
-                }
-            }
-
-            return true;
+            // 最小の段階の目印（無い部位の分を除く）が全部あるか
+            return MissingRequired().Count == 0;
         }
 
         private void DrawShapesStep(UiTheme theme)
@@ -406,20 +442,40 @@ namespace VRCast.UI
                 $"可用的 ARKit 形狀: {matched}/{total}"), matched >= PerfectSyncBlendShapes.MinMatchedShapes);
             GuiControls.Hint(Loc.T(
                 "For each shape choose Generate (made from the points), Existing shape (use one of the avatar's blend shapes) " +
-                "or None. Eye movement is off by default because the eye bones already follow your gaze. " +
-                "Select a shape name to test it with the slider and to choose the existing blend shape.",
+                "or None. Select a shape name to test it with the slider and to choose the existing blend shape.",
                 "形状ごとに「自動生成」（目印から作る）・「既存の BlendShape」（アバターの BlendShape を使う）・「なし」を選べます。" +
-                "目の動きは目のボーンで視線を動かすため、既定では作りません。" +
                 "形状の名前を押すと、スライダーで試したり、使う既存の BlendShape を選んだりできます。",
                 "형상마다 '자동 생성'(표시로 만듦)·'기존 BlendShape'(아바타의 BlendShape 사용)·'없음'을 고를 수 있습니다. " +
-                "눈 움직임은 눈 본으로 시선을 움직이므로 기본으로 만들지 않습니다. " +
                 "형상 이름을 누르면 슬라이더로 확인하거나 사용할 기존 BlendShape를 고를 수 있습니다.",
                 "每个形状可选择“自动生成”（由标记生成）·“现有 BlendShape”（使用形象的 BlendShape）·“无”。" +
-                "眼球运动由眼睛骨骼控制视线，因此默认不生成。" +
                 "点击形状名称可用滑块测试，或选择要使用的现有 BlendShape。",
                 "每個形狀可選擇「自動生成」（由標記生成）·「現有 BlendShape」（使用形象的 BlendShape）·「無」。" +
-                "眼球運動由眼睛骨骼控制視線，因此預設不生成。" +
                 "點擊形狀名稱可用滑桿測試，或選擇要使用的現有 BlendShape。"));
+
+            // 目の動きの既定（目のボーンの有無で変わる）
+            GuiControls.Hint(HasEyeBones
+                ? Loc.T("Eye movement is off by default because the eye bones already follow your gaze.",
+                    "目の動きは目のボーンで視線を動かすため、既定では作りません。",
+                    "눈 움직임은 눈 본으로 시선을 움직이므로 기본으로 만들지 않습니다.",
+                    "眼球运动由眼睛骨骼控制视线，因此默认不生成。",
+                    "眼球運動由眼睛骨骼控制視線，因此預設不生成。")
+                : Loc.T("This avatar has no eye bones, so eye movement is generated (only pupils painted on the face mesh move).",
+                    "このアバターには目のボーンが無いため、目の動きも自動生成します（顔メッシュに描かれた瞳だけが動きます）。",
+                    "이 아바타에는 눈 본이 없으므로 눈 움직임도 자동 생성합니다(얼굴 메시에 그려진 눈동자만 움직입니다).",
+                    "此形象没有眼睛骨骼，因此也自动生成眼球运动（只移动画在面部网格上的瞳孔）。",
+                    "此形象沒有眼睛骨骼，因此也自動生成眼球運動（只移動畫在臉部網格上的瞳孔）。"));
+
+            // 自動生成しても動く部分が無かった形状
+            int empty = CountEmptyShapes();
+            if (empty > 0)
+            {
+                GuiControls.Warning(Loc.T(
+                    $"{empty} shape(s) marked \"Nothing to move\" had no part to move (e.g. the eyes are a separate mesh or the part is missing). Choose Existing shape or None for them.",
+                    $"「動く部分なし」の {empty} 個の形状は、自動生成しても動く部分がありませんでした（目が別のメッシュ・その部位が無いなど）。「既存の BlendShape」か「なし」を選んでください。",
+                    $"'움직일 부분 없음'인 형상 {empty}개는 자동 생성해도 움직일 부분이 없었습니다(눈이 별도 메시이거나 해당 부위가 없는 등). '기존 BlendShape' 또는 '없음'을 고르세요.",
+                    $"标为“无可移动部分”的 {empty} 个形状自动生成后没有可移动的部分（眼睛是单独网格、没有该部位等）。请选择“现有 BlendShape”或“无”。",
+                    $"標為「無可移動部分」的 {empty} 個形狀自動生成後沒有可移動的部分（眼睛是單獨網格、沒有該部位等）。請選擇「現有 BlendShape」或「無」。"));
+            }
 
             // 設定を変えたら作り直しが必要
             if (_dirty)
@@ -493,6 +549,13 @@ namespace VRCast.UI
             }
 
             GUILayout.EndHorizontal();
+
+            // 自動生成しても動く部分が無かった形状に印を付ける
+            if (IsEmptyShape(index))
+            {
+                GUILayout.Label(Loc.T("Nothing to move", "動く部分なし", "움직일 부분 없음", "无可移动部分", "無可移動部分"),
+                    theme != null ? theme.WarningText : GUI.skin.label);
+            }
             if (shape.Native || shape.Source == PerfectSyncSet.SourceNone)
             {
                 return;
@@ -526,6 +589,28 @@ namespace VRCast.UI
             {
                 DrawCandidateSearch(theme, shape);
             }
+        }
+
+        private bool IsEmptyShape(int index)
+        {
+            // 前回の生成で動く部分が無く、今も「自動生成」のままの形状
+            return _emptyShapes.Contains(index) && !_shapes[index].Native
+                && _shapes[index].Source == PerfectSyncSet.SourceGenerated;
+        }
+
+        private int CountEmptyShapes()
+        {
+            // 「動く部分なし」の印が付く形状の数
+            int count = 0;
+            foreach (int index in _emptyShapes)
+            {
+                if (IsEmptyShape(index))
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         private void DrawCandidateSearch(UiTheme theme, ShapeState shape)

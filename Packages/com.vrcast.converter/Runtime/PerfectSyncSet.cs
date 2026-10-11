@@ -24,6 +24,9 @@ namespace VRCast.AvatarFormat
         // 目印の細かさ（0 = 最小・1 = 標準・2 = 詳細）
         public const int MaxDetail = 2;
 
+        // アバターに無い部位のビット（1 = 眉・2 = 鼻・4 = 口の中）
+        public const int MaxAbsentParts = 7;
+
         // 形状の元（生成 / 既存の BlendShape / 使わない）
         public const int SourceGenerated = 0;
         public const int SourceExisting = 1;
@@ -39,6 +42,9 @@ namespace VRCast.AvatarFormat
         public int detail = 1;
         public bool mirror = true;
         public bool includeMouthParts = true;
+
+        // アバターに無い部位（ビットの組み合わせ。その部位の目印は打たず、形状は既定で作らない）
+        public int absentParts;
 
         // 目印を打った顔メッシュ（アバタールートからの相対パス）
         public string facePath = string.Empty;
@@ -67,6 +73,12 @@ namespace VRCast.AvatarFormat
             if (detail < 0 || detail > MaxDetail)
             {
                 return $"detail must be 0-{MaxDetail}.";
+            }
+
+            // 無い部位は定義済みのビットだけ
+            if (absentParts < 0 || absentParts > MaxAbsentParts)
+            {
+                return $"absentParts must be 0-{MaxAbsentParts}.";
             }
 
             // 文字列は空を許可する（元の情報が無い・ルートのメッシュ）

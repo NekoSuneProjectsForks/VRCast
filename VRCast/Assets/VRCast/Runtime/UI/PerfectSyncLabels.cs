@@ -56,6 +56,24 @@ namespace VRCast.UI
         }
 
         /// <summary>
+        /// アバターに無いことがある部位の表示名。
+        /// </summary>
+        public static string FacePart(FaceParts part)
+        {
+            switch (part)
+            {
+                case FaceParts.Brows:
+                    return Loc.T("Brows", "眉", "눈썹", "眉毛", "眉毛");
+                case FaceParts.Nose:
+                    return Loc.T("Nose", "鼻", "코", "鼻子", "鼻子");
+                case FaceParts.MouthInterior:
+                    return Loc.T("Inside of the mouth", "口の中", "입 안", "口腔内部", "口腔內部");
+                default:
+                    return part.ToString();
+            }
+        }
+
+        /// <summary>
         /// 案内図での位置（x: 見る人の左 -1 〜 右 1、y: 下 -1 〜 上 1。正面から見るのでアバターの左は右側）。
         /// </summary>
         public static Vector2 DiagramPosition(LandmarkId id)

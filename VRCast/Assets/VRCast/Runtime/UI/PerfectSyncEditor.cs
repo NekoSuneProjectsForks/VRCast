@@ -33,6 +33,9 @@ namespace VRCast.UI
         // 目印をつかめる距離（画面の画素）
         private const float PickRadius = 14f;
 
+        // 元に戻せる操作の数（古いものから捨てる）
+        private const int MaxUndo = 100;
+
         // 歯・舌のメッシュとみなす名前（小文字で含むか調べる）
         private static readonly string[] MouthPartKeywords = { "teeth", "tooth", "tongue", "歯", "舌" };
 
@@ -59,6 +62,18 @@ namespace VRCast.UI
 
             // 割り当てる既存の BlendShape（_candidates の番号。-1 = 未選択）
             public int Binding = -1;
+        }
+
+        /// <summary>
+        /// 元に戻すための、目印を変える直前の状態（目印・自動で決めた右側・左右対称・無い部位・選択）。
+        /// </summary>
+        private sealed class UndoState
+        {
+            public Dictionary<LandmarkId, PerfectSyncLandmark> Landmarks;
+            public HashSet<LandmarkId> AutoMirrored;
+            public bool Mirror;
+            public FaceParts Absent;
+            public LandmarkId? Selected;
         }
 
         /// <summary>
@@ -118,9 +133,22 @@ namespace VRCast.UI
         private bool _mirror = true;
         private bool _includeMouthParts = true;
 
+        // アバターに無い部位（その部位の目印は打たず、形状は既定で作らない）
+        private FaceParts _absent;
+
+        // 顔メッシュと一緒に動かせる歯・舌のメッシュの数（0 なら「歯・舌も動かす」は選べない）
+        private int _mouthPartCount;
+
         // 次に打つ（選択中の）目印と、ドラッグ中か・そのドラッグで新しく打ったか
         private LandmarkId? _selected;
         private bool _dragging;
+
+        // 元に戻す履歴（古いものが先頭）。つかんだだけで動かさなければ積まないよう、つかんだ時点の状態を控えておく
+        private readonly List<UndoState> _undo = new List<UndoState>();
+        private UndoState _pendingUndo;
+
+        // 直前にクリックで打った目印（打った直後は選択が次の目印へ移るため、Delete で消す対象にする）
+        private LandmarkId? _lastPlaced;
 
         // ARKit の並びと同じ数の形状の設定と、割り当てに使える既存の BlendShape
         private readonly ShapeState[] _shapes = new ShapeState[ArKitFace.BlendShapeNames.Length];
@@ -130,6 +158,9 @@ namespace VRCast.UI
         private PerfectSyncShapeData _generated;
         private PerfectSyncMeshes _preview;
         private bool _dirty = true;
+
+        // 自動生成しても動く部分が無かった形状（ARKit の番号。目が別のメッシュ・その部位が無いなど）
+        private readonly HashSet<int> _emptyShapes = new HashSet<int>();
 
         // 試しに動かす形状（ARKit の番号。-1 = なし）・その値・書き込み先
         private int _previewIndex = -1;
@@ -250,6 +281,9 @@ namespace VRCast.UI
                 _includeMouthParts = saved.includeMouthParts;
             }
 
+            // 無い部位は保存してあればそれ、無ければ全部ある（別のアバターの設定を持ち越さない）
+            _absent = resume ? (FaceParts)saved.absentParts & FaceParts.All : FaceParts.None;
+
             // 顔メッシュを選び、保存してあった目印をその顔メッシュに戻す
             SelectFace(ChooseFace(resume ? saved.facePath : null));
             if (resume && saved.facePath == _facePath)
@@ -267,6 +301,7 @@ namespace VRCast.UI
             _savedPath = null;
             _confirmingClose = false;
             _generated = null;
+            _emptyShapes.Clear();
             _dirty = true;
             _selected = NextUnplaced();
             _savedPose = _orbit.Pose;
@@ -345,6 +380,7 @@ namespace VRCast.UI
             _previewIndex = -1;
             _preview = null;
             _generated = null;
+            _emptyShapes.Clear();
             if (_baked != null)
             {
                 UnityEngine.Object.Destroy(_baked);
@@ -356,6 +392,7 @@ namespace VRCast.UI
             _candidates.Clear();
             _landmarks.Clear();
             _autoMirrored.Clear();
+            ClearUndo();
             _region.Clear();
             _regionVertices.Clear();
             _face = null;
@@ -510,6 +547,12 @@ namespace VRCast.UI
             _selected = NextUnplaced();
             _dirty = true;
 
+            // 別のメッシュの目印には戻せないので履歴も捨てる
+            ClearUndo();
+
+            // この顔メッシュと一緒に動かせる歯・舌のメッシュを数える
+            _mouthPartCount = CountMouthParts();
+
             // 今の姿勢の形を作り、顔のまわりの三角形を決める
             BakeFace();
             BuildRegion();
@@ -517,7 +560,7 @@ namespace VRCast.UI
 
         private void RestoreLandmarks(PerfectSyncLandmark[] saved)
         {
-            // 定義済みの番号で、三角形の番号がこのメッシュに収まるものだけ戻す
+            // 定義済みの番号で、無い部位のものではなく、三角形の番号がこのメッシュに収まるものだけ戻す
             if (saved == null || _geometry == null)
             {
                 return;
@@ -525,7 +568,9 @@ namespace VRCast.UI
 
             foreach (PerfectSyncLandmark landmark in saved)
             {
-                if (landmark != null && FaceLandmarks.IsDefined(landmark.id) && _geometry.TryGetPoint(landmark, out _))
+                if (landmark != null && FaceLandmarks.IsDefined(landmark.id)
+                    && (FacePartRules.Landmark((LandmarkId)landmark.id) & _absent) == 0
+                    && _geometry.TryGetPoint(landmark, out _))
                 {
                     _landmarks[(LandmarkId)landmark.id] = Copy(landmark);
                 }
@@ -549,8 +594,8 @@ namespace VRCast.UI
                 return;
             }
 
-            // 目の動きは目のボーンで動かすので、既定では作らない
-            for (int i = 0; i < _shapes.Length; i++)
+            // 目の動きは目のボーンがあればボーンで動かすので、既定では作らない（無ければ顔に描いた瞳を動かす形状を作る）
+            for (int i = 0; HasEyeBones && i < _shapes.Length; i++)
             {
                 if (PerfectSyncLabels.IsEyeLook(ArKitFace.BlendShapeNames[i]))
                 {
@@ -558,8 +603,69 @@ namespace VRCast.UI
                 }
             }
 
+            // 無い部位の形状は作らない
+            SetAbsentShapeSources(_absent, true);
+
             // 既存の BlendShape に名前で対応が付くものは、既存を使う
             AutoAssign();
+        }
+
+        /// <summary>
+        /// 視線で動かす目のボーンがあれば true（無ければ目の動きも形状で作る）。
+        /// </summary>
+        private bool HasEyeBones => _faceDriver != null && _faceDriver.HasEyes;
+
+        private void SetAbsentShapeSources(FaceParts parts, bool absent)
+        {
+            // parts の部位の形状のうち、無くしたなら「自動生成」を「なし」に、戻したなら「なし」を「自動生成」にする
+            // （既存の BlendShape を割り当てたもの・元からある形状はそのまま）
+            int from = absent ? PerfectSyncSet.SourceGenerated : PerfectSyncSet.SourceNone;
+            int to = absent ? PerfectSyncSet.SourceNone : PerfectSyncSet.SourceGenerated;
+            for (int i = 0; parts != FaceParts.None && i < _shapes.Length; i++)
+            {
+                ShapeState shape = _shapes[i];
+                if (!shape.Native && shape.Source == from
+                    && (FacePartRules.Shape(ArKitFace.BlendShapeNames[i]) & parts) != 0)
+                {
+                    shape.Source = to;
+                    _dirty = true;
+                }
+            }
+        }
+
+        private void SetPartAbsent(FaceParts part, bool absent)
+        {
+            // 変わらなければ何もしない
+            if (((_absent & part) != 0) == absent)
+            {
+                return;
+            }
+
+            // 変える前の状態を履歴に積み、無い部位を更新する
+            PushUndo(Snapshot());
+            _absent = absent ? _absent | part : _absent & ~part;
+
+            // 無くした部位の目印を消す（自動で決めた右側も含む）
+            if (absent)
+            {
+                foreach (LandmarkId id in FaceLandmarks.For(LandmarkDetail.Detailed))
+                {
+                    if ((FacePartRules.Landmark(id) & part) != 0 && _landmarks.Remove(id))
+                    {
+                        _autoMirrored.Remove(id);
+                    }
+                }
+            }
+
+            // その部位の形状の出どころを合わせ、選択中の目印が無くなったら次の目印へ
+            SetAbsentShapeSources(part, absent);
+            if (_selected.HasValue && (FacePartRules.Landmark(_selected.Value) & _absent) != 0)
+            {
+                _selected = NextUnplaced();
+            }
+
+            _lastPlaced = null;
+            _dirty = true;
         }
 
         private void ApplySavedShapes(PerfectSyncSet saved)
@@ -747,6 +853,8 @@ namespace VRCast.UI
                 LandmarkId? picked = PickLandmark(Input.mousePosition);
                 if (picked.HasValue)
                 {
+                    // つかんだ時点の状態を控え、実際に動かしたときだけ履歴に積む
+                    _pendingUndo = Snapshot();
                     _selected = picked;
                     _dragging = true;
                 }
@@ -755,7 +863,10 @@ namespace VRCast.UI
                     _selected ??= NextUnplaced();
                     if (_selected.HasValue)
                     {
+                        // 打つ前の状態を履歴に積み、打った目印を Delete の対象として覚える
+                        PushUndo(Snapshot());
                         PlaceLandmark(_selected.Value, hit, false);
+                        _lastPlaced = _selected;
                         _dragging = true;
                     }
                 }
@@ -764,6 +875,13 @@ namespace VRCast.UI
             // ドラッグ中: 表面に沿って動かす（反対側は動かした目印の相手だけ決め直す）
             if (_dragging && Input.GetMouseButton(0) && _selected.HasValue && RaycastFace(out PerfectSyncLandmark moved))
             {
+                // つかんだ目印を初めて動かしたときに、つかむ前の状態を履歴に積む
+                if (_pendingUndo != null)
+                {
+                    PushUndo(_pendingUndo);
+                    _pendingUndo = null;
+                }
+
                 PlaceLandmark(_selected.Value, moved, true);
             }
 
@@ -771,6 +889,7 @@ namespace VRCast.UI
             if (_dragging && !Input.GetMouseButton(0))
             {
                 _dragging = false;
+                _pendingUndo = null;
                 Remirror(null);
                 _selected = NextUnplaced() ?? _selected;
             }
@@ -784,10 +903,144 @@ namespace VRCast.UI
                 return;
             }
 
-            if (_selected.HasValue && (Input.GetKeyDown(KeyCode.Delete) || Input.GetKeyDown(KeyCode.Backspace)))
+            // 目印の段階以外・ドラッグ中は履歴・目印を変えない（見えていない目印・つかんでいる目印を消さないように）
+            if (_step != Step.Points || _dragging)
             {
-                RemoveLandmark(_selected.Value);
+                return;
             }
+
+            // Ctrl+Z で 1 つ前に戻す
+            bool control = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+            if (control && Input.GetKeyDown(KeyCode.Z))
+            {
+                Undo();
+                return;
+            }
+
+            // Delete / Backspace で、選択中の目印（打っていなければ直前に打った目印）を消す
+            if (Input.GetKeyDown(KeyCode.Delete) || Input.GetKeyDown(KeyCode.Backspace))
+            {
+                RemoveDeleteTarget();
+            }
+        }
+
+        /// <summary>
+        /// Delete・「目印を消す」で消す目印。選択中の目印を打ってあればそれ、無ければ直前にクリックで打った目印
+        /// （どちらも左右対称で自動で決めた右側は除く。左側を消せば一緒に消える）。
+        /// </summary>
+        private LandmarkId? DeleteTarget()
+        {
+            if (_selected.HasValue && CanRemove(_selected.Value))
+            {
+                return _selected;
+            }
+
+            return _lastPlaced.HasValue && CanRemove(_lastPlaced.Value) ? _lastPlaced : null;
+        }
+
+        private bool CanRemove(LandmarkId id)
+        {
+            // 打ってあり、自動で決めた右側でない（自動の右側は消しても左側からすぐ決め直される）
+            return _landmarks.ContainsKey(id) && !_autoMirrored.Contains(id);
+        }
+
+        private void RemoveDeleteTarget()
+        {
+            LandmarkId? target = DeleteTarget();
+            if (!target.HasValue)
+            {
+                return;
+            }
+
+            // 消す前の状態を履歴に積んで消し、消した目印を次に打つ目印として選ぶ
+            PushUndo(Snapshot());
+            RemoveLandmark(target.Value);
+            _selected = target;
+            if (_lastPlaced == target)
+            {
+                _lastPlaced = null;
+            }
+        }
+
+        private void ClearAllLandmarks()
+        {
+            // 消す前の状態を履歴に積む（全部消しても元に戻せる）
+            PushUndo(Snapshot());
+            _landmarks.Clear();
+            _autoMirrored.Clear();
+            _lastPlaced = null;
+            _dirty = true;
+            _selected = NextUnplaced();
+        }
+
+        private UndoState Snapshot()
+        {
+            // 目印は複製して控える（後の操作で中身が変わっても影響しない）
+            var landmarks = new Dictionary<LandmarkId, PerfectSyncLandmark>();
+            foreach (KeyValuePair<LandmarkId, PerfectSyncLandmark> pair in _landmarks)
+            {
+                landmarks[pair.Key] = Copy(pair.Value);
+            }
+
+            return new UndoState
+            {
+                Landmarks = landmarks,
+                AutoMirrored = new HashSet<LandmarkId>(_autoMirrored),
+                Mirror = _mirror,
+                Absent = _absent,
+                Selected = _selected,
+            };
+        }
+
+        private void PushUndo(UndoState state)
+        {
+            // 上限を超えたら最も古い操作から捨てる
+            _undo.Add(state);
+            if (_undo.Count > MaxUndo)
+            {
+                _undo.RemoveAt(0);
+            }
+        }
+
+        private void Undo()
+        {
+            // 戻せる操作が無ければ何もしない
+            if (_undo.Count == 0)
+            {
+                return;
+            }
+
+            // 最後に積んだ状態へ戻す（目印・自動の右側・左右対称・選択）
+            UndoState state = _undo[_undo.Count - 1];
+            _undo.RemoveAt(_undo.Count - 1);
+            _landmarks.Clear();
+            foreach (KeyValuePair<LandmarkId, PerfectSyncLandmark> pair in state.Landmarks)
+            {
+                _landmarks[pair.Key] = pair.Value;
+            }
+
+            _autoMirrored.Clear();
+            _autoMirrored.UnionWith(state.AutoMirrored);
+            _mirror = state.Mirror;
+
+            // 無い部位が変わっていたら、変わった部位の形状の出どころも戻す
+            FaceParts becomeAbsent = state.Absent & ~_absent;
+            FaceParts becomePresent = _absent & ~state.Absent;
+            _absent = state.Absent;
+            SetAbsentShapeSources(becomeAbsent, true);
+            SetAbsentShapeSources(becomePresent, false);
+            _selected = state.Selected ?? NextUnplaced();
+            _lastPlaced = null;
+            _pendingUndo = null;
+            _dirty = true;
+        }
+
+        private void ClearUndo()
+        {
+            // 履歴と、つかんだ時点の控え・直前に打った目印を捨てる
+            _undo.Clear();
+            _pendingUndo = null;
+            _lastPlaced = null;
         }
 
         private LandmarkId? PickLandmark(Vector3 mouse)
@@ -894,7 +1147,7 @@ namespace VRCast.UI
         private LandmarkId? NextUnplaced()
         {
             // 今の細かさで、まだ打っていない最初の目印（左右対称なら右側は自動で決まるので飛ばす）
-            foreach (LandmarkId id in FaceLandmarks.For(_detail))
+            foreach (LandmarkId id in ActiveLandmarks())
             {
                 if (_landmarks.ContainsKey(id) || (_mirror && FaceLandmarks.IsRight(id)))
                 {
@@ -907,10 +1160,24 @@ namespace VRCast.UI
             return null;
         }
 
+        private List<LandmarkId> ActiveLandmarks()
+        {
+            // 今の細かさで打つ目印（無い部位のものを除く）
+            return FaceLandmarks.For(_detail, _absent);
+        }
+
+        private List<LandmarkId> MissingRequired()
+        {
+            // 生成に最低限必要な目印のうち、まだ打っていないもの
+            List<LandmarkId> missing = FaceLandmarks.RequiredFor(_absent);
+            missing.RemoveAll(_landmarks.ContainsKey);
+            return missing;
+        }
+
         private int PlacedCount(out int total)
         {
             // 今の細かさで打つ目印のうち、打った（自動で決めたものを含む）数
-            List<LandmarkId> ids = FaceLandmarks.For(_detail);
+            List<LandmarkId> ids = ActiveLandmarks();
             total = ids.Count;
             int placed = 0;
             foreach (LandmarkId id in ids)
@@ -955,6 +1222,7 @@ namespace VRCast.UI
 
             // 自動生成する形状が無ければ、割り当てだけ使う
             _generated = new PerfectSyncShapeData();
+            _emptyShapes.Clear();
             if (!any)
             {
                 return true;
@@ -976,7 +1244,7 @@ namespace VRCast.UI
                 }
             }
 
-            FaceRig rig = FaceRig.Build(points, normals, out List<LandmarkId> missing);
+            FaceRig rig = FaceRig.Build(points, normals, out List<LandmarkId> missing, _absent);
             if (rig == null)
             {
                 // 足りない目印を知らせ、最初の 1 つを選ぶ
@@ -1003,18 +1271,61 @@ namespace VRCast.UI
             }
 
             _generated.Shapes.AddRange(PerfectSyncGenerator.Generate(rig, inputs, strengths));
+
+            // 作ろうとしたのに、どのメッシュでも動く頂点が無かった形状を控える
+            var made = new HashSet<string>();
+            foreach (PerfectSyncShape shape in _generated.Shapes)
+            {
+                made.Add(shape.Name);
+            }
+
+            for (int i = 0; i < strengths.Length; i++)
+            {
+                if (strengths[i] > 0f && !made.Contains(ArKitFace.BlendShapeNames[i]))
+                {
+                    _emptyShapes.Add(i);
+                }
+            }
+
             return true;
+        }
+
+        private int CountMouthParts()
+        {
+            // 顔メッシュと一緒に動かせる歯・舌のメッシュの数
+            Transform head = HeadBone();
+            int count = 0;
+            foreach (SkinnedMeshRenderer renderer in _renderers)
+            {
+                if (IsUsableMouthPart(renderer, head, out _))
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private Transform HeadBone()
+        {
+            // 頭のボーン（歯・舌と顔メッシュの位置関係を、取り込み時の姿勢で求めるのに使う）
+            return _avatar.IsHumanoid ? _avatar.Animator.GetBoneTransform(HumanBodyBones.Head) : null;
+        }
+
+        private bool IsUsableMouthPart(SkinnedMeshRenderer renderer, Transform head, out Matrix4x4 meshToFace)
+        {
+            // 顔メッシュ以外の、歯・舌らしい名前で、顔メッシュと座標系をつなげるメッシュ
+            meshToFace = Matrix4x4.identity;
+            return renderer != _face && IsMouthPart(renderer.name) && TryMeshToFace(renderer, head, out meshToFace);
         }
 
         private void AddMouthParts(List<PerfectSyncGenerator.MeshInput> inputs)
         {
-            // 頭のボーン（歯・舌と顔メッシュの位置関係を、取り込み時の姿勢で求めるのに使う）
-            Transform head = _avatar.IsHumanoid ? _avatar.Animator.GetBoneTransform(HumanBodyBones.Head) : null;
+            Transform head = HeadBone();
             Transform root = _avatar.Instance.transform;
             foreach (SkinnedMeshRenderer renderer in _renderers)
             {
-                if (renderer == _face || !IsMouthPart(renderer.name)
-                    || !TryMeshToFace(renderer, head, out Matrix4x4 meshToFace))
+                if (!IsUsableMouthPart(renderer, head, out Matrix4x4 meshToFace))
                 {
                     continue;
                 }
@@ -1136,6 +1447,7 @@ namespace VRCast.UI
                 detail = (int)_detail,
                 mirror = _mirror,
                 includeMouthParts = _includeMouthParts,
+                absentParts = (int)_absent,
                 facePath = _facePath,
                 landmarks = landmarks.ToArray(),
                 shapes = shapes,

@@ -13,6 +13,7 @@ namespace VRCast.PerfectSync
         // 推定に使う比率（両目の中心の間隔 = 1 としたときの大きさ）
         private const float EyeHalfWidthRatio = 0.2f;
         private const float BrowSpreadRatio = 0.25f;
+        private const float BrowRaiseRatio = 0.35f;
         private const float NoseForwardRatio = 0.15f;
         private const float JawPivotBackRatio = 0.7f;
         private const float JawPivotRaise = 0.45f;
@@ -42,13 +43,15 @@ namespace VRCast.PerfectSync
         /// <summary>
         /// 目印の位置（メッシュの座標系）から作る。最小の段階の目印が揃っていなければ null と、足りない目印を返す。
         /// normals は目印の位置の法線（前の向きの確認用。無ければ空でよい）。
+        /// absent の部位（アバターに無い部位）の目印は求めず、打っていなければ推定する。
         /// </summary>
         public static FaceRig Build(IReadOnlyDictionary<LandmarkId, Vector3> points,
-            IReadOnlyDictionary<LandmarkId, Vector3> normals, out List<LandmarkId> missing)
+            IReadOnlyDictionary<LandmarkId, Vector3> normals, out List<LandmarkId> missing,
+            FaceParts absent = FaceParts.None)
         {
-            // 最小の段階の目印が全部あること
+            // 最小の段階の目印が全部あること（無い部位の分は除く）
             missing = new List<LandmarkId>();
-            foreach (LandmarkId id in FaceLandmarks.Required)
+            foreach (LandmarkId id in FaceLandmarks.RequiredFor(absent))
             {
                 if (!points.ContainsKey(id))
                 {
@@ -174,9 +177,11 @@ namespace VRCast.PerfectSync
             Origin = (eyeLeft + eyeRight) * 0.5f;
             Scale = Mathf.Max(Vector3.Distance(eyeLeft, eyeRight), 1e-6f);
 
-            // 上: あごから眉の中心へ向かう向きを、左と直交させる
-            Vector3 brows = (points[LandmarkId.BrowMidLeft] + points[LandmarkId.BrowMidRight]) * 0.5f;
-            Vector3 up = brows - points[LandmarkId.Chin];
+            // 上: あごから眉の中心（眉が無ければ両目の中心）へ向かう向きを、左と直交させる
+            bool hasBrows = points.TryGetValue(LandmarkId.BrowMidLeft, out Vector3 browLeft)
+                & points.TryGetValue(LandmarkId.BrowMidRight, out Vector3 browRight);
+            Vector3 top = hasBrows ? (browLeft + browRight) * 0.5f : Origin;
+            Vector3 up = top - points[LandmarkId.Chin];
             up -= Left * Vector3.Dot(up, Left);
             Up = up.sqrMagnitude > 1e-12f ? up.normalized : Vector3.up;
 
@@ -210,6 +215,10 @@ namespace VRCast.PerfectSync
             CompleteEye(LandmarkId.EyeUpperRight, LandmarkId.EyeLowerRight, LandmarkId.EyeInnerRight,
                 LandmarkId.EyeOuterRight, LandmarkId.EyeUpperInnerRight, LandmarkId.EyeUpperOuterRight,
                 LandmarkId.EyeLowerInnerRight, LandmarkId.EyeLowerOuterRight, -1f);
+
+            // 眉の中央（眉が無いアバター）: 目の中心の少し上・少し前
+            AddIfMissing(LandmarkId.BrowMidLeft, Eye(1f) + new Vector3(0f, s * BrowRaiseRatio, s * 0.05f));
+            AddIfMissing(LandmarkId.BrowMidRight, Eye(-1f) + new Vector3(0f, s * BrowRaiseRatio, s * 0.05f));
 
             // 眉頭・眉尻（眉の中央から内側・外側へ）
             CompleteBrow(LandmarkId.BrowMidLeft, LandmarkId.BrowInnerLeft, LandmarkId.BrowOuterLeft, 1f);

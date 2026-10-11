@@ -68,6 +68,46 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Rig_Build_WithoutBrows_EstimatesBrows()
+        {
+            // 眉が無いアバター: 眉の目印を打たなくても作れ、向きは同じで、眉は目より上に推定されること
+            Dictionary<LandmarkId, Vector3> points = PerfectSyncTestFace.MinimalPoints();
+            points.Remove(LandmarkId.BrowMidLeft);
+            points.Remove(LandmarkId.BrowMidRight);
+            FaceRig rig = FaceRig.Build(points, PerfectSyncTestFace.Normals(points.Keys), out List<LandmarkId> missing,
+                FaceParts.Brows);
+
+            Assert.That(rig, Is.Not.Null);
+            Assert.That(missing, Is.Empty);
+            Assert.That(Vector3.Distance(rig.Up, Vector3.up), Is.LessThan(1e-3f));
+            Assert.That(rig[LandmarkId.BrowMidLeft].y, Is.GreaterThan(rig[LandmarkId.EyeUpperLeft].y));
+            Assert.That(rig[LandmarkId.BrowOuterRight].x, Is.LessThan(0f));
+
+            // 眉が「ある」ままなら、眉の目印が足りないと返すこと
+            Assert.That(FaceRig.Build(points, PerfectSyncTestFace.Normals(points.Keys), out missing), Is.Null);
+            Assert.That(missing, Is.EqualTo(new[] { LandmarkId.BrowMidLeft, LandmarkId.BrowMidRight }));
+        }
+
+        [Test]
+        public void FaceParts_FilterLandmarksAndClassifyShapes()
+        {
+            // 無い部位の目印は一覧と必須から外れること
+            List<LandmarkId> withoutBrows = FaceLandmarks.For(LandmarkDetail.Detailed, FaceParts.Brows | FaceParts.Nose);
+            Assert.That(withoutBrows, Has.None.EqualTo(LandmarkId.BrowInnerLeft));
+            Assert.That(withoutBrows, Has.None.EqualTo(LandmarkId.NoseTip));
+            Assert.That(withoutBrows, Has.Some.EqualTo(LandmarkId.Chin));
+            Assert.That(FaceLandmarks.RequiredFor(FaceParts.Brows), Has.Count.EqualTo(FaceLandmarks.Required.Count - 2));
+
+            // 形状の部位分け
+            Assert.That(FacePartRules.Shape("browInnerUp"), Is.EqualTo(FaceParts.Brows));
+            Assert.That(FacePartRules.Shape("noseSneerLeft"), Is.EqualTo(FaceParts.Nose));
+            Assert.That(FacePartRules.Shape("jawOpen"), Is.EqualTo(FaceParts.MouthInterior));
+            Assert.That(FacePartRules.Shape("eyeBlinkLeft"), Is.EqualTo(FaceParts.None));
+            Assert.That(FacePartRules.Landmark(LandmarkId.NoseWingRight), Is.EqualTo(FaceParts.Nose));
+            Assert.That(FacePartRules.Landmark(LandmarkId.EyeUpperLeft), Is.EqualTo(FaceParts.None));
+        }
+
+        [Test]
         public void Geometry_RaycastNearestAndReflect()
         {
             FaceMeshGeometry geometry = PerfectSyncTestFace.CreateGeometry();

@@ -133,9 +133,28 @@ namespace VRCast.PerfectSync
         }
 
         /// <summary>
+        /// detail の細かさで打つ目印のうち、absent の部位（アバターに無い部位）のものを除いたもの。
+        /// </summary>
+        public static List<LandmarkId> For(LandmarkDetail detail, FaceParts absent)
+        {
+            // 無い部位の目印は打たない（位置は推定で補う）
+            List<LandmarkId> list = For(detail);
+            list.RemoveAll(id => (FacePartRules.Landmark(id) & absent) != 0);
+            return list;
+        }
+
+        /// <summary>
         /// 生成に最低限必要な目印（最小の段階のもの）。
         /// </summary>
         public static List<LandmarkId> Required => For(LandmarkDetail.Minimal);
+
+        /// <summary>
+        /// absent の部位が無いときに、生成に最低限必要な目印。
+        /// </summary>
+        public static List<LandmarkId> RequiredFor(FaceParts absent)
+        {
+            return For(LandmarkDetail.Minimal, absent);
+        }
 
         /// <summary>
         /// 番号が目印として定義されていれば true（ファイルから読んだ値の確認用）。

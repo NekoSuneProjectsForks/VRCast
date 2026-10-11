@@ -82,6 +82,15 @@ namespace VRCast.Tests
             set.bindings[0].weight = 1f;
             set.detail = 3;
             Assert.That(set.Validate(), Is.Not.Null);
+            set.detail = 1;
+
+            // 無い部位は定義済みのビット（0〜7）だけ
+            set.absentParts = PerfectSyncSet.MaxAbsentParts;
+            Assert.That(set.Validate(), Is.Null);
+            set.absentParts = PerfectSyncSet.MaxAbsentParts + 1;
+            Assert.That(set.Validate(), Is.Not.Null);
+            set.absentParts = -1;
+            Assert.That(set.Validate(), Is.Not.Null);
         }
     }
 }
