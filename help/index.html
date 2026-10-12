@@ -773,21 +773,31 @@
         <span class="ko">카메라는 <span class="ui">&lt;</span> <span class="ui">&gt;</span>로 선택합니다. 움직이지 않으면 <span class="ui">트래커 다시 시작</span>.</span>
         <span class="zh-hans">用 <span class="ui">&lt;</span> <span class="ui">&gt;</span> 选择相机。没有反应时，请点击 <span class="ui">重启追踪器</span>。</span>
         <span class="zh-hant">用 <span class="ui">&lt;</span> <span class="ui">&gt;</span> 選擇相機。沒有反應時，請點擊 <span class="ui">重新啟動追蹤器</span>。</span></li>
-    <li><span class="ja">入力元を <span class="ui">iPhone・外部アプリ（VMC、顔のみ）</span> にすると、カメラの代わりにスマートフォンのアプリ（iPhone の Waidayo など）から VMC プロトコルで顔の動きを受け取ります。
-        PC とスマートフォンを同じ Wi-Fi につなぎ、トラッキングタブに出る <span class="ui">この PC の IP アドレス</span> と <span class="ui">UDP ポート</span>（既定 39539）をアプリの送信先に入力してください。
-        初回は Windows ファイアウォールの確認が出るので、プライベートネットワークで許可してください。ARKit の値を送るアプリなら、パーフェクトシンクと表情の反映も使えます（腕・手は動きません）。</span>
-        <span class="en">Set the source to <span class="ui">iPhone / external app (VMC, face only)</span> to receive your face movement from a phone app (such as Waidayo on iPhone) over the VMC protocol instead of a camera.
-        Connect the PC and the phone to the same Wi-Fi, and enter <span class="ui">This PC's IP address</span> and the <span class="ui">UDP port</span> (39539 by default) shown in the Tracking tab as the destination in the app.
-        The first time, Windows Firewall asks for permission; allow it on private networks. Apps that send ARKit values also work with perfect sync and facial expressions (arms and hands do not move).</span>
-        <span class="ko">입력 소스를 <span class="ui">iPhone·외부 앱 (VMC, 얼굴만)</span>으로 하면 카메라 대신 스마트폰 앱 (iPhone의 Waidayo 등)에서 VMC 프로토콜로 얼굴 움직임을 받습니다.
-        PC와 스마트폰을 같은 Wi-Fi에 연결하고, 트래킹 탭에 나오는 <span class="ui">이 PC의 IP 주소</span>와 <span class="ui">UDP 포트</span>(기본 39539)를 앱의 전송 대상에 입력하세요.
-        처음에는 Windows 방화벽 확인 창이 나오므로 개인 네트워크에서 허용하세요. ARKit 값을 보내는 앱이라면 퍼펙트 싱크와 표정 반영도 사용할 수 있습니다 (팔·손은 움직이지 않습니다).</span>
-        <span class="zh-hans">将输入源设为 <span class="ui">iPhone / 外部应用（VMC，仅面部）</span> 后，会代替相机，通过 VMC 协议从手机应用（如 iPhone 上的 Waidayo）接收面部动作。
-        请将电脑和手机连接到同一 Wi-Fi，并在应用的发送目标中输入追踪标签页显示的 <span class="ui">此电脑的 IP 地址</span> 和 <span class="ui">UDP 端口</span>（默认 39539）。
-        首次会弹出 Windows 防火墙确认，请允许专用网络。发送 ARKit 数值的应用还可使用完美同步和反映表情（手臂和手不会动）。</span>
-        <span class="zh-hant">將輸入來源設為 <span class="ui">iPhone / 外部應用程式（VMC，僅臉部）</span> 後，會代替相機，透過 VMC 協定從手機應用程式（如 iPhone 上的 Waidayo）接收臉部動作。
-        請將電腦和手機連接到同一 Wi-Fi，並在應用程式的傳送目標中輸入追蹤分頁顯示的 <span class="ui">此電腦的 IP 位址</span> 和 <span class="ui">UDP 連接埠</span>（預設 39539）。
-        首次會跳出 Windows 防火牆確認，請允許私人網路。傳送 ARKit 數值的應用程式還可使用完美同步和反映表情（手臂和手不會動）。</span></li>
+    <li><span class="ja">入力元を <span class="ui">iPhone・外部アプリ（VMC、顔 + 全身）</span> にすると、カメラの代わりにスマートフォンのアプリ（iPhone の Waidayo など）や PC のアプリ（VirtualMotionCapture など）から VMC プロトコルで動きを受け取ります。
+        PC とスマートフォンを同じ Wi-Fi につなぎ、トラッキングタブに出る <span class="ui">この PC の IP アドレス</span> と <span class="ui">UDP ポート</span>（既定 39539）をアプリの送信先に入力してください（同じ PC で動かすアプリなら 127.0.0.1）。
+        初回は Windows ファイアウォールの確認が出るので、プライベートネットワークで許可してください。ARKit の値を送るアプリなら、パーフェクトシンクと表情の反映も使えます。
+        全身を送るアプリでは <span class="ui">全身（送信側アバターの動き）</span>（既定は ON）で、腰・脚・腕・指と体全体の位置も送信側のアバターと同じように動きます。まっすぐ立ってカメラ側を向き、リセットの <span class="ui">顔の向き</span> を押すと正面がそろいます。
+        <span class="ui">足を床に合わせる</span>（既定は ON）では、送信側とアバターの脚の長さの違いで足が浮いたりめり込んだりしないよう、膝の曲げで足の位置を合わせます。</span>
+        <span class="en">Set the source to <span class="ui">iPhone / external app (VMC, face + full body)</span> to receive your movement from a phone app (such as Waidayo on iPhone) or a PC app (such as VirtualMotionCapture) over the VMC protocol instead of a camera.
+        Connect the PC and the phone to the same Wi-Fi, and enter <span class="ui">This PC's IP address</span> and the <span class="ui">UDP port</span> (39539 by default) shown in the Tracking tab as the destination in the app (use 127.0.0.1 for an app on this PC).
+        The first time, Windows Firewall asks for permission; allow it on private networks. Apps that send ARKit values also work with perfect sync and facial expressions.
+        With apps that send the whole body, <span class="ui">Full body (from the sender's avatar)</span> (on by default) also moves the hips, legs, arms, fingers and whole-body position like the sender's avatar. Stand straight facing the camera and press <span class="ui">Head</span> under Reset to set the front.
+        <span class="ui">Keep feet on the floor</span> (on by default) bends the knees to place the feet so they do not float or sink when the sender's and the avatar's leg lengths differ.</span>
+        <span class="ko">입력 소스를 <span class="ui">iPhone·외부 앱 (VMC, 얼굴 + 전신)</span>으로 하면 카메라 대신 스마트폰 앱 (iPhone의 Waidayo 등)이나 PC 앱 (VirtualMotionCapture 등)에서 VMC 프로토콜로 움직임을 받습니다.
+        PC와 스마트폰을 같은 Wi-Fi에 연결하고, 트래킹 탭에 나오는 <span class="ui">이 PC의 IP 주소</span>와 <span class="ui">UDP 포트</span>(기본 39539)를 앱의 전송 대상에 입력하세요 (이 PC에서 실행하는 앱이면 127.0.0.1).
+        처음에는 Windows 방화벽 확인 창이 나오므로 개인 네트워크에서 허용하세요. ARKit 값을 보내는 앱이라면 퍼펙트 싱크와 표정 반영도 사용할 수 있습니다.
+        전신을 보내는 앱에서는 <span class="ui">전신 (전송 측 아바타의 움직임)</span>(기본은 켜짐)으로 허리·다리·팔·손가락과 몸 전체 위치도 전송 측 아바타처럼 움직입니다. 똑바로 서서 카메라 쪽을 보고 초기화의 <span class="ui">얼굴 방향</span>을 누르면 정면이 맞춰집니다.
+        <span class="ui">발을 바닥에 맞추기</span>(기본은 켜짐)는 전송 측과 아바타의 다리 길이 차이로 발이 뜨거나 파묻히지 않도록 무릎을 굽혀 발 위치를 맞춥니다.</span>
+        <span class="zh-hans">将输入源设为 <span class="ui">iPhone / 外部应用（VMC，面部 + 全身）</span> 后，会代替相机，通过 VMC 协议从手机应用（如 iPhone 上的 Waidayo）或电脑应用（如 VirtualMotionCapture）接收动作。
+        请将电脑和手机连接到同一 Wi-Fi，并在应用的发送目标中输入追踪标签页显示的 <span class="ui">此电脑的 IP 地址</span> 和 <span class="ui">UDP 端口</span>（默认 39539）（在此电脑上运行的应用请用 127.0.0.1）。
+        首次会弹出 Windows 防火墙确认，请允许专用网络。发送 ARKit 数值的应用还可使用完美同步和反映表情。
+        对于发送全身的应用，<span class="ui">全身（发送端虚拟形象的动作）</span>（默认开启）会让腰部、腿、手臂、手指和整体位置也像发送端的虚拟形象一样移动。站直面向相机，点击重置中的 <span class="ui">头部朝向</span> 即可对齐正面。
+        <span class="ui">脚部贴合地面</span>（默认开启）会通过弯曲膝盖调整脚的位置，避免因发送端与虚拟形象腿长不同而悬空或陷入地面。</span>
+        <span class="zh-hant">將輸入來源設為 <span class="ui">iPhone / 外部應用程式（VMC，臉部 + 全身）</span> 後，會代替相機，透過 VMC 協定從手機應用程式（如 iPhone 上的 Waidayo）或電腦應用程式（如 VirtualMotionCapture）接收動作。
+        請將電腦和手機連接到同一 Wi-Fi，並在應用程式的傳送目標中輸入追蹤分頁顯示的 <span class="ui">此電腦的 IP 位址</span> 和 <span class="ui">UDP 連接埠</span>（預設 39539）（在此電腦上執行的應用程式請用 127.0.0.1）。
+        首次會跳出 Windows 防火牆確認，請允許私人網路。傳送 ARKit 數值的應用程式還可使用完美同步和反映表情。
+        對於傳送全身的應用程式，<span class="ui">全身（傳送端虛擬形象的動作）</span>（預設開啟）會讓腰部、腿、手臂、手指和整體位置也像傳送端的虛擬形象一樣移動。站直面向相機，點擊重設中的 <span class="ui">頭部朝向</span> 即可對齊正面。
+        <span class="ui">腳部貼合地面</span>（預設開啟）會透過彎曲膝蓋調整腳的位置，避免因傳送端與虛擬形象腿長不同而懸空或陷入地面。</span></li>
     <li><span class="ja">入力元を <span class="ui">iFacialMocap（iPhone、顔のみ）</span> にすると、iPhone の iFacialMocap から顔の動きを受け取ります。
         PC と iPhone を同じ Wi-Fi につなぎ、iFacialMocap の画面上部に出る IP アドレスをトラッキングタブの <span class="ui">iPhone の IP アドレス</span> に入力してください（UDP ポート 49983 を使います）。
         初回は Windows ファイアウォールの確認が出るので、プライベートネットワークで許可してください。パーフェクトシンクと表情の反映も使えます（腕・手は動きません）。</span>

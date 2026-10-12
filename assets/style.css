@@ -89,6 +89,7 @@ main { flex: 1; padding: 24px; min-width: 0; }
 .hero img { width: 140px; height: 140px; }
 .hero h1 { font-size: 40px; margin: 12px 0 4px; }
 .hero .lead { color: var(--dim); font-size: 18px; margin: 0 0 24px; }
+.hero .formats { font-weight: bold; margin: -12px 0 24px; }
 .buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 .button {
   display: inline-block; padding: 10px 22px; border-radius: 8px; text-decoration: none; font-weight: bold;
