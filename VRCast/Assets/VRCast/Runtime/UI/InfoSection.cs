@@ -5,23 +5,20 @@ using VRCast.Platform;
 namespace VRCast.UI
 {
     /// <summary>
-    /// 情報タブ（このアプリについて・アップデートの確認・ヘルプ、公式 Discord、クレジット、デバッグログ）。
+    /// 情報タブ（このアプリについて・アップデートの確認・ヘルプ、クレジット、デバッグログ）。
     /// 長いデバッグログの一覧は最後に置く。
     /// </summary>
     public class InfoSection
     {
         private readonly AppSettings _settings;
         private readonly UpdateChecker _updates;
-        private readonly DiscordSection _discord;
         private readonly CreditsSection _credits;
         private readonly LogSection _log;
 
-        public InfoSection(AppSettings settings, UpdateChecker updates, DiscordSection discord, CreditsSection credits,
-            LogSection log)
+        public InfoSection(AppSettings settings, UpdateChecker updates, CreditsSection credits, LogSection log)
         {
             _settings = settings;
             _updates = updates;
-            _discord = discord;
             _credits = credits;
             _log = log;
         }
@@ -31,7 +28,6 @@ namespace VRCast.UI
             DrawAbout();
             DrawUpdates();
             DrawHelp();
-            _discord.Draw();
             _credits.Draw();
             _log.Draw();
         }

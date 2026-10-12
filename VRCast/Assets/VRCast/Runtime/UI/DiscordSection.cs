@@ -5,7 +5,7 @@ using VRCast.Platform;
 namespace VRCast.UI
 {
     /// <summary>
-    /// 情報タブの公式 Discord（参加ボタンと、Discord のウィジェットと同じ内容: サーバー名・オンライン人数・オンラインのメンバー）。
+    /// 公式 Discord タブ（参加ボタンと、Discord のウィジェットと同じ内容: サーバー名・オンライン人数・オンラインのメンバー）。
     /// 情報はタブを表示している間だけ取得する。
     /// </summary>
     public sealed class DiscordSection : IDisposable
@@ -156,6 +156,13 @@ namespace VRCast.UI
 
                 GUILayout.Label(member.username, label, GuiControls.Shrinkable, GUILayout.Height(AvatarSize));
                 GUILayout.EndHorizontal();
+            }
+
+            // 一覧に出しきれないオンラインの人数
+            int more = _widget.OnlineCount - _widget.Members.Count;
+            if (more > 0)
+            {
+                GuiControls.Hint(Loc.T($"and {more} more", $"ほか {more} 人", $"외 {more}명", $"另有 {more} 人", $"另有 {more} 人"));
             }
         }
 

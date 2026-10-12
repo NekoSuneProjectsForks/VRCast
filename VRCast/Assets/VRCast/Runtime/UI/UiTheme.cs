@@ -191,7 +191,7 @@ namespace VRCast.UI
         public GUIStyle Centered { get; private set; }
         public GUIStyle Card { get; private set; }
 
-        // パネル下部のアンケート欄（ほかのカードと同じ見た目のカード・見出し・本文）と、目立つボタン
+        // 公式 Discord タブのアンケート欄（ほかのカードと同じ見た目のカード・見出し・本文）と、目立つボタン
         public GUIStyle SurveyCard { get; private set; }
         public GUIStyle SurveyBadge { get; private set; }
         public GUIStyle SurveyText { get; private set; }
@@ -486,12 +486,12 @@ namespace VRCast.UI
             };
             Card.normal.background = Rounded(CardColor, CardRadius);
 
-            // アンケート欄（地と角丸はほかのカードと同じ。余白はパネル下部の並びに合わせる）
+            // アンケート欄（地と角丸・外側の余白はほかのカードと同じ）
             SurveyCard = new GUIStyle
             {
                 border = Offset(CardRadius + 1),
                 padding = new RectOffset(12, 12, 8, 10),
-                margin = new RectOffset(0, 0, 6, 2),
+                margin = new RectOffset(Card.margin.left, Card.margin.right, Card.margin.top, Card.margin.bottom),
             };
             SurveyCard.normal.background = Card.normal.background;
             SurveyBadge = new GUIStyle(SectionTitle) { wordWrap = false };

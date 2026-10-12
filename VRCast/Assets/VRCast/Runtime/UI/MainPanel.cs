@@ -16,8 +16,8 @@ namespace VRCast.UI
 {
     /// <summary>
     /// IMGUI の操作パネル。左のタブ（はじめに / アバター・オブジェクト・シェイプキー / 顔・表情・体・ポーズ・トラッキング /
-    /// 表示・グラフィック・出力 / 操作・連携・パフォーマンス・設定・情報 / パーフェクトシンク化）で表示するセクションを切り替え、
-    /// 内容は縦スクロールする（タブ列も収まらなければ縦スクロール）。下部にはリセットボタン・アンケート欄・動作状況を常に表示する。
+    /// 表示・グラフィック・出力 / 操作・連携・パフォーマンス・設定・情報・公式 Discord / パーフェクトシンク化）で表示するセクションを切り替え、
+    /// 内容は縦スクロールする（タブ列も収まらなければ縦スクロール）。下部にはリセットボタン・動作状況を常に表示する。
     /// 画面に収まる高さに制限し、Tab キーで表示切替（隠している間は背景も透過）。
     /// 表示言語（見出しの下のボタンでいつでも切替）と UI の大きさは設定に従う。見出しの「?」でヘルプページを開く。
     /// パーフェクトシンク化の編集中は、このパネルの代わりに編集画面（PerfectSyncEditor）を出す。
@@ -34,7 +34,7 @@ namespace VRCast.UI
         private const float MinWindowHeight = 240f;
         private const float ScreenMargin = 10f;
 
-        // 見出し行（ドラッグで移動できる範囲）とタブ列の幅
+        // 見出し行（ドラッグで移動できる範囲）とタブ列の最低の幅（長いタブ名の言語では広げる）
         private const float HeaderHeight = 36f;
         private const float SidebarWidth = 150f;
 
@@ -64,6 +64,7 @@ namespace VRCast.UI
             Performance,
             Settings,
             Info,
+            Discord,
             PerfectSync,
         }
 
@@ -154,7 +155,7 @@ namespace VRCast.UI
             _performanceSection = new PerformanceSection(settings, rendering);
             _presetSection = new PresetSection(settings, ReapplySettings);
             _settingsSection = new SettingsSection(settings, rendering, ResetAllSettings, _presetSection);
-            _infoSection = new InfoSection(settings, updates, _discordSection, new CreditsSection(),
+            _infoSection = new InfoSection(settings, updates, new CreditsSection(),
                 new LogSection(trackerProcess, tracker, settings));
 
             // リセットはパネル下部のボタンとショートカットキー（パネルを隠していても動く）で共用する
@@ -409,9 +410,6 @@ namespace VRCast.UI
             GUILayout.Space(FooterSpacing);
             _resetBar.Draw(_theme.Sidebar);
 
-            // どのタブでも見えるアンケート欄（次に対応してほしい機能などの募集）
-            _surveyBar.Draw();
-
             // どのタブでも見える動作状況（設定で OFF にできる）
             _performanceBar.Draw();
 
@@ -543,9 +541,25 @@ namespace VRCast.UI
             GUILayout.EndHorizontal();
         }
 
+        private float SidebarWidthFor()
+        {
+            // 一番長いタブ名が収まる幅（縦スクロールバーが出ても右が見切れないよう、その分も足す。最低は SidebarWidth）
+            float widest = 0f;
+            for (int i = 0; i < TabCount; i++)
+            {
+                var tab = (Tab)i;
+                GUIStyle style = tab == Tab.PerfectSync ? _theme.FeatureTab : _theme.Tab;
+                widest = Mathf.Max(widest, style.CalcSize(new GUIContent(TabLabel(tab))).x + style.margin.horizontal);
+            }
+
+            GUIStyle scrollbar = GUI.skin.verticalScrollbar;
+            float width = widest + _theme.Sidebar.padding.horizontal + scrollbar.fixedWidth + scrollbar.margin.horizontal;
+            return Mathf.Max(SidebarWidth, Mathf.Ceil(width));
+        }
+
         private void DrawSidebar()
         {
-            GUILayout.BeginVertical(_theme.Sidebar, GUILayout.Width(SidebarWidth), GUILayout.ExpandHeight(true));
+            GUILayout.BeginVertical(_theme.Sidebar, GUILayout.Width(SidebarWidthFor()), GUILayout.ExpandHeight(true));
 
             // 収まらないときだけ縦スクロールバーを出す（横には出さない）
             _sidebarScroll = GUILayout.BeginScrollView(
@@ -619,6 +633,11 @@ namespace VRCast.UI
                 case Tab.Info:
                     _infoSection.Draw();
                     break;
+                case Tab.Discord:
+                    // 公式 Discord の下に、次に対応してほしい機能などのアンケート
+                    _discordSection.Draw();
+                    _surveyBar.Draw();
+                    break;
                 case Tab.PerfectSync:
                     _perfectSyncSection.Draw();
                     break;
@@ -659,6 +678,8 @@ namespace VRCast.UI
                     return Loc.T("Performance", "パフォーマンス", "성능", "性能", "效能");
                 case Tab.Info:
                     return Loc.T("Info", "情報", "정보", "信息", "資訊");
+                case Tab.Discord:
+                    return Loc.T("Official Discord", "公式 Discord", "공식 Discord", "官方 Discord", "官方 Discord");
                 case Tab.PerfectSync:
                     return Loc.T("Perfect sync setup", "パーフェクトシンク化", "퍼펙트 싱크화", "完美同步化", "完美同步化");
                 default:

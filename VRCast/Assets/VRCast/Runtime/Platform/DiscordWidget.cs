@@ -29,7 +29,7 @@ namespace VRCast.Platform
         private const int AvatarSize = 64;
 
         // 表示・アイコン取得の対象にするメンバー数の上限
-        private const int MaxMembers = 50;
+        private const int MaxMembers = 10;
 
         // 取得のタイムアウト（秒）と、取り直す間隔（秒）
         private const int TimeoutSeconds = 10;
