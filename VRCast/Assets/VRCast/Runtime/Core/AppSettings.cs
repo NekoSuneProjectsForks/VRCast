@@ -271,7 +271,7 @@ namespace VRCast.Core
         // パーフェクトシンク中だけ、検出が弱い口・頬の動きを倍率で強める（口をとがらせる・頬をふくらませる・唇を巻き込む）
         public bool trackingPerfectSyncBoost;
         public float trackingBoostPucker = 2f;
-        public float trackingBoostCheekPuff = 3f;
+        public float trackingBoostCheekPuff = 1.5f;
         public float trackingBoostLips = 2f;
 
         // 表情反映（MediaPipe・VMC・iFacialMocap のみ）。表情ごとの割り当ては表情プリセット名（空欄 = 自動、"<none>" = 割り当てなし）

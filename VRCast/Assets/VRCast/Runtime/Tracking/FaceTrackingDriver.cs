@@ -539,8 +539,8 @@ namespace VRCast.Tracking
                 return default;
             }
 
-            return new PerfectSyncBoost(
-                _settings.trackingBoostPucker, _settings.trackingBoostCheekPuff, _settings.trackingBoostLips);
+            return new PerfectSyncBoost(_settings.trackingBoostPucker, _settings.trackingBoostCheekPuff,
+                _settings.trackingBoostLips, _lastFrame.CheekPuffEstimate);
         }
 
         private void ApplyPerfectSync()

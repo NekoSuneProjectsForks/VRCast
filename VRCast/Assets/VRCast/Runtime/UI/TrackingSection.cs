@@ -686,11 +686,11 @@ namespace VRCast.UI
                 "  " + Loc.T("Lips (roll / press)", "唇（巻き込む・押し付ける）", "입술 (말기·누르기)", "嘴唇（内卷・抿紧）", "嘴唇（內捲・抿緊）"),
                 _settings.trackingBoostLips, 1f, max, "F1");
             GuiControls.Hint(Loc.T(
-                "Raise a value if the shape barely moves, lower it if it moves too easily. The camera (MediaPipe) may hardly detect puffed cheeks at all; if so, raising it won't help.",
-                "動きが小さければ値を上げ、すぐ動きすぎるなら下げてください。カメラ（MediaPipe）では頬のふくらみがほとんど検出されないことがあり、その場合は上げても動きません。",
-                "움직임이 작으면 값을 올리고, 너무 쉽게 움직이면 낮추세요. 카메라(MediaPipe)는 볼 부풀리기를 거의 감지하지 못할 수 있으며, 그 경우 값을 올려도 움직이지 않습니다.",
-                "动作太小时调高，太容易动时调低。摄像头（MediaPipe）可能几乎检测不到鼓腮，此时调高也不会动。",
-                "動作太小時調高，太容易動時調低。攝影機（MediaPipe）可能幾乎偵測不到鼓腮，此時調高也不會動。"));
+                "Raise a value if the shape barely moves, lower it if it moves too easily. With the camera (MediaPipe), puffed cheeks are estimated from the shape of your face; keep a neutral face for a few seconds after starting so it can learn your normal face.",
+                "動きが小さければ値を上げ、すぐ動きすぎるなら下げてください。カメラ（MediaPipe）では頬のふくらみを顔の形から推定します。開始後の数秒は真顔にしておくと、ふだんの顔を覚えて正しく測れます。",
+                "움직임이 작으면 값을 올리고, 너무 쉽게 움직이면 낮추세요. 카메라(MediaPipe)에서는 볼 부풀리기를 얼굴 형태로 추정합니다. 시작 후 몇 초 동안 무표정을 유지하면 평소 얼굴을 기억해 정확하게 측정합니다.",
+                "动作太小时调高，太容易动时调低。使用摄像头（MediaPipe）时，会根据脸型估算鼓腮。开始后的几秒保持面无表情，即可记住平时的脸并准确测量。",
+                "動作太小時調高，太容易動時調低。使用攝影機（MediaPipe）時，會依臉型估算鼓腮。開始後的幾秒保持面無表情，即可記住平時的臉並準確測量。"));
         }
 
         private void DrawExpressions()

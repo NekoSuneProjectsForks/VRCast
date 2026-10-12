@@ -50,6 +50,9 @@ namespace VRCast.Tracking
             public float[] matrix;
             public float[] blendshapes;
 
+            // 顔の点の形から推定した頬のふくらみ（0〜1。古いトラッカーは送らず 0）
+            public float cheekPuff;
+
             // 腕: ArmPointCount 点の world 座標（x, y, z の繰り返し）と可視度
             public bool pose;
             public float[] arms;
@@ -154,6 +157,9 @@ namespace VRCast.Tracking
 
             // 目・口・視線・表情とパーフェクトシンク用の値（MediaPipe の左右は映像基準のまま。受信ごとに新しい配列のため複製しない）
             ArKitFace.Fill(scores, ArKitRange.MediaPipe, ref face);
+
+            // 推定した頬のふくらみ（非有限値は無し扱い）
+            face.CheekPuffEstimate = TrackingMath.AllFinite(message.cheekPuff) ? Mathf.Clamp01(message.cheekPuff) : 0f;
             return true;
         }
 

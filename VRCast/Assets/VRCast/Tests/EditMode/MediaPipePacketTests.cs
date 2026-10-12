@@ -30,6 +30,23 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void TryParse_Face_ReadsCheekPuffEstimate()
+        {
+            // 範囲内はそのまま、範囲外は 0〜1 に収め、送られていなければ 0 になること
+            MediaPipePacket.Message message = CreateMessage();
+            message.cheekPuff = 0.4f;
+            Assert.That(Parse(message, out _, out FaceTrackingFrame face, out _), Is.True);
+            Assert.That(face.CheekPuffEstimate, Is.EqualTo(0.4f).Within(1e-5f));
+
+            message.cheekPuff = 3f;
+            Assert.That(Parse(message, out _, out FaceTrackingFrame clamped, out _), Is.True);
+            Assert.That(clamped.CheekPuffEstimate, Is.EqualTo(1f).Within(1e-5f));
+
+            Assert.That(Parse(CreateMessage(), out _, out FaceTrackingFrame missing, out _), Is.True);
+            Assert.That(missing.CheekPuffEstimate, Is.EqualTo(0f));
+        }
+
+        [Test]
         public void TryParse_Face_ConvertsRotationAxes()
         {
             // MediaPipe の回転 (x, y, z, w) は Unity の (x, -y, -z, w) になること
