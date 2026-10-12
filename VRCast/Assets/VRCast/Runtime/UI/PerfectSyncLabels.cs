@@ -10,20 +10,22 @@ namespace VRCast.UI
     public static class PerfectSyncLabels
     {
         /// <summary>
-        /// 目印の名前（左右のあるものは「アバターの左 / 右」を付ける）。
+        /// 目印の名前（左右のあるものは、正面から見た画面上の側と「アバターの左 / 右」を付ける）。
         /// </summary>
         public static string Landmark(LandmarkId id)
         {
-            // 左右の別を名前から外し、部位名と左右の表記を組み合わせる
+            // 左右の別を名前から外し、部位名と左右の表記を組み合わせる（正面から見るのでアバターの左は画面の右）
             string part = Part(id);
             if (FaceLandmarks.IsLeft(id))
             {
-                return part + Loc.T(" (avatar's left)", "（アバターの左）", " (아바타의 왼쪽)", "（形象左侧）", "（形象左側）");
+                return part + Loc.T(" (screen right, avatar's left)", "（画面の右・アバターの左）",
+                    " (화면 오른쪽·아바타의 왼쪽)", "（画面右侧·形象左侧）", "（畫面右側·形象左側）");
             }
 
             if (FaceLandmarks.IsRight(id))
             {
-                return part + Loc.T(" (avatar's right)", "（アバターの右）", " (아바타의 오른쪽)", "（形象右侧）", "（形象右側）");
+                return part + Loc.T(" (screen left, avatar's right)", "（画面の左・アバターの右）",
+                    " (화면 왼쪽·아바타의 오른쪽)", "（画面左侧·形象右侧）", "（畫面左側·形象右側）");
             }
 
             return part;
