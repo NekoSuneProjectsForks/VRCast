@@ -36,6 +36,7 @@ namespace VRCast.Animations
 
         private AppSettings _settings;
         private Func<bool> _isHeadTracked;
+        private Func<bool> _isBodyTracked;
 
         // 上半身（あるものだけ）。揺れ・ひねりを等分し、呼吸の反りは胸側で受け持つ
         private readonly List<BoneSlot> _torso = new List<BoneSlot>();
@@ -64,11 +65,14 @@ namespace VRCast.Animations
 
         /// <summary>
         /// isHeadTracked が true の間（顔のトラッキング中）は頭のゆらぎを止め、本人の頭の動きに任せる。
+        /// isBodyTracked が true の間（全身のトラッキング中）は動き全体を止め、本人の体の動きに任せる。
         /// </summary>
-        public void Initialize(Animator animator, AppSettings settings, Func<bool> isHeadTracked)
+        public void Initialize(Animator animator, AppSettings settings, Func<bool> isHeadTracked,
+            Func<bool> isBodyTracked = null)
         {
             _settings = settings;
             _isHeadTracked = isHeadTracked;
+            _isBodyTracked = isBodyTracked;
 
             // 非 Humanoid は何もしない
             if (animator == null || !animator.isHuman || animator.avatar == null)
@@ -133,8 +137,9 @@ namespace VRCast.Animations
 
             // ON/OFF と、顔のトラッキング中かどうかを滑らかに切り替える
             float step = Time.deltaTime / FadeSeconds;
-            // 一時停止中は OFF と同じく止める
-            bool active = _settings.idleMotionEnabled && !Suspended;
+            // 一時停止中・全身のトラッキング中は OFF と同じく止める
+            bool bodyTracked = _isBodyTracked != null && _isBodyTracked();
+            bool active = _settings.idleMotionEnabled && !Suspended && !bodyTracked;
             _weight = Mathf.MoveTowards(_weight, active ? 1f : 0f, step);
             bool headTracked = _isHeadTracked != null && _isHeadTracked();
             _headWeight = Mathf.MoveTowards(_headWeight, headTracked ? 0f : 1f, step);

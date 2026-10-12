@@ -223,6 +223,12 @@ namespace VRCast.Core
         // 外部アプリ（VMC プロトコル）の受信ポート（同梱トラッカーの trackingPort とは別。LAN から受信する）
         public int vmcPort = DefaultVmcPort;
 
+        // 外部アプリ（VMC プロトコル）から全身（腰・脚・腕・指・体全体の位置）を受け取ってアバターを動かす
+        public bool trackingVmcBody = true;
+
+        // 全身の追従で、足の位置を送信側に合わせて床に付ける（脚の比率の違いで足が浮く・めり込むのを膝の曲げで抑える）
+        public bool trackingVmcGroundFeet = true;
+
         // iFacialMocap を動かしている iPhone の IP アドレス（送信開始の合図の宛先。空なら未設定）
         public string iFacialMocapAddress = string.Empty;
         public float trackingBodyLean = 1f;

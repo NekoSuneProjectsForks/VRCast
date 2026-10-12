@@ -146,8 +146,9 @@ namespace VRCast.UI
                     "MediaPipe（面部 + 手）", "MediaPipe（臉部 + 手）"),
                 Loc.T("OpenSeeFace (face only)", "OpenSeeFace（顔のみ）", "OpenSeeFace (얼굴만)",
                     "OpenSeeFace（仅面部）", "OpenSeeFace（僅臉部）"),
-                Loc.T("iPhone / external app (VMC, face only)", "iPhone・外部アプリ（VMC、顔のみ）",
-                    "iPhone·외부 앱 (VMC, 얼굴만)", "iPhone / 外部应用（VMC，仅面部）", "iPhone / 外部應用程式（VMC，僅臉部）"),
+                Loc.T("iPhone / external app (VMC, face + full body)", "iPhone・外部アプリ（VMC、顔 + 全身）",
+                    "iPhone·외부 앱 (VMC, 얼굴 + 전신)", "iPhone / 外部应用（VMC，面部 + 全身）",
+                    "iPhone / 外部應用程式（VMC，臉部 + 全身）"),
                 Loc.T("iFacialMocap (iPhone, face only)", "iFacialMocap（iPhone、顔のみ）",
                     "iFacialMocap (iPhone, 얼굴만)", "iFacialMocap（iPhone，仅面部）", "iFacialMocap（iPhone，僅臉部）"),
             };
@@ -305,6 +306,12 @@ namespace VRCast.UI
                 DrawHands();
             }
 
+            // 全身は受信できる入力元（VMC）のみ
+            if (TrackingSourceInfo.HasFullBody(_settings.trackingSource))
+            {
+                DrawFullBody();
+            }
+
             // パーフェクトシンク・表情の反映は ARKit の値を受信できる入力元（MediaPipe・VMC・iFacialMocap）のみ
             if (TrackingSourceInfo.HasArKit(_settings.trackingSource))
             {
@@ -403,15 +410,70 @@ namespace VRCast.UI
             }
         }
 
+        private void DrawFullBody()
+        {
+            _settings.trackingVmcBody = GUILayout.Toggle(
+                _settings.trackingVmcBody,
+                Loc.T("Full body (from the sender's avatar)", "全身（送信側アバターの動き）", "전신 (전송 측 아바타의 움직임)",
+                    "全身（发送端虚拟形象的动作）", "全身（傳送端虛擬形象的動作）"));
+            GuiControls.Hint(Loc.T(
+                "Moves the hips, legs, arms, fingers and whole-body position like the avatar in the sender app (e.g. VirtualMotionCapture). Face-only apps keep the idle pose.",
+                "送信側アプリ（VirtualMotionCapture など）のアバターと同じように、腰・脚・腕・指と体全体の位置を動かします。顔だけを送るアプリでは待機ポーズのままです。",
+                "전송 측 앱 (VirtualMotionCapture 등)의 아바타처럼 허리·다리·팔·손가락과 몸 전체 위치를 움직입니다. 얼굴만 보내는 앱에서는 대기 포즈 그대로입니다.",
+                "像发送端应用（如 VirtualMotionCapture）中的虚拟形象一样，移动腰部、腿、手臂、手指和整体位置。仅发送面部的应用会保持待机姿势。",
+                "像傳送端應用程式（如 VirtualMotionCapture）中的虛擬形象一樣，移動腰部、腿、手臂、手指和整體位置。僅傳送臉部的應用程式會保持待機姿勢。"));
+
+            // 無効時は足の接地・状態を出さない
+            if (!_settings.trackingVmcBody)
+            {
+                return;
+            }
+
+            // 足の接地（送信側とアバターの脚の比率の違いで足が浮く・めり込むのを抑える）
+            _settings.trackingVmcGroundFeet = GUILayout.Toggle(
+                _settings.trackingVmcGroundFeet,
+                Loc.T("Keep feet on the floor", "足を床に合わせる", "발을 바닥에 맞추기", "脚部贴合地面", "腳部貼合地面"));
+            GuiControls.Hint(Loc.T(
+                "Bends the knees so the feet follow the sender's feet without floating or sinking. Stand straight facing the camera and press Reset > Head to set where the feet rest.",
+                "膝の曲げで足を送信側の足の位置へ合わせ、浮いたりめり込んだりしないようにします。まっすぐ立ってカメラ側を向き、リセットの「顔の向き」を押すと足の基準がそろいます。",
+                "무릎을 굽혀 발을 전송 측 발 위치에 맞추고, 뜨거나 파묻히지 않게 합니다. 똑바로 서서 카메라 쪽을 보고 초기화의 \"얼굴 방향\"을 누르면 발의 기준이 맞춰집니다.",
+                "通过弯曲膝盖让脚跟随发送端的脚部位置，避免悬空或陷入地面。站直面向相机，点击重置中的“头部朝向”即可对齐脚的基准。",
+                "透過彎曲膝蓋讓腳跟隨傳送端的腳部位置，避免懸空或陷入地面。站直面向相機，點擊重設中的「頭部朝向」即可對齊腳的基準。"));
+
+            // アバターが無ければ状態を出さない
+            var driver = _avatar.Get<FullBodyTrackingDriver>();
+            if (driver == null)
+            {
+                return;
+            }
+
+            // 対象外のアバター・受信中（受け取ったボーンの数）・全身が届いていない
+            if (!driver.IsAvailable)
+            {
+                GuiControls.Hint(Loc.T("Full body: not available for this avatar", "全身: このアバターでは使えません",
+                    "전신: 이 아바타에서는 사용할 수 없음", "全身：此虚拟形象不可用", "全身：此虛擬形象無法使用"));
+            }
+            else if (driver.IsTracking)
+            {
+                GuiControls.Hint(Loc.T("Full body: tracking", "全身: トラッキング中", "전신: 트래킹 중", "全身：追踪中",
+                    "全身：追蹤中") + $" ({driver.ReceivedBones} " + Loc.T("bones", "ボーン", "본", "骨骼", "骨骼") + ")");
+            }
+            else
+            {
+                GuiControls.Hint(Loc.T("Full body: no body data (idle pose)", "全身: 体のデータが届いていません（待機ポーズ）",
+                    "전신: 몸 데이터가 오지 않음 (대기 포즈)", "全身：未收到身体数据（待机姿势）", "全身：未收到身體資料（待機姿勢）"));
+            }
+        }
+
         private void DrawVmcConnection()
         {
-            // 送信側アプリ（Waidayo 等）の設定手順
+            // 送信側アプリ（Waidayo・VirtualMotionCapture 等）の設定手順
             GuiControls.Hint(Loc.T(
-                "In the app on your phone (e.g. Waidayo), set the VMC protocol destination to one of these addresses and the port below. Use the same Wi-Fi as this PC.",
-                "スマートフォンのアプリ（Waidayo など）で、VMC プロトコルの送信先に下のどれかの IP アドレスとポートを入力してください。この PC と同じ Wi-Fi につないでください。",
-                "스마트폰 앱 (Waidayo 등)에서 VMC 프로토콜 전송 대상에 아래 IP 주소 중 하나와 포트를 입력하세요. 이 PC와 같은 Wi-Fi에 연결하세요.",
-                "在手机应用（如 Waidayo）中，将 VMC 协议的发送目标设为下方任一 IP 地址和端口。请连接与此电脑相同的 Wi-Fi。",
-                "在手機應用程式（如 Waidayo）中，將 VMC 協定的傳送目標設為下方任一 IP 位址和連接埠。請連接與此電腦相同的 Wi-Fi。"));
+                "In the sender app (e.g. Waidayo on your phone, VirtualMotionCapture on a PC), set the VMC protocol destination to one of these addresses and the port below. Use the same network as this PC (127.0.0.1 if the app runs on this PC).",
+                "送信側アプリ（スマートフォンの Waidayo、PC の VirtualMotionCapture など）で、VMC プロトコルの送信先に下のどれかの IP アドレスとポートを入力してください。この PC と同じネットワークにつないでください（この PC で動かすアプリなら 127.0.0.1）。",
+                "전송 측 앱 (스마트폰의 Waidayo, PC의 VirtualMotionCapture 등)에서 VMC 프로토콜 전송 대상에 아래 IP 주소 중 하나와 포트를 입력하세요. 이 PC와 같은 네트워크에 연결하세요 (이 PC에서 실행하는 앱이면 127.0.0.1).",
+                "在发送端应用（如手机上的 Waidayo、电脑上的 VirtualMotionCapture）中，将 VMC 协议的发送目标设为下方任一 IP 地址和端口。请连接与此电脑相同的网络（在此电脑上运行的应用请用 127.0.0.1）。",
+                "在傳送端應用程式（如手機上的 Waidayo、電腦上的 VirtualMotionCapture）中，將 VMC 協定的傳送目標設為下方任一 IP 位址和連接埠。請連接與此電腦相同的網路（在此電腦上執行的應用程式請用 127.0.0.1）。"));
 
             // この PC の IP アドレス（間隔を空けて取り直す。Wi-Fi の切り替え後にも追従）
             if (Time.unscaledTime >= _nextAddressRefresh)

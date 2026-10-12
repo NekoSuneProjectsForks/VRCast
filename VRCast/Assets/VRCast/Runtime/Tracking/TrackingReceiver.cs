@@ -8,13 +8,13 @@ namespace VRCast.Tracking
 {
     /// <summary>
     /// トラッカーの UDP 出力を受信する Provider。アプリ全体で 1 つ。
-    /// 設定の入力元に合わせて OpenSeeFace（バイナリ、顔のみ）・MediaPipe（JSON、顔・腕・手）・VMC（OSC、顔のみ）・
+    /// 設定の入力元に合わせて OpenSeeFace（バイナリ、顔のみ）・MediaPipe（JSON、顔・腕・手）・VMC（OSC、顔・全身）・
     /// iFacialMocap（テキスト、顔のみ）を解析し分ける。
     /// 同梱トラッカーは 127.0.0.1 にのみ bind し、外部アプリ（iPhone 等から LAN 経由で届く）だけ全アドレスで待ち受ける。
     /// iFacialMocap はデータが来ない間、設定の iPhone へ送信開始の合図を同じソケットから送り続ける。
     /// スレッドを使わず Update でポーリングする。
     /// </summary>
-    public class TrackingReceiver : MonoBehaviour, IFaceTrackingProvider, IBodyTrackingProvider
+    public class TrackingReceiver : MonoBehaviour, IFaceTrackingProvider, IBodyTrackingProvider, IHumanoidPoseProvider
     {
         // ログのカテゴリ名
         private const string LogCategory = "Tracking";
@@ -60,6 +60,10 @@ namespace VRCast.Tracking
         private float _bodyTime = float.NegativeInfinity;
         private int _bodySequence;
 
+        // 最新の全身の姿勢（VMC のみ）と受信時刻
+        private readonly HumanoidPoseFrame _latestPose = new HumanoidPoseFrame();
+        private float _poseTime = float.NegativeInfinity;
+
         // 受信レート計測（1 秒ごとに更新）
         private int _framesThisSecond;
         private float _rateWindowStart;
@@ -101,7 +105,7 @@ namespace VRCast.Tracking
         public string Status { get; private set; } = "Disabled";
 
         // 途絶した後に前回のレートが残らないよう、受信中のときだけ返す
-        public int FramesPerSecond => IsFresh(_faceTime) || IsFresh(_bodyTime) ? _framesPerSecond : 0;
+        public int FramesPerSecond => IsFresh(_faceTime) || IsFresh(_bodyTime) || IsFresh(_poseTime) ? _framesPerSecond : 0;
 
         public void Initialize(AppSettings settings)
         {
@@ -120,6 +124,13 @@ namespace VRCast.Tracking
             // 顔と同様（OpenSeeFace では一度も更新されないため常に false）
             frame = _latestBody;
             return IsFresh(_bodyTime);
+        }
+
+        public bool TryGetPose(out HumanoidPoseFrame pose)
+        {
+            // 顔と同様（VMC 以外では一度も更新されないため常に false）
+            pose = _latestPose;
+            return IsFresh(_poseTime);
         }
 
         private bool IsFresh(float time)
@@ -319,7 +330,7 @@ namespace VRCast.Tracking
                 return true;
             }
 
-            // VMC は顔のみ（Apply で 1 フレーム確定したときだけ更新）
+            // VMC は顔（Apply で 1 フレーム確定したときだけ更新）と全身の姿勢（ボーン・ルートが届くたびに更新）
             if (_boundSource == TrackingSource.Vmc)
             {
                 if (!_vmc.Read(_buffer, length, out completedFrame, out FaceTrackingFrame frame, VRCastLog.DetailEnabled))
@@ -327,7 +338,7 @@ namespace VRCast.Tracking
                     return false;
                 }
 
-                // 送信内容（ARKit 名か・Head があるか）を確かめられるよう、初めてのアドレスを詳細ログへ
+                // 送信内容（ARKit 名か・Head があるか・どのボーンが届くか）を確かめられるよう、初めてのアドレスを詳細ログへ
                 foreach (string address in _vmc.NewAddresses)
                 {
                     VRCastLog.Detail(LogCategory, $"VMC message: {address}");
@@ -338,6 +349,14 @@ namespace VRCast.Tracking
                     _latestFace = frame;
                     _faceTime = now;
                     _statFaces++;
+                }
+
+                // 全身の姿勢は Apply を送らない送信元もあるため、ボーン・ルートが届いたパケットごとに写す
+                if (_vmc.PoseChanged)
+                {
+                    _latestPose.CopyFrom(_vmc.Pose);
+                    _latestPose.Sequence++;
+                    _poseTime = now;
                 }
 
                 return true;
@@ -506,10 +525,11 @@ namespace VRCast.Tracking
                     $"left hand {Percent(_statLeftHands, valid)}, right hand {Percent(_statRightHands, valid)}";
             }
 
-            // VMC は届いた ARKit 名の数と頭の向きの有無（パーフェクトシンク・頭の動きが使えるか）
+            // VMC は届いた ARKit 名の数と頭の向きの有無、ボーンの数と全身の有無（パーフェクトシンク・頭・全身が使えるか）
             if (_boundSource == TrackingSource.Vmc)
             {
-                summary += $", ARKit shapes {_vmc.ArKitShapeCount}, head {(_vmc.HasHead ? "yes" : "no")}";
+                summary += $", ARKit shapes {_vmc.ArKitShapeCount}, head {(_vmc.HasHead ? "yes" : "no")}, " +
+                    $"bones {_vmc.Pose.ReceivedCount}, full body {(_vmc.Pose.HasBody ? "yes" : "no")}";
             }
 
             return summary;
@@ -554,6 +574,11 @@ namespace VRCast.Tracking
             {
                 Status = $"Receiving on {_boundPort} ({_framesPerSecond} fps, no face)";
             }
+            else if (TryGetPose(out _))
+            {
+                // 顔の値（Blend/Apply）を送らない送信元は、全身の姿勢だけを受信中と出す
+                Status = $"Receiving on {_boundPort} (body only, no face)";
+            }
             else if (_boundSource == TrackingSource.IFacialMocap && !IPAddress.TryParse(_settings.iFacialMocapAddress, out _))
             {
                 // 合図を送れないので、iPhone の IP アドレスの入力を促す
@@ -577,6 +602,7 @@ namespace VRCast.Tracking
             _boundPort = -1;
             _faceTime = float.NegativeInfinity;
             _bodyTime = float.NegativeInfinity;
+            _poseTime = float.NegativeInfinity;
             Status = status;
 
             // 診断の状態も始め直す（次に開いたときの最初のパケットを記録するため）

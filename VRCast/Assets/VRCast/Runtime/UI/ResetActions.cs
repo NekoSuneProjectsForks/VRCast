@@ -68,6 +68,10 @@ namespace VRCast.UI
             switch (action)
             {
                 case ResetAction.Head:
+                    // 顔か全身（顔の値を送らない送信元もある）を受信中なら正面を取り直せる
+                    var head = _avatar.Get<FaceTrackingDriver>();
+                    var body = _avatar.Get<FullBodyTrackingDriver>();
+                    return (head != null && head.IsTracking) || (body != null && body.IsTracking);
                 case ResetAction.Gaze:
                     var face = _avatar.Get<FaceTrackingDriver>();
                     return face != null && face.IsTracking;
@@ -96,8 +100,19 @@ namespace VRCast.UI
             switch (action)
             {
                 case ResetAction.Head:
-                    // 顔の向き・上半身・視線を今の向きで正面にする
-                    _avatar.Get<FaceTrackingDriver>().Calibrate();
+                    // 顔の向き・上半身・視線（全身の追従中は体の向き・位置も）を今の向きで正面にする
+                    var headDriver = _avatar.Get<FaceTrackingDriver>();
+                    if (headDriver != null)
+                    {
+                        headDriver.Calibrate();
+                    }
+
+                    var bodyDriver = _avatar.Get<FullBodyTrackingDriver>();
+                    if (bodyDriver != null)
+                    {
+                        bodyDriver.Calibrate();
+                    }
+
                     break;
                 case ResetAction.Gaze:
                     // 視線だけを正面にする

@@ -219,9 +219,15 @@ namespace VRCast.App
             // 腕・指の向きの基準を記録するため待機ポーズ適用後に初期化
             avatar.Instance.AddComponent<HandTrackingDriver>().Initialize(avatar.Animator, _tracker, _settings);
 
-            // 待機モーション（呼吸・体の揺れ・頭のゆらぎ）。顔のトラッキング中は頭のゆらぎを止めて本人の動きに任せる
+            // 外部アプリ（VMC）からの全身。T ポーズは Avatar の骨格情報から求め、腰の位置は待機ポーズ適用後の位置を基準にする
+            var fullBody = avatar.Instance.AddComponent<FullBodyTrackingDriver>();
+            fullBody.Initialize(avatar.Animator, _tracker, _settings);
+
+            // 待機モーション（呼吸・体の揺れ・頭のゆらぎ）。顔のトラッキング中は頭のゆらぎを止めて本人の動きに任せ、
+            // 全身の追従中は全体を止める
             avatar.Instance.AddComponent<IdleMotionController>().Initialize(
-                avatar.Animator, _settings, () => face != null && face.IsTracking);
+                avatar.Animator, _settings, () => face != null && face.IsTracking,
+                () => fullBody != null && fullBody.IsTracking);
 
             // Constraint（揺れものの静止姿勢に反映されるよう先に初期化）
             avatar.Instance.AddComponent<ConstraintSolver>().Initialize(avatar.Animator, avatar.Constraints);

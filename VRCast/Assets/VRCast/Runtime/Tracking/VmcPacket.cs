@@ -9,9 +9,12 @@ namespace VRCast.Tracking
     /// VMC プロトコル（OSC over UDP。iPhone の Waidayo 等）で届く顔の値を FaceTrackingFrame にまとめる。
     /// VMC は状態を送り続ける形式なので、値は受信のたびに上書きして保持し、"/VMC/Ext/Blend/Apply" で 1 フレームを確定する。
     /// - "/VMC/Ext/Blend/Val (s 名前, f 値)": ARKit 名（パーフェクトシンク）または VRM の表情名（Blink_L / Blink_R / A 等）
-    /// - "/VMC/Ext/Bone/Pos (s 名前, f px, py, pz, qx, qy, qz, qw)": Head の回転を頭の向きに使う（Unity 座標系）
+    /// - "/VMC/Ext/Bone/Pos (s 名前, f px, py, pz, qx, qy, qz, qw)": Head の回転を頭の向きに使い（Unity 座標系）、
+    ///   全ボーンのローカル回転・位置を全身の姿勢（Pose）として保持する
+    /// - "/VMC/Ext/Root/Pos (s 名前, f px, py, pz, qx, qy, qz, qw[, sx, sy, sz, ...])": 送信側アバターのルート（体全体の位置・向き）
     /// VMC の値は送信側アプリのアバターの動き（本人と向かい合う鏡像。Waidayo 等）なので、
     /// 鏡像 ON で送信側と同じ向きになるよう、頭の回転は左右反転し、表情の左右は入れ替えずにカメラ基準のフレームへ置く。
+    /// 全身の姿勢は送信側アバターの値のまま保持し、左右の扱いは FullBodyTrackingDriver が決める。
     /// </summary>
     public sealed class VmcPacket
     {
@@ -19,13 +22,18 @@ namespace VRCast.Tracking
         private const string BlendValueAddress = "/VMC/Ext/Blend/Val";
         private const string BlendApplyAddress = "/VMC/Ext/Blend/Apply";
         private const string BonePoseAddress = "/VMC/Ext/Bone/Pos";
+        private const string RootPoseAddress = "/VMC/Ext/Root/Pos";
         private const string VmcPrefix = "/VMC/";
 
         // 頭のボーン名（Unity の HumanBodyBones の名前）
         private const string HeadBone = "Head";
 
-        // Bone/Pos の float 引数の数（位置 3 + 回転 4）
+        // Bone/Pos・Root/Pos の float 引数の数（位置 3 + 回転 4）と、Root/Pos の拡大率までの数（VMC v2.1 以降）
         private const int BonePoseFloats = 7;
+        private const int RootScaleFloats = 10;
+
+        // ボーン名（HumanBodyBones の名前）→ HumanBodyBones の値
+        private static readonly Dictionary<string, int> BoneIndices = CreateBoneIndices();
 
         // 診断用に覚えるアドレスの数の上限
         private const int MaxSeenAddresses = 256;
@@ -83,6 +91,16 @@ namespace VRCast.Tracking
         public List<string> NewAddresses { get; } = new List<string>();
 
         /// <summary>
+        /// 受け取った全身の姿勢（ボーン・ルートの最新値を保持し続ける）。
+        /// </summary>
+        public HumanoidPoseFrame Pose { get; } = new HumanoidPoseFrame();
+
+        /// <summary>
+        /// 直前の Read でボーン・ルートの値を 1 つでも受け取ったら true（全身の姿勢の更新の判定用）。
+        /// </summary>
+        public bool PoseChanged { get; private set; }
+
+        /// <summary>
         /// 保持している値を捨てる（入力元の切替・待ち受けのやり直し時）。
         /// </summary>
         public void Reset()
@@ -96,6 +114,8 @@ namespace VRCast.Tracking
             Array.Clear(_vrmVowels, 0, _vrmVowels.Length);
             _headRotation = Quaternion.identity;
             HasHead = false;
+            Pose.Clear();
+            PoseChanged = false;
             _seenAddresses.Clear();
             NewAddresses.Clear();
         }
@@ -111,9 +131,10 @@ namespace VRCast.Tracking
             hasFrame = false;
             frame = default;
 
-            // OSC として読み、VMC のアドレスだけを処理する
+            // OSC として読み、VMC のアドレスだけを処理する（全身の姿勢の更新はこのパケットの分だけ数える）
             _messages.Clear();
             NewAddresses.Clear();
+            PoseChanged = false;
             OscPacket.Parse(buffer, 0, length, _messages);
             bool anyVmc = false;
             foreach (OscMessage message in _messages)
@@ -163,18 +184,31 @@ namespace VRCast.Tracking
 
                     return false;
                 case BonePoseAddress:
-                    // 頭のボーンの回転だけ使う
-                    if (message.Kind == OscValueKind.String && message.String == HeadBone
+                    // 名前と位置・回転がそろっているものだけ使う（頭は頭の向きにも使う）
+                    if (message.Kind == OscValueKind.String && message.String != null
                         && message.Floats != null && message.Floats.Length >= BonePoseFloats)
                     {
-                        SetHead(message.Floats);
+                        if (message.String == HeadBone)
+                        {
+                            SetHead(message.Floats);
+                        }
+
+                        SetBone(message.String, message.Floats);
+                    }
+
+                    return false;
+                case RootPoseAddress:
+                    // 位置・回転がそろっているものだけ使う
+                    if (message.Floats != null && message.Floats.Length >= BonePoseFloats)
+                    {
+                        SetRoot(message.Floats);
                     }
 
                     return false;
                 case BlendApplyAddress:
                     return true;
                 default:
-                    // ルート・トラッカー・カメラ等は使わない
+                    // トラッカー・カメラ・時刻等は使わない
                     return false;
             }
         }
@@ -284,16 +318,85 @@ namespace VRCast.Tracking
         private void SetHead(float[] values)
         {
             // 回転（qx, qy, qz, qw）が壊れていれば使わない
-            var rotation = new Quaternion(values[3], values[4], values[5], values[6]);
-            if (!TrackingMath.AllFinite(rotation.x, rotation.y, rotation.z, rotation.w)
-                || rotation.x * rotation.x + rotation.y * rotation.y + rotation.z * rotation.z + rotation.w * rotation.w < 1e-6f)
+            if (!TryReadPose(values, out _, out Quaternion rotation))
             {
                 return;
             }
 
             // 送信側アバターの回転は鏡像済みなので、左右反転してカメラ基準にする（正面は FaceTrackingDriver のキャリブレーションで決まる）
-            _headRotation = TrackingMath.MirrorRotation(Quaternion.Normalize(rotation));
+            _headRotation = TrackingMath.MirrorRotation(rotation);
             HasHead = true;
+        }
+
+        private void SetBone(string name, float[] values)
+        {
+            // Humanoid のボーン名でないもの・壊れた値は使わない
+            if (!BoneIndices.TryGetValue(name, out int bone) || !TryReadPose(values, out Vector3 position,
+                    out Quaternion rotation))
+            {
+                return;
+            }
+
+            // 初めて届いたボーンなら数を数え、送信側アバターの値のまま保持する
+            if (!Pose.Received[bone])
+            {
+                Pose.Received[bone] = true;
+                Pose.ReceivedCount++;
+            }
+
+            Pose.Positions[bone] = position;
+            Pose.Rotations[bone] = rotation;
+            PoseChanged = true;
+        }
+
+        private void SetRoot(float[] values)
+        {
+            // 壊れた値は使わない
+            if (!TryReadPose(values, out Vector3 position, out Quaternion rotation))
+            {
+                return;
+            }
+
+            // 拡大率（VMC v2.1 以降）は届いていて正しい値のときだけ使う（無ければ等倍）
+            Vector3 scale = Vector3.one;
+            if (values.Length >= RootScaleFloats && TrackingMath.AllFinite(values[7], values[8], values[9])
+                && values[7] > 0f && values[8] > 0f && values[9] > 0f)
+            {
+                scale = new Vector3(values[7], values[8], values[9]);
+            }
+
+            Pose.HasRoot = true;
+            Pose.RootPosition = position;
+            Pose.RootRotation = rotation;
+            Pose.RootScale = scale;
+            PoseChanged = true;
+        }
+
+        private static bool TryReadPose(float[] values, out Vector3 position, out Quaternion rotation)
+        {
+            // 位置（px, py, pz）と回転（qx, qy, qz, qw）。非有限値・長さ 0 の回転は壊れた値として使わない
+            position = new Vector3(values[0], values[1], values[2]);
+            rotation = new Quaternion(values[3], values[4], values[5], values[6]);
+            if (!TrackingMath.AllFinite(values[0], values[1], values[2], values[3], values[4], values[5], values[6])
+                || rotation.x * rotation.x + rotation.y * rotation.y + rotation.z * rotation.z + rotation.w * rotation.w < 1e-6f)
+            {
+                return false;
+            }
+
+            rotation = Quaternion.Normalize(rotation);
+            return true;
+        }
+
+        private static Dictionary<string, int> CreateBoneIndices()
+        {
+            // HumanBodyBones の名前（LastBone は列挙の終端なので除く）
+            var indices = new Dictionary<string, int>(HumanoidPoseFrame.BoneCount);
+            for (int bone = 0; bone < HumanoidPoseFrame.BoneCount; bone++)
+            {
+                indices[((HumanBodyBones)bone).ToString()] = bone;
+            }
+
+            return indices;
         }
 
         private static string Normalize(string name)

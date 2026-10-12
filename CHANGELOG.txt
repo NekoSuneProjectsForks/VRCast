@@ -12,12 +12,14 @@ Newest first. Each version is written in Japanese, then English.
 - パーフェクトシンク化で、目印を自動で置く機能を追加（アバターのまばたき・口・眉の BlendShape から求める方法と、顔の画像認識（MediaPipe）で求める方法を選べます。まだ打っていない目印だけを置き、元に戻すで取り消せます）
 - 書き出しツールで、BlendShape のあるメッシュを読み取れる形で書き出すように変更（パーフェクトシンク化に必要です。既存のアバターで使うには書き出し直してください）
 - 設定タブに「パネルの不透明度」を追加（操作パネルとパーフェクトシンク化の編集画面の背景を透かせます。文字は薄くなりません）
+- VMC プロトコルの入力元で全身のトラッキングに対応（VirtualMotionCapture などの送信側アプリのアバターと同じように、腰・脚・腕・指と体全体の位置を動かします。トラッキングタブの「全身」で ON/OFF できます。「足を床に合わせる」で、送信側とアバターの脚の長さの違いで足が浮いたりめり込んだりしないよう、膝の曲げで足の位置を合わせます。顔だけを送るアプリではこれまでどおりです）
 [English]
 - Added the Perfect sync setup tab (click points on the face mesh to generate the 51 ARKit face shapes automatically and assign blend shapes the avatar already has; choose Minimal, Standard or Detailed points, test the result, including with live tracking before saving, then save it as a new .vrcaster file; the original file is not changed, and opening the saved file lets you continue editing; physics, idle motion, tracking, blinking and lip sync are paused while editing)
 - Added support for avatars without brows, a nose or a mouth interior in perfect sync setup (mark the missing parts to skip their points and their shapes; avatars without eye bones also get eye movement shapes, the teeth/tongue option is disabled when there are no separate teeth or tongue meshes, and shapes that turned out to move nothing are marked "Nothing to move")
 - Added automatic point placement to perfect sync setup (choose between using the avatar's blink, mouth and brow blend shapes, or face image recognition with MediaPipe; only points you have not placed yet are filled in, and Undo removes them)
 - Changed the exporter to export meshes with blend shapes in a readable form (needed for perfect sync setup; re-export existing avatars to use it)
 - Added Panel opacity to the Settings tab (makes the background of the control panel and the perfect sync editor see-through; text stays fully visible)
+- Added full body tracking to the VMC protocol source (moves the hips, legs, arms, fingers and whole-body position like the avatar in the sender app, such as VirtualMotionCapture; toggle it with Full body in the Tracking tab; Keep feet on the floor bends the knees to place the feet so they do not float or sink when the sender's and the avatar's leg lengths differ; face-only apps work as before)
 
 ■ 1.18.8 (2026-10-12)
 

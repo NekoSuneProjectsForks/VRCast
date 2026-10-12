@@ -11,7 +11,7 @@ namespace VRCast.Core
         // 同梱の OpenSeeFace（顔のみ）
         OpenSeeFace = 1,
 
-        // 外部アプリ（iPhone の Waidayo 等）が VMC プロトコルで送る顔の値（顔のみ。LAN から受信）
+        // 外部アプリ（iPhone の Waidayo・PC の VirtualMotionCapture 等）が VMC プロトコルで送る顔・全身の値（LAN から受信）
         Vmc = 2,
 
         // iPhone の iFacialMocap が独自形式で送る顔の値（顔のみ。LAN から受信し、送信開始の合図をこちらから送る）
@@ -37,6 +37,14 @@ namespace VRCast.Core
         public static bool HasArms(TrackingSource source)
         {
             return source == TrackingSource.MediaPipe;
+        }
+
+        /// <summary>
+        /// 全身の姿勢（ボーンごとの回転・体全体の位置）を受信できる入力元なら true。
+        /// </summary>
+        public static bool HasFullBody(TrackingSource source)
+        {
+            return source == TrackingSource.Vmc;
         }
 
         /// <summary>

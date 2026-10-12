@@ -62,6 +62,58 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Read_Bones_KeepsFullBodyPoseAsSent()
+        {
+            // 全ボーンのローカル回転・位置を送信側の値のまま保持し、腰と両上腕がそろえば全身として扱うこと
+            Quaternion arm = Quaternion.Euler(0f, 0f, 60f);
+            var vmc = new VmcPacket();
+            byte[] packet = Bundle(Bone("Hips", Quaternion.identity, new Vector3(0f, 0.9f, 0f)), Bone("LeftUpperArm", arm));
+            Assert.That(vmc.Read(packet, packet.Length, out bool hasFrame, out _), Is.True);
+
+            // ボーンだけのパケットでも姿勢は更新され、顔のフレームは確定しないこと
+            Assert.That(hasFrame, Is.False);
+            Assert.That(vmc.PoseChanged, Is.True);
+            Assert.That(vmc.Pose.ReceivedCount, Is.EqualTo(2));
+            Assert.That(vmc.Pose.HasBody, Is.False);
+            Assert.That(vmc.Pose.Positions[(int)HumanBodyBones.Hips].y, Is.EqualTo(0.9f).Within(1e-5f));
+            Assert.That(Quaternion.Angle(vmc.Pose.Rotations[(int)HumanBodyBones.LeftUpperArm], arm), Is.LessThan(0.01f));
+
+            // 右上腕が届けば全身になること（同じボーンは数え直さない）
+            Read(vmc, Bundle(Bone("RightUpperArm", Quaternion.identity), Bone("LeftUpperArm", arm)), out _, out _);
+            Assert.That(vmc.Pose.HasBody, Is.True);
+            Assert.That(vmc.Pose.ReceivedCount, Is.EqualTo(3));
+
+            // 表情だけのパケットでは姿勢は更新されないこと
+            Read(vmc, Bundle(Blend("jawOpen", 0.5f), Apply()), out _, out _);
+            Assert.That(vmc.PoseChanged, Is.False);
+        }
+
+        [Test]
+        public void Read_Root_SetsRootAndHipsPosition()
+        {
+            // ルートの位置・向き・拡大率を腰の位置へ反映すること
+            var vmc = new VmcPacket();
+            Read(vmc, Bundle(
+                Message("/VMC/Ext/Root/Pos", ",sffffffffff", Str("root"), Float(1f), Float(0f), Float(2f),
+                    Float(0f), Float(0f), Float(0f), Float(1f), Float(2f), Float(2f), Float(2f)),
+                Bone("Hips", Quaternion.identity, new Vector3(0f, 0.5f, 0f))), out _, out _);
+
+            Assert.That(vmc.Pose.HasRoot, Is.True);
+            Assert.That(Vector3.Distance(vmc.Pose.HipsPosition, new Vector3(1f, 1f, 2f)), Is.LessThan(1e-5f));
+        }
+
+        [Test]
+        public void Read_UnknownOrBrokenBone_IsIgnored()
+        {
+            // Humanoid でない名前・壊れた回転のボーンは使わないこと
+            var vmc = new VmcPacket();
+            Read(vmc, Bundle(Bone("Tail", Quaternion.identity), Bone("Spine", new Quaternion(0f, 0f, 0f, 0f))), out _, out _);
+
+            Assert.That(vmc.Pose.ReceivedCount, Is.EqualTo(0));
+            Assert.That(vmc.PoseChanged, Is.False);
+        }
+
+        [Test]
         public void Read_VrmNamesOnly_DrivesEyesAndMouth()
         {
             // ARKit 名が来ない送信元は VRM の表情名で目と口だけ動き、パーフェクトシンク・表情は使わないこと
@@ -135,6 +187,7 @@ namespace VRCast.Tests
 
             Assert.That(vmc.ArKitShapeCount, Is.EqualTo(0));
             Assert.That(vmc.HasHead, Is.False);
+            Assert.That(vmc.Pose.ReceivedCount, Is.EqualTo(0));
             Assert.That(frame.MouthOpen, Is.EqualTo(0f));
             Assert.That(Quaternion.Angle(frame.HeadRotation, Quaternion.identity), Is.LessThan(0.01f));
         }
@@ -166,11 +219,11 @@ namespace VRCast.Tests
             return Message("/VMC/Ext/Blend/Val", ",sf", Str(name), Float(value));
         }
 
-        private static byte[] Bone(string name, Quaternion rotation)
+        private static byte[] Bone(string name, Quaternion rotation, Vector3 position = default)
         {
-            // ボーンの位置（0）と回転
-            return Message("/VMC/Ext/Bone/Pos", ",sfffffff", Str(name), Float(0f), Float(0f), Float(0f),
-                Float(rotation.x), Float(rotation.y), Float(rotation.z), Float(rotation.w));
+            // ボーンの位置（省略時は 0）と回転
+            return Message("/VMC/Ext/Bone/Pos", ",sfffffff", Str(name), Float(position.x), Float(position.y),
+                Float(position.z), Float(rotation.x), Float(rotation.y), Float(rotation.z), Float(rotation.w));
         }
 
         private static byte[] Apply()

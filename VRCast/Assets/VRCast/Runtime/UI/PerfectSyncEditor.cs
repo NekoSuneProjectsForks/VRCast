@@ -475,6 +475,13 @@ namespace VRCast.UI
                 hands.Suspended = suspended;
             }
 
+            // 外部アプリからの全身のトラッキング（待機ポーズへ戻す）
+            var fullBody = root.GetComponent<FullBodyTrackingDriver>();
+            if (fullBody != null)
+            {
+                fullBody.Suspended = suspended;
+            }
+
             // まばたき（目を開いたまま）と口パク（口を閉じたまま）。目印を打つまぶた・唇の形を変えない
             var blink = root.GetComponent<BlinkController>();
             if (blink != null)
