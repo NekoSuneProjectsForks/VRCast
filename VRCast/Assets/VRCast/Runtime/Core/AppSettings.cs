@@ -272,9 +272,10 @@ namespace VRCast.Core
         // パーフェクトシンクを有効にする条件（false = ARKit 名が MinMatchedShapes 種類以上、true = 1 種類でもあれば）
         public bool trackingPerfectSyncAnyShape;
 
-        // パーフェクトシンク中だけ、検出が弱い口・頬の動きを倍率で強める（口をとがらせる・頬をふくらませる・唇を巻き込む）
+        // パーフェクトシンク中だけ、検出が弱い口・頬の動きを倍率で強める（とがらせる・口の左右・頬・唇）
         public bool trackingPerfectSyncBoost = true;
         public float trackingBoostPucker = 2f;
+        public float trackingBoostMouth = 1f;
         public float trackingBoostCheekPuff = 1.5f;
         public float trackingBoostLips = 1f;
 
@@ -919,6 +920,7 @@ namespace VRCast.Core
             trackingEyeOpenOffset = Mathf.Clamp(trackingEyeOpenOffset, 0f, MaxTrackingEyeOpenOffset);
             // 口・頬の強調の倍率も同様（1 未満は弱めてしまうため 1 から）
             trackingBoostPucker = Mathf.Clamp(trackingBoostPucker, 1f, MaxPerfectSyncBoost);
+            trackingBoostMouth = Mathf.Clamp(trackingBoostMouth, 1f, MaxPerfectSyncBoost);
             trackingBoostCheekPuff = Mathf.Clamp(trackingBoostCheekPuff, 1f, MaxPerfectSyncBoost);
             trackingBoostLips = Mathf.Clamp(trackingBoostLips, 1f, MaxPerfectSyncBoost);
             // 頬のふくらみの推定は、出し始めより最大が必ず大きくなるよう間隔を空ける

@@ -5,7 +5,7 @@ using VRCast.Tracking;
 namespace VRCast.UI
 {
     /// <summary>
-    /// パーフェクトシンクの「口・頬の動きを強調」の設定（ON/OFF・組ごとの倍率・頬のふくらみの推定のしきい値と今の値）。
+    /// パーフェクトシンクの「口・頬の動きを強調」の設定（ON/OFF・組ごとの倍率・頬のしきい値と、頬・口の左右の今の値）。
     /// トラッキングタブと、パーフェクトシンク化の「実際のトラッキングで試す」で同じものを出す。
     /// </summary>
     public static class PerfectSyncBoostControls
@@ -17,6 +17,7 @@ namespace VRCast.UI
         {
             private readonly bool _enabled;
             private readonly float _pucker;
+            private readonly float _mouth;
             private readonly float _cheekPuff;
             private readonly float _lips;
             private readonly float _cheekStart;
@@ -26,6 +27,7 @@ namespace VRCast.UI
             {
                 _enabled = settings.trackingPerfectSyncBoost;
                 _pucker = settings.trackingBoostPucker;
+                _mouth = settings.trackingBoostMouth;
                 _cheekPuff = settings.trackingBoostCheekPuff;
                 _lips = settings.trackingBoostLips;
                 _cheekStart = settings.trackingCheekPuffStart;
@@ -47,6 +49,7 @@ namespace VRCast.UI
             {
                 settings.trackingPerfectSyncBoost = _enabled;
                 settings.trackingBoostPucker = _pucker;
+                settings.trackingBoostMouth = _mouth;
                 settings.trackingBoostCheekPuff = _cheekPuff;
                 settings.trackingBoostLips = _lips;
                 settings.trackingCheekPuffStart = _cheekStart;
@@ -72,11 +75,11 @@ namespace VRCast.UI
                 settings.trackingPerfectSyncBoost,
                 Loc.T("Boost mouth and cheeks", "口・頬の動きを強調", "입·볼 움직임 강조", "增强嘴部和脸颊动作", "增強嘴部和臉頰動作"));
             GuiControls.Hint(Loc.T(
-                "Only while perfect sync is driving the face. Strengthens pouting, puffed cheeks and lip movements that the camera tends to pick up weakly.",
-                "パーフェクトシンクで顔を動かしている間だけ効きます。カメラでは弱く出やすい、ふくれっ面（口をとがらせる）・頬をふくらませる・唇の動きを強めます。",
-                "퍼펙트 싱크로 얼굴을 움직이는 동안에만 적용됩니다. 카메라에서 약하게 잡히기 쉬운 입 내밀기·볼 부풀리기·입술 움직임을 강하게 합니다.",
-                "仅在完美同步驱动面部时生效。增强摄像头容易识别偏弱的嘟嘴、鼓腮和嘴唇动作。",
-                "僅在完美同步驅動臉部時生效。增強攝影機容易辨識偏弱的嘟嘴、鼓腮和嘴唇動作。"));
+                "Only while perfect sync is driving the face. Strengthens pouting, mouth shifting left/right, puffed cheeks and lip movements that the camera tends to pick up weakly.",
+                "パーフェクトシンクで顔を動かしている間だけ効きます。カメラでは弱く出やすい、ふくれっ面・口の左右・頬をふくらませる・唇の動きを強めます。",
+                "퍼펙트 싱크로 얼굴을 움직이는 동안에만 적용됩니다. 카메라에서 약하게 잡히기 쉬운 입 내밀기·입 좌우·볼 부풀리기·입술 움직임을 강하게 합니다.",
+                "仅在完美同步驱动面部时生效。增强摄像头容易识别偏弱的嘟嘴、嘴巴左右移动、鼓腮和嘴唇动作。",
+                "僅在完美同步驅動臉部時生效。增強攝影機容易辨識偏弱的嘟嘴、嘴巴左右移動、鼓腮和嘴唇動作。"));
 
             // 無効時は倍率・しきい値を出さない
             if (!settings.trackingPerfectSyncBoost)
@@ -84,17 +87,29 @@ namespace VRCast.UI
                 return;
             }
 
-            DrawGains(settings);
+            DrawGains(settings, driver);
             DrawCheekEstimate(settings, driver);
         }
 
-        private static void DrawGains(AppSettings settings)
+        private static void DrawGains(AppSettings settings, FaceTrackingDriver driver)
         {
             // 組ごとの倍率（1 = そのまま）
             float max = AppSettings.MaxPerfectSyncBoost;
             settings.trackingBoostPucker = GuiControls.Slider(
                 Loc.T("Pout", "ふくれっ面", "입 내밀기", "嘟嘴", "嘟嘴"),
                 settings.trackingBoostPucker, 1f, max, "F1");
+            settings.trackingBoostMouth = GuiControls.Slider(
+                Loc.T("Mouth left / right", "口の左右", "입 좌우", "嘴左右", "嘴左右"),
+                settings.trackingBoostMouth, 1f, max, "F1");
+            if (driver != null && driver.IsTracking)
+            {
+                driver.MouthSideEstimates(out float left, out float right);
+                GuiControls.Status(Loc.T($"Mouth now: left {left:F2}, right {right:F2}",
+                    $"口の左右 今: 左 {left:F2}、右 {right:F2}", $"입 좌우 현재: 왼쪽 {left:F2}, 오른쪽 {right:F2}",
+                    $"嘴左右 当前: 左 {left:F2}，右 {right:F2}", $"嘴左右 目前: 左 {left:F2}，右 {right:F2}"),
+                    left > 0f || right > 0f);
+            }
+
             settings.trackingBoostCheekPuff = GuiControls.Slider(
                 Loc.T("Puffed cheeks", "頬をふくらませる", "볼 부풀리기", "鼓腮", "鼓腮"),
                 settings.trackingBoostCheekPuff, 1f, max, "F1");
@@ -102,11 +117,11 @@ namespace VRCast.UI
                 Loc.T("Lips", "唇", "입술", "嘴唇", "嘴唇"),
                 settings.trackingBoostLips, 1f, max, "F1");
             GuiControls.Hint(Loc.T(
-                "Raise a value if the shape barely moves, lower it if it moves too easily.",
-                "動きが小さければ値を上げ、すぐ動きすぎるなら下げてください。",
-                "움직임이 작으면 값을 올리고, 너무 쉽게 움직이면 낮추세요.",
-                "动作太小时调高，太容易动时调低。",
-                "動作太小時調高，太容易動時調低。"));
+                "Raise a value if the shape barely moves, lower it if it moves too easily. Mouth left / right is estimated from the shape of your face (the camera often misses it).",
+                "動きが小さければ値を上げ、すぐ動きすぎるなら下げてください。口の左右は顔の形から推定します（カメラではほとんど出ません）。",
+                "움직임이 작으면 값을 올리고, 너무 쉽게 움직이면 낮추세요. 입 좌우는 얼굴 형태로 추정합니다(카메라에서는 거의 나오지 않습니다).",
+                "动作太小时调高，太容易动时调低。嘴巴左右根据脸型估算（摄像头几乎检测不到）。",
+                "動作太小時調高，太容易動時調低。嘴巴左右依臉型估算（攝影機幾乎偵測不到）。"));
         }
 
         private static void DrawCheekEstimate(AppSettings settings, FaceTrackingDriver driver)

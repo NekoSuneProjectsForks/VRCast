@@ -87,7 +87,7 @@ namespace VRCast.UI
             // 編集画面を開く
             UiTheme theme = UiTheme.Current;
             if (GUILayout.Button(Loc.T("Start editing", "編集を始める", "편집 시작", "开始编辑", "開始編輯"),
-                    theme != null ? theme.AccentButton : GUI.skin.button))
+                    theme != null ? theme.AccentButton : GUI.skin.button, GUILayout.ExpandWidth(true)))
             {
                 _editor.Open(avatar);
             }

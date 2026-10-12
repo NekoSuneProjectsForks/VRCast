@@ -117,8 +117,6 @@ namespace VRCast.UI
         // タブ列のスクロール位置（パネルが低くて全部のタブが収まらないとき）
         private Vector2 _sidebarScroll;
 
-        // タブの内容の幅（前回の描画で測った見えている幅。0 = 未計測）
-        private float _contentWidth;
         private Rect _windowRect = new Rect(ScreenMargin, ScreenMargin, WindowWidth, MaxWindowHeight);
 
         public void Initialize(
@@ -386,23 +384,16 @@ namespace VRCast.UI
             GUILayout.BeginHorizontal();
             DrawSidebar();
 
-            // 選択中のタブの内容（横スクロールバーは出さない）
+            // 選択中のタブの内容（横スクロールバーは出さない。幅はタブ列の残りに収め、英語の長いボタンが右へはみ出さない）
+            float column = ContentColumnWidth();
             _scroll[(int)_tab] = GUILayout.BeginScrollView(
-                _scroll[(int)_tab], false, false, GUIStyle.none, GUI.skin.verticalScrollbar);
+                _scroll[(int)_tab], false, false, GUIStyle.none, GUI.skin.verticalScrollbar,
+                GUILayout.MaxWidth(column));
 
-            // 内容の幅を見えている幅に固定する（ボタンの多い行は右へはみ出さず、行の中で縮む）
-            GUILayout.BeginVertical(_contentWidth > 0f ? GUILayout.Width(_contentWidth) : GUILayout.ExpandWidth(true));
+            GUILayout.BeginVertical(GUILayout.MaxWidth(column), GUILayout.ExpandWidth(true));
             DrawContent();
             GUILayout.EndVertical();
             GUILayout.EndScrollView();
-
-            // 見えている幅（スクロールバーの分を除く）を次のフレームの配置に使う
-            if (Event.current.type == EventType.Repaint)
-            {
-                GUIStyle scrollbar = GUI.skin.verticalScrollbar;
-                float scrollbarWidth = scrollbar.fixedWidth + scrollbar.margin.horizontal;
-                _contentWidth = Mathf.Max(0f, GUILayoutUtility.GetLastRect().width - scrollbarWidth);
-            }
 
             GUILayout.EndHorizontal();
 
@@ -539,6 +530,16 @@ namespace VRCast.UI
             }
 
             GUILayout.EndHorizontal();
+        }
+
+        private float ContentColumnWidth()
+        {
+            // ウィンドウ内でタブ列・余白・縦スクロールバーを除いた幅（この幅を超える内容は右が見切れる）
+            GUIStyle scrollbar = GUI.skin.verticalScrollbar;
+            float scrollbarWidth = scrollbar.fixedWidth + scrollbar.margin.horizontal;
+            float padding = GUI.skin.window.padding.horizontal;
+            float sidebar = SidebarWidthFor() + _theme.Sidebar.margin.horizontal;
+            return Mathf.Max(80f, Mathf.Floor(_windowRect.width - padding - sidebar - scrollbarWidth));
         }
 
         private float SidebarWidthFor()

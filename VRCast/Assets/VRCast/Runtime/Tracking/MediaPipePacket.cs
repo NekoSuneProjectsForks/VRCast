@@ -56,6 +56,9 @@ namespace VRCast.Tracking
             // 顔の点から推定した頬のふくらみ 0〜1（初期の送信。cheekWiden が無ければこれを使う）
             public float cheekPuff;
 
+            // 口の左右のずれ（正 = 映像の右、両目幅に対する割合。古いトラッカーは送らず 0）
+            public float mouthShift;
+
             // 腕: ArmPointCount 点の world 座標（x, y, z の繰り返し）と可視度
             public bool pose;
             public float[] arms;
@@ -164,6 +167,7 @@ namespace VRCast.Tracking
             // 頬の幅の広がり（非有限値は広がり無し扱い）と、古いトラッカーの 0〜1 推定
             face.CheekWiden = TrackingMath.AllFinite(message.cheekWiden) ? message.cheekWiden : 0f;
             face.CheekPuffDirect = TrackingMath.AllFinite(message.cheekPuff) ? Mathf.Clamp01(message.cheekPuff) : 0f;
+            face.MouthShift = TrackingMath.AllFinite(message.mouthShift) ? message.mouthShift : 0f;
             return true;
         }
 

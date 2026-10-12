@@ -12,6 +12,8 @@ VRCast から同じ手順で起動・カメラ一覧取得ができる。
     blendshapes BLENDSHAPE_NAMES 順のスコア（0〜1）
     cheekWiden  頬の幅の真顔の基準からの広がり（割合。blendshapes の cheekPuff はほぼ 0 のため、
                 VRCast 側でこれを頬のふくらみに変える）
+    mouthShift  口の左右のずれ（両目の幅に対する割合。正 = 映像の右。blendshapes の mouthLeft /
+                mouthRight は弱いため、VRCast 側でこれを口の左右に変える）
     pose        体が映っているか
     arms        左肩・右肩・左肘・右肘・左手首・右手首の world 座標（m）
     visibility  arms の各点の可視度
@@ -180,6 +182,9 @@ CHEEK_EYE_CORNERS = (33, 263)  # 両目の外側の端（大きさの基準）
 # 真顔の基準の追従の時定数（秒）。狭まる側は速く、広がる側は遅く追い、ふくらませている間に基準が上がらないようにする
 CHEEK_BASE_FALL_SECONDS = 2.0
 CHEEK_BASE_RISE_SECONDS = 20.0
+# 口の左右（鼻に対する口の中心の横ずれ。頭の向きで口と鼻が一緒に動くので、向きの影響を抑える）
+MOUTH_CORNERS = (61, 291)
+MOUTH_NOSE = 1
 
 # --face-image で顔とみなす確からしさ（MediaPipe の既定は 0.5）。
 # アバターのアニメ調の顔は実写より低く出やすいため下げる
@@ -263,8 +268,9 @@ class Stats:
         self.face_ms = 0.0
         self.pose_ms = 0.0
         self.hand_ms = 0.0
-        # 頬の幅の基準からの広がり（割合）の最大（頬のふくらみのしきい値の調整用）
+        # 頬の幅の基準からの広がり（割合）の最大と、口の左右のずれの絶対値の最大（しきい値の調整用）
         self.cheek_widen = 0.0
+        self.mouth_shift = 0.0
 
     def report(self, now):
         """間隔が過ぎていれば STATS 行を出して集計を戻す。"""
@@ -290,7 +296,8 @@ class Stats:
             f"hands per frame {self.hands / inferred:.2f}, "
             f"skipped {self.skipped}, read failures {self.read_failures}, "
             f"send errors {self.send_errors}, "
-            f"cheek widen max {self.cheek_widen * 100:.1f}%")
+            f"cheek widen max {self.cheek_widen * 100:.1f}%, "
+            f"mouth shift max {self.mouth_shift * 100:.1f}%")
         self._start = now
         self._clear()
 
@@ -643,6 +650,41 @@ class CheekWidthMeter:
 
         # 基準からの広がり（口の開き・笑顔による広がりは VRCast 側で除く）
         return round(ratio / self._base - 1.0, DIGITS)
+
+
+class MouthShiftMeter:
+    """口の中心が鼻に対して映像の左右どちらへずれたか（両目の幅に対する割合）を測る。
+
+    MediaPipe の mouthLeft / mouthRight は弱く出やすいため、顔の点から測り VRCast 側で口の左右に変える。
+    真顔のずれを基準にし、中心へ戻る側は速く、ずれる側は遅く追う。
+    """
+
+    def __init__(self):
+        """真顔の基準（横ずれ）と、最後に更新した時刻を持つ。"""
+        self._base = None
+        self._time = 0.0
+
+    def measure(self, face_result, covered, aspect, now):
+        """正 = 映像の右へずれた割合（0.05 = 両目幅の 5%）を返す。"""
+        if covered or not face_result.face_landmarks:
+            return 0.0
+        points = face_result.face_landmarks[0]
+        eyes = point_distance(points, *CHEEK_EYE_CORNERS, aspect)
+        if eyes <= 1e-6:
+            return 0.0
+        left, right = MOUTH_CORNERS
+        mouth_x = (points[left].x + points[right].x) * 0.5
+        offset = (mouth_x - points[MOUTH_NOSE].x) / eyes
+
+        elapsed = max(now - self._time, 0.0)
+        self._time = now
+        if self._base is None:
+            self._base = offset
+        seconds = (CHEEK_BASE_FALL_SECONDS if abs(offset) < abs(self._base)
+                   else CHEEK_BASE_RISE_SECONDS)
+        follow = 1.0 - math.exp(-elapsed / seconds)
+        self._base += (offset - self._base) * follow
+        return round(offset - self._base, DIGITS)
 
 
 def point_distance(points, first, second, aspect):
@@ -1044,11 +1086,11 @@ class Inference:
 def build_packet(results, filters, aspect, stats, now):
     """推定結果を平滑化して、送信する JSON のバイト列を作る。
 
-    results は (顔, 体, 手)、    filters は (FaceGuard, Smoother, CheekWidthMeter)、
+    results は (顔, 体, 手)、    filters は (FaceGuard, Smoother, CheekWidthMeter, MouthShiftMeter)、
     aspect は映像の高さ / 幅。
     """
     face_result, pose_result, hand_result = results
-    guard, smoother, cheek = filters
+    guard, smoother, cheek, mouth = filters
     packet = {"v": PROTOCOL_VERSION}
     packet.update(face_fields(face_result))
     packet.update(pose_fields(pose_result))
@@ -1059,6 +1101,9 @@ def build_packet(results, filters, aspect, stats, now):
     packet["cheekWiden"] = cheek.measure(
         face_result, guard.covered, aspect, now)
     stats.cheek_widen = max(stats.cheek_widen, packet["cheekWiden"])
+    packet["mouthShift"] = mouth.measure(
+        face_result, guard.covered, aspect, now)
+    stats.mouth_shift = max(stats.mouth_shift, abs(packet["mouthShift"]))
     # 頭・腕・手・可視度の揺れを抑える
     smoother.apply(packet, now)
     # 区切りの空白を省いて小さくする
@@ -1110,6 +1155,7 @@ def run(arguments):
     smoother = Smoother()
     guard = FaceGuard()
     cheek = CheekWidthMeter()
+    mouth = MouthShiftMeter()
     stats = Stats(arguments.status_interval, use_hands)
     inference = Inference((face, pose, hands), arguments.pose_every,
                           arguments.hand_search_every, stats,
@@ -1226,7 +1272,7 @@ def run(arguments):
                 aspect = frame.shape[0] / frame.shape[1]
                 sender.sendto(
                     build_packet((face_result, pose_result, hand_result),
-                                 (guard, smoother, cheek), aspect, stats,
+                                 (guard, smoother, cheek, mouth), aspect, stats,
                                  timestamp / 1000.0),
                     target)
             except OSError as error:

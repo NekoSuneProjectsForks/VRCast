@@ -504,6 +504,8 @@ namespace VRCast.UI
             {
                 fontStyle = FontStyle.Bold,
                 padding = new RectOffset(10, 10, 8, 9),
+                wordWrap = true,
+                clipping = TextClipping.Overflow,
             };
             SetStates(AccentButton, Rounded(Accent, ControlRadius), Rounded(AccentHover, ControlRadius),
                 Rounded(Accent, ControlRadius), OnAccent);

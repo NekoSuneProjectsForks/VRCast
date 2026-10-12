@@ -41,6 +41,17 @@ namespace VRCast.Tests
             Assert.That(Parse(CreateMessage(), out _, out FaceTrackingFrame missing, out _), Is.True);
             Assert.That(missing.CheekWiden, Is.EqualTo(0f));
             Assert.That(missing.CheekPuffDirect, Is.EqualTo(0f));
+            Assert.That(missing.MouthShift, Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void TryParse_Face_ReadsMouthShift()
+        {
+            // 口の横ずれはそのまま読み、送られていなければ 0 になること
+            MediaPipePacket.Message message = CreateMessage();
+            message.mouthShift = -0.04f;
+            Assert.That(Parse(message, out _, out FaceTrackingFrame face, out _), Is.True);
+            Assert.That(face.MouthShift, Is.EqualTo(-0.04f).Within(1e-5f));
         }
 
         [Test]

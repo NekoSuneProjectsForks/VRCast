@@ -41,6 +41,9 @@ namespace VRCast.Tracking
 
         // 古い MediaPipe トラッカーが送った頬のふくらみ 0〜1（cheekWiden が 0 のときの予備）
         public float CheekPuffDirect;
+
+        // 口の左右のずれ（正 = 映像の右、両目幅に対する割合。MediaPipe のみ、他は 0）
+        public float MouthShift;
     }
 
     /// <summary>

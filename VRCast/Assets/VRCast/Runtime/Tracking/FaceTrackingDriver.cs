@@ -190,6 +190,25 @@ namespace VRCast.Tracking
                     _settings.trackingCheekPuffStart, _settings.trackingCheekPuffFull));
 
         /// <summary>
+        /// 直近の口の左右の推定（0〜1、アバター基準。倍率を掛ける前。表示用）。
+        /// </summary>
+        public void MouthSideEstimates(out float left, out float right)
+        {
+            PerfectSyncBoost.EstimateMouthSides(_lastFrame.MouthShift, out float imageLeft, out float imageRight);
+            // 鏡像 OFF では映像の左右を入れ替えて本人の左右にする（パーフェクトシンクの書き込みと同じ）
+            if (_settings != null && _settings.FaceMirror)
+            {
+                left = imageLeft;
+                right = imageRight;
+            }
+            else
+            {
+                left = imageRight;
+                right = imageLeft;
+            }
+        }
+
+        /// <summary>
         /// 視線（トラッキング・カメラ目線）で動かす目ボーンがあれば true。
         /// </summary>
         public bool HasEyes => _leftEye != null || _rightEye != null;
@@ -566,8 +585,9 @@ namespace VRCast.Tracking
                 return default;
             }
 
-            return new PerfectSyncBoost(_settings.trackingBoostPucker, _settings.trackingBoostCheekPuff,
-                _settings.trackingBoostLips, CheekPuffEstimate);
+            MouthSideEstimates(out float mouthLeft, out float mouthRight);
+            return new PerfectSyncBoost(_settings.trackingBoostPucker, _settings.trackingBoostMouth,
+                _settings.trackingBoostCheekPuff, _settings.trackingBoostLips, CheekPuffEstimate, mouthLeft, mouthRight);
         }
 
         private void ApplyPerfectSync()

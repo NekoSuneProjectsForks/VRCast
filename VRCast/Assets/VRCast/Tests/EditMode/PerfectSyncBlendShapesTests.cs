@@ -40,12 +40,40 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Boost_StrengthensPoutOnly()
+        {
+            var boost = new PerfectSyncBoost(2f, 1f, 1f, 1f, 0f, 0f, 0f);
+
+            // ふくれっ面の倍率 2: とがらせは 2 倍、口の左右・顎は掛けないこと
+            Assert.That(boost.Apply(ArKitFace.MouthPucker, 0.4f), Is.EqualTo(0.8f).Within(1e-5f));
+            Assert.That(boost.Apply(ArKitFace.IndexOf("mouthLeft"), 0.4f), Is.EqualTo(0.4f).Within(1e-5f));
+            Assert.That(boost.Apply(ArKitFace.JawOpen, 0.4f), Is.EqualTo(0.4f).Within(1e-5f));
+        }
+
+        [Test]
+        public void Boost_UsesLargerOfReceivedAndEstimatedMouthSides()
+        {
+            int mouthLeft = ArKitFace.IndexOf("mouthLeft");
+            int mouthRight = ArKitFace.IndexOf("mouthRight");
+
+            // 映像の右へ 5%（開始 2%・最大 8%）= 右 0.5。倍率 2 なら 1、左は 0
+            PerfectSyncBoost.EstimateMouthSides(0.05f, out float imageLeft, out float imageRight);
+            Assert.That(imageLeft, Is.EqualTo(0f));
+            Assert.That(imageRight, Is.EqualTo(0.5f).Within(1e-4f));
+
+            var boost = new PerfectSyncBoost(1f, 2f, 1f, 1f, 0f, imageLeft, imageRight);
+            Assert.That(boost.Apply(mouthRight, 0.1f), Is.EqualTo(1f).Within(1e-5f));
+            Assert.That(boost.Apply(mouthLeft, 0.1f), Is.EqualTo(0.1f).Within(1e-5f));
+            Assert.That(boost.Apply(ArKitFace.JawOpen, 0.4f), Is.EqualTo(0.4f).Within(1e-5f));
+        }
+
+        [Test]
         public void Boost_UsesLargerOfReceivedAndEstimatedCheekPuff()
         {
             int cheekPuff = ArKitFace.IndexOf("cheekPuff");
 
             // 倍率 2: 推定 0.3 が受信 0.05 より大きいので 0.6、既定値は強調しないこと
-            var boost = new PerfectSyncBoost(1f, 2f, 1f, 0.3f);
+            var boost = new PerfectSyncBoost(1f, 1f, 2f, 1f, 0.3f, 0f, 0f);
             Assert.That(boost.Apply(cheekPuff, 0.05f), Is.EqualTo(0.6f).Within(1e-5f));
             Assert.That(default(PerfectSyncBoost).Apply(cheekPuff, 0.05f), Is.EqualTo(0.05f).Within(1e-5f));
         }

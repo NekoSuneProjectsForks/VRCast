@@ -4,8 +4,9 @@ namespace VRCast.Tracking
 {
     /// <summary>
     /// パーフェクトシンクの口・頬の強調: 検出が弱く 1 まで届きにくい ARKit の値を倍率で強める。
-    /// ふくれっ面（mouthPucker・mouthFunnel）・頬ふくらませ（cheekPuff）・唇（巻き込み・押し付け・すぼめ上げ）の 3 組。
-    /// cheekPuff は MediaPipe ではほぼ 0 のため、頬の幅の広がりから推定した値（EstimateCheekPuff）と大きい方を使う。
+    /// ふくれっ面（mouthPucker・mouthFunnel）・口の左右（mouthLeft / mouthRight）・頬ふくらませ（cheekPuff）・
+    /// 唇（巻き込み・押し付け・すぼめ上げ）。
+    /// cheekPuff と mouthLeft / Right は MediaPipe では弱いため、顔の点から推定した値と大きい方を使う。
     /// 既定値（default）は全部の倍率が 0 で、1 未満の倍率は強調しない扱いなので、何も変えない。
     /// </summary>
     public readonly struct PerfectSyncBoost
@@ -14,6 +15,8 @@ namespace VRCast.Tracking
         private static readonly int MouthPucker = ArKitFace.IndexOf("mouthPucker");
         private static readonly int MouthFunnel = ArKitFace.IndexOf("mouthFunnel");
         private static readonly int CheekPuff = ArKitFace.IndexOf("cheekPuff");
+        private static readonly int MouthLeft = ArKitFace.IndexOf("mouthLeft");
+        private static readonly int MouthRight = ArKitFace.IndexOf("mouthRight");
         private static readonly int[] LipShapes =
         {
             ArKitFace.IndexOf("mouthRollLower"), ArKitFace.IndexOf("mouthRollUpper"),
@@ -32,20 +35,31 @@ namespace VRCast.Tracking
         private const float SmileGateStart = 0.35f;
         private const float SmileGateEnd = 0.7f;
 
+        // 口の左右: 両目幅に対するずれがこの割合で出し始め、この割合で最大
+        public const float MouthShiftStart = 0.02f;
+        public const float MouthShiftFull = 0.08f;
+
         // 組ごとの倍率（1 = そのまま）
         private readonly float _pucker;
+        private readonly float _mouth;
         private readonly float _cheekPuff;
         private readonly float _lips;
 
-        // 顔の形から推定した頬のふくらみ（0〜1。推定しない入力元は 0）
+        // 顔の形から推定した頬のふくらみと、アバター基準の口の左右（0〜1。推定しない入力元は 0）
         private readonly float _cheekPuffEstimate;
+        private readonly float _mouthLeft;
+        private readonly float _mouthRight;
 
-        public PerfectSyncBoost(float pucker, float cheekPuff, float lips, float cheekPuffEstimate)
+        public PerfectSyncBoost(float pucker, float mouth, float cheekPuff, float lips, float cheekPuffEstimate,
+            float mouthLeft, float mouthRight)
         {
             _pucker = pucker;
+            _mouth = mouth;
             _cheekPuff = cheekPuff;
             _lips = lips;
             _cheekPuffEstimate = cheekPuffEstimate;
+            _mouthLeft = mouthLeft;
+            _mouthRight = mouthRight;
         }
 
         /// <summary>
@@ -71,14 +85,31 @@ namespace VRCast.Tracking
         }
 
         /// <summary>
+        /// 口の横ずれ shift（正 = 映像の右、両目幅に対する割合）から、映像基準の口の左右（0〜1）を返す。
+        /// </summary>
+        public static void EstimateMouthSides(float shift, out float imageLeft, out float imageRight)
+        {
+            imageRight = Mathf.InverseLerp(MouthShiftStart, MouthShiftFull, shift);
+            imageLeft = Mathf.InverseLerp(MouthShiftStart, MouthShiftFull, -shift);
+        }
+
+        /// <summary>
         /// ARKit 名の位置 index の値 value（0〜1）を倍率で強め、0〜1 に収めて返す（対象外の名前はそのまま）。
         /// </summary>
         public float Apply(int index, float value)
         {
-            // 頬のふくらみは、受信値と推定値の大きい方を強める
+            // 頬のふくらみ・口の左右は、受信値と推定値の大きい方を強める
             if (index == CheekPuff)
             {
                 value = Mathf.Max(value, _cheekPuffEstimate);
+            }
+            else if (index == MouthLeft)
+            {
+                value = Mathf.Max(value, _mouthLeft);
+            }
+            else if (index == MouthRight)
+            {
+                value = Mathf.Max(value, _mouthRight);
             }
 
             // 名前の組に応じた倍率（1 未満は 1 とみなし、弱めない）
@@ -88,10 +119,15 @@ namespace VRCast.Tracking
 
         private float GainFor(int index)
         {
-            // ふくれっ面・頬ふくらませ・唇の順に判定し、どれでもなければ強調しない
+            // ふくれっ面・口の左右・頬ふくらませ・唇の順に判定し、どれでもなければ強調しない
             if (index == MouthPucker || index == MouthFunnel)
             {
                 return _pucker;
+            }
+
+            if (index == MouthLeft || index == MouthRight)
+            {
+                return _mouth;
             }
 
             if (index == CheekPuff)
