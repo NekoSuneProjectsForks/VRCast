@@ -91,6 +91,8 @@
   <a href="#perfectsync"><span class="ko">퍼펙트 싱크화</span></a>
   <a href="#tracking"><span class="ko">트래킹</span></a>
   <a href="#settings"><span class="ko">설정·초기화</span></a>
+  <a href="#performance"><span class="ko">성능</span></a>
+  <a href="#info"><span class="ko">정보</span></a>
   <a href="#keys"><span class="ko">조작 목록</span></a>
   <a href="#trouble"><span class="ko">문제 해결</span></a>
 </nav>
@@ -172,6 +174,11 @@
         <span class="ko"><span class="ui">아바타</span> 탭의 <span class="ui">최근 사용한 아바타</span>에 최근 사용한 아바타가 최대 10개 표시되며, 클릭하여 전환할 수 있습니다. 이름 아래에는 넣은 (드롭·찾아보기·불러오기) 날짜가 표시됩니다 (<span class="ui">×</span>를 누른 뒤 <span class="ui">제거</span>로 목록에서 제거).
           카메라·조명·아바타 밝기·대기 포즈·몸 방향은 아바타마다 기억되어 전환하면 복원됩니다.</span>
         </li>
+    <li>
+        <span class="ko">목록은 아바타마다 이미지가 있는 타일로 표시됩니다. 타일의 <span class="ui">이미지</span>로 PNG / JPG / GIF(GIF는 애니메이션됩니다)를 설정할 수 있습니다.
+          표시 중인 아바타는 이미지를 창에 드롭해도 설정됩니다. 제거하려면 <span class="ui">상태</span>의 <span class="ui">이미지 제거</span>를 누르세요.
+          이미지가 없는 아바타는 불러올 때 얼굴을 자동으로 촬영해 목록 이미지로 사용합니다. <span class="ui">상태</span>의 <span class="ui">얼굴 촬영</span>으로 다시 찍을 수 있습니다.</span>
+        </li>
   </ul>
   <p class="note warn ko"><code>.vrcaster</code>와 <code>.vrm</code> 이외의 파일 (이미지나 unitypackage 등)은 불러올 수 없습니다. <code>.vrcaster</code>에서 오류가 표시되면 다시 내보내세요.</p>
 
@@ -194,7 +201,7 @@
   <h2><span class="ko">3. OBS에 표시하기</span></h2>
   <ol class="steps">
     <li>
-        <span class="ko">VRCast의 <span class="ui">시작하기</span> 탭 (또는 <span class="ui">표시</span> 탭)에서 배경을 <span class="ui">투명</span>하게 합니다.
+        <span class="ko">VRCast의 <span class="ui">시작하기</span> 탭 (또는 <span class="ui">그래픽</span> 탭)에서 배경을 <span class="ui">투명</span>하게 합니다.
         VRCast 창에서는 배경색이 그대로 보이지만, OBS에서는 배경이 투명해집니다.</span>
         </li>
     <li>
@@ -264,13 +271,14 @@
 </section>
 
 <section id="look">
-  <h2><span class="ko">외형·조명 (표시 탭)</span></h2>
+  <h2><span class="ko">외형·조명 (표시·그래픽 탭)</span></h2>
+  <p class="ko">카메라와 해상도는 <span class="ui">표시</span> 탭, 배경·조명·윤곽선은 <span class="ui">그래픽</span> 탭에 있습니다.</p>
   <table>
     <tr><th><span class="ko">항목</span></th>
         <th><span class="ko">내용</span></th></tr>
     <tr><td><span class="ko">카메라</span></td>
         <td>
-            <span class="ko">화각 변경과 초기화. 오른쪽 드래그로 회전, 가운데 드래그로 이동, 휠로 확대·축소. 카메라 위치와 화각은 아바타마다 기억되며, 다시 시작한 후에도 유지됩니다. <span class="ui">카메라 고정</span>을 켜면 마우스 드래그·휠로 움직이지 않습니다 (화각과 초기화는 사용 가능).</span>
+            <span class="ko">화각 변경과 초기화. 오른쪽 드래그로 회전, 가운데 드래그로 이동, 휠로 확대·축소. 카메라 위치와 화각은 아바타마다 기억되며, 다시 시작한 후에도 유지됩니다. <span class="ui">카메라 고정</span>을 켜면 마우스 드래그·휠로 움직이지 않습니다 (화각과 초기화는 사용 가능). <span class="ui">아바타 안으로 들어가지 않기</span>(기본은 켜짐)가 켜져 있으면 가까이 가도 몸 앞에서 카메라가 멈추고, 그 이상은 화각을 좁혀 클로즈업합니다.</span>
             </td></tr>
     <tr><td><span class="ko">배경</span></td>
         <td>
@@ -287,21 +295,28 @@
             <span class="ui">방향</span> 0이면 정면에서 비춥니다. 조명으로 밝아지지 않으면 <span class="ui">아바타 밝기</span>를 올립니다. 조명과 아바타 밝기는 아바타마다 기억됩니다.</span>
             </td></tr>
     <tr><td><span class="ko">윤곽선</span></td>
-        <td><span class="ko"><span class="ui">굵기</span>로 아바타 윤곽선 (lilToon / MToon / Poiyomi / UTS)을 굵게·가늘게 할 수 있습니다 (0~3, 1 = 머티리얼 그대로, 0 = 윤곽선 없음). <span class="ui">머티리얼 그대로 (1)</span>로 되돌립니다. 아바타마다 기억됩니다.</span></td></tr>
+        <td>
+            <span class="ko"><span class="ui">굵기</span>로 아바타 윤곽선 (lilToon / MToon / Poiyomi / UTS)을 굵게·가늘게 할 수 있습니다 (0~3, 1 = 머티리얼 그대로, 0 = 윤곽선 없음). <span class="ui">머티리얼 그대로 (1)</span>로 되돌립니다. 아바타마다 기억됩니다.</span>
+            </td></tr>
   </table>
-  <p class="ko"><span class="ui">포즈·표정</span> 탭에서는 아바타의 방향·팔 내리는 정도·표정을 변경할 수 있습니다.
+  <p class="ko"><span class="ui">몸·포즈</span> 탭에서는 아바타의 방향·팔 내리는 정도를, <span class="ui">얼굴·표정</span> 탭에서는 표정을 변경할 수 있습니다.
     표정마다 단축키를 할당할 수 있습니다 (기본은 모두 미할당). 키 버튼을 누른 뒤 할당할 키를 누르고 (<code>Ctrl+Alt+N</code> 같은 동시 입력, 숫자 키패드 (NumLock 켜짐에서 숫자 키와 구별), 기호 키, 오른쪽 Ctrl 등의 단독 키 (눌렀다 떼기), 마우스 사이드 버튼도 가능), <span class="ui">Esc</span>로 취소합니다 (Tab은 사용할 수 없습니다). 옆의 <span class="ui">초기화</span>로 할당을 해제합니다 (아바타별로 저장).
     <span class="ui">VRCast가 뒤에 있을 때도 사용</span>(기본 켜짐)이면 OBS 등을 조작하는 중에도 전환할 수 있습니다. 다른 앱에서 입력하는 동안에도 반응하므로 Ctrl이나 Alt와의 조합을 권장합니다.
     버튼·키로 고른 표정은 고정되어 자동 감지로 바뀌지 않습니다. 같은 표정을 다시 고르거나 <span class="ui">자동 감지로 복귀</span>를 누르면 돌아갑니다.
     소품 전환 등도 포함한 클립에서 BlendShape만 꺼낸 표정은 기본적으로 목록에 나오지 않습니다. <span class="ui">다른 클립도 표시</span>를 켜면 나옵니다 (해당 클립이 있는 아바타에서만 표시).
-    <span class="ui">OSC / HTTP</span> 탭 (출력과 설정 사이)에는 불러온 아바타의 표정별 명령이 나열되며 (<span class="ui">복사</span>로 복사), 포트 아래에 OSC 대상과 HTTP URL이 표시됩니다 (<span class="ui">브라우저에서 상태 열기</span>로 동작 확인. Stream Deck에서는 "웹사이트"의 "백그라운드에서 GET"에 URL 전체를 설정). <span class="ui">외부 조작 (OSC / HTTP)</span>을 켜면 Stream Deck이나 OSC 앱에서 표정을 전환할 수 있습니다 (이 PC에서만. 예: <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>, OSC <code>/vrcast/expression "Smile"</code>. 번호는 0 = 무표정, 1 이후 = 표정 순서).</p>
-  <p class="ko"><span class="ui">대기 모션</span>(기본 켜짐, Humanoid만)은 웹캠을 쓰지 않을 때 아바타가 완전히 멈춰 보이지 않도록 호흡·몸 흔들림·머리 흔들림을 조금 더합니다.
+    <span class="ui">단축키·연동</span> 탭에는 불러온 아바타의 표정별 명령이 나열되며 (<span class="ui">복사</span>로 복사), 포트 아래에 OSC 대상과 HTTP URL이 표시됩니다 (<span class="ui">브라우저에서 상태 열기</span>로 동작 확인. Stream Deck에서는 "웹사이트"의 "백그라운드에서 GET"에 URL 전체를 설정). <span class="ui">외부 조작 (OSC / HTTP)</span>을 켜면 Stream Deck이나 OSC 앱에서 표정을 전환할 수 있습니다 (이 PC에서만. 예: <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>, OSC <code>/vrcast/expression "Smile"</code>. 번호는 0 = 무표정, 1 이후 = 표정 순서).</p>
+  <p class="ko"><span class="ui">몸·포즈</span> 탭의 <span class="ui">대기 모션</span>(기본 켜짐, Humanoid만)은 웹캠을 쓰지 않을 때 아바타가 완전히 멈춰 보이지 않도록 호흡·몸 흔들림·머리 흔들림을 조금 더합니다.
     <span class="ui">호흡 · 몸 흔들림</span>을 끄면 멈춥니다. 켜져 있을 때는 <span class="ui">호흡</span>·<span class="ui">몸 흔들림</span>·<span class="ui">머리 흔들림</span>의 강도 (0~2, 1이 표준)와 <span class="ui">속도</span> (0.5~2배)를 조정할 수 있습니다.
-    얼굴 트래킹 중에는 머리 흔들림을 멈추고 본인의 움직임을 따릅니다.</p>
+    얼굴 트래킹 중에는 머리 흔들림을 멈추고 본인의 움직임을 따릅니다.
+    같은 탭의 <span class="ui">흔들림</span>에서 흔들림 (PhysBone 근사)을 켜고 끌 수 있습니다.</p>
 </section>
 
 <section id="objects">
-  <h2><span class="ko">의상·소품 켜고 끄기 (오브젝트 탭)</span></h2>
+  <h2><span class="ko">의상·소품·파티클 켜고 끄기 (오브젝트 탭)</span></h2>
+  <p class="ko">아바타에 파티클(Particle System)이 있으면 <span class="ui">오브젝트</span> 탭 아래에 <span class="ui">파티클</span> 항목이 나옵니다. 이펙트별 스위치나 <span class="ui">모두 켜기</span> / <span class="ui">모두 끄기</span>로 표시를 전환할 수 있습니다 (아바타별로 저장).
+    처음에는 VRChat의 초기 상태(FX 토글) 그대로이며, 켜면 숨겨진 상위 오브젝트도 표시합니다. 새 내보내기 도구로 다시 내보낸 아바타에서 사용할 수 있습니다.
+    꺼져 있는 파티클도 내보내므로 내보내기 전에 모두 켤 필요가 없습니다. VRChat에서 함께 켜고 끄는 것(FX 토글·이펙트 폴더)은 하나로 묶어 표시합니다.
+    <span class="ui">이름 변경</span>으로 표시 이름을 붙일 수 있고 (비워 두면 Unity의 이름으로 돌아감), 각 행 아래에 Unity의 경로가 나옵니다.</p>
   <p class="ko">아바타의 내용이 Unity의 Hierarchy와 같은 순서로 나옵니다. 체크하면 표시, 해제하면 숨깁니다 (Unity Inspector의 체크와 같음). 전환은 아바타별로 저장됩니다.
     내보내기 도구의 <span class="ui">비활성 오브젝트도 내보내기</span>(기본 켜짐)를 켜고 내보내면 씬에서 꺼 둔 의상·소품도 꺼진 상태로 들어가므로 여기서 켤 수 있습니다 (1.18.7 이후의 내보내기 도구).</p>
   <p class="ko"><span class="ui">VRChat 메뉴로 전환하는 것만</span>을 켜면 VRChat Expression Menu(FX 토글)로 전환하는 의상·소품만 나열됩니다 (해당하는 것이 있는 아바타는 처음부터 켜짐).
@@ -310,7 +325,7 @@
 </section>
 
 <section id="face">
-  <h2><span class="ko">립싱크·눈 깜빡임 (얼굴 탭)</span></h2>
+  <h2><span class="ko">립싱크·눈 깜빡임 (얼굴·표정 탭)</span></h2>
   <ul>
     <li>
         <span class="ko"><span class="ui">마이크로 립싱크</span>를 켜고 마이크를 선택한 뒤, <span class="ui">음량</span> 미터를 보면서
@@ -321,13 +336,13 @@
         판별이 어긋나면 <span class="ui">목소리 높이 보정</span>을 움직입니다 (목소리가 높은 사람은 오른쪽).</span>
         </li>
     <li>
-        <span class="ko">흔들림 (PhysBone 근사)과 자동 눈 깜빡임도 켜고 끌 수 있습니다.</span>
+        <span class="ko">자동 눈 깜빡임도 켜고 끌 수 있습니다 (흔들림은 <span class="ui">몸·포즈</span> 탭).</span>
         </li>
     <li>
         <span class="ko"><span class="ui">표정 중에는 눈 깜빡이지 않기</span>를 켜면 표정을 짓는 동안 자동 눈 깜빡임과 트래킹의 눈 깜빡임이 모두 멈춰 표정의 눈 모양이 흐트러지지 않습니다.</span>
         </li>
     <li>
-        <span class="ko"><span class="ui">흔들림 / 눈 깜빡임 / 시선</span>의 <span class="ui">카메라 시선</span>을 켜면 눈을 화면으로 향하게 합니다 (트래킹 시선 대신 사용하며 트래킹을 꺼도 동작). 패널 아래 버튼이나 단축키 (기본값: 숫자 키패드 5. <span class="ui">설정</span> 탭에서 변경 가능)로도 전환할 수 있습니다.</span>
+        <span class="ko"><span class="ui">눈 깜빡임 / 시선</span>의 <span class="ui">카메라 시선</span>을 켜면 눈을 화면으로 향하게 합니다 (트래킹 시선 대신 사용하며 트래킹을 꺼도 동작). 패널 아래 버튼이나 단축키 (기본값: 숫자 키패드 5. <span class="ui">단축키·연동</span> 탭에서 변경 가능)로도 전환할 수 있습니다.</span>
         </li>
     <li>
         <span class="ko"><span class="ui">표정 중에는 마이크 립싱크 멈추기</span>·<span class="ui">표정 중에는 트래킹의 입 멈추기</span>를 켜면 표정을 짓는 동안 각각의 입 움직임이 멈춥니다 (따로 고를 수 있고 둘 다 켤 수도 있습니다. 표정의 입과 립싱크가 겹치면 깨지는 아바타용).</span>
@@ -343,14 +358,28 @@
   <h2><span class="ko">퍼펙트 싱크화 (퍼펙트 싱크화 탭)</span></h2>
   <p class="ko">ARKit 이름의 BlendShape가 없는 아바타도 얼굴에 표시를 찍으면 퍼펙트 싱크용 51종의 형상을 자동으로 만들 수 있습니다. 원래 있는 BlendShape('아'·눈 깜빡임·웃음 등)는 자동으로 할당해 사용합니다. 결과는 새 <code>.vrcaster</code>로 다른 이름으로 저장하며 원본 파일은 바꾸지 않습니다.</p>
   <ul>
-    <li><span class="ko">메시의 정점을 읽기 때문에 2.0.0 이후의 내보내기 도구로 다시 내보낸 <code>.vrcaster</code>가 필요합니다 (VRM은 대상 외). 탭의 <span class="ui">편집 시작</span>으로 편집 화면으로 이동합니다. 편집 중에는 출력에도 얼굴 클로즈업이 나오고, 흔들림·대기 모션·트래킹·눈 깜빡임·립싱크는 멈춥니다 (닫으면 원래대로 돌아옵니다).</span></li>
-    <li><span class="ko"><span class="ui">1. 표시</span>: <span class="ui">얼굴 메시</span>와 <span class="ui">세밀도</span>(<span class="ui">최소 (약 10점)</span> / <span class="ui">표준 (약 20점)</span> / <span class="ui">상세 (약 40점)</span>)를 고르고, 그림에서 빛나는 표시를 얼굴 위에서 왼쪽 클릭해 찍습니다. 드래그로 움직일 수 있습니다 (시점은 얼굴 정면에 고정되며 휠로 확대·가운데 드래그로 이동. <span class="ui">시점을 얼굴 정면에 고정</span>을 끄면 오른쪽 드래그로 회전). 잘못 찍었을 때는 그림 아래의 <span class="ui">실행 취소</span>(Ctrl+Z)로 하나씩 되돌리고, <span class="ui">지우기</span>(Delete 키)로 선택한 표시(찍지 않았다면 방금 찍은 표시)를 지울 수 있습니다.
-        <span class="ui">왼쪽 표시를 오른쪽에도 반영 (좌우 대칭)</span>이 켜져 있으면 오른쪽은 자동으로 놓입니다. '아바타의 왼쪽'은 정면에서 볼 때 오른쪽입니다(표시 이름에도 '화면 오른쪽·아바타의 왼쪽'처럼 나옵니다). 최소 표시(눈·눈썹·입꼬리·입술·턱)가 갖춰지면 <span class="ui">생성해서 확인</span>을 누릅니다.</span></li>
-    <li><span class="ko"><span class="ui">2. 형상</span>: 형상마다 <span class="ui">자동 생성</span> / <span class="ui">기존 BlendShape</span> / <span class="ui">없음</span>과 <span class="ui">강도</span>를 고르고 <span class="ui">반영</span>으로 확인합니다. 눈의 움직임(eyeLook)은 눈 본이 시선으로 움직이므로 기본값은 <span class="ui">없음</span>입니다(눈 본이 없는 아바타는 <span class="ui">자동 생성</span>). 만들어도 움직일 부분이 없었던 형상에는 <span class="ui">움직일 부분 없음</span>이 표시되므로 <span class="ui">기존 BlendShape</span> 또는 <span class="ui">없음</span>을 고르세요.</span></li>
-    <li><span class="ko"><span class="ui">이 아바타에 없는 부위</span>에서 <span class="ui">눈썹</span> / <span class="ui">코</span> / <span class="ui">입 안</span>을 고르면 그 부위의 표시는 찍지 않아도 되고, 그 부위의 형상은 기본값이 <span class="ui">없음</span>이 됩니다(입 안이나 혀가 만들어지지 않은 아바타는 '아' 등 기존 BlendShape로 입을 움직입니다). 별도의 치아·혀 메시가 없는 아바타에서는 <span class="ui">치아·혀 메시도 턱과 함께 움직이기</span>를 고를 수 없습니다.</span></li>
-    <li><span class="ko"><span class="ui">자동으로 찍기</span>의 두 버튼으로 아직 찍지 않은 표시를 자동으로 놓을 수 있습니다(찍은 표시는 바뀌지 않으며 <span class="ui">실행 취소</span>로 취소할 수 있습니다). <span class="ui">BlendShape에서</span>는 아바타의 눈 깜빡임·'아'·'우'·눈썹 BlendShape로 움직이는 부분에서 눈·입·눈썹·코끝을 구합니다. <span class="ui">이미지 인식</span>은 얼굴을 정면으로 한 뒤 누르면 지금 화면의 얼굴을 MediaPipe로 인식해 놓습니다(애니메이션풍 얼굴은 찾지 못할 수 있습니다). 둘 다 위치는 대략적이므로 어긋난 표시는 드래그로 고치세요.</span></li>
-    <li><span class="ko">저장하기 전에 <span class="ui">2. 형상</span>의 <span class="ui">실제 트래킹으로 확인 (저장하기 전에)</span>를 켜면, 확인 중인 형상 그대로 자신의 얼굴 움직임으로 확인할 수 있습니다(트래킹 탭에서 트래킹과 <span class="ui">퍼펙트 싱크</span>를 켜 두세요). 형상을 바꾸면 <span class="ui">반영</span>으로 갱신됩니다.</span></li>
-    <li><span class="ko"><span class="ui">다른 이름으로 저장...</span>(기본값: '원래 이름_PerfectSync.vrcaster')으로 저장하고 <span class="ui">저장한 아바타 불러오기</span>로 열면 트래킹 탭의 <span class="ui">퍼펙트 싱크</span>로 얼굴이 움직입니다. 퍼펙트 싱크 버전을 다시 편집하면 저장한 표시에서 이어서 고칠 수 있습니다. 이 파일은 2.0.0 이전의 VRCast에서는 열 수 없습니다. <span class="ui">닫기</span>를 누르면 확인이 나오고, <span class="ui">저장하지 않고 닫기</span>로 저장하지 않은 변경을 버리고 원래 화면으로 돌아갑니다.</span></li>
+    <li>
+        <span class="ko">메시의 정점을 읽기 때문에 2.0.0 이후의 내보내기 도구로 다시 내보낸 <code>.vrcaster</code>가 필요합니다 (VRM은 대상 외). 탭 목록 맨 아래의 보라색 <span class="ui">퍼펙트 싱크화</span> 탭에서 <span class="ui">편집 시작</span>으로 편집 화면으로 이동합니다. 편집 중에는 출력에도 얼굴 클로즈업이 나오고, 흔들림·대기 모션·트래킹·눈 깜빡임·립싱크는 멈춥니다 (닫으면 원래대로 돌아옵니다).</span>
+        </li>
+    <li>
+        <span class="ko"><span class="ui">1. 표시</span>: <span class="ui">얼굴 메시</span>와 <span class="ui">세밀도</span>(<span class="ui">최소 (약 10점)</span> / <span class="ui">표준 (약 20점)</span> / <span class="ui">상세 (약 40점)</span>)를 고르고, 그림에서 빛나는 표시를 얼굴 위에서 왼쪽 클릭해 찍습니다. 드래그로 움직일 수 있습니다 (시점은 얼굴 정면에 고정되며 휠로 확대·가운데 드래그로 이동. <span class="ui">시점을 얼굴 정면에 고정</span>을 끄면 오른쪽 드래그로 회전). 잘못 찍었을 때는 그림 아래의 <span class="ui">실행 취소</span>(Ctrl+Z)로 하나씩 되돌리고, <span class="ui">지우기</span>(Delete 키)로 선택한 표시(찍지 않았다면 방금 찍은 표시)를 지울 수 있습니다.
+        <span class="ui">왼쪽 표시를 오른쪽에도 반영 (좌우 대칭)</span>이 켜져 있으면 오른쪽은 자동으로 놓입니다. '아바타의 왼쪽'은 정면에서 볼 때 오른쪽입니다(표시 이름에도 '화면 오른쪽·아바타의 왼쪽'처럼 나옵니다). 최소 표시(눈·눈썹·입꼬리·입술·턱)가 갖춰지면 <span class="ui">생성해서 확인</span>을 누릅니다.</span>
+        </li>
+    <li>
+        <span class="ko"><span class="ui">2. 형상</span>: 형상마다 <span class="ui">자동 생성</span> / <span class="ui">기존 BlendShape</span> / <span class="ui">없음</span>과 <span class="ui">강도</span>를 고르고 <span class="ui">반영</span>으로 확인합니다. 눈의 움직임(eyeLook)은 눈 본이 시선으로 움직이므로 기본값은 <span class="ui">없음</span>입니다(눈 본이 없는 아바타는 <span class="ui">자동 생성</span>). 만들어도 움직일 부분이 없었던 형상에는 <span class="ui">움직일 부분 없음</span>이 표시되므로 <span class="ui">기존 BlendShape</span> 또는 <span class="ui">없음</span>을 고르세요.</span>
+        </li>
+    <li>
+        <span class="ko"><span class="ui">이 아바타에 없는 부위</span>에서 <span class="ui">눈썹</span> / <span class="ui">코</span> / <span class="ui">입 안</span>을 고르면 그 부위의 표시는 찍지 않아도 되고, 그 부위의 형상은 기본값이 <span class="ui">없음</span>이 됩니다(입 안이나 혀가 만들어지지 않은 아바타는 '아' 등 기존 BlendShape로 입을 움직입니다). 별도의 치아·혀 메시가 없는 아바타에서는 <span class="ui">치아·혀 메시도 턱과 함께 움직이기</span>를 고를 수 없습니다. 없는 부위가 있는 아바타에서는 기대한 대로 움직이지 않을 수 있습니다.</span>
+        </li>
+    <li>
+        <span class="ko"><span class="ui">자동으로 찍기</span>의 두 버튼으로 아직 찍지 않은 표시를 자동으로 놓을 수 있습니다(찍은 표시는 바뀌지 않으며 <span class="ui">실행 취소</span>로 취소할 수 있습니다). <span class="ui">BlendShape에서</span>는 아바타의 눈 깜빡임·'아'·'우'·눈썹 BlendShape로 움직이는 부분에서 눈·입·눈썹·코끝을 구합니다. <span class="ui">이미지 인식</span>은 얼굴을 정면으로 한 뒤 누르면 지금 화면의 얼굴을 MediaPipe로 인식해 놓습니다(애니메이션풍 얼굴은 찾지 못할 수 있습니다). 둘 다 위치는 대략적이므로 어긋난 표시는 드래그로 고치세요.</span>
+        </li>
+    <li>
+        <span class="ko">저장하기 전에 <span class="ui">2. 형상</span>의 <span class="ui">실제 트래킹으로 확인 (저장하기 전에)</span>를 켜면, 확인 중인 형상 그대로 자신의 얼굴 움직임으로 확인할 수 있습니다(트래킹 탭에서 트래킹과 <span class="ui">퍼펙트 싱크</span>를 켜 두세요). 형상을 바꾸면 <span class="ui">반영</span>으로 갱신됩니다.</span>
+        </li>
+    <li>
+        <span class="ko"><span class="ui">다른 이름으로 저장...</span>(기본값: '원래 이름_PerfectSync.vrcaster')으로 저장하고 <span class="ui">저장한 아바타 불러오기</span>로 열면 트래킹 탭의 <span class="ui">퍼펙트 싱크</span>로 얼굴이 움직입니다. 퍼펙트 싱크 버전을 다시 편집하면 저장한 표시에서 이어서 고칠 수 있습니다. 이 파일은 2.0.0 이전의 VRCast에서는 열 수 없습니다. <span class="ui">닫기</span>를 누르면 확인이 나오고, <span class="ui">저장하지 않고 닫기</span>로 저장하지 않은 변경을 버리고 원래 화면으로 돌아갑니다.</span>
+        </li>
   </ul>
 </section>
 
@@ -367,7 +396,13 @@
         <span class="ko"><span class="ui">입력 소스</span>는 세로로 나열된 스위치 중 하나를 켜서 고릅니다. 각 줄 오른쪽 (폭이 부족하면 스위치 아래)에 권장 (MediaPipe)과 PC 부하 기준 (낮음·보통·높음)이 표시됩니다. MediaPipe는 <span class="ui">팔·손</span>을 끄면 가벼워지고, iPhone 등에서 받는 입력 소스는 스마트폰에서 추정하므로 PC 부하가 낮습니다.</span>
         </li>
     <li>
-        <span class="ko"><span class="ui">눈 깜빡임 트래킹</span>(기본은 켜짐)을 끄면 눈의 개폐를 따라가지 않고 얼굴 탭의 자동 눈 깜빡임을 사용합니다 (퍼펙트 싱크에서도 눈 깜빡임만은 움직이지 않습니다).</span>
+        <span class="ko"><span class="ui">눈 깜빡임 트래킹</span>(기본은 켜짐)을 끄면 눈의 개폐를 따라가지 않고 얼굴·표정 탭의 자동 눈 깜빡임을 사용합니다 (퍼펙트 싱크에서도 눈 깜빡임만은 움직이지 않습니다).</span>
+        </li>
+    <li>
+        <span class="ko">눈을 뜨고 있는데 아바타가 반쯤 감은 눈이 되면 <span class="ui">눈 뜨기 보정</span>(기본값 0)을 올립니다. 그 값까지 감긴 정도는 뜬 눈으로 취급하고, 깜빡임에서는 완전히 감깁니다 (퍼펙트 싱크와 표정 반영의 실눈 판정에도 적용되며, <span class="ui">눈 깜빡임 트래킹</span>이 켜져 있을 때만 표시됩니다).</span>
+        </li>
+    <li>
+        <span class="ko">눈을 깜빡이거나 옆을 볼 때 의도치 않게 윙크가 되거나 양쪽 눈의 뜨인 정도가 달라지면 <span class="ui">양쪽 눈 맞추기</span>(기본은 <span class="ui">끄기</span>)를 선택합니다. <span class="ui">항상</span>은 양쪽 눈을 항상 맞춥니다 (깜빡임은 되지만 윙크는 할 수 없습니다). <span class="ui">옆을 볼 때만</span>은 얼굴이 옆을 향할 때만 맞춥니다 (퍼펙트 싱크에도 적용).</span>
         </li>
     <li>
         <span class="ko">감은 눈·윙크가 머리 기울기나 팔과 반대쪽이 될 때는 <span class="ui">움직임</span> 항목의 <span class="ui">얼굴 좌우 바꾸기</span>(기본은 꺼짐)를 켭니다. 얼굴 (눈 깜빡임·퍼펙트 싱크·시선)만 바뀌고, 머리 방향과 팔은 <span class="ui">미러</span> 설정 그대로입니다.</span>
@@ -381,12 +416,19 @@
         <span class="ui">활성화 조건</span>에서 <span class="ui">20종 이상</span>(기본) 또는 <span class="ui">1종이라도</span>를 선택할 수 있으며, 지원 여부는 그 아래에 개수로 표시됩니다. 퍼펙트 싱크 중에는 <span class="ui">표정 반영</span>의 자동 전환이 멈춥니다(20종 미만으로 움직일 때는 함께 사용합니다).</span>
         </li>
     <li>
+        <span class="ko"><span class="ui">입·볼 움직임 강조</span>(기본은 켜짐)는 퍼펙트 싱크로 얼굴을 움직이는 동안에만, 카메라에서 약하게 잡히기 쉬운 <span class="ui">입 내밀기</span>·<span class="ui">입 좌우</span>·<span class="ui">볼 부풀리기</span>·<span class="ui">입술</span> 움직임을 배율(1~5)로 강하게 합니다(입 좌우 배율은 기본 1배).
+        움직임이 작으면 값을 올리고, 너무 쉽게 움직이면 낮추세요. MediaPipe에서는 입 좌우와 볼 부풀리기를 얼굴 형태로 추정합니다. 시작 후 몇 초 동안 무표정을 유지하면 평소 얼굴을 기억해 정확하게 측정합니다.
+        <span class="ui">볼 부풀리기 감지</span>의 <span class="ui">시작 (%)</span>은 무표정일 때 값보다 조금 위로, <span class="ui">최대 (%)</span>는 볼을 부풀렸을 때 값 정도로 설정합니다(현재 값은 설정 아래에 표시됩니다). 퍼펙트 싱크화의 <span class="ui">실제 트래킹으로 확인</span> 중에는 같은 설정이 왼쪽의 <span class="ui">입·볼 조정</span> 패널에도 나옵니다. 바꾼 값은 트래킹 탭에 바로 반영되고, <span class="ui">설정 저장</span>으로 파일에 남깁니다.</span>
+        </li>
+    <li>
         <span class="ko">카메라는 <span class="ui">&lt;</span> <span class="ui">&gt;</span>로 선택합니다. 움직이지 않으면 <span class="ui">트래커 다시 시작</span>.</span>
         </li>
     <li>
-        <span class="ko">입력 소스를 <span class="ui">iPhone·외부 앱 (VMC, 얼굴만)</span>으로 하면 카메라 대신 스마트폰 앱 (iPhone의 Waidayo 등)에서 VMC 프로토콜로 얼굴 움직임을 받습니다.
-        PC와 스마트폰을 같은 Wi-Fi에 연결하고, 트래킹 탭에 나오는 <span class="ui">이 PC의 IP 주소</span>와 <span class="ui">UDP 포트</span>(기본 39539)를 앱의 전송 대상에 입력하세요.
-        처음에는 Windows 방화벽 확인 창이 나오므로 개인 네트워크에서 허용하세요. ARKit 값을 보내는 앱이라면 퍼펙트 싱크와 표정 반영도 사용할 수 있습니다 (팔·손은 움직이지 않습니다).</span>
+        <span class="ko">입력 소스를 <span class="ui">iPhone·외부 앱 (VMC, 얼굴 + 전신)</span>으로 하면 카메라 대신 스마트폰 앱 (iPhone의 Waidayo 등)이나 PC 앱 (VirtualMotionCapture 등)에서 VMC 프로토콜로 움직임을 받습니다.
+        PC와 스마트폰을 같은 Wi-Fi에 연결하고, 트래킹 탭에 나오는 <span class="ui">이 PC의 IP 주소</span>와 <span class="ui">UDP 포트</span>(기본 39539)를 앱의 전송 대상에 입력하세요 (이 PC에서 실행하는 앱이면 127.0.0.1).
+        처음에는 Windows 방화벽 확인 창이 나오므로 개인 네트워크에서 허용하세요. ARKit 값을 보내는 앱이라면 퍼펙트 싱크와 표정 반영도 사용할 수 있습니다.
+        전신을 보내는 앱에서는 <span class="ui">전신 (전송 측 아바타의 움직임)</span>(기본은 켜짐)으로 허리·다리·팔·손가락과 몸 전체 위치도 전송 측 아바타처럼 움직입니다. 똑바로 서서 카메라 쪽을 보고 초기화의 <span class="ui">얼굴 방향</span>을 누르면 정면이 맞춰집니다.
+        <span class="ui">발을 바닥에 맞추기</span>(기본은 켜짐)는 전송 측과 아바타의 다리 길이 차이로 발이 뜨거나 파묻히지 않도록 무릎을 굽혀 발 위치를 맞춥니다.</span>
         </li>
     <li>
         <span class="ko">입력 소스를 <span class="ui">iFacialMocap (iPhone, 얼굴만)</span>으로 하면 iPhone의 iFacialMocap에서 얼굴 움직임을 받습니다.
@@ -402,6 +444,9 @@
     <li>
         <span class="ko"><span class="ui">몸의 움직임</span>에서 머리 움직임에 맞춰 상체를 기울일지 몸 전체를 움직일지 선택할 수 있습니다.</span>
         </li>
+    <li>
+        <span class="ko">전신을 비출 때 <span class="ui">전신 모드 (발 고정)</span>를 켜면 발을 바닥에 둔 채 허리도 상체의 기울기·이동을 따라가고 무릎을 굽혀 흡수합니다.</span>
+        </li>
   </ul>
   <p class="note warn ko">다른 앱 (Discord·Zoom·VSeeFace 등)이 웹캠을 사용 중이면 시작할 수 없습니다.</p>
 </section>
@@ -413,12 +458,28 @@
         <span class="ko"><span class="ui">표시 언어</span>: 자동 (OS에 맞춤) / English / 日本語 / 한국어 / 简体中文 / 繁體中文. 패널 위쪽의 언어 버튼으로 어느 탭에서든 바꿀 수 있습니다.</span>
         </li>
     <li>
-        <span class="ko"><span class="ui">UI 크기</span>: 75%~200%.</span></li>
-    <li><span class="ko"><span class="ui">패널 불투명도</span>: 조작 패널과 퍼펙트 싱크화 편집 화면의 배경을 20%~100%로 비치게 할 수 있습니다 (글자는 흐려지지 않습니다).</span>
+        <span class="ko"><span class="ui">UI 크기</span>: 75%~200%.</span>
         </li>
     <li>
-        <span class="ko"><span class="ui">테마</span>: 라이트 (기본) / 다크. 표시 탭에서 배경색을 바꾸지 않았다면 배경도 테마에 맞춰 바뀝니다.</span>
+        <span class="ko"><span class="ui">패널 불투명도</span>: 조작 패널과 퍼펙트 싱크화 편집 화면의 배경을 20%~100%로 비치게 할 수 있습니다 (글자는 흐려지지 않습니다).</span>
         </li>
+    <li>
+        <span class="ko"><span class="ui">테마</span>: 라이트 (기본) / 다크. 그래픽 탭에서 배경색을 바꾸지 않았다면 배경도 테마에 맞춰 바뀝니다.</span>
+        </li>
+    <li>
+        <span class="ko">설정은 VRCast 종료 시 자동으로 저장되고, 다음 실행 시 복원됩니다.</span>
+        </li>
+    <li>
+        <span class="ko"><span class="ui">설정 프리셋</span>: 설정을 카테고리(동작 최적화·트래킹·출력 등)별로 골라 <code>.vrcastpreset</code> 파일로 내보내고(<span class="ui">내보내기...</span>), 다른 PC나 나중에 불러올 수 있습니다(<span class="ui">불러오기...</span> 또는 파일을 창에 끌어다 놓기). 불러올 때는 적용할 카테고리를 고른 뒤 <span class="ui">적용</span>을 누릅니다. <span class="ui">아바타 관련 제외</span>로 조명·포즈·표정 할당 등 아바타마다 맞추는 설정만 한 번에 뺄 수 있습니다. 아바타별 기록(셰이프 키·카메라·표정 키)과 마이크·카메라·포트 등 PC별 값은 포함하지 않습니다. 파일은 텍스트이므로 필요 없는 카테고리를 지워서 쓸 수도 있습니다.</span>
+        </li>
+  </ul>
+  <p class="note danger ko"><span class="ui">모든 설정 초기화</span> (빨간 버튼)를 누르고 확인에서 <span class="ui">초기화하기</span>를 누르면 모든 설정이 초기 상태로 돌아갑니다
+    (창 크기와 마지막으로 연 아바타는 유지됩니다). 되돌릴 수 없습니다.</p>
+</section>
+
+<section id="performance">
+  <h2><span class="ko">성능 (성능 탭)</span></h2>
+  <ul>
     <li>
         <span class="ko"><span class="ui">저부하 모드</span> (기본은 켜짐): 화면을 30fps (끄면 60fps)로 제한하고 OpenSeeFace는 가벼운 모델을 써서 게임이나 OBS와 함께 쓸 때의 부하를 줄입니다. MediaPipe의 부하는 트래킹 탭의 <span class="ui">트래커 동작</span>에서 고릅니다.</span>
         </li>
@@ -440,23 +501,28 @@
     <li>
         <span class="ko"><span class="ui">NVIDIA 인스턴트 리플레이</span> (NVIDIA GPU가 있는 PC에서만 표시): <span class="ui">NVIDIA 인스턴트 리플레이가 감지하지 않게 하기</span>를 누르면 VRCast가 인스턴트 리플레이(ShadowPlay)에 게임으로 감지되지 않도록 드라이버 설정에 VRCast용 프로필을 씁니다. VRCast를 다시 시작하면 적용됩니다. <span class="ui">NVIDIA 인스턴트 리플레이 감지 되돌리기</span>로 되돌릴 수 있습니다. 비공식 설정이라 드라이버에 따라 효과가 없을 수 있습니다. 변경하지 못했다고 표시되면 VRCast를 관리자 권한으로 실행해 보세요.</span>
         </li>
+  </ul>
+</section>
+
+<section id="info">
+  <h2><span class="ko">정보 (정보 탭)</span></h2>
+  <ul>
     <li>
         <span class="ko"><span class="ui">업데이트</span>: 시작할 때 새 버전이 있는지 확인하고, 있으면 패널 위쪽에 알립니다 (<span class="ui">GitHub에서 다운로드</span> / <span class="ui">BOOTH에서 다운로드</span> / <span class="ui">업데이트 내역 보기 (GitHub)</span>).
-        최신 버전 번호를 읽기 위해서만 웹사이트 (coffin299.github.io)에 접속합니다. 끌 수도 있습니다.</span>
+        최신 버전 번호를 읽기 위해서만 웹사이트 (coffin299.github.io)에 접속합니다. 끌 수도 있습니다.
+        <span class="ui">지금 업데이트</span>를 누르면 GitHub에서 새 버전을 다운로드해 파일을 교체하고 VRCast가 자동으로 다시 시작됩니다 (설정은 그대로). OBS나 Discord에서 가상 카메라를 사용하는 중에도 업데이트할 수 있습니다. VRCast를 Program Files 등 관리자 권한이 필요한 폴더에 둔 경우에는 자동 업데이트할 수 없으므로 다운로드 버튼에서 받으세요. 아바타 프로젝트에 넣은 내보내기 도구는 자동으로 업데이트되지 않습니다. 시간이 있을 때 zip에서 최신 버전을 가져오세요.</span>
         </li>
     <li>
-        <span class="ko">설정은 VRCast 종료 시 자동으로 저장되고, 다음 실행 시 복원됩니다.</span>
-        </li>
-    <li><span class="ko"><span class="ui">설정 프리셋</span>: 설정을 카테고리(동작 최적화·트래킹·출력 등)별로 골라 <code>.vrcastpreset</code> 파일로 내보내고(<span class="ui">내보내기...</span>), 다른 PC나 나중에 불러올 수 있습니다(<span class="ui">불러오기...</span> 또는 파일을 창에 끌어다 놓기). 불러올 때는 적용할 카테고리를 고른 뒤 <span class="ui">적용</span>을 누릅니다. <span class="ui">아바타 관련 제외</span>로 조명·포즈·표정 할당 등 아바타마다 맞추는 설정만 한 번에 뺄 수 있습니다. 아바타별 기록(셰이프 키·카메라·표정 키)과 마이크·카메라·포트 등 PC별 값은 포함하지 않습니다. 파일은 텍스트이므로 필요 없는 카테고리를 지워서 쓸 수도 있습니다.</span>
-        </li>
-    <li>
-        <span class="ko">개발자·협력자와 라이선스는 <span class="ui">크레딧</span> 탭에서 확인할 수 있습니다.
+        <span class="ko">개발자·협력자와 라이선스는 <span class="ui">크레딧</span>에서 확인할 수 있습니다.
         개발자의 <a href="https://www.twitch.tv/coffinnoob299">Twitch 채널</a>도 여기서 열 수 있습니다. 팔로우나 Prime 구독을 해 주시면 개발에 큰 힘이 됩니다.</span>
         </li>
-    <li><span class="ko">탭 목록 맨 아래의 <span class="ui">공식 Discord</span> 탭에서는 <a href="https://discord.gg/vM5RH52HdF">공식 Discord</a>에 참여하는 버튼과 서버의 온라인 인원·온라인 멤버, 복사할 수 있는 초대 코드(<code>vM5RH52HdF</code>)를 표시합니다.</span></li>
+    <li>
+        <span class="ko">정보 탭 아래의 <span class="ui">공식 Discord</span> 탭에서는 <a href="https://discord.gg/vM5RH52HdF">공식 Discord</a>에 참여하는 버튼과 서버의 온라인 인원·온라인 멤버, 복사할 수 있는 초대 코드(<code>vM5RH52HdF</code>)를 표시합니다. 맨 아래에는 다음에 지원했으면 하는 기능 등을 모집하는 <span class="ui">설문</span>이 있습니다.</span>
+        </li>
+    <li>
+        <span class="ko">맨 아래의 <span class="ui">디버그 로그</span>에서 카메라 목록·트래커 상태와 로그를 확인할 수 있습니다 (<a href="#trouble">문제 해결</a>).</span>
+        </li>
   </ul>
-  <p class="note danger ko"><span class="ui">모든 설정 초기화</span> (빨간 버튼)를 누르고 확인에서 <span class="ui">초기화하기</span>를 누르면 모든 설정이 초기 상태로 돌아갑니다
-    (창 크기와 마지막으로 연 아바타는 유지됩니다). 되돌릴 수 없습니다.</p>
 </section>
 
 <section id="keys">
@@ -474,13 +540,13 @@
         <td>
             <span class="ko">얼굴 방향 / 시선 / 표정 (무표정) / 카메라. 어느 탭에서든 누를 수 있습니다 (버튼 아래 줄에 할당된 단축키 표시)</span>
             </td></tr>
-    <tr><td><span class="ko">패널 아래쪽 설문</span></td>
+    <tr><td><span class="ko">공식 Discord 탭의 설문</span></td>
         <td>
-            <span class="ko">다음에 지원했으면 하는 기능 등을 모집합니다. <a href="https://github.com/coffin299/VRCast/issues/11">GitHub Issue</a> 또는 <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google 폼</a>에 자유롭게 적어 주세요. 탭 목록 맨 아래의 <span class="ui">공식 Discord</span> 탭에서 <a href="https://discord.gg/vM5RH52HdF">공식 Discord</a>에도 참여할 수 있습니다</span>
+            <span class="ko">다음에 지원했으면 하는 기능 등을 모집합니다. <a href="https://github.com/coffin299/VRCast/issues/11">GitHub Issue</a> 또는 <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google 폼</a>에 자유롭게 적어 주세요. 같은 탭에서 <a href="https://discord.gg/vM5RH52HdF">공식 Discord</a>에도 참여할 수 있습니다</span>
             </td></tr>
-    <tr><td><span class="ko">숫자 키패드 1~4</span></td>
+    <tr><td><span class="ko">숫자 키패드 1~5</span></td>
         <td>
-            <span class="ko">초기화 (1 얼굴 방향 / 2 시선 / 3 표정 / 4 카메라). 패널을 숨겨도 사용할 수 있으며 <span class="ui">설정</span> 탭의 <span class="ui">단축키 (초기화)</span>에서 변경·해제할 수 있습니다 (NumLock 켜짐. <span class="ui">VRCast가 뒤에 있을 때도 사용</span>은 기본 켜짐). 표정 단축키와 같은 키로 하면 경고가 나오고 표정이 우선됩니다</span>
+            <span class="ko">초기화 (1 얼굴 방향 / 2 시선 / 3 표정 / 4 카메라)와 5 카메라 시선 켜기 / 끄기. 패널을 숨겨도 사용할 수 있으며 <span class="ui">단축키·연동</span> 탭의 <span class="ui">단축키 (초기화·카메라 시선)</span>에서 변경·해제할 수 있습니다 (NumLock 켜짐. <span class="ui">VRCast가 뒤에 있을 때도 사용</span>은 기본 켜짐). 표정 단축키와 같은 키로 하면 경고가 나오고 표정이 우선됩니다</span>
             </td></tr>
     <tr><td><span class="ko">오른쪽 드래그</span></td>
         <td><span class="ko">카메라 회전</span></td></tr>
@@ -490,7 +556,7 @@
         <td><span class="ko">확대·축소</span></td></tr>
     <tr><td><span class="ko">할당한 키</span></td>
         <td>
-            <span class="ko">표정 전환 / 무표정 (<span class="ui">포즈</span> 탭에서 표정마다 할당. 기본값은 할당 없음)</span>
+            <span class="ko">표정 전환 / 무표정 (<span class="ui">얼굴·표정</span> 탭에서 표정마다 할당. 기본값은 할당 없음)</span>
             </td></tr>
   </table>
 </section>
@@ -499,7 +565,7 @@
   <h2><span class="ko">문제 해결</span></h2>
 
   <h3><span class="ko">아바타가 어둡다</span></h3>
-  <p class="ko"><span class="ui">표시</span> 탭의 <span class="ui">맑음</span> 프리셋을 누르거나 <span class="ui">환경광</span>을 올리세요.
+  <p class="ko"><span class="ui">그래픽</span> 탭의 <span class="ui">맑음</span> 프리셋을 누르거나 <span class="ui">환경광</span>을 올리세요.
     <span class="ui">방향</span>을 0 근처로 하면 정면에서 빛이 비춥니다.
     lilToon 등은 밝기가 텍스처 색까지로 제한되므로, 태양광을 올려도 일정 이상은 밝아지지 않습니다.
     그럴 때는 <span class="ui">아바타 밝기</span>를 올리세요 (0.1~10, 1 = 머티리얼 그대로).</p>
@@ -515,10 +581,10 @@
   <p class="ko">VRCast를 관리자 권한으로 실행하면 Windows 제한으로 드롭할 수 없습니다. 일반적으로 실행하거나 <span class="ui">파일 선택...</span>을 사용하세요.</p>
 
   <h3><span class="ko">게임이나 OBS와 함께 쓰면 트래킹이 끊긴다</span></h3>
-  <p class="ko"><span class="ui">설정</span> 탭의 <span class="ui">저부하 모드</span>가 켜져 있는지 확인하세요 (기본은 켜짐). MediaPipe라면 트래킹 탭의 <span class="ui">트래커 동작</span>을 <span class="ui">부드럽게</span>로 하면 부하가 줄고, <span class="ui">절약</span>으로 하면 다시 절반 정도가 됩니다 (기본값인 <span class="ui">매끄럽게 (고부하)</span>는 손가락을 매끄럽게 움직이기 위해 무거운 편입니다). 그래도 무거우면 쓰지 않는 팔·손 트래킹을 끄면 부하가 줄어듭니다. <span class="ui">프로세스 우선순위</span>를 「보통 이상」으로 하는 것도 효과가 있습니다.</p>
+  <p class="ko"><span class="ui">성능</span> 탭의 <span class="ui">저부하 모드</span>가 켜져 있는지 확인하세요 (기본은 켜짐). MediaPipe라면 트래킹 탭의 <span class="ui">트래커 동작</span>을 <span class="ui">부드럽게</span>로 하면 부하가 줄고, <span class="ui">절약</span>으로 하면 다시 절반 정도가 됩니다 (기본값인 <span class="ui">매끄럽게 (고부하)</span>는 손가락을 매끄럽게 움직이기 위해 무거운 편입니다). 그래도 무거우면 쓰지 않는 팔·손 트래킹을 끄면 부하가 줄어듭니다. <span class="ui">프로세스 우선순위</span>를 「보통 이상」으로 하는 것도 효과가 있습니다.</p>
 
   <h3><span class="ko">립싱크가 안 된다</span></h3>
-  <p class="ko"><span class="ui">얼굴</span> 탭에서 올바른 마이크가 선택되어 있는지, <span class="ui">음량</span> 미터가 움직이는지 확인하고,
+  <p class="ko"><span class="ui">얼굴·표정</span> 탭에서 올바른 마이크가 선택되어 있는지, <span class="ui">음량</span> 미터가 움직이는지 확인하고,
     움직이지 않으면 <span class="ui">마이크 감도</span>를 올리거나 <span class="ui">노이즈 게이트</span>를 낮추세요.</p>
 
   <h3><span class="ko">표정이 바뀌지 않는다</span></h3>
@@ -529,7 +595,7 @@
   <h3><span class="ko">카메라가 인식되지 않는다·트래킹이 안 된다</span></h3>
   <p class="ko">먼저 <span class="ui">트래킹</span> 탭의 <span class="ui">카메라</span>에서 사용 중인 웹캠이 선택되어 있는지 확인하세요.
     <code>VRCast Camera</code>(VRCast의 가상 카메라)·<code>OBS Virtual Camera</code> 등의 가상 카메라나 얼굴 인증용 적외선(IR) 카메라를 선택하면 영상은 들어와도 얼굴이 인식되지 않습니다.</p>
-  <p class="ko"><span class="ui">디버그 로그</span> 탭을 열면 카메라 목록·트래커 상태와 시작 후의 로그를 확인할 수 있습니다.
+  <p class="ko"><span class="ui">정보</span> 탭 맨 아래의 <span class="ui">디버그 로그</span>에서 카메라 목록·트래커 상태와 시작 후의 로그를 확인할 수 있습니다.
     <span class="ui">WARN</span> / <span class="ui">ERROR</span>만 표시하거나, 카테고리를 <code>Tracker</code> / <code>TrackerOutput</code> / <code>Tracking</code>(카메라 관련)으로 좁힐 수 있습니다.
     문제를 보고할 때는 <span class="ui">표시 중 복사</span>를 눌러 로그와 환경을 그대로 붙여 넣어 주세요.</p>
   <p class="ko">원인을 알 수 없을 때는 <span class="ui">상세 로그</span>를 켜고 증상이 나타날 때까지 기다린 뒤 복사해 주세요.

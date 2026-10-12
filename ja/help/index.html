@@ -91,6 +91,8 @@
   <a href="#perfectsync"><span class="ja">パーフェクトシンク化</span></a>
   <a href="#tracking"><span class="ja">トラッキング</span></a>
   <a href="#settings"><span class="ja">設定・リセット</span></a>
+  <a href="#performance"><span class="ja">パフォーマンス</span></a>
+  <a href="#info"><span class="ja">情報</span></a>
   <a href="#keys"><span class="ja">操作一覧</span></a>
   <a href="#trouble"><span class="ja">困ったとき</span></a>
 </nav>
@@ -182,7 +184,7 @@
 <section id="obs">
   <h2><span class="ja">3. OBS に映す</span></h2>
   <ol class="steps">
-    <li><span class="ja">VRCast の <span class="ui">はじめに</span> タブ（または <span class="ui">表示</span> タブ）で背景を <span class="ui">透過</span> にします。
+    <li><span class="ja">VRCast の <span class="ui">はじめに</span> タブ（または <span class="ui">グラフィック</span> タブ）で背景を <span class="ui">透過</span> にします。
         VRCast の画面では背景色のまま見えますが、OBS では背景が抜けます。</span>
         </li>
     <li><span class="ja">OBS の <span class="ui">ソース</span> の <span class="ui">+</span> から <span class="ui">ゲームキャプチャ</span> を追加します。</span>
@@ -238,7 +240,8 @@
 </section>
 
 <section id="look">
-  <h2><span class="ja">見た目・ライト（表示タブ）</span></h2>
+  <h2><span class="ja">見た目・ライト（表示・グラフィックタブ）</span></h2>
+  <p class="ja">カメラと解像度は <span class="ui">表示</span> タブ、背景・ライト・輪郭線は <span class="ui">グラフィック</span> タブにあります。</p>
   <table>
     <tr><th><span class="ja">項目</span></th>
         <th><span class="ja">内容</span></th></tr>
@@ -257,25 +260,27 @@
             <span class="ui">向き</span> 0 で正面から当たります。ライトで明るくならないときは <span class="ui">アバターの明るさ</span> を上げます。ライトとアバターの明るさはアバターごとに記憶されます。</span>
             </td></tr>
     <tr><td><span class="ja">輪郭線</span></td>
-        <td><span class="ja"><span class="ui">太さ</span> でアバターの輪郭線（lilToon / MToon / Poiyomi / UTS）を太く・細くできます（0〜3、1 = マテリアルのまま、0 = 輪郭線なし）。<span class="ui">マテリアルのまま（1）</span> で元に戻ります。アバターごとに記憶されます。</span></td></tr>
+        <td><span class="ja"><span class="ui">太さ</span> でアバターの輪郭線（lilToon / MToon / Poiyomi / UTS）を太く・細くできます（0〜3、1 = マテリアルのまま、0 = 輪郭線なし）。<span class="ui">マテリアルのまま（1）</span> で元に戻ります。アバターごとに記憶されます。</span>
+            </td></tr>
   </table>
-  <p class="ja"><span class="ui">ポーズ・表情</span> タブではアバターの向き・腕の下ろし方・表情を変更できます。
+  <p class="ja"><span class="ui">体・ポーズ</span> タブではアバターの向き・腕の下ろし方を、<span class="ui">顔・表情</span> タブでは表情を変更できます。
     表情ごとにショートカットキーを割り当てられます（既定はすべて未割り当て）。キーのボタンを押してから割り当てたいキーを押し（<code>Ctrl+Alt+N</code> のような同時押し、テンキー（NumLock ON で数字キーと区別）、記号キー、右 Ctrl などの単独（押して離す）、マウスのサイドボタンも可）、<span class="ui">Esc</span> でやめられます（Tab は使えません）。隣の <span class="ui">リセット</span> で割り当てを外します（アバターごとに保存）。
     <span class="ui">VRCast が背面にあるときも使う</span>（既定 ON）なら、OBS などを操作中でも切り替えられます。ほかのアプリで文字を入力している間も反応するため、Ctrl や Alt との組み合わせがおすすめです。
     ボタン・キーで選んだ表情は固定され、トラッキングの自動検出では変わりません。同じ表情をもう一度選ぶか <span class="ui">自動検出に戻す</span> で元に戻ります。
     小物の切り替えなども含むクリップから BlendShape だけを取り出した表情は、既定では一覧に出ません。<span class="ui">ほかのクリップも表示</span> を ON にすると出ます（該当するクリップがあるアバターだけ表示）。
-    <span class="ui">OSC / HTTP</span> タブ（出力と設定の間）で <span class="ui">外部から操作（OSC / HTTP）</span> を ON にすると、表示中のアバターの表情ごとのコマンドが一覧に並び（<span class="ui">コピー</span> でコピー）、ポートの下に OSC の送信先と HTTP の URL が表示されます（<span class="ui">ブラウザで状態を開く</span> で動作確認。Stream Deck では「Web サイト」の「バックグラウンドで GET」に URL 全体を設定）。Stream Deck や OSC アプリから表情を切り替えられます（この PC からのみ。例: <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>、OSC <code>/vrcast/expression "Smile"</code>。番号は 0 = ニュートラル、1 以降 = 表情の並び順）。</p>
-  <p class="ja"><span class="ui">待機モーション</span>（既定 ON、Humanoid のみ）は、Web カメラを使っていないときにアバターが完全に止まって見えないよう、呼吸・体の揺れ・頭のゆらぎを少し足します。
+    <span class="ui">操作・連携</span> タブで <span class="ui">外部から操作（OSC / HTTP）</span> を ON にすると、表示中のアバターの表情ごとのコマンドが一覧に並び（<span class="ui">コピー</span> でコピー）、ポートの下に OSC の送信先と HTTP の URL が表示されます（<span class="ui">ブラウザで状態を開く</span> で動作確認。Stream Deck では「Web サイト」の「バックグラウンドで GET」に URL 全体を設定）。Stream Deck や OSC アプリから表情を切り替えられます（この PC からのみ。例: <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>、OSC <code>/vrcast/expression "Smile"</code>。番号は 0 = ニュートラル、1 以降 = 表情の並び順）。</p>
+  <p class="ja"><span class="ui">体・ポーズ</span> タブの <span class="ui">待機モーション</span>（既定 ON、Humanoid のみ）は、Web カメラを使っていないときにアバターが完全に止まって見えないよう、呼吸・体の揺れ・頭のゆらぎを少し足します。
     <span class="ui">呼吸・体の揺れ</span> を OFF にすると止まります。ON のときは <span class="ui">呼吸</span>・<span class="ui">体の揺れ</span>・<span class="ui">頭のゆらぎ</span> の強さ（0〜2、1 が標準）と <span class="ui">速さ</span>（0.5〜2 倍）を調整できます。
-    顔のトラッキング中は頭のゆらぎを止め、本人の動きに任せます。</p>
-  <p class="ja">アバターにパーティクル（Particle System）があると、<span class="ui">パーティクル</span> 欄が出ます。エフェクトごとのスイッチ、または <span class="ui">すべて ON</span> / <span class="ui">すべて OFF</span> で表示を切り替えられます（アバターごとに保存）。
-    最初は VRChat の初期状態（FX のトグル）どおりで、ON にすると非表示の親のオブジェクトも表示します。新しい書き出しツールで書き出し直したアバターで使えます。
-    書き出し時に OFF のパーティクルも書き出されるので、書き出し前にすべて ON にする必要はありません。VRChat で一緒に ON/OFF するもの（FX のトグル・エフェクトのフォルダー）は 1 つにまとめて表示します。
-    <span class="ui">名前を変更</span> で表示名を付けられ（空にすると Unity 上の名前に戻ります）、各行の下に Unity 上の場所（パス）が出ます。</p>
+    顔のトラッキング中は頭のゆらぎを止め、本人の動きに任せます。
+    同じタブの <span class="ui">揺れもの</span> で、揺れもの（PhysBone の近似）を ON/OFF できます。</p>
 </section>
 
 <section id="objects">
-  <h2><span class="ja">衣装・小物の ON/OFF（オブジェクトタブ）</span></h2>
+  <h2><span class="ja">衣装・小物・パーティクルの ON/OFF（オブジェクトタブ）</span></h2>
+  <p class="ja">アバターにパーティクル（Particle System）があると、<span class="ui">オブジェクト</span> タブの下に <span class="ui">パーティクル</span> 欄が出ます。エフェクトごとのスイッチ、または <span class="ui">すべて ON</span> / <span class="ui">すべて OFF</span> で表示を切り替えられます（アバターごとに保存）。
+    最初は VRChat の初期状態（FX のトグル）どおりで、ON にすると非表示の親のオブジェクトも表示します。新しい書き出しツールで書き出し直したアバターで使えます。
+    書き出し時に OFF のパーティクルも書き出されるので、書き出し前にすべて ON にする必要はありません。VRChat で一緒に ON/OFF するもの（FX のトグル・エフェクトのフォルダー）は 1 つにまとめて表示します。
+    <span class="ui">名前を変更</span> で表示名を付けられ（空にすると Unity 上の名前に戻ります）、各行の下に Unity 上の場所（パス）が出ます。</p>
   <p class="ja">アバターの中身が Unity のヒエラルキーと同じ並びで出ます。チェックを入れると表示、外すと非表示になります（Unity のインスペクターのチェックと同じ）。切り替えはアバターごとに保存されます。
     書き出しツールの <span class="ui">非アクティブのオブジェクトも書き出す</span>（既定 ON）を ON にして書き出すと、シーンで OFF にしていた衣装・小物も OFF のまま入るので、ここで ON にできます（1.18.7 以降の書き出しツール）。</p>
   <p class="ja"><span class="ui">VRChat のメニューで切り替えるものだけ</span> を ON にすると、VRChat の Expression Menu（FX のトグル）で切り替えている衣装・小物だけが並びます（該当するものがあるアバターでは最初から ON）。
@@ -284,7 +289,7 @@
 </section>
 
 <section id="face">
-  <h2><span class="ja">口パク・まばたき（顔タブ）</span></h2>
+  <h2><span class="ja">口パク・まばたき（顔・表情タブ）</span></h2>
   <ul>
     <li><span class="ja"><span class="ui">マイクで口パク</span> を ON にしてマイクを選び、<span class="ui">音量</span> メーターを見ながら
         <span class="ui">マイク感度</span> と <span class="ui">ノイズゲート</span>（この音量以下は無音）を調整します。</span>
@@ -292,11 +297,11 @@
     <li><span class="ja"><span class="ui">母音で口の形を変える</span> が ON なら、VRChat と同じように「あいうえお」で口の形が変わります。
         判定がずれるときは <span class="ui">声の高さ補正</span> を動かします（声が高い人は右）。</span>
         </li>
-    <li><span class="ja">揺れもの（PhysBone の近似）と自動まばたきも ON/OFF できます。</span>
+    <li><span class="ja">自動まばたきも ON/OFF できます（揺れものは <span class="ui">体・ポーズ</span> タブ）。</span>
         </li>
     <li><span class="ja"><span class="ui">表情中はまばたきしない</span> を ON にすると、表情を出している間は自動まばたきもトラッキングのまばたきも止まり、表情の目の形が崩れません。</span>
         </li>
-    <li><span class="ja"><span class="ui">揺れもの / まばたき / 目線</span> の <span class="ui">カメラ目線</span> を ON にすると、目を画面に向けます（トラッキングの視線の代わりに使い、トラッキングを切っていても効きます）。パネル下部のボタンやショートカットキー（既定はテンキーの 5。<span class="ui">設定</span> タブで変更可）でも切り替えられます。</span>
+    <li><span class="ja"><span class="ui">まばたき / 目線</span> の <span class="ui">カメラ目線</span> を ON にすると、目を画面に向けます（トラッキングの視線の代わりに使い、トラッキングを切っていても効きます）。パネル下部のボタンやショートカットキー（既定はテンキーの 5。<span class="ui">操作・連携</span> タブで変更可）でも切り替えられます。</span>
         </li>
     <li><span class="ja"><span class="ui">表情中はマイクの口パクを止める</span>・<span class="ui">表情中はトラッキングの口を止める</span> を ON にすると、表情を出している間はそれぞれの口の動きが止まります（別々に選べ、両方 ON にもできます。表情の口とリップシンクが重なると崩れるアバター向け）。</span>
         </li>
@@ -310,14 +315,14 @@
   <h2><span class="ja">パーフェクトシンク化（パーフェクトシンク化タブ）</span></h2>
   <p class="ja">ARKit 名の BlendShape が無いアバターでも、顔に目印を打つとパーフェクトシンク用の 51 種類の形状を自動で作れます。元からある BlendShape（「あ」・まばたき・笑顔など）は自動で割り当てて使います。結果は新しい <code>.vrcaster</code> として別名で保存し、元のファイルは変更しません。</p>
   <ul>
-    <li><span class="ja">メッシュの頂点を読むため、2.0.0 以降の書き出しツールで書き出し直した <code>.vrcaster</code> が必要です（VRM は対象外）。タブの <span class="ui">編集を始める</span> で編集画面に移ります。編集中は出力にも顔のアップが映り、揺れもの・待機モーション・トラッキング・まばたき・口パクは止まります（閉じると元に戻ります）。</span>
+    <li><span class="ja">メッシュの頂点を読むため、2.0.0 以降の書き出しツールで書き出し直した <code>.vrcaster</code> が必要です（VRM は対象外）。タブ一覧の一番下にある紫色の <span class="ui">パーフェクトシンク化</span> タブの <span class="ui">編集を始める</span> で編集画面に移ります。編集中は出力にも顔のアップが映り、揺れもの・待機モーション・トラッキング・まばたき・口パクは止まります（閉じると元に戻ります）。</span>
         </li>
     <li><span class="ja"><span class="ui">1. 目印</span>: <span class="ui">顔メッシュ</span> と <span class="ui">細かさ</span>（<span class="ui">最小（約 10 点）</span> / <span class="ui">標準（約 20 点）</span> / <span class="ui">詳細（約 40 点）</span>）を選び、図で光っている目印を顔の上で左クリックして打ちます。ドラッグで動かせます（視点は顔の正面に固定され、ホイールで拡大・中ドラッグで移動。<span class="ui">視点を顔の正面に固定</span> を外すと右ドラッグで回転）。間違えたときは図の下の <span class="ui">元に戻す</span>（Ctrl+Z）で 1 つずつ戻せ、<span class="ui">消す</span>（Delete キー）で選択中の目印（打っていなければ直前に打った目印）を消せます。
         <span class="ui">左側の目印を右側にも反映（左右対称）</span> が ON なら右側は自動で置かれます。「アバターの左」は正面から見て右側です（目印の名前にも「画面の右・アバターの左」のように出ます）。最小の目印（目・眉・口角・唇・あご）がそろったら <span class="ui">生成して試す</span> を押します。</span>
         </li>
     <li><span class="ja"><span class="ui">2. 形状</span>: 形状ごとに <span class="ui">自動生成</span> / <span class="ui">既存の BlendShape</span> / <span class="ui">なし</span> と <span class="ui">強さ</span> を選び、<span class="ui">反映</span> で試します。目の動き（eyeLook）は目のボーンが視線で動くので、既定は <span class="ui">なし</span> です（目のボーンが無いアバターでは <span class="ui">自動生成</span>）。作っても動く部分が無かった形状には <span class="ui">動く部分なし</span> と出るので、<span class="ui">既存の BlendShape</span> か <span class="ui">なし</span> を選んでください。</span>
         </li>
-    <li><span class="ja"><span class="ui">このアバターに無い部位</span> で <span class="ui">眉</span> / <span class="ui">鼻</span> / <span class="ui">口の中</span> を選ぶと、その部位の目印は打たずに済み、その部位の形状は既定で <span class="ui">なし</span> になります（口の中や舌が作られていないアバターは、「あ」などの既存の BlendShape で口を動かします）。別の歯・舌のメッシュが無いアバターでは <span class="ui">歯・舌のメッシュも顎と一緒に動かす</span> は選べません。</span>
+    <li><span class="ja"><span class="ui">このアバターに無い部位</span> で <span class="ui">眉</span> / <span class="ui">鼻</span> / <span class="ui">口の中</span> を選ぶと、その部位の目印は打たずに済み、その部位の形状は既定で <span class="ui">なし</span> になります（口の中や舌が作られていないアバターは、「あ」などの既存の BlendShape で口を動かします）。別の歯・舌のメッシュが無いアバターでは <span class="ui">歯・舌のメッシュも顎と一緒に動かす</span> は選べません。存在しない部位があるアバターでは、期待どおりの動きにならない可能性があります。</span>
         </li>
     <li><span class="ja"><span class="ui">自動で置く</span> の 2 つのボタンで、まだ打っていない目印を自動で置けます（打った目印は変わりません。<span class="ui">元に戻す</span> で取り消せます）。<span class="ui">BlendShape から</span> はアバターのまばたき・「あ」「う」・眉の BlendShape で動く部分から目・口・眉・鼻先を求めます。<span class="ui">画像認識</span> は顔を正面に向けてから押すと、今の画面の顔を MediaPipe で認識して置きます（アニメ調の顔は見つからないことがあります）。どちらも位置は目安なので、ずれた目印はドラッグで直してください。</span>
         </li>
@@ -337,7 +342,7 @@
         </li>
     <li><span class="ja"><span class="ui">入力元</span> は、縦に並んだスイッチのどれか 1 つを ON にして選びます。各行の右（幅が足りないときはスイッチの下）に推奨（MediaPipe）と PC 負荷の目安（低・中・高）が出ます。MediaPipe は <span class="ui">腕・手</span> を OFF にすると軽くなり、iPhone などから受け取る入力元は推定をスマートフォン側で行うため PC の負荷は低めです。</span>
         </li>
-    <li><span class="ja"><span class="ui">まばたきをトラッキング</span>（既定は ON）を OFF にすると、目の開閉は追わず、顔タブの自動まばたきでまばたきします（パーフェクトシンクでもまばたきだけは動かしません）。</span>
+    <li><span class="ja"><span class="ui">まばたきをトラッキング</span>（既定は ON）を OFF にすると、目の開閉は追わず、顔・表情タブの自動まばたきでまばたきします（パーフェクトシンクでもまばたきだけは動かしません）。</span>
         </li>
     <li><span class="ja">目を開けているのにアバターが半目になるときは、<span class="ui">目の開きの補正</span>（既定は 0）を上げます。値までの目の閉じ具合は開いた目として扱い、まばたきでは閉じ切ります（パーフェクトシンクと、表情を反映のジト目の判定にも効きます。<span class="ui">まばたきをトラッキング</span> が ON のときだけ出ます）。</span>
         </li>
@@ -351,11 +356,17 @@
     <li><span class="ja">MediaPipe・iPhone・外部アプリ（VMC）・iFacialMocap では <span class="ui">パーフェクトシンク</span>（既定は ON）にも対応しています。ARKit 名の BlendShape（<code>eyeBlinkLeft</code>・<code>jawOpen</code>・<code>mouthSmileLeft</code> など）を持つアバターなら、眉・頬・口の形まで顔の動きどおりに動きます。
         <span class="ui">有効にする条件</span> で <span class="ui">20 種類以上</span>（既定）か <span class="ui">1 種類でも</span> を選べ、対応しているかはその下に件数で表示されます。パーフェクトシンク中は <span class="ui">表情を反映</span> の自動切り替えは止まります（20 種類未満で動かしているときは併用します）。</span>
         </li>
+    <li><span class="ja"><span class="ui">口・頬の動きを強調</span>（既定は ON）では、パーフェクトシンクで顔を動かしている間だけ、カメラでは弱く出やすい <span class="ui">ふくれっ面</span>・<span class="ui">口の左右</span>・<span class="ui">頬をふくらませる</span>・<span class="ui">唇</span> の動きを倍率（1〜5）で強めます（口の左右の倍率は既定 1 倍）。
+        動きが小さければ値を上げ、すぐ動きすぎるなら下げてください。MediaPipe では口の左右と頬のふくらみを顔の形から推定します。開始後の数秒は真顔にしておくと、ふだんの顔を覚えて正しく測れます。
+        <span class="ui">頬のふくらみの検出</span> の <span class="ui">出し始め（%）</span> は真顔のときの値より少し上に、<span class="ui">最大（%）</span> は頬をふくらませたときの値くらいにします（今の値は設定の下に表示されます）。パーフェクトシンク化の <span class="ui">実際のトラッキングで試す</span> 中は、同じ設定が左側の <span class="ui">口・頬の調整</span> パネルにも出ます。変えた値はトラッキングタブへすぐ反映され、<span class="ui">設定を保存</span> でファイルに残します。</span>
+        </li>
     <li><span class="ja">カメラは <span class="ui">&lt;</span> <span class="ui">&gt;</span> で選びます。動かないときは <span class="ui">トラッカーを再起動</span>。</span>
         </li>
-    <li><span class="ja">入力元を <span class="ui">iPhone・外部アプリ（VMC、顔のみ）</span> にすると、カメラの代わりにスマートフォンのアプリ（iPhone の Waidayo など）から VMC プロトコルで顔の動きを受け取ります。
-        PC とスマートフォンを同じ Wi-Fi につなぎ、トラッキングタブに出る <span class="ui">この PC の IP アドレス</span> と <span class="ui">UDP ポート</span>（既定 39539）をアプリの送信先に入力してください。
-        初回は Windows ファイアウォールの確認が出るので、プライベートネットワークで許可してください。ARKit の値を送るアプリなら、パーフェクトシンクと表情の反映も使えます（腕・手は動きません）。</span>
+    <li><span class="ja">入力元を <span class="ui">iPhone・外部アプリ（VMC、顔 + 全身）</span> にすると、カメラの代わりにスマートフォンのアプリ（iPhone の Waidayo など）や PC のアプリ（VirtualMotionCapture など）から VMC プロトコルで動きを受け取ります。
+        PC とスマートフォンを同じ Wi-Fi につなぎ、トラッキングタブに出る <span class="ui">この PC の IP アドレス</span> と <span class="ui">UDP ポート</span>（既定 39539）をアプリの送信先に入力してください（同じ PC で動かすアプリなら 127.0.0.1）。
+        初回は Windows ファイアウォールの確認が出るので、プライベートネットワークで許可してください。ARKit の値を送るアプリなら、パーフェクトシンクと表情の反映も使えます。
+        全身を送るアプリでは <span class="ui">全身（送信側アバターの動き）</span>（既定は ON）で、腰・脚・腕・指と体全体の位置も送信側のアバターと同じように動きます。まっすぐ立ってカメラ側を向き、リセットの <span class="ui">顔の向き</span> を押すと正面がそろいます。
+        <span class="ui">足を床に合わせる</span>（既定は ON）では、送信側とアバターの脚の長さの違いで足が浮いたりめり込んだりしないよう、膝の曲げで足の位置を合わせます。</span>
         </li>
     <li><span class="ja">入力元を <span class="ui">iFacialMocap（iPhone、顔のみ）</span> にすると、iPhone の iFacialMocap から顔の動きを受け取ります。
         PC と iPhone を同じ Wi-Fi につなぎ、iFacialMocap の画面上部に出る IP アドレスをトラッキングタブの <span class="ui">iPhone の IP アドレス</span> に入力してください（UDP ポート 49983 を使います）。
@@ -382,8 +393,20 @@
         </li>
     <li><span class="ja"><span class="ui">パネルの不透明度</span>: 操作パネルとパーフェクトシンク化の編集画面の背景を 20%〜100% で透かせます（文字は薄くなりません）。</span>
         </li>
-    <li><span class="ja"><span class="ui">テーマ</span>: ライト（既定）/ ダーク。背景色を表示タブで変えていなければ、背景もテーマに合わせて切り替わります。</span>
+    <li><span class="ja"><span class="ui">テーマ</span>: ライト（既定）/ ダーク。背景色をグラフィックタブで変えていなければ、背景もテーマに合わせて切り替わります。</span>
         </li>
+    <li><span class="ja">設定は VRCast の終了時に自動で保存され、次回起動時に復元されます。</span>
+        </li>
+    <li><span class="ja"><span class="ui">設定プリセット</span>: 設定をカテゴリ（動作最適化・トラッキング・出力など）ごとに選んで <code>.vrcastpreset</code> ファイルに書き出し（<span class="ui">書き出す...</span>）、別の PC や後から読み込めます（<span class="ui">読み込む...</span>、またはファイルをウィンドウにドロップ）。読み込むときは反映するカテゴリを選んでから <span class="ui">適用</span> を押します。<span class="ui">アバター関連を外す</span> で、ライト・ポーズ・表情の割り当てなどアバターごとに合わせる設定だけをまとめて外せます。アバターごとの記録（シェイプキー・カメラ・表情のキー）と、マイク・カメラ・ポートなど PC ごとの値は含みません。ファイルはテキストなので、いらないカテゴリを消して使うこともできます。</span>
+        </li>
+  </ul>
+  <p class="note danger ja"><span class="ui">全ての設定をリセット</span>（赤いボタン）を押し、確認で <span class="ui">リセットする</span> を押すと、全ての設定が初期状態に戻ります
+    （ウィンドウサイズと最後に開いたアバターは残ります）。元に戻せません。</p>
+</section>
+
+<section id="performance">
+  <h2><span class="ja">パフォーマンス（パフォーマンスタブ）</span></h2>
+  <ul>
     <li><span class="ja"><span class="ui">軽量モード</span>（既定は ON）: 描画を 30fps（OFF なら 60fps）に抑え、OpenSeeFace は軽いモデルを使って、ゲームや OBS と同時に使うときの負荷を減らします。MediaPipe の重さはトラッキングタブの <span class="ui">トラッカーの動作</span> で選びます。</span>
         </li>
     <li><span class="ja"><span class="ui">動作状況を表示</span>（既定は ON）: パネルの一番下に、描画の FPS・VRCast の CPU 使用率・GPU の処理時間・同梱トラッカーの CPU 使用率・トラッキングの受信レートを英語で表示します（1 秒ごとに更新）。重いときの原因の見当をつけるのに使えます。</span>
@@ -398,21 +421,24 @@
         </li>
     <li><span class="ja"><span class="ui">NVIDIA インスタントリプレイ</span>（NVIDIA の GPU がある PC だけ表示）: <span class="ui">NVIDIA のインスタントリプレイに検知させない</span> を押すと、VRCast がインスタントリプレイ（ShadowPlay）にゲームとして検知されないよう、ドライバー設定に VRCast 用のプロファイルを書きます。VRCast を起動し直すと反映されます。<span class="ui">NVIDIA のインスタントリプレイの検知を元に戻す</span> で元に戻せます。非公式の設定のため、ドライバーによっては効きません。変更できないと表示されたときは、VRCast を管理者として実行してお試しください。</span>
         </li>
+  </ul>
+</section>
+
+<section id="info">
+  <h2><span class="ja">情報（情報タブ）</span></h2>
+  <ul>
     <li><span class="ja"><span class="ui">アップデート</span>: 起動時に新しいバージョンがあるかを確認し、あればパネル上部に通知します（<span class="ui">GitHub からダウンロード</span> / <span class="ui">BOOTH からダウンロード</span> / <span class="ui">更新履歴を表示する（GitHub）</span>）。
         確認は最新のバージョン番号を読むためだけに Web サイト（coffin299.github.io）へ接続します。OFF にもできます。
         <span class="ui">今すぐ更新</span> を押すと、GitHub から新しいバージョンをダウンロードしてファイルを入れ替え、VRCast が自動で起動し直します（設定はそのまま）。OBS や Discord で仮想カメラを使ったままでも更新できます。VRCast を Program Files など管理者権限の必要なフォルダに置いている場合は自動更新できないため、ダウンロードのボタンから入手してください。アバターのプロジェクトに入れた書き出しツールは自動では更新されません。お手すきの際に、zip から最新版をインポートしてください。</span>
         </li>
-    <li><span class="ja">設定は VRCast の終了時に自動で保存され、次回起動時に復元されます。</span>
-        </li>
-    <li><span class="ja"><span class="ui">設定プリセット</span>: 設定をカテゴリ（動作最適化・トラッキング・出力など）ごとに選んで <code>.vrcastpreset</code> ファイルに書き出し（<span class="ui">書き出す...</span>）、別の PC や後から読み込めます（<span class="ui">読み込む...</span>、またはファイルをウィンドウにドロップ）。読み込むときは反映するカテゴリを選んでから <span class="ui">適用</span> を押します。<span class="ui">アバター関連を外す</span> で、ライト・ポーズ・表情の割り当てなどアバターごとに合わせる設定だけをまとめて外せます。アバターごとの記録（シェイプキー・カメラ・表情のキー）と、マイク・カメラ・ポートなど PC ごとの値は含みません。ファイルはテキストなので、いらないカテゴリを消して使うこともできます。</span>
-        </li>
-    <li><span class="ja">開発者・協力者とライセンスは <span class="ui">クレジット</span> タブで確認できます。
+    <li><span class="ja">開発者・協力者とライセンスは <span class="ui">クレジット</span> で確認できます。
         開発者の <a href="https://www.twitch.tv/coffinnoob299">Twitch チャンネル</a> もここから開けます。フォローや Prime サブスクをしてくれると開発の励みになります。</span>
         </li>
-    <li><span class="ja">タブ一覧の一番下の <span class="ui">公式 Discord</span> タブでは、<a href="https://discord.gg/vM5RH52HdF">公式 Discord</a> に参加するボタンと、サーバーのオンライン人数・オンラインのメンバー、コピーできる招待コード（<code>vM5RH52HdF</code>）を表示します。</span></li>
+    <li><span class="ja">情報タブの下の <span class="ui">公式 Discord</span> タブでは、<a href="https://discord.gg/vM5RH52HdF">公式 Discord</a> に参加するボタンと、サーバーのオンライン人数・オンラインのメンバー、コピーできる招待コード（<code>vM5RH52HdF</code>）を表示します。一番下には、次に対応してほしい機能などを募集する <span class="ui">アンケート</span> があります。</span>
+        </li>
+    <li><span class="ja">一番下の <span class="ui">デバッグログ</span> で、カメラ一覧・トラッカーの状態とログを確認できます（<a href="#trouble">困ったとき</a>）。</span>
+        </li>
   </ul>
-  <p class="note danger ja"><span class="ui">全ての設定をリセット</span>（赤いボタン）を押し、確認で <span class="ui">リセットする</span> を押すと、全ての設定が初期状態に戻ります
-    （ウィンドウサイズと最後に開いたアバターは残ります）。元に戻せません。</p>
 </section>
 
 <section id="keys">
@@ -427,11 +453,11 @@
     <tr><td><span class="ja">パネル下部のリセット</span></td>
         <td><span class="ja">顔の向き / 視線 / 表情（ニュートラル）/ カメラ。どのタブを開いていても押せます（ボタンの下段に割り当て中のショートカットキーを表示）</span>
             </td></tr>
-    <tr><td><span class="ja">パネル下部のアンケート</span></td>
-        <td><span class="ja">次に対応してほしい機能などの募集です。<a href="https://github.com/coffin299/VRCast/issues/11">GitHub の Issue</a> か <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google フォーム</a> から自由に書いてください。タブ一覧の一番下の <span class="ui">公式 Discord</span> タブから <a href="https://discord.gg/vM5RH52HdF">公式 Discord</a> にも参加できます</span>
+    <tr><td><span class="ja">公式 Discord タブのアンケート</span></td>
+        <td><span class="ja">次に対応してほしい機能などの募集です。<a href="https://github.com/coffin299/VRCast/issues/11">GitHub の Issue</a> か <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google フォーム</a> から自由に書いてください。同じタブから <a href="https://discord.gg/vM5RH52HdF">公式 Discord</a> にも参加できます</span>
             </td></tr>
     <tr><td><span class="ja">テンキー 1〜5</span></td>
-        <td><span class="ja">リセット（1 顔の向き / 2 視線 / 3 表情 / 4 カメラ）と 5 カメラ目線の ON / OFF。パネルを隠していても使え、<span class="ui">設定</span> タブの <span class="ui">ショートカットキー（リセット・カメラ目線）</span> で変更・解除できます（NumLock ON。<span class="ui">VRCast が背面にあるときも使う</span> は既定 ON）。表情のショートカットキーと同じキーにすると警告が出て、表情が優先されます</span>
+        <td><span class="ja">リセット（1 顔の向き / 2 視線 / 3 表情 / 4 カメラ）と 5 カメラ目線の ON / OFF。パネルを隠していても使え、<span class="ui">操作・連携</span> タブの <span class="ui">ショートカットキー（リセット・カメラ目線）</span> で変更・解除できます（NumLock ON。<span class="ui">VRCast が背面にあるときも使う</span> は既定 ON）。表情のショートカットキーと同じキーにすると警告が出て、表情が優先されます</span>
             </td></tr>
     <tr><td><span class="ja">右ドラッグ</span></td>
         <td><span class="ja">カメラを回転</span></td></tr>
@@ -440,7 +466,7 @@
     <tr><td><span class="ja">ホイール</span></td>
         <td><span class="ja">ズーム</span></td></tr>
     <tr><td><span class="ja">割り当てたキー</span></td>
-        <td><span class="ja">表情の切り替え / ニュートラル（<span class="ui">ポーズ</span> タブで表情ごとに割り当て。既定は未割り当て）</span>
+        <td><span class="ja">表情の切り替え / ニュートラル（<span class="ui">顔・表情</span> タブで表情ごとに割り当て。既定は未割り当て）</span>
             </td></tr>
   </table>
 </section>
@@ -449,7 +475,7 @@
   <h2><span class="ja">困ったとき</span></h2>
 
   <h3><span class="ja">アバターが暗い</span></h3>
-  <p class="ja"><span class="ui">表示</span> タブの <span class="ui">晴れ</span> プリセットを押すか、<span class="ui">環境光</span> を上げてください。
+  <p class="ja"><span class="ui">グラフィック</span> タブの <span class="ui">晴れ</span> プリセットを押すか、<span class="ui">環境光</span> を上げてください。
     <span class="ui">向き</span> を 0 付近にすると正面から光が当たります。
     lilToon 等は明るさがテクスチャの色までに制限されるため、太陽光を上げても一定以上は明るくなりません。
     その場合は <span class="ui">アバターの明るさ</span> を上げてください（0.1〜10、1 = マテリアルのまま）。</p>
@@ -465,10 +491,10 @@
   <p class="ja">VRCast を管理者として実行していると Windows の制限でドロップできません。通常どおり起動するか、<span class="ui">ファイルを選ぶ...</span> を使ってください。</p>
 
   <h3><span class="ja">ゲームや OBS と一緒に使うとトラッキングがカクつく</span></h3>
-  <p class="ja"><span class="ui">設定</span> タブの <span class="ui">軽量モード</span> が ON になっているか確認してください（既定は ON）。MediaPipe ならトラッキングタブの <span class="ui">トラッカーの動作</span> を <span class="ui">なめらか</span> にすると負荷が下がり、<span class="ui">エコ</span> にするとさらに半分ほどになります（既定の <span class="ui">ぬるぬる（高負荷）</span> は指をなめらかに動かすため重めです）。それでも重いときは、使わない <span class="ui">腕・手</span> のトラッキングを OFF にすると負荷が下がります。<span class="ui">プロセスの優先度</span> を「通常以上」にするのも効果があります。</p>
+  <p class="ja"><span class="ui">パフォーマンス</span> タブの <span class="ui">軽量モード</span> が ON になっているか確認してください（既定は ON）。MediaPipe ならトラッキングタブの <span class="ui">トラッカーの動作</span> を <span class="ui">なめらか</span> にすると負荷が下がり、<span class="ui">エコ</span> にするとさらに半分ほどになります（既定の <span class="ui">ぬるぬる（高負荷）</span> は指をなめらかに動かすため重めです）。それでも重いときは、使わない <span class="ui">腕・手</span> のトラッキングを OFF にすると負荷が下がります。<span class="ui">プロセスの優先度</span> を「通常以上」にするのも効果があります。</p>
 
   <h3><span class="ja">口パクしない</span></h3>
-  <p class="ja"><span class="ui">顔</span> タブで正しいマイクが選ばれているか、<span class="ui">音量</span> メーターが動くか確認し、
+  <p class="ja"><span class="ui">顔・表情</span> タブで正しいマイクが選ばれているか、<span class="ui">音量</span> メーターが動くか確認し、
     動かなければ <span class="ui">マイク感度</span> を上げるか <span class="ui">ノイズゲート</span> を下げてください。</p>
 
   <h3><span class="ja">表情が変わらない</span></h3>
@@ -479,7 +505,7 @@
   <h3><span class="ja">カメラが認識されない・トラッキングが動かない</span></h3>
   <p class="ja">まず <span class="ui">トラッキング</span> タブの <span class="ui">カメラ</span> で、お使いの Web カメラが選ばれているか確認してください。
     <code>VRCast Camera</code>（VRCast の仮想カメラ）・<code>OBS Virtual Camera</code> などの仮想カメラや、顔認証用の赤外線（IR）カメラを選ぶと、映像は届いても顔が認識されません。</p>
-  <p class="ja"><span class="ui">デバッグログ</span> タブを開くと、カメラ一覧・トラッカーの状態と、起動してからのログを確認できます。
+  <p class="ja"><span class="ui">情報</span> タブの一番下の <span class="ui">デバッグログ</span> では、カメラ一覧・トラッカーの状態と、起動してからのログを確認できます。
     <span class="ui">WARN</span> / <span class="ui">ERROR</span> だけを表示したり、カテゴリを <code>Tracker</code> / <code>TrackerOutput</code> / <code>Tracking</code>（カメラ関係）に絞ったりできます。
     不具合を報告するときは <span class="ui">表示中をコピー</span> を押して、ログと環境をそのまま貼り付けてください。</p>
   <p class="ja">原因がわからないときは <span class="ui">詳細ログ</span> を ON にして、症状が出るまで待ってからコピーしてください。
