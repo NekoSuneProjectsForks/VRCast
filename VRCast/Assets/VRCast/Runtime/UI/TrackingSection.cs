@@ -618,6 +618,8 @@ namespace VRCast.UI
                 Loc.T("Enable when", "有効にする条件", "활성화 조건", "启用条件", "啟用條件"),
                 labels, _settings.trackingPerfectSyncAnyShape ? 1 : 0) == 1;
 
+            DrawPerfectSyncBoost();
+
             // アバター未表示なら状態を出さない
             var driver = _avatar.Get<FaceTrackingDriver>();
             if (driver == null)
@@ -651,6 +653,44 @@ namespace VRCast.UI
                     $"少于 {min} 个，只驱动找到的 BlendShape，并同时使用表情反映",
                     $"少於 {min} 個，只驅動找到的 BlendShape，並同時使用表情反映"));
             }
+        }
+
+        private void DrawPerfectSyncBoost()
+        {
+            // 口・頬の強調の ON/OFF（パーフェクトシンクで動かしている間だけ効く）
+            _settings.trackingPerfectSyncBoost = GUILayout.Toggle(
+                _settings.trackingPerfectSyncBoost,
+                Loc.T("Boost mouth and cheeks", "口・頬の動きを強調", "입·볼 움직임 강조", "增强嘴部和脸颊动作", "增強嘴部和臉頰動作"));
+            GuiControls.Hint(Loc.T(
+                "Only while perfect sync is driving the face. Strengthens pouting, puffed cheeks and lip movements that the camera tends to pick up weakly.",
+                "パーフェクトシンクで顔を動かしている間だけ効きます。カメラでは弱く出やすい、ふくれっ面（口をとがらせる）・頬をふくらませる・唇の動きを強めます。",
+                "퍼펙트 싱크로 얼굴을 움직이는 동안에만 적용됩니다. 카메라에서 약하게 잡히기 쉬운 입 내밀기·볼 부풀리기·입술 움직임을 강하게 합니다.",
+                "仅在完美同步驱动面部时生效。增强摄像头容易识别偏弱的嘟嘴、鼓腮和嘴唇动作。",
+                "僅在完美同步驅動臉部時生效。增強攝影機容易辨識偏弱的嘟嘴、鼓腮和嘴唇動作。"));
+
+            // 無効時は倍率を出さない
+            if (!_settings.trackingPerfectSyncBoost)
+            {
+                return;
+            }
+
+            // 組ごとの倍率（1 = そのまま）
+            float max = AppSettings.MaxPerfectSyncBoost;
+            _settings.trackingBoostPucker = GuiControls.Slider(
+                "  " + Loc.T("Pout", "ふくれっ面（口をとがらせる）", "입 내밀기", "嘟嘴", "嘟嘴"),
+                _settings.trackingBoostPucker, 1f, max, "F1");
+            _settings.trackingBoostCheekPuff = GuiControls.Slider(
+                "  " + Loc.T("Puffed cheeks", "頬をふくらませる", "볼 부풀리기", "鼓腮", "鼓腮"),
+                _settings.trackingBoostCheekPuff, 1f, max, "F1");
+            _settings.trackingBoostLips = GuiControls.Slider(
+                "  " + Loc.T("Lips (roll / press)", "唇（巻き込む・押し付ける）", "입술 (말기·누르기)", "嘴唇（内卷・抿紧）", "嘴唇（內捲・抿緊）"),
+                _settings.trackingBoostLips, 1f, max, "F1");
+            GuiControls.Hint(Loc.T(
+                "Raise a value if the shape barely moves, lower it if it moves too easily. The camera (MediaPipe) may hardly detect puffed cheeks at all; if so, raising it won't help.",
+                "動きが小さければ値を上げ、すぐ動きすぎるなら下げてください。カメラ（MediaPipe）では頬のふくらみがほとんど検出されないことがあり、その場合は上げても動きません。",
+                "움직임이 작으면 값을 올리고, 너무 쉽게 움직이면 낮추세요. 카메라(MediaPipe)는 볼 부풀리기를 거의 감지하지 못할 수 있으며, 그 경우 값을 올려도 움직이지 않습니다.",
+                "动作太小时调高，太容易动时调低。摄像头（MediaPipe）可能几乎检测不到鼓腮，此时调高也不会动。",
+                "動作太小時調高，太容易動時調低。攝影機（MediaPipe）可能幾乎偵測不到鼓腮，此時調高也不會動。"));
         }
 
         private void DrawExpressions()

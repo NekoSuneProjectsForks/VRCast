@@ -65,6 +65,9 @@ namespace VRCast.Core
         // 目の開きの補正の上限（開いているとみなす目の閉じ具合。1 にするとまばたきで閉じなくなる）
         public const float MaxTrackingEyeOpenOffset = 0.6f;
 
+        // パーフェクトシンクの口・頬の強調の倍率の上限（1 = 強調しない）
+        public const float MaxPerfectSyncBoost = 5f;
+
         // 待機モーション（呼吸・体の揺れ・頭のゆらぎ）の強さの上限と、速さの倍率の範囲
         public const float MaxIdleMotionStrength = 2f;
         public const float MinIdleMotionSpeed = 0.5f;
@@ -264,6 +267,12 @@ namespace VRCast.Core
 
         // パーフェクトシンクを有効にする条件（false = ARKit 名が MinMatchedShapes 種類以上、true = 1 種類でもあれば）
         public bool trackingPerfectSyncAnyShape;
+
+        // パーフェクトシンク中だけ、検出が弱い口・頬の動きを倍率で強める（口をとがらせる・頬をふくらませる・唇を巻き込む）
+        public bool trackingPerfectSyncBoost;
+        public float trackingBoostPucker = 2f;
+        public float trackingBoostCheekPuff = 3f;
+        public float trackingBoostLips = 2f;
 
         // 表情反映（MediaPipe・VMC・iFacialMocap のみ）。表情ごとの割り当ては表情プリセット名（空欄 = 自動、"<none>" = 割り当てなし）
         public bool trackingExpressions = true;
@@ -900,6 +909,10 @@ namespace VRCast.Core
             trackingGaze = Mathf.Clamp(trackingGaze, 0f, MaxTrackingGaze);
             // 目の開きの補正も同様
             trackingEyeOpenOffset = Mathf.Clamp(trackingEyeOpenOffset, 0f, MaxTrackingEyeOpenOffset);
+            // 口・頬の強調の倍率も同様（1 未満は弱めてしまうため 1 から）
+            trackingBoostPucker = Mathf.Clamp(trackingBoostPucker, 1f, MaxPerfectSyncBoost);
+            trackingBoostCheekPuff = Mathf.Clamp(trackingBoostCheekPuff, 1f, MaxPerfectSyncBoost);
+            trackingBoostLips = Mathf.Clamp(trackingBoostLips, 1f, MaxPerfectSyncBoost);
             // 未知のまばたきのそろえ方はそろえない扱いへ
             if (!Enum.IsDefined(typeof(BlinkSyncMode), trackingBlinkSync))
             {

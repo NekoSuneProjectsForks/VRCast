@@ -531,6 +531,18 @@ namespace VRCast.Tracking
             };
         }
 
+        private PerfectSyncBoost CurrentBoost()
+        {
+            // 口・頬の強調が OFF なら強調しない（既定値）
+            if (!_settings.trackingPerfectSyncBoost)
+            {
+                return default;
+            }
+
+            return new PerfectSyncBoost(
+                _settings.trackingBoostPucker, _settings.trackingBoostCheekPuff, _settings.trackingBoostLips);
+        }
+
         private void ApplyPerfectSync()
         {
             // 未初期化なら何もしない
@@ -543,7 +555,7 @@ namespace VRCast.Tracking
             if (IsPerfectSyncActive)
             {
                 _perfectSync.Apply(_lastFrame.BlendShapes, _lastFrame.BlendShapeRange, _settings.FaceMirror,
-                    Time.deltaTime, _settings.trackingBlink, CurrentEyeAdjustment());
+                    Time.deltaTime, _settings.trackingBlink, CurrentEyeAdjustment(), CurrentBoost());
             }
             else
             {
