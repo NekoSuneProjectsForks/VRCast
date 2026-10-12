@@ -15,8 +15,9 @@ using VRCast.Tracking;
 namespace VRCast.UI
 {
     /// <summary>
-    /// IMGUI の操作パネル。左のタブ（Start / Avatar / Pose / Objects / Face / Shape keys / Perfect sync / Tracking / Display / Output / OSC / HTTP / Settings / Log / Credits / Discord）で
-    /// 表示するセクションを切り替え、内容は縦スクロールする。下部にはリセットボタン・アンケート欄・動作状況を常に表示する。
+    /// IMGUI の操作パネル。左のタブ（はじめに / アバター・オブジェクト・シェイプキー / 顔・表情・体・ポーズ・トラッキング /
+    /// 表示・グラフィック・出力 / 操作・連携・パフォーマンス・設定・情報 / パーフェクトシンク化）で表示するセクションを切り替え、
+    /// 内容は縦スクロールする（タブ列も収まらなければ縦スクロール）。下部にはリセットボタン・アンケート欄・動作状況を常に表示する。
     /// 画面に収まる高さに制限し、Tab キーで表示切替（隠している間は背景も透過）。
     /// 表示言語（見出しの下のボタンでいつでも切替）と UI の大きさは設定に従う。見出しの「?」でヘルプページを開く。
     /// パーフェクトシンク化の編集中は、このパネルの代わりに編集画面（PerfectSyncEditor）を出す。
@@ -35,7 +36,10 @@ namespace VRCast.UI
 
         // 見出し行（ドラッグで移動できる範囲）とタブ列の幅
         private const float HeaderHeight = 36f;
-        private const float SidebarWidth = 132f;
+        private const float SidebarWidth = 150f;
+
+        // タブ列のまとまりの間の余白
+        private const float TabGroupSpacing = 8f;
 
         // 見出しのヘルプボタンの幅
         private const float HelpButtonWidth = 32f;
@@ -43,27 +47,30 @@ namespace VRCast.UI
         // タブの内容と下部のリセットボタンの間隔
         private const float FooterSpacing = 8f;
 
-        // タブの並び
+        // タブの並び（タブ列の上から順。パーフェクトシンク化は別の色で一番下）
         private enum Tab
         {
             Start,
             Avatar,
-            Pose,
             Objects,
-            Face,
             ShapeKeys,
-            PerfectSync,
+            Face,
+            Body,
             Tracking,
             Display,
+            Graphics,
             Output,
-            Remote,
+            Control,
+            Performance,
             Settings,
-            Log,
-            Credits,
-            Discord,
+            Info,
+            PerfectSync,
         }
 
         private static readonly int TabCount = Enum.GetValues(typeof(Tab)).Length;
+
+        // 前に余白を空けて、まとまりの先頭にするタブ
+        private static readonly Tab[] GroupStarts = { Tab.Avatar, Tab.Face, Tab.Display, Tab.Control, Tab.PerfectSync };
 
         private AvatarSession _session;
         private FileDropReceiver _fileDrop;
@@ -77,18 +84,22 @@ namespace VRCast.UI
         private AvatarSection _avatarSection;
         private AnimationSection _animationSection;
         private ObjectSection _objectSection;
+        private ParticleSection _particleSection;
         private FaceSection _faceSection;
+        private ExpressionSection _expressionSection;
         private ShapeKeySection _shapeKeySection;
         private PerfectSyncSection _perfectSyncSection;
         private PerfectSyncEditor _perfectSyncEditor;
         private TrackingSection _trackingSection;
         private DisplaySection _displaySection;
+        private GraphicsSection _graphicsSection;
         private OutputSection _outputSection;
+        private ShortcutSection _shortcutSection;
         private RemoteSection _remoteSection;
+        private PerformanceSection _performanceSection;
         private SettingsSection _settingsSection;
         private PresetSection _presetSection;
-        private LogSection _logSection;
-        private CreditsSection _creditsSection;
+        private InfoSection _infoSection;
         private readonly DiscordSection _discordSection = new DiscordSection();
         private ResetBar _resetBar;
         private readonly SurveyBar _surveyBar = new SurveyBar();
@@ -101,6 +112,9 @@ namespace VRCast.UI
         private bool _visible = true;
         private Tab _tab = Tab.Start;
         private readonly Vector2[] _scroll = new Vector2[TabCount];
+
+        // タブ列のスクロール位置（パネルが低くて全部のタブが収まらないとき）
+        private Vector2 _sidebarScroll;
 
         // タブの内容の幅（前回の描画で測った見えている幅。0 = 未計測）
         private float _contentWidth;
@@ -125,18 +139,23 @@ namespace VRCast.UI
             _startSection = new StartSection(session, _avatarSection, rendering, virtualCamera, OpenLink);
             _animationSection = new AnimationSection(session, settings);
             _objectSection = new ObjectSection(session, settings);
+            _particleSection = new ParticleSection(session, settings);
             _faceSection = new FaceSection(session, microphone, settings);
+            _expressionSection = new ExpressionSection(session, settings);
             _shapeKeySection = new ShapeKeySection(session, settings);
             _perfectSyncEditor = new PerfectSyncEditor(session, orbit);
             _perfectSyncSection = new PerfectSyncSection(session, _perfectSyncEditor);
             _trackingSection = new TrackingSection(session, tracker, trackerProcess, skeleton, settings);
             _displaySection = new DisplaySection(orbit, rendering, settings);
+            _graphicsSection = new GraphicsSection(rendering);
             _outputSection = new OutputSection(virtualCamera, spout, rendering);
+            _shortcutSection = new ShortcutSection(session, settings);
             _remoteSection = new RemoteSection(session, remote, settings);
+            _performanceSection = new PerformanceSection(settings, rendering);
             _presetSection = new PresetSection(settings, ReapplySettings);
-            _settingsSection = new SettingsSection(session, settings, rendering, updates, ResetAllSettings, _presetSection);
-            _logSection = new LogSection(trackerProcess, tracker, settings);
-            _creditsSection = new CreditsSection();
+            _settingsSection = new SettingsSection(settings, rendering, ResetAllSettings, _presetSection);
+            _infoSection = new InfoSection(settings, updates, _discordSection, new CreditsSection(),
+                new LogSection(trackerProcess, tracker, settings));
 
             // リセットはパネル下部のボタンとショートカットキー（パネルを隠していても動く）で共用する
             var resetActions = new ResetActions(session, orbit, settings);
@@ -528,17 +547,28 @@ namespace VRCast.UI
         {
             GUILayout.BeginVertical(_theme.Sidebar, GUILayout.Width(SidebarWidth), GUILayout.ExpandHeight(true));
 
-            // 押したタブを選択（選択中はアクセント色）
+            // 収まらないときだけ縦スクロールバーを出す（横には出さない）
+            _sidebarScroll = GUILayout.BeginScrollView(
+                _sidebarScroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar);
+
+            // 押したタブを選択（選択中はアクセント色。まとまりの先頭の前は少し空ける）
             for (int i = 0; i < TabCount; i++)
             {
                 var tab = (Tab)i;
-                if (GUILayout.Toggle(_tab == tab, TabLabel(tab), _theme.Tab) && _tab != tab)
+                if (Array.IndexOf(GroupStarts, tab) >= 0)
+                {
+                    GUILayout.Space(TabGroupSpacing);
+                }
+
+                // パーフェクトシンク化だけは別の色で目立たせる
+                GUIStyle style = tab == Tab.PerfectSync ? _theme.FeatureTab : _theme.Tab;
+                if (GUILayout.Toggle(_tab == tab, TabLabel(tab), style) && _tab != tab)
                 {
                     _tab = tab;
                 }
             }
 
-            GUILayout.FlexibleSpace();
+            GUILayout.EndScrollView();
             GUILayout.EndVertical();
         }
 
@@ -553,20 +583,19 @@ namespace VRCast.UI
                 case Tab.Avatar:
                     _avatarSection.Draw();
                     break;
-                case Tab.Pose:
-                    _animationSection.Draw();
-                    break;
                 case Tab.Objects:
                     _objectSection.Draw();
-                    break;
-                case Tab.Face:
-                    _faceSection.Draw();
+                    _particleSection.Draw();
                     break;
                 case Tab.ShapeKeys:
                     _shapeKeySection.Draw();
                     break;
-                case Tab.PerfectSync:
-                    _perfectSyncSection.Draw();
+                case Tab.Face:
+                    _faceSection.Draw();
+                    _expressionSection.Draw();
+                    break;
+                case Tab.Body:
+                    _animationSection.Draw();
                     break;
                 case Tab.Tracking:
                     _trackingSection.Draw();
@@ -574,20 +603,24 @@ namespace VRCast.UI
                 case Tab.Display:
                     _displaySection.Draw();
                     break;
+                case Tab.Graphics:
+                    _graphicsSection.Draw();
+                    break;
                 case Tab.Output:
                     _outputSection.Draw();
                     break;
-                case Tab.Remote:
+                case Tab.Control:
+                    _shortcutSection.Draw();
                     _remoteSection.Draw();
                     break;
-                case Tab.Log:
-                    _logSection.Draw();
+                case Tab.Performance:
+                    _performanceSection.Draw();
                     break;
-                case Tab.Credits:
-                    _creditsSection.Draw();
+                case Tab.Info:
+                    _infoSection.Draw();
                     break;
-                case Tab.Discord:
-                    _discordSection.Draw();
+                case Tab.PerfectSync:
+                    _perfectSyncSection.Draw();
                     break;
                 default:
                     _settingsSection.Draw();
@@ -604,30 +637,30 @@ namespace VRCast.UI
                     return Loc.T("Start", "はじめに", "시작하기", "开始", "開始");
                 case Tab.Avatar:
                     return Loc.T("Avatar", "アバター", "아바타", "虚拟形象", "虛擬形象");
-                case Tab.Pose:
-                    return Loc.T("Pose", "ポーズ・表情", "포즈·표정", "姿势·表情", "姿勢·表情");
                 case Tab.Objects:
                     return Loc.T("Objects", "オブジェクト", "오브젝트", "对象", "物件");
-                case Tab.Face:
-                    return Loc.T("Face", "顔", "얼굴", "面部", "臉部");
                 case Tab.ShapeKeys:
                     return Loc.T("Shape key setup", "シェイプキー設定", "셰이프 키 설정", "形态键设置", "形態鍵設定");
-                case Tab.PerfectSync:
-                    return Loc.T("Perfect sync setup", "パーフェクトシンク化", "퍼펙트 싱크화", "完美同步化", "完美同步化");
+                case Tab.Face:
+                    return Loc.T("Face & expressions", "顔・表情", "얼굴·표정", "面部·表情", "臉部·表情");
+                case Tab.Body:
+                    return Loc.T("Body & pose", "体・ポーズ", "몸·포즈", "身体·姿势", "身體·姿勢");
                 case Tab.Tracking:
                     return Loc.T("Tracking", "トラッキング", "트래킹", "追踪", "追蹤");
                 case Tab.Display:
                     return Loc.T("Display", "表示", "표시", "显示", "顯示");
+                case Tab.Graphics:
+                    return Loc.T("Graphics", "グラフィック", "그래픽", "图形", "圖形");
                 case Tab.Output:
                     return Loc.T("Output", "出力", "출력", "输出", "輸出");
-                case Tab.Remote:
-                    return "OSC / HTTP";
-                case Tab.Log:
-                    return Loc.T("Debug log", "デバッグログ", "디버그 로그", "调试日志", "偵錯日誌");
-                case Tab.Credits:
-                    return Loc.T("Credits", "クレジット", "크레딧", "致谢", "致謝");
-                case Tab.Discord:
-                    return Loc.T("Official Discord", "公式 Discord", "공식 Discord", "官方 Discord", "官方 Discord");
+                case Tab.Control:
+                    return Loc.T("Hotkeys / OSC", "操作・連携", "단축키·연동", "快捷键·联动", "快捷鍵·連動");
+                case Tab.Performance:
+                    return Loc.T("Performance", "パフォーマンス", "성능", "性能", "效能");
+                case Tab.Info:
+                    return Loc.T("Info", "情報", "정보", "信息", "資訊");
+                case Tab.PerfectSync:
+                    return Loc.T("Perfect sync setup", "パーフェクトシンク化", "퍼펙트 싱크화", "完美同步化", "完美同步化");
                 default:
                     return Loc.T("Settings", "設定", "설정", "设置", "設定");
             }

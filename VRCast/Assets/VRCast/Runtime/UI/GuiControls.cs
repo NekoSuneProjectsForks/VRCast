@@ -244,6 +244,26 @@ namespace VRCast.UI
         }
 
         /// <summary>
+        /// ラベル + 横に並べた選択ボタン（選択中はアクセント色）の 1 行を描画し、選択後の番号を返す。
+        /// </summary>
+        public static int LabeledChoice(string label, IReadOnlyList<string> texts, int selected)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(label, GUILayout.Width(LabelWidth));
+            for (int i = 0; i < texts.Count; i++)
+            {
+                // 選択中でないボタンを押したらその番号にする
+                if (GUILayout.Toggle(selected == i, texts[i], GUI.skin.button, Shrinkable) && selected != i)
+                {
+                    selected = i;
+                }
+            }
+
+            GUILayout.EndHorizontal();
+            return selected;
+        }
+
+        /// <summary>
         /// value をクリップボードへコピーするボタン（押した直後だけ「コピー済み」と表示）。
         /// </summary>
         public static void CopyButton(string value)

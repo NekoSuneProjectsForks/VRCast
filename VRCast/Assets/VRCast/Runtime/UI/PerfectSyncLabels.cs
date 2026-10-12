@@ -76,6 +76,20 @@ namespace VRCast.UI
         }
 
         /// <summary>
+        /// 眉・鼻・口の中などが無いアバターでは、作った形状が思いどおりに動かないことがあるという注意。
+        /// </summary>
+        public static string MissingPartsCaution()
+        {
+            return Loc.T(
+                "On avatars missing some face parts (brows, nose, inside of the mouth, etc.), " +
+                "the generated shapes may not move as expected.",
+                "眉・鼻・口の中など、存在しない部位があるアバターでは、期待どおりの動きにならない可能性があります。",
+                "눈썹·코·입 안 등 없는 부위가 있는 아바타에서는 기대한 대로 움직이지 않을 수 있습니다.",
+                "对于缺少眉毛、鼻子、口腔内部等部位的虚拟形象，生成的形状可能无法按预期动作。",
+                "對於缺少眉毛、鼻子、口腔內部等部位的虛擬形象，生成的形狀可能無法按預期動作。");
+        }
+
+        /// <summary>
         /// 案内図での位置（x: 見る人の左 -1 〜 右 1、y: 下 -1 〜 上 1。正面から見るのでアバターの左は右側）。
         /// </summary>
         public static Vector2 DiagramPosition(LandmarkId id)

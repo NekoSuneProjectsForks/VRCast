@@ -97,7 +97,7 @@ namespace VRCast.UI
 
         private void DrawSpoutTransparency()
         {
-            // 背景の透過は表示タブの設定と共通（Spout2 はカメラの描画結果のアルファをそのまま送る）
+            // 背景の透過はグラフィックタブの設定と共通（Spout2 はカメラの描画結果のアルファをそのまま送る）
             _rendering.TransparentBackground = GUILayout.Toggle(
                 _rendering.TransparentBackground,
                 Loc.T("Transparent background", "背景を透過する", "배경을 투명하게", "背景透明", "背景透明"));

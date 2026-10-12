@@ -297,6 +297,12 @@ namespace VRCast.UI
 
             GUILayout.EndHorizontal();
 
+            // 無い部位を選んでいる間は、思いどおりに動かないことがあると知らせる
+            if (_absent != FaceParts.None)
+            {
+                GuiControls.Warning(PerfectSyncLabels.MissingPartsCaution());
+            }
+
             // 自動で置く（打っていない目印だけ。画像認識の結果を待つ間は押せない）
             DrawAutoPlace(hint, wrap);
 
@@ -408,7 +414,7 @@ namespace VRCast.UI
             bool test = GUILayout.Toggle(_trackingTest, Loc.T(
                     "Test with live tracking (before saving)", "実際のトラッキングで試す（保存する前に）",
                     "실제 트래킹으로 확인 (저장하기 전에)", "用实际追踪测试（保存前）", "用實際追蹤測試（儲存前）"),
-                WrapButton(theme));
+                theme != null ? theme.TryButton : GUI.skin.button);
             if (test != _trackingTest)
             {
                 if (test)

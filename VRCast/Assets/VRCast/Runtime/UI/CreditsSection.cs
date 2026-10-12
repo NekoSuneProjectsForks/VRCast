@@ -3,7 +3,7 @@ using UnityEngine;
 namespace VRCast.UI
 {
     /// <summary>
-    /// Credits タブ（開発者・協力者のリンク（名前 = X、右に YouTube・Twitch 等）と、GitHub のライセンス・NOTICE を開くボタン）。
+    /// 情報タブのクレジット（開発者・協力者のリンク（名前 = X、右に YouTube・Twitch 等）と、GitHub のライセンス・NOTICE を開くボタン）。
     /// </summary>
     public class CreditsSection
     {

@@ -5,7 +5,7 @@ using VRCast.Platform;
 namespace VRCast.UI
 {
     /// <summary>
-    /// Discord タブ（公式 Discord への参加ボタンと、Discord のウィジェットと同じ内容: サーバー名・オンライン人数・オンラインのメンバー）。
+    /// 情報タブの公式 Discord（参加ボタンと、Discord のウィジェットと同じ内容: サーバー名・オンライン人数・オンラインのメンバー）。
     /// 情報はタブを表示している間だけ取得する。
     /// </summary>
     public sealed class DiscordSection : IDisposable

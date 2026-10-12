@@ -551,7 +551,7 @@ namespace VRCast.UI
 
         private void DrawBlink()
         {
-            // まばたきのトラッキングの ON/OFF（どの入力元でも使う。OFF の間は顔タブの自動まばたきに任せる）
+            // まばたきのトラッキングの ON/OFF（どの入力元でも使う。OFF の間は顔・表情タブの自動まばたきに任せる）
             _settings.trackingBlink = GUILayout.Toggle(
                 _settings.trackingBlink,
                 Loc.T("Track blinks", "まばたきをトラッキング", "눈 깜빡임 트래킹", "追踪眨眼", "追蹤眨眼"));
@@ -559,8 +559,9 @@ namespace VRCast.UI
             // OFF のときは自動まばたきになることを伝える
             if (!_settings.trackingBlink)
             {
-                GuiControls.Hint(Loc.T("Uses auto blink (Face tab) instead", "代わりに自動まばたき（顔タブ）を使います",
-                    "대신 자동 눈 깜빡임 (얼굴 탭)을 사용합니다", "改用自动眨眼（面部标签）", "改用自動眨眼（臉部分頁）"));
+                GuiControls.Hint(Loc.T("Uses auto blink (Face & expressions tab) instead",
+                    "代わりに自動まばたき（顔・表情タブ）を使います", "대신 자동 눈 깜빡임 (얼굴·표정 탭)을 사용합니다",
+                    "改用自动眨眼（面部·表情标签页）", "改用自動眨眼（臉部·表情分頁）"));
                 return;
             }
 
@@ -931,11 +932,11 @@ namespace VRCast.UI
             _settings.trackingGaze = GuiControls.Slider(
                 Loc.T("Eye gaze", "視線の強さ", "시선 강도", "视线强度", "視線強度"),
                 _settings.trackingGaze, 0f, AppSettings.MaxTrackingGaze);
-            GuiControls.Hint(Loc.T("To point the eyes at the screen, use Face tab > Look at camera",
-                "目を画面に向けるには、顔タブの「カメラ目線」を使います",
-                "눈을 화면으로 향하게 하려면 얼굴 탭의 \"카메라 시선\"을 사용합니다",
-                "要让眼睛看向画面，请使用面部标签页的“看向镜头”",
-                "要讓眼睛看向畫面，請使用臉部分頁的「看向鏡頭」"));
+            GuiControls.Hint(Loc.T("To point the eyes at the screen, use Face & expressions tab > Look at camera",
+                "目を画面に向けるには、顔・表情タブの「カメラ目線」を使います",
+                "눈을 화면으로 향하게 하려면 얼굴·표정 탭의 \"카메라 시선\"을 사용합니다",
+                "要让眼睛看向画面，请使用面部·表情标签页的“看向镜头”",
+                "要讓眼睛看向畫面，請使用臉部·表情分頁的「看向鏡頭」"));
 
             // ウインク用 BlendShape が無いアバターは両目同時のみ（再エクスポートで推定される場合がある）
             var blink = _avatar.Get<BlinkController>();

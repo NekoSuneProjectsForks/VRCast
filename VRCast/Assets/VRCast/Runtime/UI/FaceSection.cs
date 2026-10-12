@@ -4,13 +4,13 @@ using VRCast.Animations;
 using VRCast.Audio;
 using VRCast.Avatars;
 using VRCast.Core;
-using VRCast.Dynamics;
 using VRCast.Tracking;
 
 namespace VRCast.UI
 {
     /// <summary>
-    /// Face タブ（揺れもの・自動まばたき・表情中のまばたき停止・カメラ目線・マイクリップシンク・表情中の口の停止）。
+    /// 顔・表情タブのまばたき・目線・口パクのカード（自動まばたき・表情中のまばたき停止・カメラ目線・マイクリップシンク・
+    /// 表情中の口の停止）。表情のカードは ExpressionSection。
     /// </summary>
     public class FaceSection
     {
@@ -33,29 +33,13 @@ namespace VRCast.UI
         public void Draw()
         {
             _avatar.Refresh();
-            DrawPhysicsAndBlink();
+            DrawBlinkAndGaze();
             DrawLipSync();
         }
 
-        private void DrawPhysicsAndBlink()
+        private void DrawBlinkAndGaze()
         {
-            GuiControls.BeginCard(Loc.T("Physics / Blink / Gaze", "揺れもの / まばたき / 目線",
-                "흔들림 / 눈 깜빡임 / 시선", "物理摆动 / 眨眼 / 视线", "物理擺動 / 眨眼 / 視線"));
-            _settings.physicsEnabled = GUILayout.Toggle(
-                _settings.physicsEnabled, Loc.T("PhysBone (approx.)", "揺れもの（PhysBone 近似）", "흔들림 (PhysBone 근사)",
-                    "物理摆动（PhysBone 近似）", "物理擺動（PhysBone 近似）"));
-
-            // 揺れものが無いアバターでは注記、あればチェーン数を表示
-            var physics = _avatar.Get<PhysBoneSimulator>();
-            if (_avatar.HasAvatar)
-            {
-                int chains = physics != null ? physics.ChainCount : 0;
-                GuiControls.Hint(physics != null && physics.IsAvailable
-                    ? Loc.T($"{chains} chains", $"{chains} チェーン", $"{chains} 체인", $"{chains} 条链", $"{chains} 條鏈")
-                    : Loc.T("No PhysBones in this avatar", "このアバターには PhysBone がありません",
-                        "이 아바타에는 PhysBone이 없습니다", "此虚拟形象没有 PhysBone", "此虛擬形象沒有 PhysBone"));
-            }
-
+            GuiControls.BeginCard(Loc.T("Blink / Gaze", "まばたき / 目線", "눈 깜빡임 / 시선", "眨眼 / 视线", "眨眼 / 視線"));
             _settings.autoBlink = GUILayout.Toggle(
                 _settings.autoBlink, Loc.T("Auto blink", "自動まばたき", "자동 눈 깜빡임", "自动眨眼", "自動眨眼"));
 

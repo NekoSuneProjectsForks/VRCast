@@ -8,7 +8,7 @@ using VRCast.Remote;
 namespace VRCast.UI
 {
     /// <summary>
-    /// OSC / HTTP タブ（外部操作の ON/OFF・ポート・状態と、コマンドの一覧）。
+    /// 操作・連携タブの外部操作（OSC / HTTP の ON/OFF・ポート・状態と、コマンドの一覧）。
     /// 表情のコマンドは表示中のアバターの表情から自動で並べ、行ごとにコピーできる。
     /// </summary>
     public class RemoteSection

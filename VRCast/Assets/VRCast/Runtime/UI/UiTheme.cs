@@ -46,6 +46,8 @@ namespace VRCast.UI
             public Color DangerActive;
             public Color Success;
             public Color Warning;
+            public Color Feature;
+            public Color FeatureHover;
         }
 
         // ライト（背景のベージュより濃いベージュの地、焦げ茶の文字、キャラメル色のアクセント）
@@ -71,6 +73,8 @@ namespace VRCast.UI
             DangerActive = new Color32(158, 42, 38, 255),
             Success = new Color32(52, 130, 76, 255),
             Warning = new Color32(160, 104, 0, 255),
+            Feature = new Color32(112, 84, 156, 255),
+            FeatureHover = new Color32(130, 102, 174, 255),
         };
 
         // ダーク（暗い焦げ茶の地、生成り色の文字、暗い地でも見えるよう明るめのキャラメル色のアクセント）
@@ -96,6 +100,8 @@ namespace VRCast.UI
             DangerActive = new Color32(166, 48, 42, 255),
             Success = new Color32(104, 186, 126, 255),
             Warning = new Color32(232, 184, 72, 255),
+            Feature = new Color32(118, 88, 166, 255),
+            FeatureHover = new Color32(136, 106, 184, 255),
         };
 
         // 使用中の配色（以下の名前で各 Build から参照する）
@@ -120,6 +126,8 @@ namespace VRCast.UI
         private Color DangerActive => _colors.DangerActive;
         private Color SuccessColor => _colors.Success;
         private Color WarningColor => _colors.Warning;
+        private Color FeatureColor => _colors.Feature;
+        private Color FeatureHover => _colors.FeatureHover;
 
         // 角丸の半径（px）
         private const int WindowRadius = 10;
@@ -191,11 +199,17 @@ namespace VRCast.UI
         public GUIStyle Sidebar { get; private set; }
         public GUIStyle Tab { get; private set; }
 
+        // ほかと分けて目立たせるタブ（パーフェクトシンク化。未選択でも紫の塗り、選択中はアクセント色）
+        public GUIStyle FeatureTab { get; private set; }
+
         // 短い文字のボタン（言語の切替など。代替フォントの字形が下へはみ出しても切らない）
         public GUIStyle OverflowButton { get; private set; }
 
         // 長い文字のボタン（幅に収まらなければ折り返して高くする。目印の名前が入るボタンなど）
         public GUIStyle WrapButton { get; private set; }
+
+        // 実際に動かして試すトグルボタン（OFF は緑の塗り、ON はアクセント色。長い文字は折り返す）
+        public GUIStyle TryButton { get; private set; }
 
         // 木の表示の開閉ボタン（スイッチと同じ高さ・余白で横に並べる）と、開閉の無い行で同じ幅を空ける透明な枠
         public GUIStyle FoldButton { get; private set; }
@@ -363,7 +377,8 @@ namespace VRCast.UI
                 Rounded(ControlActive, ControlRadius), TextColor);
             SetOnStates(Skin.button, Rounded(Accent, ControlRadius), Rounded(AccentHover, ControlRadius), OnAccent);
             OverflowButton = new GUIStyle(Skin.button) { clipping = TextClipping.Overflow };
-            WrapButton = new GUIStyle(Skin.button) { wordWrap = true };
+            // 折り返した最終行の代替フォントの字形が下へはみ出しても切らない
+            WrapButton = new GUIStyle(Skin.button) { wordWrap = true, clipping = TextClipping.Overflow };
 
             // 開閉ボタン（記号が削れないよう余白を無くし、スイッチと同じ高さ・上下の余白にして縦位置をそろえる）
             FoldButton = new GUIStyle(Skin.button)
@@ -493,6 +508,13 @@ namespace VRCast.UI
             SetStates(AccentButton, Rounded(Accent, ControlRadius), Rounded(AccentHover, ControlRadius),
                 Rounded(Accent, ControlRadius), OnAccent);
 
+            // 試すボタン（ダークでは緑が明るく白い文字が読みにくいので暗くし、押している間はさらに暗くする）
+            Color tryFill = Color.Lerp(SuccessColor, Color.black, Dark ? 0.35f : 0f);
+            TryButton = new GUIStyle(AccentButton) { wordWrap = true, clipping = TextClipping.Overflow };
+            SetStates(TryButton, Rounded(tryFill, ControlRadius), Rounded(Color.Lerp(tryFill, Color.white, 0.12f), ControlRadius),
+                Rounded(Color.Lerp(tryFill, Color.black, 0.15f), ControlRadius), OnAccent);
+            SetOnStates(TryButton, Rounded(Accent, ControlRadius), Rounded(AccentHover, ControlRadius), OnAccent);
+
             // 左のタブ列
             Sidebar = new GUIStyle
             {
@@ -512,6 +534,11 @@ namespace VRCast.UI
             };
             SetStates(Tab, null, Rounded(ControlHover, ControlRadius), Rounded(ControlActive, ControlRadius), TextDim);
             Tab.hover.textColor = TextColor;
+
+            // 目立たせるタブ（太字・紫の塗り。押している間は少し暗く）
+            FeatureTab = new GUIStyle(Tab) { fontStyle = FontStyle.Bold };
+            SetStates(FeatureTab, Rounded(FeatureColor, ControlRadius), Rounded(FeatureHover, ControlRadius),
+                Rounded(Color.Lerp(FeatureColor, Color.black, 0.15f), ControlRadius), OnAccent);
         }
 
         private static void SetStates(GUIStyle style, Texture2D normal, Texture2D hover, Texture2D active, Color text)

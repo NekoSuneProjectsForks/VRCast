@@ -49,6 +49,7 @@ namespace VRCast.UI
                 "并分配形象原有的 BlendShape。结果另存为新的 .vrcaster 文件，不会修改原文件。",
                 "在虛擬形象臉上放置標記後，會自動生成 ARKit 臉部形狀（VRCast 使用的 51 種），" +
                 "並分配形象原有的 BlendShape。結果另存為新的 .vrcaster 檔案，不會修改原檔案。"));
+            GuiControls.Warning(PerfectSyncLabels.MissingPartsCaution());
 
             // 始められない理由（未読み込み・VRM・書き出し直しが必要）
             string reason = PerfectSyncEditor.CanEdit(avatar);

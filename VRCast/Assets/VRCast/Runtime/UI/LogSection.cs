@@ -10,7 +10,7 @@ using VRCast.Tracking;
 namespace VRCast.UI
 {
     /// <summary>
-    /// デバッグログタブ（カメラが認識されない等の原因調査用）。
+    /// 情報タブのデバッグログ（カメラが認識されない等の原因調査用）。
     /// 環境・トラッカーの状態の要約と、アプリ内に保持したログを重要度・カテゴリ・文字列で絞り込んで表示し、コピーできる。
     /// </summary>
     public class LogSection

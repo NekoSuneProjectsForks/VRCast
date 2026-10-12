@@ -15,9 +15,9 @@ VRChat のアバターを単体で表示し、OBS などの配信ソフトや Di
    「トラッキング」タブの「表情を反映」で ON/OFF・しきい値・割り当てを変えられます。
 表示言語はパネル上部のボタン（または「設定」タブ）で 英語 / 日本語 / 韓国語 / 中国語（簡体字・繁体字）から選べます。
 ゲームや OBS と同時に使うときの負荷を減らす「軽量モード」が最初から ON になっています。
-動きの滑らかさを優先したいときは「設定」タブで OFF にしてください。
+動きの滑らかさを優先したいときは「パフォーマンス」タブで OFF にしてください。
 起動時に新しいバージョンがあるかを確認し、あればパネル上部でお知らせします
-（最新のバージョン番号を読むためだけに Web サイトへ接続します。「設定」タブで OFF にできます）。
+（最新のバージョン番号を読むためだけに Web サイトへ接続します。「情報」タブで OFF にできます）。
 お知らせの「今すぐ更新」を押すと、GitHub からダウンロードしてファイルを入れ替え、VRCast が自動で起動し直します（設定はそのまま）。
 このフォルダを Program Files など管理者権限の必要な場所に置いた場合は自動更新できないため、zip から入れ替えてください。
 セットアップ版で、このフォルダの 1 つ上のフォルダを展開先に選んでも、設定はそのままで新しいバージョンに入れ替えられます。
@@ -46,12 +46,12 @@ CHANGELOG.txt をご覧ください。
   （こちらのドライバーは C:\Program Files\VRCast\VirtualCamera に入ります。使わなくなったらこの方式を選んだまま「ドライバーを解除」）。
 - 設定とログ: %USERPROFILE%\AppData\LocalLow\VRCast\VRCast\
   不具合の報告時は Player.log を添えてください: https://github.com/coffin299/VRCast/issues
-  カメラが認識されない等のときは、「デバッグログ」タブの「表示中をコピー」で、ログと環境をまとめてコピーして貼り付けられます。
+  カメラが認識されない等のときは、「情報」タブのデバッグログの「表示中をコピー」で、ログと環境をまとめてコピーして貼り付けられます。
   原因がわからないときは「詳細ログ」を ON にしてから症状を再現してコピーしてください（調べ終わったら OFF に戻してください）。
 
 ■ ライセンス
 VRCast は Apache License 2.0 です（LICENSE.txt）。
-同梱しているサードパーティのライセンス表記は NOTICE.txt をご覧ください（アプリの「クレジット」タブから GitHub でも開けます）。
+同梱しているサードパーティのライセンス表記は NOTICE.txt をご覧ください（アプリの「情報」タブのクレジットから GitHub でも開けます）。
 開発者: ごみぃ（https://x.com/coffin299） / 協力者: Arche_039（https://x.com/Arche_039）、おけパ（https://x.com/_okepa）
 https://github.com/coffin299/VRCast
 公式 Discord: https://discord.gg/vM5RH52HdF
@@ -71,9 +71,9 @@ VRCast shows a VRChat avatar on its own and sends it to streaming software such 
    Use "Facial expressions" in the Tracking tab to turn it on/off and change sensitivity and mapping.
 The panel language can be English, Japanese, Korean or Chinese (Simplified / Traditional) (buttons at the top of the panel, or the Settings tab).
 "Low load mode", which reduces load when running with games or OBS, is on by default.
-Turn it off in the Settings tab if you prefer smoother motion.
+Turn it off in the Performance tab if you prefer smoother motion.
 VRCast checks for a new version at startup and shows a notice at the top of the panel if there is one
-(it connects to the website only to read the latest version number; you can turn this off in the Settings tab).
+(it connects to the website only to read the latest version number; you can turn this off in the Info tab).
 Press "Update now" in the notice to download it from GitHub, replace the files and restart VRCast automatically (your settings are kept).
 If you put this folder somewhere that needs administrator rights (such as Program Files), automatic update is not available;
 replace the folder with the one in the zip instead.
@@ -103,12 +103,12 @@ See CHANGELOG.txt.
   (its driver goes to C:\Program Files\VRCast\VirtualCamera; when you no longer need it, press "Uninstall driver" with this method selected).
 - Settings and logs: %USERPROFILE%\AppData\LocalLow\VRCast\VRCast\
   Please attach Player.log when reporting a problem: https://github.com/coffin299/VRCast/issues
-  If your camera is not detected, "Copy shown" in the "Debug log" tab copies the logs and your environment so you can paste them.
+  If your camera is not detected, "Copy shown" in the debug log on the "Info" tab copies the logs and your environment so you can paste them.
   If the cause is unclear, turn on "Detailed logging", reproduce the problem, then copy (turn it off again when you are done).
 
 - License
 VRCast is licensed under the Apache License 2.0 (LICENSE.txt).
-See NOTICE.txt for the notices of bundled third-party software (also available on GitHub from the Credits tab).
+See NOTICE.txt for the notices of bundled third-party software (also available on GitHub from the credits on the Info tab).
 Developer: ごみぃ (https://x.com/coffin299) / Collaborators: Arche_039 (https://x.com/Arche_039), おけパ (https://x.com/_okepa)
 https://github.com/coffin299/VRCast
 Official Discord: https://discord.gg/vM5RH52HdF

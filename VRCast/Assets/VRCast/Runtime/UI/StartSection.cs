@@ -228,7 +228,8 @@ namespace VRCast.UI
                 _open(StartLink.Tracking);
             }
 
-            if (GUILayout.Button(Loc.T("Face tab", "顔タブ", "얼굴 탭", "面部标签页", "臉部分頁"), GuiControls.Shrinkable))
+            if (GUILayout.Button(Loc.T("Face & expressions tab", "顔・表情タブ", "얼굴·표정 탭", "面部·表情标签页", "臉部·表情分頁"),
+                    GuiControls.Shrinkable))
             {
                 _open(StartLink.Face);
             }

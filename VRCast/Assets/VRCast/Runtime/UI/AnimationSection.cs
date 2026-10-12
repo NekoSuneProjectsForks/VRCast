@@ -1,173 +1,43 @@
-using System.Collections.Generic;
 using UnityEngine;
 using VRCast.Animations;
 using VRCast.Avatars;
 using VRCast.Core;
+using VRCast.Dynamics;
 
 namespace VRCast.UI
 {
     /// <summary>
-    /// Pose タブ（待機ポーズ・待機モーション・パーティクル・表情）。表示中アバターのコントローラーを操作する。
-    /// 表情ごとにショートカットキーを割り当てられる（クリックで割り当て開始、Esc でやめる、アバターごとに記録）。
-    /// 割り当ては Windows のキーの状態で読む（テンキー・記号キー・左右の修飾キー単独も区別できる）。
+    /// 体・ポーズタブ（待機ポーズ・待機モーション・揺れもの）。表示中アバターのコントローラーを操作する。
     /// </summary>
     public class AnimationSection
     {
-        // ボタンに表示する名前の最大文字数
-        private const int MaxButtonLabelLength = 22;
-
-        // キーの割り当てボタンとリセットボタンの幅
-        private const float KeyButtonWidth = 120f;
-        private const float ResetButtonWidth = 70f;
-
-        // 共通接頭辞を切る位置の区切り文字
-        private static readonly char[] PrefixSeparators = { '_', '-', ' ' };
-
-        private readonly AvatarSession _session;
         private readonly AvatarComponentCache _avatar;
         private readonly AppSettings _settings;
-        // 表情ボタンの表示名（アバター切替時に作る）
-        private string[] _labels = new string[0];
         private PoseController _pose;
-        private ExpressionController _expressions;
         private IdleMotionController _idleMotion;
-        private AvatarParticles _particles;
-
-        // 名前を変更中のパーティクルのまとまり（null = 変更していない）と、入力中の名前
-        private AvatarParticles.Group _renamingParticle;
-        private string _particleNameInput;
-
-        // 表情のショートカットキーの割り当て（対象 = プリセット、-1 = ニュートラル）
-        private readonly KeyCaptureSession _capture = new KeyCaptureSession();
 
         public AnimationSection(AvatarSession session, AppSettings settings)
         {
-            _session = session;
             _avatar = new AvatarComponentCache(session);
             _settings = settings;
         }
 
         public void Draw()
         {
-            // アバター未表示なら案内だけ
+            // アバター未表示なら案内だけ（揺れものの ON/OFF は全アバター共通なので出す）
             if (!RefreshControllers())
             {
                 GuiControls.BeginCard(Loc.T("Pose", "ポーズ", "포즈", "姿势", "姿勢"));
                 GuiControls.Hint(Loc.T("Load an avatar first.", "先にアバターを読み込んでください。", "먼저 아바타를 불러오세요.",
                     "请先加载虚拟形象。", "請先載入虛擬形象。"));
                 GuiControls.EndCard();
+                DrawPhysics();
                 return;
             }
 
             DrawPose();
             DrawIdleMotion();
-            DrawParticles();
-            DrawExpressions();
-        }
-
-        private void DrawParticles()
-        {
-            // パーティクルが見つかったアバターだけに出す
-            if (_particles == null || _particles.Groups.Count == 0)
-            {
-                return;
-            }
-
-            GuiControls.BeginCard(Loc.T("Particles", "パーティクル", "파티클", "粒子", "粒子"));
-            GuiControls.Hint(Loc.T(
-                $"{_particles.Groups.Count} found ({_particles.EnabledCount} on). Particles switched together in VRChat are grouped. Turning one on also shows its hidden parent objects. Saved per avatar.",
-                $"{_particles.Groups.Count} 個見つかりました（{_particles.EnabledCount} 個 ON）。VRChat で一緒に ON/OFF するものは 1 つにまとめています。ON にすると、非表示の親のオブジェクトも表示します。アバターごとに保存されます。",
-                $"{_particles.Groups.Count}개 발견 ({_particles.EnabledCount}개 켜짐). VRChat에서 함께 켜고 끄는 것은 하나로 묶었습니다. 켜면 숨겨진 상위 오브젝트도 표시합니다. 아바타별로 저장됩니다.",
-                $"找到 {_particles.Groups.Count} 个（{_particles.EnabledCount} 个开启）。在 VRChat 中一起开关的粒子会合并为一项。开启后也会显示被隐藏的父对象。按虚拟形象分别保存。",
-                $"找到 {_particles.Groups.Count} 個（{_particles.EnabledCount} 個開啟）。在 VRChat 中一起開關的粒子會合併為一項。開啟後也會顯示被隱藏的父物件。依虛擬形象分別儲存。"));
-
-            // まとめて ON / OFF
-            bool changed = false;
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button(Loc.T("All on", "すべて ON", "모두 켜기", "全部开启", "全部開啟"), GuiControls.Shrinkable))
-            {
-                _particles.SetAll(true);
-                changed = true;
-            }
-
-            if (GUILayout.Button(Loc.T("All off", "すべて OFF", "모두 끄기", "全部关闭", "全部關閉"), GuiControls.Shrinkable))
-            {
-                _particles.SetAll(false);
-                changed = true;
-            }
-
-            GUILayout.EndHorizontal();
-
-            // まとまりごとの ON/OFF・名前の変更と、Unity 上の場所
-            foreach (AvatarParticles.Group group in _particles.Groups)
-            {
-                changed |= DrawParticleGroup(group);
-            }
-
-            // 変えたらこのアバターの分として記録する（保存は終了時）
-            if (changed && _session.Current != null)
-            {
-                _settings.SetParticleToggles(_session.Current.SourcePath, _particles.Export());
-            }
-
-            GuiControls.EndCard();
-        }
-
-        private bool DrawParticleGroup(AvatarParticles.Group group)
-        {
-            bool changed = false;
-
-            // ON/OFF（複数をまとめたものは数も出す）と、名前の変更ボタン
-            GUILayout.BeginHorizontal();
-            string label = group.SystemCount > 1 ? $"{group.Label} ({group.SystemCount})" : group.Label;
-            bool enabled = GUILayout.Toggle(group.Enabled, label, GuiControls.Shrinkable);
-            if (enabled != group.Enabled)
-            {
-                _particles.SetEnabled(group, enabled);
-                changed = true;
-            }
-
-            // 名前の入力を始める（今の名前から）
-            if (_renamingParticle != group
-                && GUILayout.Button(Loc.T("Rename", "名前を変更", "이름 변경", "重命名", "重新命名"),
-                    GUILayout.Width(KeyButtonWidth)))
-            {
-                _renamingParticle = group;
-                _particleNameInput = group.Label;
-            }
-
-            GUILayout.EndHorizontal();
-
-            // 名前の入力中: 決定で付ける（空なら Unity 上の名前に戻す）、取り消しで閉じる
-            if (_renamingParticle == group)
-            {
-                GUILayout.BeginHorizontal();
-                _particleNameInput = GUILayout.TextField(
-                    _particleNameInput ?? string.Empty, AvatarParticles.MaxNameLength, GuiControls.Shrinkable);
-                if (GUILayout.Button("OK", GUILayout.Width(ResetButtonWidth)))
-                {
-                    AvatarParticles.SetName(group, _particleNameInput);
-                    _renamingParticle = null;
-                    changed = true;
-                }
-
-                if (GUILayout.Button(Loc.T("Cancel", "取消", "취소", "取消", "取消"), GUILayout.Width(ResetButtonWidth)))
-                {
-                    _renamingParticle = null;
-                }
-
-                GUILayout.EndHorizontal();
-                GuiControls.Hint(Loc.T(
-                    "Leave empty to use the name in Unity.",
-                    "空にすると Unity 上の名前に戻ります。",
-                    "비워 두면 Unity의 이름으로 돌아갑니다.",
-                    "留空则恢复为 Unity 中的名称。",
-                    "留空則恢復為 Unity 中的名稱。"));
-            }
-
-            // Unity 上の場所（名前を変えたときは元の名前も分かるように）
-            GuiControls.Hint(Loc.T("Path: ", "場所: ", "경로: ", "路径: ", "路徑: ") + group.Path);
-            return changed;
+            DrawPhysics();
         }
 
         private bool RefreshControllers()
@@ -176,14 +46,7 @@ namespace VRCast.UI
             if (_avatar.Refresh())
             {
                 _pose = _avatar.Get<PoseController>();
-                _expressions = _avatar.Get<ExpressionController>();
                 _idleMotion = _avatar.Get<IdleMotionController>();
-                _particles = _avatar.Get<AvatarParticles>();
-                _renamingParticle = null;
-                BuildLabels();
-
-                // 別のアバターの表情へ割り当てないよう、割り当て中ならやめる
-                _capture.Cancel();
             }
 
             return _avatar.HasAvatar;
@@ -294,222 +157,25 @@ namespace VRCast.UI
             GuiControls.EndCard();
         }
 
-        private void DrawExpressions()
+        private void DrawPhysics()
         {
-            GuiControls.BeginCard(Loc.T("Expressions", "表情", "표정", "表情", "表情"));
+            GuiControls.BeginCard(Loc.T("Physics", "揺れもの", "흔들림", "物理摆动", "物理擺動"));
+            _settings.physicsEnabled = GUILayout.Toggle(
+                _settings.physicsEnabled, Loc.T("PhysBone (approx.)", "揺れもの（PhysBone 近似）", "흔들림 (PhysBone 근사)",
+                    "物理摆动（PhysBone 近似）", "物理擺動（PhysBone 近似）"));
 
-            // 表情データが無いアバター
-            if (_expressions == null || _expressions.Names.Count == 0)
+            // 揺れものが無いアバターでは注記、あればチェーン数を表示
+            if (_avatar.HasAvatar)
             {
-                GuiControls.Hint(Loc.T("No expressions in this package.", "このアバターには表情データがありません。",
-                    "이 아바타에는 표정 데이터가 없습니다.",
-                    "此虚拟形象没有表情数据。", "此虛擬形象沒有表情資料。"));
-                GuiControls.EndCard();
-                _capture.Cancel();
-                return;
-            }
-
-            // 割り当てが決まったら表情に割り当てて記録する
-            if (_capture.Update(out int target, out KeyCombo captured))
-            {
-                _expressions.SetHotkey(target, captured);
-                SaveHotkeys();
-            }
-
-            // 手動で選んだ表情の扱い
-            GuiControls.Hint(Loc.T(
-                "An expression chosen with a button, shortcut key or external control stays until you choose it again, which returns to auto detection.",
-                "ボタン・ショートカットキー・外部操作で選んだ表情は固定され、トラッキングの自動検出では変わりません。同じ表情をもう一度選ぶと自動検出に戻ります。",
-                "버튼·단축키·외부 조작으로 고른 표정은 고정되어 자동 감지로 바뀌지 않습니다. 같은 표정을 다시 고르면 자동 감지로 돌아갑니다.",
-                "通过按钮、快捷键或外部操作选择的表情会被固定，不会被自动检测改变。再次选择同一表情即可恢复自动检测。",
-                "透過按鈕、快捷鍵或外部操作選擇的表情會被固定，不會被自動偵測改變。再次選擇同一表情即可恢復自動偵測。"));
-
-            // 割り当て中はやり方を、それ以外は使い方を案内する
-            GuiControls.Hint(_capture.IsCapturing
-                ? KeyCaptureSession.AssignHint
-                : Loc.T("Click a key button to assign a shortcut key. Any key works, including combinations such as Ctrl+Alt+N, the numeric keypad (with NumLock on), symbol keys, left / right Ctrl alone and mouse side buttons. Saved per avatar.",
-                    "キーのボタンを押すとショートカットキーを割り当てられます。Ctrl+Alt+N のような組み合わせ、テンキー（NumLock ON で区別）、記号キー、右 Ctrl などの単独、マウスのサイドボタンも使えます。アバターごとに保存されます。",
-                    "키 버튼을 누르면 단축키를 할당할 수 있습니다. Ctrl+Alt+N 같은 조합, 숫자 키패드 (NumLock 켜짐에서 구별), 기호 키, 오른쪽 Ctrl 등의 단독 키, 마우스 사이드 버튼도 사용할 수 있습니다. 아바타별로 저장됩니다.",
-                    "点击按键按钮即可分配快捷键。也可使用 Ctrl+Alt+N 等组合、小键盘（NumLock 开启时可区分）、符号键、右 Ctrl 等单独按键以及鼠标侧键。按虚拟形象分别保存。",
-                    "點擊按鍵按鈕即可分配快捷鍵。也可使用 Ctrl+Alt+N 等組合、數字鍵台（NumLock 開啟時可區分）、符號鍵、右 Ctrl 等單獨按鍵以及滑鼠側鍵。依虛擬形象分別儲存。"));
-
-            // 背面でも使うか（OBS などを操作中でも切り替えられる。単独のキーはほかのアプリでの入力中も反応する）
-            _settings.expressionHotkeysInBackground = GUILayout.Toggle(
-                _settings.expressionHotkeysInBackground,
-                Loc.T("Also work when VRCast is in the background", "VRCast が背面にあるときも使う",
-                    "VRCast가 뒤에 있을 때도 사용", "VRCast 在后台时也可使用", "VRCast 在背景時也可使用"));
-            if (_settings.expressionHotkeysInBackground)
-            {
-                GuiControls.Hint(Loc.T(
-                    "Keys also react while you type in other apps, so combinations with Ctrl or Alt, or the numeric keypad, are recommended.",
-                    "ほかのアプリで文字を入力している間も反応するため、Ctrl や Alt との組み合わせ、またはテンキーがおすすめです。",
-                    "다른 앱에서 입력하는 동안에도 반응하므로 Ctrl이나 Alt와의 조합 또는 숫자 키패드를 권장합니다.",
-                    "在其他应用中输入时也会响应，建议与 Ctrl 或 Alt 组合使用，或使用小键盘。",
-                    "在其他應用程式中輸入時也會回應，建議與 Ctrl 或 Alt 組合使用，或使用數字鍵台。"));
-            }
-
-            // 手動で固定中なら、その旨と自動検出へ戻すボタン
-            if (_expressions.IsManual)
-            {
-                GUILayout.BeginHorizontal();
-                GuiControls.Status(Loc.T("Expression locked (auto detection paused)", "表情を固定中（自動検出は停止）",
-                    "표정 고정 중 (자동 감지 정지)", "表情已固定（自动检测暂停）", "表情已固定（自動偵測暫停）"), true);
-                if (GUILayout.Button(Loc.T("Back to auto", "自動検出に戻す", "자동 감지로 복귀", "恢复自动检测", "恢復自動偵測"),
-                        GUILayout.ExpandWidth(false)))
-                {
-                    _expressions.ReleaseManual();
-                }
-
-                GUILayout.EndHorizontal();
-            }
-
-            // 既定で非表示の表情があるときだけ、一覧に出すかを選べる
-            if (_expressions.HiddenCount > 0)
-            {
-                // スイッチの文字は短くし（長いとパネルの幅を押し広げて行が見切れる）、説明は折り返す説明文にする
-                _settings.showHiddenExpressions = GUILayout.Toggle(
-                    _settings.showHiddenExpressions,
-                    string.Format(Loc.T("Also show other clips ({0})", "ほかのクリップも表示（{0} 個）",
-                            "다른 클립도 표시 ({0}개)", "也显示其他剪辑（{0} 个）", "也顯示其他剪輯（{0} 個）"),
-                        _expressions.HiddenCount),
-                    GuiControls.Shrinkable);
-                GuiControls.Hint(Loc.T(
-                    "Blend shapes taken from clips that also toggle items, etc.",
-                    "小物の切り替えなども含むクリップから BlendShape だけを取り出した表情です。",
-                    "소품 전환 등도 포함한 클립에서 BlendShape만 꺼낸 표정입니다.",
-                    "从还包含道具切换等的剪辑中只取出 BlendShape 的表情。",
-                    "從還包含道具切換等的剪輯中只取出 BlendShape 的表情。"));
-            }
-
-            // ニュートラルは常に先頭、以降は表情（選択中はアクセント色。パネル全体がスクロールする）
-            DrawExpressionRow(-1, Loc.T("Neutral", "ニュートラル", "무표정", "无表情", "無表情"));
-            for (int i = 0; i < _labels.Length; i++)
-            {
-                // 非表示の表情は設定で表示したときだけ出す（選択中なら戻せるよう出しておく）
-                if (_expressions.IsHidden(i) && !_settings.showHiddenExpressions && _expressions.Current != i)
-                {
-                    continue;
-                }
-
-                DrawExpressionRow(i, _labels[i]);
+                var physics = _avatar.Get<PhysBoneSimulator>();
+                int chains = physics != null ? physics.ChainCount : 0;
+                GuiControls.Hint(physics != null && physics.IsAvailable
+                    ? Loc.T($"{chains} chains", $"{chains} チェーン", $"{chains} 체인", $"{chains} 条链", $"{chains} 條鏈")
+                    : Loc.T("No PhysBones in this avatar", "このアバターには PhysBone がありません",
+                        "이 아바타에는 PhysBone이 없습니다", "此虚拟形象没有 PhysBone", "此虛擬形象沒有 PhysBone"));
             }
 
             GuiControls.EndCard();
-        }
-
-        private void DrawExpressionRow(int preset, string label)
-        {
-            GUILayout.BeginHorizontal();
-
-            // 表情ボタン（押すとその表情で固定。固定中の表情を押し直すと自動検出へ戻す）
-            bool selected = _expressions.Current == preset;
-            if (GUILayout.Toggle(selected, label, GUI.skin.button, GuiControls.Shrinkable) != selected)
-            {
-                _expressions.Select(preset, true);
-            }
-
-            // キーのボタン（押すと割り当て開始、割り当て中の行をもう一度押すとやめる）
-            KeyCombo combo = _expressions.GetHotkey(preset);
-            _capture.DrawKeyButton(preset, combo, KeyButtonWidth);
-
-            // リセット（割り当てを外す。未割り当てなら押せない）
-            GUI.enabled = combo.IsAssigned;
-            if (GUILayout.Button(Loc.T("Reset", "リセット", "초기화", "重置", "重設"), GUILayout.Width(ResetButtonWidth)))
-            {
-                _expressions.SetHotkey(preset, KeyCombo.None);
-                SaveHotkeys();
-            }
-
-            GUI.enabled = true;
-            GUILayout.EndHorizontal();
-
-            // リセットのショートカットキーと同じなら警告（表情が優先され、そのリセットはこのキーでは動かない）
-            if (_settings.TryFindResetHotkey(combo, out ResetAction action))
-            {
-                GuiControls.Warning(string.Format(Loc.T(
-                        "⚠ Same key as the \"{0}\" reset shortcut. This expression takes priority (change it in Settings).",
-                        "⚠ リセット「{0}」のショートカットキーと同じです。表情が優先されます（設定タブで変更できます）。",
-                        "⚠ 「{0}」 초기화 단축키와 같습니다. 표정이 우선됩니다 (설정 탭에서 변경할 수 있습니다).",
-                        "⚠ 与“{0}”重置快捷键相同。表情优先（可在设置标签页中更改）。",
-                        "⚠ 與「{0}」重設快捷鍵相同。表情優先（可在設定分頁中變更）。"),
-                    ResetActions.Label(action)));
-            }
-        }
-
-        private void SaveHotkeys()
-        {
-            // このアバターの分として記録する（保存は終了時）
-            if (_session.Current != null)
-            {
-                _settings.SetExpressionHotkeys(_session.Current.SourcePath, _expressions.ExportHotkeys());
-            }
-        }
-
-        private void BuildLabels()
-        {
-            // 表情が無ければ空
-            if (_expressions == null)
-            {
-                _labels = new string[0];
-                return;
-            }
-
-            // 全表情に共通する接頭辞（区切り文字まで）を表示から省く
-            IReadOnlyList<string> names = _expressions.Names;
-            int prefixLength = CommonPrefixLength(names);
-            _labels = new string[names.Count];
-            for (int i = 0; i < names.Count; i++)
-            {
-                // 接頭辞を除き、長い名前は省略
-                string name = names[i].Substring(prefixLength);
-                if (name.Length > MaxButtonLabelLength)
-                {
-                    name = name.Substring(0, MaxButtonLabelLength - 1) + "…";
-                }
-
-                _labels[i] = name;
-            }
-        }
-
-        private static int CommonPrefixLength(IReadOnlyList<string> names)
-        {
-            // 1 件以下なら省略しない
-            if (names.Count < 2)
-            {
-                return 0;
-            }
-
-            // 全名前で一致する先頭文字数を求める
-            int length = names[0].Length;
-            for (int i = 1; i < names.Count; i++)
-            {
-                int max = Mathf.Min(length, names[i].Length);
-                int j = 0;
-                while (j < max && names[i][j] == names[0][j])
-                {
-                    j++;
-                }
-
-                length = j;
-            }
-
-            // 単語の途中で切らないよう、最後の区切り文字の直後まで戻す
-            int cut = names[0].LastIndexOfAny(PrefixSeparators, Mathf.Max(0, length - 1)) + 1;
-            if (length == 0 || cut <= 0)
-            {
-                return 0;
-            }
-
-            // 名前が空になる場合は省略しない
-            for (int i = 0; i < names.Count; i++)
-            {
-                if (names[i].Length <= cut)
-                {
-                    return 0;
-                }
-            }
-
-            return cut;
         }
     }
 }
