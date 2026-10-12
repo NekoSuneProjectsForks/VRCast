@@ -114,6 +114,7 @@ namespace VRCast.Tracking
         public static readonly int EyeBlinkLeft = IndexOf("eyeBlinkLeft");
         public static readonly int EyeBlinkRight = IndexOf("eyeBlinkRight");
         public static readonly int JawOpen = IndexOf("jawOpen");
+        public static readonly int MouthPucker = IndexOf("mouthPucker");
         private static readonly int EyeLookDownLeft = IndexOf("eyeLookDownLeft");
         private static readonly int EyeLookDownRight = IndexOf("eyeLookDownRight");
         private static readonly int EyeLookInLeft = IndexOf("eyeLookInLeft");
@@ -129,7 +130,6 @@ namespace VRCast.Tracking
         private static readonly int[] FrownShapes = { IndexOf("mouthFrownLeft"), IndexOf("mouthFrownRight") };
         private static readonly int[] BrowOuterUpShapes = { IndexOf("browOuterUpLeft"), IndexOf("browOuterUpRight") };
         private static readonly int BrowInnerUp = IndexOf("browInnerUp");
-        private static readonly int MouthPucker = IndexOf("mouthPucker");
 
         /// <summary>
         /// 目・口・視線・表情の強さ・パーフェクトシンク用の値を face に書く（顔の向き・位置は書かない）。
@@ -161,7 +161,7 @@ namespace VRCast.Tracking
                 Surprise = (browInner + browOuter) * 0.5f,
                 Angry = Average(scores, AngryShapes),
                 Sad = Mathf.Clamp01(Average(scores, FrownShapes) + Mathf.Max(0f, browInner - browOuter)),
-                Pout = Mathf.InverseLerp(PoutStart, PoutFull, scores[MouthPucker]),
+                Pout = PoutStrength(scores[MouthPucker]),
             };
             FillEyeExpressions(scores, range, 0f, ref face.Expression);
             face.HasExpression = true;
@@ -169,6 +169,14 @@ namespace VRCast.Tracking
             // パーフェクトシンク用に生の値と、まばたきを写す範囲も渡す
             face.BlendShapes = scores;
             face.BlendShapeRange = range;
+        }
+
+        /// <summary>
+        /// mouthPucker の値（0〜1）からふくれっ面の強さ（0〜1）を返す。
+        /// </summary>
+        public static float PoutStrength(float mouthPucker)
+        {
+            return Mathf.InverseLerp(PoutStart, PoutFull, mouthPucker);
         }
 
         /// <summary>

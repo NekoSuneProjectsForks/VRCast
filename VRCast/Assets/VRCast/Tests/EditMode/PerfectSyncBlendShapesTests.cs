@@ -34,8 +34,8 @@ namespace VRCast.Tests
             Assert.That(PerfectSyncBoost.EstimateCheekPuff(0.0375f, scores, 1.5f, 6f), Is.EqualTo(0.5f).Within(1e-4f));
             Assert.That(PerfectSyncBoost.EstimateCheekPuff(0.1f, scores, 1.5f, 6f), Is.EqualTo(1f));
 
-            // 口を大きく開けているときは推定しないこと
-            scores[ArKitFace.JawOpen] = 0.5f;
+            // 口を大きく開けているときは推定しないこと（真顔でも出る小さな jawOpen では消さない）
+            scores[ArKitFace.JawOpen] = 0.8f;
             Assert.That(PerfectSyncBoost.EstimateCheekPuff(0.1f, scores, 1.5f, 6f), Is.EqualTo(0f));
         }
 

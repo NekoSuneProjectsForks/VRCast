@@ -183,10 +183,11 @@ namespace VRCast.Tracking
         /// <summary>
         /// 直近の頬の幅の広がりから推定した頬のふくらみ（0〜1、倍率を掛ける前。表示用）。
         /// </summary>
-        public float CheekPuffEstimate => _settings != null
-            ? PerfectSyncBoost.EstimateCheekPuff(_lastFrame.CheekWiden, _lastFrame.BlendShapes,
-                _settings.trackingCheekPuffStart, _settings.trackingCheekPuffFull)
-            : 0f;
+        public float CheekPuffEstimate => _settings == null
+            ? 0f
+            : Mathf.Max(_lastFrame.CheekPuffDirect,
+                PerfectSyncBoost.EstimateCheekPuff(_lastFrame.CheekWiden, _lastFrame.BlendShapes,
+                    _settings.trackingCheekPuffStart, _settings.trackingCheekPuffFull));
 
         /// <summary>
         /// 視線（トラッキング・カメラ目線）で動かす目ボーンがあれば true。
@@ -346,6 +347,19 @@ namespace VRCast.Tracking
 
             _wasReceived = received;
             IsTracking = received;
+
+            // 口・頬の強調が ON なら、ふくれっ面の表情判定にも倍率を掛ける（パーフェクトシンク中はプリセットを使わないが、生データの表示にも使う）
+            if (received && _settings.trackingPerfectSyncBoost && _lastFrame.HasExpression
+                && _lastFrame.BlendShapes != null
+                && _lastFrame.BlendShapes.Length == ArKitFace.BlendShapeNames.Length)
+            {
+                ExpressionScores expression = _lastFrame.Expression;
+                float pucker = Mathf.Clamp01(_lastFrame.BlendShapes[ArKitFace.MouthPucker]
+                    * Mathf.Max(1f, _settings.trackingBoostPucker));
+                expression.Pout = ArKitFace.PoutStrength(pucker);
+                _lastFrame.Expression = expression;
+            }
+
 
             // 正面が未設定なら、頭が静止したところで自動で取る
             if (received && !_calibrated)

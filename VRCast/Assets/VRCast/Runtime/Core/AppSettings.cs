@@ -276,7 +276,7 @@ namespace VRCast.Core
         public bool trackingPerfectSyncBoost = true;
         public float trackingBoostPucker = 2f;
         public float trackingBoostCheekPuff = 1.5f;
-        public float trackingBoostLips = 2f;
+        public float trackingBoostLips = 1f;
 
         // 頬のふくらみの推定（MediaPipe のみ）: 頬の幅が真顔より何 % 広がったら出し始め、何 % で最大にするか
         public float trackingCheekPuffStart = 1.5f;

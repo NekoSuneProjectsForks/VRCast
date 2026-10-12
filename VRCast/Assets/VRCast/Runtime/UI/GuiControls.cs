@@ -197,7 +197,7 @@ namespace VRCast.UI
         public static void Status(string text, bool ok)
         {
             UiTheme theme = UiTheme.Current;
-            GUIStyle style = theme == null ? GUI.skin.label : ok ? theme.Success : theme.Hint;
+            GUIStyle style = theme == null ? GUI.skin.label : ok ? theme.SuccessWrapped : theme.Hint;
             GUILayout.Label(text, style);
         }
 

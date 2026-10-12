@@ -110,33 +110,31 @@ namespace VRCast.UI
                 theme != null ? theme.SectionTitle : GUI.skin.label);
             PerfectSyncBoostControls.Draw(_settings, _faceDriver);
 
-            // 保存していない変更があるか（あれば保存・元に戻すを押せる）
+            // 保存していない変更があるか（あれば保存・元に戻すを押せる。横に並べると見切れるので縦に積む）
             bool changed = !_boostSaved.Matches(_settings);
-            GUILayout.BeginHorizontal();
             GUI.enabled = changed;
             if (GUILayout.Button(Loc.T("Save settings", "設定を保存", "설정 저장", "保存设置", "儲存設定"),
-                    theme != null ? theme.AccentButton : GUI.skin.button, GuiControls.Shrinkable))
+                    theme != null ? theme.AccentButton : GUI.skin.button))
             {
                 SaveBoostChanges();
             }
 
-            if (GUILayout.Button(Loc.T("Revert", "元に戻す", "되돌리기", "还原", "還原"), GuiControls.Shrinkable))
+            if (GUILayout.Button(Loc.T("Revert", "元に戻す", "되돌리기", "还原", "還原")))
             {
                 _boostSaved.Restore(_settings);
             }
 
             GUI.enabled = true;
-            GUILayout.EndHorizontal();
 
-            // 保存の状態（保存しないまま試すのをやめると元の値へ戻る）
+            // 保存の状態（メモリ上はトラッキングタブと常に同じ。ファイルへ残すときだけ保存）
             if (changed)
             {
                 GuiControls.Warning(Loc.T(
-                    "Not saved. Unsaved changes are reverted when you stop testing or close the editor.",
-                    "未保存です。保存しないまま試すのをやめる・編集を閉じると、元の値に戻ります。",
-                    "저장되지 않았습니다. 저장하지 않고 확인을 끝내거나 편집을 닫으면 원래 값으로 돌아갑니다.",
-                    "尚未保存。未保存就停止测试或关闭编辑时，会恢复为原来的值。",
-                    "尚未儲存。未儲存就停止測試或關閉編輯時，會恢復為原來的值。"));
+                    "Not saved to file yet. The Tracking tab already uses these values. Revert restores the values from when you started testing.",
+                    "ファイルにはまだ保存していません。トラッキングタブにはすでに反映されています。「元に戻す」で試し始めたときの値に戻します。",
+                    "파일에는 아직 저장하지 않았습니다. 트래킹 탭에는 이미 반영되어 있습니다. '되돌리기'로 확인을 시작했을 때 값으로 돌아갑니다.",
+                    "尚未写入文件。追踪分页已经在用这些值。点“还原”会回到开始测试时的值。",
+                    "尚未寫入檔案。追蹤分頁已經在用這些值。點「還原」會回到開始測試時的值。"));
             }
             else
             {
@@ -484,7 +482,7 @@ namespace VRCast.UI
             bool test = GUILayout.Toggle(_trackingTest, Loc.T(
                     "Test with live tracking (before saving)", "実際のトラッキングで試す（保存する前に）",
                     "실제 트래킹으로 확인 (저장하기 전에)", "用实际追踪测试（保存前）", "用實際追蹤測試（儲存前）"),
-                theme != null ? theme.TryButton : GUI.skin.button);
+                theme != null ? theme.TryButton : GUI.skin.button, GUILayout.ExpandWidth(true));
             if (test != _trackingTest)
             {
                 if (test)
@@ -524,11 +522,11 @@ namespace VRCast.UI
             else
             {
                 GuiControls.Status(Loc.T(
-                    "Moving with live tracking. After changing shapes, press Apply to update. Tune the mouth and cheeks in the panel on the left.",
-                    "トラッキングで動かしています。形状を変えたら「反映」で更新されます。口・頬の動きは左のパネルで調整できます。",
-                    "트래킹으로 움직이는 중입니다. 형상을 바꾼 뒤 '반영'으로 갱신됩니다. 입·볼 움직임은 왼쪽 패널에서 조정할 수 있습니다.",
-                    "正在用追踪驱动。更改形状后点击“应用”即可更新。可在左侧面板调整嘴部和脸颊动作。",
-                    "正在用追蹤驅動。變更形狀後點擊「套用」即可更新。可在左側面板調整嘴部和臉頰動作。"), true);
+                    "Moving with live tracking. After changing shapes, press Apply to update.\nTune the mouth and cheeks in the panel on the left.",
+                    "トラッキングで動かしています。形状を変えたら「反映」で更新されます。\n口・頬の動きは左のパネルで調整できます。",
+                    "트래킹으로 움직이는 중입니다. 형상을 바꾼 뒤 '반영'으로 갱신됩니다.\n입·볼 움직임은 왼쪽 패널에서 조정할 수 있습니다.",
+                    "正在用追踪驱动。更改形状后点击“应用”即可更新。\n可在左侧面板调整嘴部和脸颊动作。",
+                    "正在用追蹤驅動。變更形狀後點擊「套用」即可更新。\n可在左側面板調整嘴部和臉頰動作。"), true);
             }
         }
 
@@ -670,22 +668,20 @@ namespace VRCast.UI
                     "设置已更改。点击“应用”更新预览。", "設定已變更。點擊「套用」更新預覽。"));
             }
 
-            GUILayout.BeginHorizontal();
+            // 長い名前のボタンは横に並べると右が見切れるので、1 行ずつ折り返して置く
+            GUIStyle wrap = WrapButton(theme);
             if (GUILayout.Button(Loc.T("Apply", "反映", "반영", "应用", "套用"),
-                    theme != null ? theme.AccentButton : GUI.skin.button, GuiControls.Shrinkable))
+                    theme != null ? theme.AccentButton : GUI.skin.button))
             {
                 _deferred = GenerateAndShow;
             }
 
             if (GUILayout.Button(Loc.T("Auto-assign existing shapes", "既存の BlendShape を自動で割り当て",
-                    "기존 BlendShape 자동 할당", "自动分配现有 BlendShape", "自動分配現有 BlendShape"), WrapButton(theme),
-                    GuiControls.Shrinkable))
+                    "기존 BlendShape 자동 할당", "自动分配现有 BlendShape", "自動分配現有 BlendShape"), wrap))
             {
                 StopPreview();
                 AutoAssign();
             }
-
-            GUILayout.EndHorizontal();
 
             // 保存する前に、実際のトラッキングで動きを確かめる
             DrawTrackingTest(theme);
@@ -847,25 +843,23 @@ namespace VRCast.UI
                 return;
             }
 
-            // 別名で保存・閉じる（閉じるは 1 段階目。押すと確認を出す）
-            GUILayout.BeginHorizontal();
+            // 別名で保存・閉じる（閉じるは 1 段階目。押すと確認を出す。横に並べると右が見切れるので縦に積む）
+            GUIStyle wrap = WrapButton(theme);
             if (GUILayout.Button(Loc.T("Save as new file...", "別名で保存...", "다른 이름으로 저장...", "另存为...", "另存新檔..."),
-                    theme != null ? theme.AccentButton : GUI.skin.button, GuiControls.Shrinkable))
+                    theme != null ? theme.AccentButton : GUI.skin.button))
             {
                 _deferred = Save;
             }
 
-            if (GUILayout.Button(Loc.T("Close", "閉じる", "닫기", "关闭", "關閉"), GuiControls.Shrinkable))
+            if (GUILayout.Button(Loc.T("Close", "閉じる", "닫기", "关闭", "關閉"), wrap))
             {
                 _confirmingClose = true;
             }
 
-            GUILayout.EndHorizontal();
-
             // 保存したファイルをすぐ読み込む
             if (!string.IsNullOrEmpty(_savedPath)
                 && GUILayout.Button(Loc.T("Load the saved avatar", "保存したアバターを読み込む", "저장한 아바타 불러오기",
-                    "加载已保存的虚拟形象", "載入已儲存的虛擬形象")))
+                    "加载已保存的虚拟形象", "載入已儲存的虛擬形象"), wrap))
             {
                 _deferred = LoadSaved;
             }
@@ -881,20 +875,17 @@ namespace VRCast.UI
                 "編集をやめますか？保存していない変更は破棄されます。",
                 "편집을 끝내시겠습니까? 저장하지 않은 변경은 버려집니다.",
                 "要结束编辑吗？未保存的更改将被丢弃。", "要結束編輯嗎？未儲存的變更將被捨棄。"));
-            GUILayout.BeginHorizontal();
+            GUIStyle wrap = WrapButton(UiTheme.Current);
             if (GuiControls.DangerButton(Loc.T("Close without saving", "保存せずに閉じる", "저장하지 않고 닫기",
-                    "不保存并关闭", "不儲存並關閉"), GuiControls.Shrinkable))
+                    "不保存并关闭", "不儲存並關閉")))
             {
                 _deferred = Close;
             }
 
-            if (GUILayout.Button(Loc.T("Keep editing", "編集を続ける", "계속 편집", "继续编辑", "繼續編輯"),
-                    GuiControls.Shrinkable))
+            if (GUILayout.Button(Loc.T("Keep editing", "編集を続ける", "계속 편집", "继续编辑", "繼續編輯"), wrap))
             {
                 _confirmingClose = false;
             }
-
-            GUILayout.EndHorizontal();
         }
 
         private void GenerateAndShow()

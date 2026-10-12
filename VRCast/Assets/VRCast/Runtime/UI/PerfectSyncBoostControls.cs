@@ -93,13 +93,13 @@ namespace VRCast.UI
             // 組ごとの倍率（1 = そのまま）
             float max = AppSettings.MaxPerfectSyncBoost;
             settings.trackingBoostPucker = GuiControls.Slider(
-                "  " + Loc.T("Pout", "ふくれっ面（口をとがらせる）", "입 내밀기", "嘟嘴", "嘟嘴"),
+                Loc.T("Pout", "ふくれっ面", "입 내밀기", "嘟嘴", "嘟嘴"),
                 settings.trackingBoostPucker, 1f, max, "F1");
             settings.trackingBoostCheekPuff = GuiControls.Slider(
-                "  " + Loc.T("Puffed cheeks", "頬をふくらませる", "볼 부풀리기", "鼓腮", "鼓腮"),
+                Loc.T("Puffed cheeks", "頬をふくらませる", "볼 부풀리기", "鼓腮", "鼓腮"),
                 settings.trackingBoostCheekPuff, 1f, max, "F1");
             settings.trackingBoostLips = GuiControls.Slider(
-                "  " + Loc.T("Lips (roll / press)", "唇（巻き込む・押し付ける）", "입술 (말기·누르기)", "嘴唇（内卷・抿紧）", "嘴唇（內捲・抿緊）"),
+                Loc.T("Lips", "唇", "입술", "嘴唇", "嘴唇"),
                 settings.trackingBoostLips, 1f, max, "F1");
             GuiControls.Hint(Loc.T(
                 "Raise a value if the shape barely moves, lower it if it moves too easily.",

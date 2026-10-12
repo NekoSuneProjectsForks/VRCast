@@ -375,7 +375,6 @@ namespace VRCast.UI
             StopPreview();
             CancelDetection();
             _orbit.RotationLocked = false;
-            DiscardBoostChanges();
             _trackingTest = false;
             if (avatarAlive)
             {
@@ -452,23 +451,9 @@ namespace VRCast.UI
                     _boostSaved = PerfectSyncBoostControls.Snapshot.Capture(_settings);
                 }
             }
-            else
-            {
-                DiscardBoostChanges();
-            }
-
             // 試す間は止めていた動き（トラッキング・まばたき・口パク・揺れもの・待機モーション）を設定どおりに動かす
             _trackingTest = on;
             SetMotionSuspended(!on);
-        }
-
-        private void DiscardBoostChanges()
-        {
-            // 試している間に変えて保存していない口・頬の調整を、控えた値へ戻す（トラッキングタブも同じ設定なので一緒に戻る）
-            if (_trackingTest && _settings != null)
-            {
-                _boostSaved.Restore(_settings);
-            }
         }
 
         private void SaveBoostChanges()

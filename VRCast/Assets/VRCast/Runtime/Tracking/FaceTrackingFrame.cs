@@ -38,6 +38,9 @@ namespace VRCast.Tracking
         // 頬の幅の真顔の基準からの広がり（割合、0.05 = 5% 広い。MediaPipe のみ、他は 0）。
         // BlendShapes の cheekPuff はほぼ 0 のため、パーフェクトシンクの口・頬の強調が ON のときだけ頬のふくらみの推定に使う
         public float CheekWiden;
+
+        // 古い MediaPipe トラッカーが送った頬のふくらみ 0〜1（cheekWiden が 0 のときの予備）
+        public float CheekPuffDirect;
     }
 
     /// <summary>

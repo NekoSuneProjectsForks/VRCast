@@ -26,10 +26,11 @@ namespace VRCast.Tracking
         private static readonly int JawOpen = ArKitFace.JawOpen;
         private static readonly int MouthSmileLeft = ArKitFace.IndexOf("mouthSmileLeft");
         private static readonly int MouthSmileRight = ArKitFace.IndexOf("mouthSmileRight");
-        private const float JawGateStart = 0.1f;
-        private const float JawGateEnd = 0.25f;
-        private const float SmileGateStart = 0.15f;
-        private const float SmileGateEnd = 0.4f;
+        // MediaPipe は真顔でも jawOpen が 0.2 前後出ることがあるので、明らかに開いているときだけ弱める
+        private const float JawGateStart = 0.35f;
+        private const float JawGateEnd = 0.65f;
+        private const float SmileGateStart = 0.35f;
+        private const float SmileGateEnd = 0.7f;
 
         // 組ごとの倍率（1 = そのまま）
         private readonly float _pucker;

@@ -40,6 +40,17 @@ namespace VRCast.Tests
 
             Assert.That(Parse(CreateMessage(), out _, out FaceTrackingFrame missing, out _), Is.True);
             Assert.That(missing.CheekWiden, Is.EqualTo(0f));
+            Assert.That(missing.CheekPuffDirect, Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void TryParse_Face_ReadsLegacyCheekPuff()
+        {
+            // 初期のトラッカーが送った 0〜1 の推定は CheekPuffDirect に入ること
+            MediaPipePacket.Message message = CreateMessage();
+            message.cheekPuff = 0.7f;
+            Assert.That(Parse(message, out _, out FaceTrackingFrame face, out _), Is.True);
+            Assert.That(face.CheekPuffDirect, Is.EqualTo(0.7f).Within(1e-5f));
         }
 
         [Test]
