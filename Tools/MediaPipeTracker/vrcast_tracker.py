@@ -10,7 +10,8 @@ VRCast から同じ手順で起動・カメラ一覧取得ができる。
     face        顔が映っているか
     matrix      顔の変換行列（4x4 行優先、MediaPipe の右手系、cm）
     blendshapes BLENDSHAPE_NAMES 順のスコア（0〜1）
-    cheekPuff   顔の点の形から推定した頬のふくらみ（0〜1。blendshapes の cheekPuff はほぼ 0 のため別に送る）
+    cheekWiden  頬の幅の真顔の基準からの広がり（割合。blendshapes の cheekPuff はほぼ 0 のため、
+                VRCast 側でこれを頬のふくらみに変える）
     pose        体が映っているか
     arms        左肩・右肩・左肘・右肘・左手首・右手首の world 座標（m）
     visibility  arms の各点の可視度
@@ -171,22 +172,14 @@ FACE_COVER_RELEASE = 0.05
 # かぶっている間、頭の向きを止めておく最長の秒数（手を当てたまま顔を動かす場合に備える）
 FACE_COVER_MAX_HOLD = 3.0
 
-# 頬のふくらみの推定（MediaPipe の cheekPuff はほぼ 0 のままのため、顔の点の形から作る）。
-# 頬の下側の輪郭の幅を両目の外側の幅で割った比が、真顔の基準よりどれだけ広がったかで測る
+# 頬の幅の測定（MediaPipe の cheekPuff はほぼ 0 のままのため、VRCast 側で頬のふくらみを推定する材料）。
+# 頬の下側の輪郭の幅を両目の外側の幅で割った比が、真顔の基準よりどれだけ広がったかを送る
+# （何 % で頬をふくらませたとみなすかは VRCast 側の設定で調整する）
 CHEEK_WIDTH_PAIRS = ((132, 361), (58, 288), (172, 397))  # 左右の頬の輪郭の点
 CHEEK_EYE_CORNERS = (33, 263)  # 両目の外側の端（大きさの基準）
-CHEEK_PUFF_START = 0.015  # 基準からの広がりがこの割合を超えたら出し始める
-CHEEK_PUFF_FULL = 0.06  # この割合で最大（1）
 # 真顔の基準の追従の時定数（秒）。狭まる側は速く、広がる側は遅く追い、ふくらませている間に基準が上がらないようにする
 CHEEK_BASE_FALL_SECONDS = 2.0
 CHEEK_BASE_RISE_SECONDS = 20.0
-# 口を開けている・笑っているときは輪郭の幅が変わるため推定を弱める（スコアの開始・終了の値）
-CHEEK_JAW_GATE = (0.1, 0.25)
-CHEEK_SMILE_GATE = (0.15, 0.4)
-# 推定を弱める判定に使う BlendShape の位置（BLENDSHAPE_NAMES 内）
-JAW_OPEN = BLENDSHAPE_NAMES.index("jawOpen")
-MOUTH_SMILE = (BLENDSHAPE_NAMES.index("mouthSmileLeft"),
-               BLENDSHAPE_NAMES.index("mouthSmileRight"))
 
 # --face-image で顔とみなす確からしさ（MediaPipe の既定は 0.5）。
 # アバターのアニメ調の顔は実写より低く出やすいため下げる
@@ -270,9 +263,8 @@ class Stats:
         self.face_ms = 0.0
         self.pose_ms = 0.0
         self.hand_ms = 0.0
-        # 頬の幅の基準からの広がり（割合）の最大と、頬のふくらみの推定値の最大（しきい値の調整用）
+        # 頬の幅の基準からの広がり（割合）の最大（頬のふくらみのしきい値の調整用）
         self.cheek_widen = 0.0
-        self.cheek_puff = 0.0
 
     def report(self, now):
         """間隔が過ぎていれば STATS 行を出して集計を戻す。"""
@@ -298,8 +290,7 @@ class Stats:
             f"hands per frame {self.hands / inferred:.2f}, "
             f"skipped {self.skipped}, read failures {self.read_failures}, "
             f"send errors {self.send_errors}, "
-            f"cheek widen max {self.cheek_widen * 100:.1f}% "
-            f"(puff max {self.cheek_puff:.2f})")
+            f"cheek widen max {self.cheek_widen * 100:.1f}%")
         self._start = now
         self._clear()
 
@@ -612,31 +603,23 @@ class FaceGuard:
                     for hand in hand_result.hand_landmarks), default=0.0)
 
 
-def ramp(value, start, end):
-    """value が start で 0、end で 1 になるよう 0〜1 に写す。"""
-    return min(max((value - start) / (end - start), 0.0), 1.0)
-
-
-class CheekPuffEstimator:
-    """顔の点の形から頬のふくらみ（0〜1）を推定する。
+class CheekWidthMeter:
+    """頬の幅が真顔の基準からどれだけ広がったか（割合）を測る。
 
     MediaPipe の BlendShape の cheekPuff はほぼ 0 のままのため、頬の下側の輪郭の幅
-    （両目の外側の幅で割った比。頭の向き・カメラからの距離で変わりにくい）が、
-    真顔の基準よりどれだけ広がったかで測る。基準は狭まる側へ速く、広がる側へ遅く追う。
+    （両目の外側の幅で割った比。頭の向き・カメラからの距離で変わりにくい）を測り、
+    VRCast 側で頬のふくらみに変える。基準は狭まる側へ速く、広がる側へ遅く追う。
     """
 
     def __init__(self):
         """真顔の基準（幅の比）と、最後に更新した時刻を持つ。"""
         self._base = None
         self._time = 0.0
-        # 直前の推定の、基準からの広がり（割合。統計用）
-        self.widen = 0.0
 
-    def estimate(self, face_result, scores, aspect, covered, now):
-        """推定値を返す。scores は BLENDSHAPE_NAMES 順、aspect は映像の高さ / 幅。"""
-        self.widen = 0.0
-        # 顔が無い・手が顔にかぶっている（輪郭が崩れる）間は推定も基準の更新もしない
-        if covered or not face_result.face_landmarks or not scores:
+    def measure(self, face_result, covered, aspect, now):
+        """基準からの広がり（割合、0.05 = 5% 広い）を返す。aspect は映像の高さ / 幅。"""
+        # 顔が無い・手が顔にかぶっている（輪郭が崩れる）間は測らず、基準も更新しない
+        if covered or not face_result.face_landmarks:
             return 0.0
         points = face_result.face_landmarks[0]
         # 両目の外側の幅（潰れていれば推定しない）
@@ -658,14 +641,8 @@ class CheekPuffEstimator:
         follow = 1.0 - math.exp(-elapsed / seconds)
         self._base += (ratio - self._base) * follow
 
-        # 基準からの広がりを強さにし、口を開けている・笑っている分だけ弱める
-        self.widen = ratio / self._base - 1.0
-        puff = ramp(self.widen, CHEEK_PUFF_START, CHEEK_PUFF_FULL)
-        jaw = scores[JAW_OPEN]
-        smile = sum(scores[index] for index in MOUTH_SMILE) / len(MOUTH_SMILE)
-        puff *= 1.0 - ramp(jaw, *CHEEK_JAW_GATE)
-        puff *= 1.0 - ramp(smile, *CHEEK_SMILE_GATE)
-        return round(puff, DIGITS)
+        # 基準からの広がり（口の開き・笑顔による広がりは VRCast 側で除く）
+        return round(ratio / self._base - 1.0, DIGITS)
 
 
 def point_distance(points, first, second, aspect):
@@ -1067,7 +1044,7 @@ class Inference:
 def build_packet(results, filters, aspect, stats, now):
     """推定結果を平滑化して、送信する JSON のバイト列を作る。
 
-    results は (顔, 体, 手)、filters は (FaceGuard, Smoother, CheekPuffEstimator)、
+    results は (顔, 体, 手)、    filters は (FaceGuard, Smoother, CheekWidthMeter)、
     aspect は映像の高さ / 幅。
     """
     face_result, pose_result, hand_result = results
@@ -1078,11 +1055,10 @@ def build_packet(results, filters, aspect, stats, now):
     packet.update(assign_hands(hand_result, pose_result))
     # 手が顔にかぶっている間は頭の向きを止める（平滑化の前に置き換える）
     guard.apply(packet, face_result, hand_result, now)
-    # 頬のふくらみを顔の点の形から推定し（VRCast 側でパーフェクトシンクの強調に使う）、統計に最大を残す
-    packet["cheekPuff"] = cheek.estimate(
-        face_result, packet["blendshapes"], aspect, guard.covered, now)
-    stats.cheek_widen = max(stats.cheek_widen, cheek.widen)
-    stats.cheek_puff = max(stats.cheek_puff, packet["cheekPuff"])
+    # 頬の幅の広がりを測り（VRCast 側で頬のふくらみに変える）、統計に最大を残す
+    packet["cheekWiden"] = cheek.measure(
+        face_result, guard.covered, aspect, now)
+    stats.cheek_widen = max(stats.cheek_widen, packet["cheekWiden"])
     # 頭・腕・手・可視度の揺れを抑える
     smoother.apply(packet, now)
     # 区切りの空白を省いて小さくする
@@ -1133,7 +1109,7 @@ def run(arguments):
     last_timestamp = -1
     smoother = Smoother()
     guard = FaceGuard()
-    cheek = CheekPuffEstimator()
+    cheek = CheekWidthMeter()
     stats = Stats(arguments.status_interval, use_hands)
     inference = Inference((face, pose, hands), arguments.pose_every,
                           arguments.hand_search_every, stats,

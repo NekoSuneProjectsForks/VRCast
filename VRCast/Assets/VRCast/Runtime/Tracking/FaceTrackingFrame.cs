@@ -35,9 +35,9 @@ namespace VRCast.Tracking
         // BlendShapes のまばたきを閉じ具合へ写す範囲（入力元ごとに違う）
         public ArKitRange BlendShapeRange;
 
-        // 顔の形から推定した頬のふくらみ（0〜1。MediaPipe のみ。BlendShapes の cheekPuff はほぼ 0 のため別に持つ）。
-        // パーフェクトシンクの口・頬の強調が ON のときだけ cheekPuff に使う
-        public float CheekPuffEstimate;
+        // 頬の幅の真顔の基準からの広がり（割合、0.05 = 5% 広い。MediaPipe のみ、他は 0）。
+        // BlendShapes の cheekPuff はほぼ 0 のため、パーフェクトシンクの口・頬の強調が ON のときだけ頬のふくらみの推定に使う
+        public float CheekWiden;
     }
 
     /// <summary>

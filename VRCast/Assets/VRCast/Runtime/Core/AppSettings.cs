@@ -68,6 +68,10 @@ namespace VRCast.Core
         // パーフェクトシンクの口・頬の強調の倍率の上限（1 = 強調しない）
         public const float MaxPerfectSyncBoost = 5f;
 
+        // 頬のふくらみの推定で、頬の幅の広がり（%）として選べる上限と、出し始め〜最大の最小の間隔（%）
+        public const float MaxCheekWidenPercent = 15f;
+        public const float MinCheekWidenSpan = 0.5f;
+
         // 待機モーション（呼吸・体の揺れ・頭のゆらぎ）の強さの上限と、速さの倍率の範囲
         public const float MaxIdleMotionStrength = 2f;
         public const float MinIdleMotionSpeed = 0.5f;
@@ -269,10 +273,14 @@ namespace VRCast.Core
         public bool trackingPerfectSyncAnyShape;
 
         // パーフェクトシンク中だけ、検出が弱い口・頬の動きを倍率で強める（口をとがらせる・頬をふくらませる・唇を巻き込む）
-        public bool trackingPerfectSyncBoost;
+        public bool trackingPerfectSyncBoost = true;
         public float trackingBoostPucker = 2f;
         public float trackingBoostCheekPuff = 1.5f;
         public float trackingBoostLips = 2f;
+
+        // 頬のふくらみの推定（MediaPipe のみ）: 頬の幅が真顔より何 % 広がったら出し始め、何 % で最大にするか
+        public float trackingCheekPuffStart = 1.5f;
+        public float trackingCheekPuffFull = 6f;
 
         // 表情反映（MediaPipe・VMC・iFacialMocap のみ）。表情ごとの割り当ては表情プリセット名（空欄 = 自動、"<none>" = 割り当てなし）
         public bool trackingExpressions = true;
@@ -913,6 +921,10 @@ namespace VRCast.Core
             trackingBoostPucker = Mathf.Clamp(trackingBoostPucker, 1f, MaxPerfectSyncBoost);
             trackingBoostCheekPuff = Mathf.Clamp(trackingBoostCheekPuff, 1f, MaxPerfectSyncBoost);
             trackingBoostLips = Mathf.Clamp(trackingBoostLips, 1f, MaxPerfectSyncBoost);
+            // 頬のふくらみの推定は、出し始めより最大が必ず大きくなるよう間隔を空ける
+            trackingCheekPuffStart = Mathf.Clamp(trackingCheekPuffStart, 0f, MaxCheekWidenPercent - MinCheekWidenSpan);
+            trackingCheekPuffFull = Mathf.Clamp(trackingCheekPuffFull, trackingCheekPuffStart + MinCheekWidenSpan,
+                MaxCheekWidenPercent);
             // 未知のまばたきのそろえ方はそろえない扱いへ
             if (!Enum.IsDefined(typeof(BlinkSyncMode), trackingBlinkSync))
             {

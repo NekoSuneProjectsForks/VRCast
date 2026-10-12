@@ -25,6 +25,32 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Boost_EstimatesCheekPuffFromWidenAndGates()
+        {
+            var scores = new float[ArKitFace.BlendShapeNames.Length];
+
+            // 1.5〜6% の範囲: 真顔（1%）は 0、中間（3.75%）は 0.5、6% 以上は 1 になること
+            Assert.That(PerfectSyncBoost.EstimateCheekPuff(0.01f, scores, 1.5f, 6f), Is.EqualTo(0f));
+            Assert.That(PerfectSyncBoost.EstimateCheekPuff(0.0375f, scores, 1.5f, 6f), Is.EqualTo(0.5f).Within(1e-4f));
+            Assert.That(PerfectSyncBoost.EstimateCheekPuff(0.1f, scores, 1.5f, 6f), Is.EqualTo(1f));
+
+            // 口を大きく開けているときは推定しないこと
+            scores[ArKitFace.JawOpen] = 0.5f;
+            Assert.That(PerfectSyncBoost.EstimateCheekPuff(0.1f, scores, 1.5f, 6f), Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void Boost_UsesLargerOfReceivedAndEstimatedCheekPuff()
+        {
+            int cheekPuff = ArKitFace.IndexOf("cheekPuff");
+
+            // 倍率 2: 推定 0.3 が受信 0.05 より大きいので 0.6、既定値は強調しないこと
+            var boost = new PerfectSyncBoost(1f, 2f, 1f, 0.3f);
+            Assert.That(boost.Apply(cheekPuff, 0.05f), Is.EqualTo(0.6f).Within(1e-5f));
+            Assert.That(default(PerfectSyncBoost).Apply(cheekPuff, 0.05f), Is.EqualTo(0.05f).Within(1e-5f));
+        }
+
+        [Test]
         public void Match_RejectsOtherNames()
         {
             // ARKit 名でない名前・空文字は対象外

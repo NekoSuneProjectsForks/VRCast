@@ -94,6 +94,9 @@ namespace VRCast.UI
         }
 
         private readonly AvatarSession _session;
+
+        // 「実際のトラッキングで試す」で口・頬の強調を調整するための設定
+        private readonly AppSettings _settings;
         private readonly OrbitCameraController _orbit;
         private readonly Camera _camera;
         private readonly PerfectSyncOverlay _overlay = new PerfectSyncOverlay();
@@ -145,6 +148,9 @@ namespace VRCast.UI
         // 保存前に実際のトラッキングで試している間 true（止めていた動きを設定どおりに動かす）
         private bool _trackingTest;
 
+        // 試し始めた時点（か最後に保存した時点）の口・頬の強調の設定（保存せずにやめたらこの値へ戻す）
+        private PerfectSyncBoostControls.Snapshot _boostSaved;
+
         // 次に打つ（選択中の）目印と、ドラッグ中か・そのドラッグで新しく打ったか
         private LandmarkId? _selected;
         private bool _dragging;
@@ -182,9 +188,10 @@ namespace VRCast.UI
         // 「閉じる」の確認中なら true（保存していない変更を誤って捨てないよう 2 段階にする）
         private bool _confirmingClose;
 
-        public PerfectSyncEditor(AvatarSession session, OrbitCameraController orbit)
+        public PerfectSyncEditor(AvatarSession session, OrbitCameraController orbit, AppSettings settings)
         {
             _session = session;
+            _settings = settings;
             _orbit = orbit;
             _camera = orbit != null ? orbit.GetComponent<Camera>() : null;
         }
@@ -368,6 +375,7 @@ namespace VRCast.UI
             StopPreview();
             CancelDetection();
             _orbit.RotationLocked = false;
+            DiscardBoostChanges();
             _trackingTest = false;
             if (avatarAlive)
             {
@@ -437,11 +445,37 @@ namespace VRCast.UI
 
                 StopPreview();
                 _previewIndex = -1;
+
+                // 口・頬の調整を保存せずにやめたときに戻せるよう、今の値を控える
+                if (_settings != null)
+                {
+                    _boostSaved = PerfectSyncBoostControls.Snapshot.Capture(_settings);
+                }
+            }
+            else
+            {
+                DiscardBoostChanges();
             }
 
             // 試す間は止めていた動き（トラッキング・まばたき・口パク・揺れもの・待機モーション）を設定どおりに動かす
             _trackingTest = on;
             SetMotionSuspended(!on);
+        }
+
+        private void DiscardBoostChanges()
+        {
+            // 試している間に変えて保存していない口・頬の調整を、控えた値へ戻す（トラッキングタブも同じ設定なので一緒に戻る）
+            if (_trackingTest && _settings != null)
+            {
+                _boostSaved.Restore(_settings);
+            }
+        }
+
+        private void SaveBoostChanges()
+        {
+            // 設定ファイルへすぐ保存し、以後はこの値を戻し先にする（トラッキングタブも同じ設定を使う）
+            AppBootstrap.Save();
+            _boostSaved = PerfectSyncBoostControls.Snapshot.Capture(_settings);
         }
 
         private void SetMotionSuspended(bool suspended)

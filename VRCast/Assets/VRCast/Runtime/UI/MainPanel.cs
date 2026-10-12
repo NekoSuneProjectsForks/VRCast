@@ -144,7 +144,7 @@ namespace VRCast.UI
             _faceSection = new FaceSection(session, microphone, settings);
             _expressionSection = new ExpressionSection(session, settings);
             _shapeKeySection = new ShapeKeySection(session, settings);
-            _perfectSyncEditor = new PerfectSyncEditor(session, orbit);
+            _perfectSyncEditor = new PerfectSyncEditor(session, orbit, settings);
             _perfectSyncSection = new PerfectSyncSection(session, _perfectSyncEditor);
             _trackingSection = new TrackingSection(session, tracker, trackerProcess, skeleton, settings);
             _displaySection = new DisplaySection(orbit, rendering, settings);
@@ -285,7 +285,7 @@ namespace VRCast.UI
             // パーフェクトシンク化の編集中は、編集画面のパネルで判定し、顔を見回せるようカメラの固定を外す
             if (_perfectSyncEditor.IsOpen)
             {
-                bool overPanel = _visible && _perfectSyncEditor.PanelRect.Contains(position);
+                bool overPanel = _visible && _perfectSyncEditor.IsOverPanel(position);
                 _orbit.InputBlocked = overPanel;
                 _orbit.Locked = false;
                 _perfectSyncEditor.Update(_visible && !overPanel);

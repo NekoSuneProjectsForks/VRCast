@@ -20,6 +20,10 @@ namespace VRCast.UI
         private const float PanelMargin = 10f;
         private const float MinPanelHeight = 320f;
 
+        // 「実際のトラッキングで試す」間に左側へ出す、口・頬の強調の調整パネル（ID・幅）
+        private const int TuneWindowId = 0x5651;
+        private const float TunePanelWidth = 380f;
+
         // 案内図の大きさと点の大きさ
         private const float DiagramSize = 150f;
         private const float DiagramDot = 6f;
@@ -49,6 +53,9 @@ namespace VRCast.UI
         // 次の Update で行う処理（ボタンで決めたもの）
         private Action _deferred;
 
+        // 調整パネルの範囲（出していなければ空。内容に合わせて高さが決まる）
+        private Rect _tuneRect;
+
         // パネルのスクロール位置・割り当ての候補の検索文字列・重ねて描く目印（使い回す）
         private Vector2 _scroll;
         private string _search = string.Empty;
@@ -74,6 +81,69 @@ namespace VRCast.UI
                 Mathf.Max(MinPanelHeight, height - PanelMargin * 2f));
             GUILayout.Window(WindowId, PanelRect, DrawPanel, GUIContent.none, GUI.skin.window,
                 GUILayout.Width(PanelRect.width), GUILayout.Height(PanelRect.height));
+
+            // トラッキングで試している間だけ、左上に口・頬の強調の調整パネルを出す（高さは内容に合わせる）
+            if (!_trackingTest || _settings == null)
+            {
+                _tuneRect = Rect.zero;
+                return;
+            }
+
+            _tuneRect = GUILayout.Window(TuneWindowId, new Rect(PanelMargin, PanelMargin, TunePanelWidth, 0f),
+                DrawTunePanel, GUIContent.none, GUI.skin.window, GUILayout.Width(TunePanelWidth));
+        }
+
+        /// <summary>
+        /// GUI の座標 position が編集画面のパネル（右側・調整パネル）の上なら true（その間はカメラ操作・目印の操作をしない）。
+        /// </summary>
+        public bool IsOverPanel(Vector2 position)
+        {
+            return PanelRect.Contains(position) || _tuneRect.Contains(position);
+        }
+
+        private void DrawTunePanel(int id)
+        {
+            UiTheme theme = UiTheme.Current;
+
+            // 見出しと、口・頬の強調の設定（トラッキングタブと同じもの。変えるとすぐ動きに反映される）
+            GUILayout.Label(Loc.T("Mouth and cheek tuning", "口・頬の調整", "입·볼 조정", "嘴部和脸颊调整", "嘴部和臉頰調整"),
+                theme != null ? theme.SectionTitle : GUI.skin.label);
+            PerfectSyncBoostControls.Draw(_settings, _faceDriver);
+
+            // 保存していない変更があるか（あれば保存・元に戻すを押せる）
+            bool changed = !_boostSaved.Matches(_settings);
+            GUILayout.BeginHorizontal();
+            GUI.enabled = changed;
+            if (GUILayout.Button(Loc.T("Save settings", "設定を保存", "설정 저장", "保存设置", "儲存設定"),
+                    theme != null ? theme.AccentButton : GUI.skin.button, GuiControls.Shrinkable))
+            {
+                SaveBoostChanges();
+            }
+
+            if (GUILayout.Button(Loc.T("Revert", "元に戻す", "되돌리기", "还原", "還原"), GuiControls.Shrinkable))
+            {
+                _boostSaved.Restore(_settings);
+            }
+
+            GUI.enabled = true;
+            GUILayout.EndHorizontal();
+
+            // 保存の状態（保存しないまま試すのをやめると元の値へ戻る）
+            if (changed)
+            {
+                GuiControls.Warning(Loc.T(
+                    "Not saved. Unsaved changes are reverted when you stop testing or close the editor.",
+                    "未保存です。保存しないまま試すのをやめる・編集を閉じると、元の値に戻ります。",
+                    "저장되지 않았습니다. 저장하지 않고 확인을 끝내거나 편집을 닫으면 원래 값으로 돌아갑니다.",
+                    "尚未保存。未保存就停止测试或关闭编辑时，会恢复为原来的值。",
+                    "尚未儲存。未儲存就停止測試或關閉編輯時，會恢復為原來的值。"));
+            }
+            else
+            {
+                GuiControls.Status(Loc.T("Saved (same settings as the Tracking tab)",
+                    "保存済み（トラッキングタブと同じ設定です）", "저장됨 (트래킹 탭과 같은 설정)",
+                    "已保存（与追踪分页的设置相同）", "已儲存（與追蹤分頁的設定相同）"), true);
+            }
         }
 
         /// <summary>
@@ -453,11 +523,12 @@ namespace VRCast.UI
             }
             else
             {
-                GuiControls.Status(Loc.T("Moving with live tracking. After changing shapes, press Apply to update.",
-                    "トラッキングで動かしています。形状を変えたら「反映」で更新されます。",
-                    "트래킹으로 움직이는 중입니다. 형상을 바꾼 뒤 '반영'으로 갱신됩니다.",
-                    "正在用追踪驱动。更改形状后点击“应用”即可更新。",
-                    "正在用追蹤驅動。變更形狀後點擊「套用」即可更新。"), true);
+                GuiControls.Status(Loc.T(
+                    "Moving with live tracking. After changing shapes, press Apply to update. Tune the mouth and cheeks in the panel on the left.",
+                    "トラッキングで動かしています。形状を変えたら「反映」で更新されます。口・頬の動きは左のパネルで調整できます。",
+                    "트래킹으로 움직이는 중입니다. 형상을 바꾼 뒤 '반영'으로 갱신됩니다. 입·볼 움직임은 왼쪽 패널에서 조정할 수 있습니다.",
+                    "正在用追踪驱动。更改形状后点击“应用”即可更新。可在左侧面板调整嘴部和脸颊动作。",
+                    "正在用追蹤驅動。變更形狀後點擊「套用」即可更新。可在左側面板調整嘴部和臉頰動作。"), true);
             }
         }
 

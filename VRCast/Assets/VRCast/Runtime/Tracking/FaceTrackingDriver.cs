@@ -176,6 +176,19 @@ namespace VRCast.Tracking
         public bool PausesExpressions => IsPerfectSyncActive && _perfectSync.IsAvailable;
 
         /// <summary>
+        /// 直近の頬の幅の真顔からの広がり（割合。MediaPipe のみ、他は 0。頬のふくらみのしきい値の調整用の表示）。
+        /// </summary>
+        public float CheekWiden => _lastFrame.CheekWiden;
+
+        /// <summary>
+        /// 直近の頬の幅の広がりから推定した頬のふくらみ（0〜1、倍率を掛ける前。表示用）。
+        /// </summary>
+        public float CheekPuffEstimate => _settings != null
+            ? PerfectSyncBoost.EstimateCheekPuff(_lastFrame.CheekWiden, _lastFrame.BlendShapes,
+                _settings.trackingCheekPuffStart, _settings.trackingCheekPuffFull)
+            : 0f;
+
+        /// <summary>
         /// 視線（トラッキング・カメラ目線）で動かす目ボーンがあれば true。
         /// </summary>
         public bool HasEyes => _leftEye != null || _rightEye != null;
@@ -540,7 +553,7 @@ namespace VRCast.Tracking
             }
 
             return new PerfectSyncBoost(_settings.trackingBoostPucker, _settings.trackingBoostCheekPuff,
-                _settings.trackingBoostLips, _lastFrame.CheekPuffEstimate);
+                _settings.trackingBoostLips, CheekPuffEstimate);
         }
 
         private void ApplyPerfectSync()

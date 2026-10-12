@@ -30,20 +30,16 @@ namespace VRCast.Tests
         }
 
         [Test]
-        public void TryParse_Face_ReadsCheekPuffEstimate()
+        public void TryParse_Face_ReadsCheekWiden()
         {
-            // 範囲内はそのまま、範囲外は 0〜1 に収め、送られていなければ 0 になること
+            // 頬の幅の広がりはそのまま読み、送られていなければ 0 になること
             MediaPipePacket.Message message = CreateMessage();
-            message.cheekPuff = 0.4f;
+            message.cheekWiden = 0.04f;
             Assert.That(Parse(message, out _, out FaceTrackingFrame face, out _), Is.True);
-            Assert.That(face.CheekPuffEstimate, Is.EqualTo(0.4f).Within(1e-5f));
-
-            message.cheekPuff = 3f;
-            Assert.That(Parse(message, out _, out FaceTrackingFrame clamped, out _), Is.True);
-            Assert.That(clamped.CheekPuffEstimate, Is.EqualTo(1f).Within(1e-5f));
+            Assert.That(face.CheekWiden, Is.EqualTo(0.04f).Within(1e-5f));
 
             Assert.That(Parse(CreateMessage(), out _, out FaceTrackingFrame missing, out _), Is.True);
-            Assert.That(missing.CheekPuffEstimate, Is.EqualTo(0f));
+            Assert.That(missing.CheekWiden, Is.EqualTo(0f));
         }
 
         [Test]
