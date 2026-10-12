@@ -110,5 +110,30 @@ namespace VRCast.Tests
             sync.Release();
             Assert.That(_renderer.GetBlendShapeWeight(0), Is.EqualTo(0f).Within(0.01f));
         }
+
+        [Test]
+        public void BlendShapes_SharedShapeFollowsBothSidesWithoutSticking()
+        {
+            // 両目まとめのまばたき 1 つに、左右のまばたきを割り当てる
+            var bindings = new[]
+            {
+                new PerfectSyncBinding { name = "eyeBlinkLeft", path = "Body", blendShape = "Blink_L", weight = 1f },
+                new PerfectSyncBinding { name = "eyeBlinkRight", path = "Body", blendShape = "Blink_L", weight = 1f },
+            };
+            PerfectSyncBlendShapes sync = PerfectSyncBlendShapes.Create(_root.transform, bindings);
+            Assert.That(sync.DrivesBlink, Is.True);
+
+            // 片目だけ閉じると、大きい方（閉じた目）の値になること
+            var scores = new float[ArKitFace.BlendShapeNames.Length];
+            scores[Array.IndexOf(ArKitFace.BlendShapeNames, "eyeBlinkLeft")] = 1f;
+            sync.Apply(scores, ArKitRange.MediaPipe, true, 10f, true);
+            Assert.That(_renderer.GetBlendShapeWeight(0), Is.EqualTo(100f).Within(0.01f));
+
+            // 両目を開くと、前の値に引きずられず開いた値（0）へ戻ること
+            Array.Clear(scores, 0, scores.Length);
+            sync.Apply(scores, ArKitRange.MediaPipe, true, 10f, true);
+            sync.Apply(scores, ArKitRange.MediaPipe, true, 10f, true);
+            Assert.That(_renderer.GetBlendShapeWeight(0), Is.EqualTo(0f).Within(0.01f));
+        }
     }
 }

@@ -37,6 +37,14 @@ namespace VRCast.Tracking
         // ARKit の各名前に対応するアバター側の書き込み先（無ければ null）
         private readonly List<Target>[] _targets;
 
+        // 書き込む BlendShape（同じ BlendShape は 1 つにまとめる）と、今のフレームで書く値・書いたか・前のフレームで書いたか。
+        // 両目まとめのまばたき・笑顔などに左右の ARKit 名を割り当てると、別々の上乗せが互いの値を元の値として取り込み、
+        // 値が下がらなくなる（半目のまま残る）ため、名前ごとの値の大きい方を BlendShape ごとに 1 回だけ書く
+        private readonly BlendShapeOverlay[] _slots;
+        private readonly float[] _slotValues;
+        private readonly bool[] _slotUsed;
+        private readonly bool[] _slotActive;
+
         // 平滑化済みの値（0〜1、アバター側の左右）
         private readonly float[] _current;
 
@@ -44,23 +52,50 @@ namespace VRCast.Tracking
         private bool _active;
 
         /// <summary>
-        /// 書き込み先 1 つと、その強さ（割り当てた既存の BlendShape は強さを変えられる。名前で見つけたものは 1）。
+        /// 書き込み先 1 つ（_slots の番号）と、その強さ（割り当てた既存の BlendShape は強さを変えられる。名前で見つけたものは 1）。
         /// </summary>
         private readonly struct Target
         {
-            public readonly BlendShapeOverlay Overlay;
+            public readonly int Slot;
             public readonly float Scale;
 
-            public Target(BlendShapeOverlay overlay, float scale)
+            public Target(int slot, float scale)
             {
-                Overlay = overlay;
+                Slot = slot;
                 Scale = scale;
             }
         }
 
-        private PerfectSyncBlendShapes(List<Target>[] targets, int matched)
+        /// <summary>
+        /// 書き込む BlendShape の一覧を作る途中の状態（同じレンダラー・番号は同じ番号にする）。
+        /// </summary>
+        private sealed class SlotTable
+        {
+            public readonly List<BlendShapeOverlay> Overlays = new List<BlendShapeOverlay>();
+            private readonly Dictionary<(SkinnedMeshRenderer, int), int> _byShape =
+                new Dictionary<(SkinnedMeshRenderer, int), int>();
+
+            public int Get(SkinnedMeshRenderer renderer, int index)
+            {
+                // 初めての BlendShape なら上乗せ用オブジェクトを作る
+                if (!_byShape.TryGetValue((renderer, index), out int slot))
+                {
+                    slot = Overlays.Count;
+                    Overlays.Add(BlendShapeOverlay.Create(renderer, index));
+                    _byShape[(renderer, index)] = slot;
+                }
+
+                return slot;
+            }
+        }
+
+        private PerfectSyncBlendShapes(List<Target>[] targets, List<BlendShapeOverlay> slots, int matched)
         {
             _targets = targets;
+            _slots = slots.ToArray();
+            _slotValues = new float[_slots.Length];
+            _slotUsed = new bool[_slots.Length];
+            _slotActive = new bool[_slots.Length];
             _current = new float[targets.Length];
             MatchedCount = matched;
         }
@@ -102,7 +137,8 @@ namespace VRCast.Tracking
         public static PerfectSyncBlendShapes Create(Transform root, IReadOnlyList<PerfectSyncBinding> bindings = null)
         {
             var targets = new List<Target>[ArKitFace.BlendShapeNames.Length];
-            int matched = AddBindings(root, bindings, targets);
+            var slots = new SlotTable();
+            int matched = AddBindings(root, bindings, targets, slots);
             var bound = new bool[targets.Length];
             for (int i = 0; i < targets.Length; i++)
             {
@@ -134,14 +170,15 @@ namespace VRCast.Tracking
                         matched++;
                     }
 
-                    targets[index].Add(new Target(BlendShapeOverlay.Create(renderer, shape), 1f));
+                    targets[index].Add(new Target(slots.Get(renderer, shape), 1f));
                 }
             }
 
-            return new PerfectSyncBlendShapes(targets, matched);
+            return new PerfectSyncBlendShapes(targets, slots.Overlays, matched);
         }
 
-        private static int AddBindings(Transform root, IReadOnlyList<PerfectSyncBinding> bindings, List<Target>[] targets)
+        private static int AddBindings(Transform root, IReadOnlyList<PerfectSyncBinding> bindings, List<Target>[] targets,
+            SlotTable slots)
         {
             // 割り当てが無ければ何もしない
             int matched = 0;
@@ -159,8 +196,8 @@ namespace VRCast.Tracking
                     continue;
                 }
 
-                BlendShapeOverlay overlay = BlendShapeOverlay.Create(root, binding.path, binding.blendShape);
-                if (overlay == null)
+                if (!BlendShapeOverlay.TryFind(root, binding.path, binding.blendShape,
+                        out SkinnedMeshRenderer renderer, out int shape))
                 {
                     continue;
                 }
@@ -172,7 +209,7 @@ namespace VRCast.Tracking
                     matched++;
                 }
 
-                targets[index].Add(new Target(overlay, binding.weight));
+                targets[index].Add(new Target(slots.Get(renderer, shape), binding.weight));
             }
 
             return matched;
@@ -226,6 +263,7 @@ namespace VRCast.Tracking
             float blinkLeft = range.BlinkToClosed(Mathf.Clamp01(scores[SourceIndex(EyeBlinkLeft, mirror)]));
             float blinkRight = range.BlinkToClosed(Mathf.Clamp01(scores[SourceIndex(EyeBlinkRight, mirror)]));
             eyes.Apply(ref blinkLeft, ref blinkRight);
+            Array.Clear(_slotUsed, 0, _slotUsed.Length);
             for (int i = 0; i < _targets.Length; i++)
             {
                 // アバターに無い名前は計算しない
@@ -234,27 +272,24 @@ namespace VRCast.Tracking
                     continue;
                 }
 
-                // まばたきを動かさない間は、一度だけ元の値へ戻して以降は書かない（同じ BlendShape への自動まばたきと競合させない）
+                // まばたきを動かさない間は書かない（同じ BlendShape への自動まばたきと競合させない。書いていた分は下で一度だけ戻す）
                 bool blinkShape = i == EyeBlinkLeft || i == EyeBlinkRight;
                 if (blinkShape && !drivesBlink)
                 {
-                    if (_current[i] != 0f)
-                    {
-                        _current[i] = 0f;
-                        Write(i, 0f);
-                    }
-
+                    _current[i] = 0f;
                     continue;
                 }
 
-                // 左右を合わせた値（まばたきは補正済みの閉じ具合）を平滑化して 0〜100 で書く
+                // 左右を合わせた値（まばたきは補正済みの閉じ具合）を平滑化して 0〜100 にする
                 float target = i == EyeBlinkLeft ? blinkLeft
                     : i == EyeBlinkRight ? blinkRight
                     : Mathf.Clamp01(scores[SourceIndex(i, mirror)]);
 
                 _current[i] = Mathf.Lerp(_current[i], target, blend);
-                Write(i, _current[i] * 100f);
+                Collect(i, _current[i] * 100f);
             }
+
+            WriteSlots();
         }
 
         /// <summary>
@@ -269,23 +304,46 @@ namespace VRCast.Tracking
             }
 
             _active = false;
-            for (int i = 0; i < _targets.Length; i++)
+
+            // 次に使うときは 0 から追従させ、全部の BlendShape を上乗せ 0 で元の値へ戻す
+            Array.Clear(_current, 0, _current.Length);
+            for (int s = 0; s < _slots.Length; s++)
             {
-                // 上乗せ 0 で元の値へ戻し、次に使うときは 0 から追従させる
-                _current[i] = 0f;
-                if (_targets[i] != null)
-                {
-                    Write(i, 0f);
-                }
+                _slots[s].Write(0f);
+                _slotActive[s] = false;
             }
         }
 
-        private void Write(int index, float weight)
+        private void Collect(int index, float weight)
         {
-            // 同じ名前の全メッシュへ、それぞれの強さを掛けて書く
+            // 同じ名前の全メッシュへ、それぞれの強さを掛けた値を控える（同じ BlendShape に複数の名前があれば大きい方）
             foreach (Target target in _targets[index])
             {
-                target.Overlay.Write(weight * target.Scale);
+                float value = weight * target.Scale;
+                if (!_slotUsed[target.Slot] || value > _slotValues[target.Slot])
+                {
+                    _slotValues[target.Slot] = value;
+                }
+
+                _slotUsed[target.Slot] = true;
+            }
+        }
+
+        private void WriteSlots()
+        {
+            // 今のフレームで値のある BlendShape だけを 1 回ずつ書き、書かなくなった BlendShape は一度だけ元の値へ戻す
+            for (int s = 0; s < _slots.Length; s++)
+            {
+                if (_slotUsed[s])
+                {
+                    _slots[s].Write(_slotValues[s]);
+                    _slotActive[s] = true;
+                }
+                else if (_slotActive[s])
+                {
+                    _slots[s].Write(0f);
+                    _slotActive[s] = false;
+                }
             }
         }
 
