@@ -90,6 +90,8 @@
   <a href="#perfectsync"><span class="ja">パーフェクトシンク化</span><span class="en">Perfect sync setup</span><span class="ko">퍼펙트 싱크화</span><span class="zh-hans">完美同步化</span><span class="zh-hant">完美同步化</span></a>
   <a href="#tracking"><span class="ja">トラッキング</span><span class="en">Tracking</span><span class="ko">트래킹</span><span class="zh-hans">追踪</span><span class="zh-hant">追蹤</span></a>
   <a href="#settings"><span class="ja">設定・リセット</span><span class="en">Settings &amp; reset</span><span class="ko">설정·초기화</span><span class="zh-hans">设置与重置</span><span class="zh-hant">設定與重設</span></a>
+  <a href="#performance"><span class="ja">パフォーマンス</span><span class="en">Performance</span><span class="ko">성능</span><span class="zh-hans">性能</span><span class="zh-hant">效能</span></a>
+  <a href="#info"><span class="ja">情報</span><span class="en">Info</span><span class="ko">정보</span><span class="zh-hans">信息</span><span class="zh-hant">資訊</span></a>
   <a href="#keys"><span class="ja">操作一覧</span><span class="en">Controls</span><span class="ko">조작 목록</span><span class="zh-hans">操作一览</span><span class="zh-hant">操作一覽</span></a>
   <a href="#trouble"><span class="ja">困ったとき</span><span class="en">Troubleshooting</span><span class="ko">문제 해결</span><span class="zh-hans">故障排除</span><span class="zh-hant">疑難排解</span></a>
 </nav>
@@ -333,15 +335,15 @@
 <section id="obs">
   <h2><span class="ja">3. OBS に映す</span><span class="en">3. Show it in OBS</span><span class="ko">3. OBS에 표시하기</span><span class="zh-hans">3. 在 OBS 中显示</span><span class="zh-hant">3. 在 OBS 中顯示</span></h2>
   <ol class="steps">
-    <li><span class="ja">VRCast の <span class="ui">はじめに</span> タブ（または <span class="ui">表示</span> タブ）で背景を <span class="ui">透過</span> にします。
+    <li><span class="ja">VRCast の <span class="ui">はじめに</span> タブ（または <span class="ui">グラフィック</span> タブ）で背景を <span class="ui">透過</span> にします。
         VRCast の画面では背景色のまま見えますが、OBS では背景が抜けます。</span>
-        <span class="en">In VRCast, turn on <span class="ui">transparency</span> in the <span class="ui">Start</span> tab (or the <span class="ui">Display</span> tab).
+        <span class="en">In VRCast, turn on <span class="ui">transparency</span> in the <span class="ui">Start</span> tab (or the <span class="ui">Graphics</span> tab).
         The VRCast window keeps showing the background color, but OBS removes it.</span>
-        <span class="ko">VRCast의 <span class="ui">시작하기</span> 탭 (또는 <span class="ui">표시</span> 탭)에서 배경을 <span class="ui">투명</span>하게 합니다.
+        <span class="ko">VRCast의 <span class="ui">시작하기</span> 탭 (또는 <span class="ui">그래픽</span> 탭)에서 배경을 <span class="ui">투명</span>하게 합니다.
         VRCast 창에서는 배경색이 그대로 보이지만, OBS에서는 배경이 투명해집니다.</span>
-        <span class="zh-hans">在 VRCast 的 <span class="ui">开始</span> 标签页（或 <span class="ui">显示</span> 标签页）中将背景设为 <span class="ui">透明</span>。
+        <span class="zh-hans">在 VRCast 的 <span class="ui">开始</span> 标签页（或 <span class="ui">图形</span> 标签页）中将背景设为 <span class="ui">透明</span>。
         VRCast 窗口中仍显示背景色，但 OBS 中背景会被去除。</span>
-        <span class="zh-hant">在 VRCast 的 <span class="ui">開始</span> 分頁（或 <span class="ui">顯示</span> 分頁）中將背景設為 <span class="ui">透明</span>。
+        <span class="zh-hant">在 VRCast 的 <span class="ui">開始</span> 分頁（或 <span class="ui">圖形</span> 分頁）中將背景設為 <span class="ui">透明</span>。
         VRCast 視窗中仍顯示背景色，但 OBS 中背景會被去除。</span></li>
     <li><span class="ja">OBS の <span class="ui">ソース</span> の <span class="ui">+</span> から <span class="ui">ゲームキャプチャ</span> を追加します。</span>
         <span class="en">In OBS, click <span class="ui">+</span> under <span class="ui">Sources</span> and add <span class="ui">Game Capture</span>.</span>
@@ -462,7 +464,12 @@
 </section>
 
 <section id="look">
-  <h2><span class="ja">見た目・ライト（表示タブ）</span><span class="en">Look &amp; lighting (Display tab)</span><span class="ko">외형·조명 (표시 탭)</span><span class="zh-hans">外观与灯光（显示标签页）</span><span class="zh-hant">外觀與燈光（顯示分頁）</span></h2>
+  <h2><span class="ja">見た目・ライト（表示・グラフィックタブ）</span><span class="en">Look &amp; lighting (Display / Graphics tabs)</span><span class="ko">외형·조명 (표시·그래픽 탭)</span><span class="zh-hans">外观与灯光（显示·图形标签页）</span><span class="zh-hant">外觀與燈光（顯示·圖形分頁）</span></h2>
+  <p class="ja">カメラと解像度は <span class="ui">表示</span> タブ、背景・ライト・輪郭線は <span class="ui">グラフィック</span> タブにあります。</p>
+  <p class="en">Camera and resolution are in the <span class="ui">Display</span> tab; background, light and outline are in the <span class="ui">Graphics</span> tab.</p>
+  <p class="ko">카메라와 해상도는 <span class="ui">표시</span> 탭, 배경·조명·윤곽선은 <span class="ui">그래픽</span> 탭에 있습니다.</p>
+  <p class="zh-hans">相机和分辨率在 <span class="ui">显示</span> 标签页，背景、灯光和轮廓线在 <span class="ui">图形</span> 标签页。</p>
+  <p class="zh-hant">相機和解析度在 <span class="ui">顯示</span> 分頁，背景、燈光和輪廓線在 <span class="ui">圖形</span> 分頁。</p>
   <table>
     <tr><th><span class="ja">項目</span><span class="en">Item</span><span class="ko">항목</span><span class="zh-hans">项目</span><span class="zh-hant">項目</span></th>
         <th><span class="ja">内容</span><span class="en">What it does</span><span class="ko">내용</span><span class="zh-hans">说明</span><span class="zh-hant">說明</span></th></tr>
@@ -507,75 +514,80 @@
             <span class="zh-hans"><span class="ui">粗细</span> 可加粗或变细虚拟形象的轮廓线（lilToon / MToon / Poiyomi / UTS）（0～3，1 = 保持材质设置，0 = 无轮廓线）。点击 <span class="ui">保持材质（1）</span> 可恢复。按虚拟形象分别记住。</span>
             <span class="zh-hant"><span class="ui">粗細</span> 可加粗或變細虛擬形象的輪廓線（lilToon / MToon / Poiyomi / UTS）（0～3，1 = 保持材質設定，0 = 無輪廓線）。點擊 <span class="ui">保持材質（1）</span> 可恢復。依虛擬形象分別記住。</span></td></tr>
   </table>
-  <p class="ja"><span class="ui">ポーズ・表情</span> タブではアバターの向き・腕の下ろし方・表情を変更できます。
+  <p class="ja"><span class="ui">体・ポーズ</span> タブではアバターの向き・腕の下ろし方を、<span class="ui">顔・表情</span> タブでは表情を変更できます。
     表情ごとにショートカットキーを割り当てられます（既定はすべて未割り当て）。キーのボタンを押してから割り当てたいキーを押し（<code>Ctrl+Alt+N</code> のような同時押し、テンキー（NumLock ON で数字キーと区別）、記号キー、右 Ctrl などの単独（押して離す）、マウスのサイドボタンも可）、<span class="ui">Esc</span> でやめられます（Tab は使えません）。隣の <span class="ui">リセット</span> で割り当てを外します（アバターごとに保存）。
     <span class="ui">VRCast が背面にあるときも使う</span>（既定 ON）なら、OBS などを操作中でも切り替えられます。ほかのアプリで文字を入力している間も反応するため、Ctrl や Alt との組み合わせがおすすめです。
     ボタン・キーで選んだ表情は固定され、トラッキングの自動検出では変わりません。同じ表情をもう一度選ぶか <span class="ui">自動検出に戻す</span> で元に戻ります。
     小物の切り替えなども含むクリップから BlendShape だけを取り出した表情は、既定では一覧に出ません。<span class="ui">ほかのクリップも表示</span> を ON にすると出ます（該当するクリップがあるアバターだけ表示）。
-    <span class="ui">OSC / HTTP</span> タブ（出力と設定の間）で <span class="ui">外部から操作（OSC / HTTP）</span> を ON にすると、表示中のアバターの表情ごとのコマンドが一覧に並び（<span class="ui">コピー</span> でコピー）、ポートの下に OSC の送信先と HTTP の URL が表示されます（<span class="ui">ブラウザで状態を開く</span> で動作確認。Stream Deck では「Web サイト」の「バックグラウンドで GET」に URL 全体を設定）。Stream Deck や OSC アプリから表情を切り替えられます（この PC からのみ。例: <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>、OSC <code>/vrcast/expression "Smile"</code>。番号は 0 = ニュートラル、1 以降 = 表情の並び順）。</p>
-  <p class="en">In the <span class="ui">Pose</span> tab you can change the avatar's direction, arm pose and expressions.
+    <span class="ui">操作・連携</span> タブで <span class="ui">外部から操作（OSC / HTTP）</span> を ON にすると、表示中のアバターの表情ごとのコマンドが一覧に並び（<span class="ui">コピー</span> でコピー）、ポートの下に OSC の送信先と HTTP の URL が表示されます（<span class="ui">ブラウザで状態を開く</span> で動作確認。Stream Deck では「Web サイト」の「バックグラウンドで GET」に URL 全体を設定）。Stream Deck や OSC アプリから表情を切り替えられます（この PC からのみ。例: <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>、OSC <code>/vrcast/expression "Smile"</code>。番号は 0 = ニュートラル、1 以降 = 表情の並び順）。</p>
+  <p class="en">In the <span class="ui">Body &amp; pose</span> tab you can change the avatar's direction and arm pose, and in the <span class="ui">Face &amp; expressions</span> tab its expressions.
     You can assign a shortcut key to each expression (all unassigned by default): press its key button, then the key you want (combinations such as <code>Ctrl+Alt+N</code>, the numeric keypad (told apart from the number row with NumLock on), symbol keys, keys such as Right Ctrl alone (press and release) and mouse side buttons all work); <span class="ui">Esc</span> cancels (Tab cannot be used). <span class="ui">Reset</span> next to it removes the key (saved per avatar).
     With <span class="ui">Also work when VRCast is in the background</span> (on by default), keys work even while you use OBS or other apps. They also react while you type in other apps, so combinations with Ctrl or Alt are recommended.
     An expression chosen with a button or key stays locked and is not changed by expression detection; choose it again or press <span class="ui">Back to auto</span> to return.
     Expressions taken from clips that also toggle items etc. (blend shapes only) are hidden by default; turn on <span class="ui">Also show other clips</span> to list them (shown only when the avatar has such clips).
-    In the <span class="ui">OSC / HTTP</span> tab (between Output and Settings), which lists a command for each expression of the loaded avatar (<span class="ui">Copy</span> copies it) and shows the OSC destination and the HTTP URL under the ports (<span class="ui">Open status in browser</span> checks that it works; in Stream Deck, put the full URL in "Website" with "GET request in background"), turn on <span class="ui">External control (OSC / HTTP)</span> to switch expressions from Stream Deck or OSC apps (this PC only; for example <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code> or OSC <code>/vrcast/expression "Smile"</code>; numbers are 0 = neutral, 1 and up = the expression order).</p>
-  <p class="ko"><span class="ui">포즈·표정</span> 탭에서는 아바타의 방향·팔 내리는 정도·표정을 변경할 수 있습니다.
+    In the <span class="ui">Hotkeys / OSC</span> tab, which lists a command for each expression of the loaded avatar (<span class="ui">Copy</span> copies it) and shows the OSC destination and the HTTP URL under the ports (<span class="ui">Open status in browser</span> checks that it works; in Stream Deck, put the full URL in "Website" with "GET request in background"), turn on <span class="ui">External control (OSC / HTTP)</span> to switch expressions from Stream Deck or OSC apps (this PC only; for example <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code> or OSC <code>/vrcast/expression "Smile"</code>; numbers are 0 = neutral, 1 and up = the expression order).</p>
+  <p class="ko"><span class="ui">몸·포즈</span> 탭에서는 아바타의 방향·팔 내리는 정도를, <span class="ui">얼굴·표정</span> 탭에서는 표정을 변경할 수 있습니다.
     표정마다 단축키를 할당할 수 있습니다 (기본은 모두 미할당). 키 버튼을 누른 뒤 할당할 키를 누르고 (<code>Ctrl+Alt+N</code> 같은 동시 입력, 숫자 키패드 (NumLock 켜짐에서 숫자 키와 구별), 기호 키, 오른쪽 Ctrl 등의 단독 키 (눌렀다 떼기), 마우스 사이드 버튼도 가능), <span class="ui">Esc</span>로 취소합니다 (Tab은 사용할 수 없습니다). 옆의 <span class="ui">초기화</span>로 할당을 해제합니다 (아바타별로 저장).
     <span class="ui">VRCast가 뒤에 있을 때도 사용</span>(기본 켜짐)이면 OBS 등을 조작하는 중에도 전환할 수 있습니다. 다른 앱에서 입력하는 동안에도 반응하므로 Ctrl이나 Alt와의 조합을 권장합니다.
     버튼·키로 고른 표정은 고정되어 자동 감지로 바뀌지 않습니다. 같은 표정을 다시 고르거나 <span class="ui">자동 감지로 복귀</span>를 누르면 돌아갑니다.
     소품 전환 등도 포함한 클립에서 BlendShape만 꺼낸 표정은 기본적으로 목록에 나오지 않습니다. <span class="ui">다른 클립도 표시</span>를 켜면 나옵니다 (해당 클립이 있는 아바타에서만 표시).
-    <span class="ui">OSC / HTTP</span> 탭 (출력과 설정 사이)에는 불러온 아바타의 표정별 명령이 나열되며 (<span class="ui">복사</span>로 복사), 포트 아래에 OSC 대상과 HTTP URL이 표시됩니다 (<span class="ui">브라우저에서 상태 열기</span>로 동작 확인. Stream Deck에서는 "웹사이트"의 "백그라운드에서 GET"에 URL 전체를 설정). <span class="ui">외부 조작 (OSC / HTTP)</span>을 켜면 Stream Deck이나 OSC 앱에서 표정을 전환할 수 있습니다 (이 PC에서만. 예: <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>, OSC <code>/vrcast/expression "Smile"</code>. 번호는 0 = 무표정, 1 이후 = 표정 순서).</p>
-  <p class="zh-hans">在 <span class="ui">姿势·表情</span> 标签页中可以更改虚拟形象的朝向、手臂姿势和表情。
+    <span class="ui">단축키·연동</span> 탭에는 불러온 아바타의 표정별 명령이 나열되며 (<span class="ui">복사</span>로 복사), 포트 아래에 OSC 대상과 HTTP URL이 표시됩니다 (<span class="ui">브라우저에서 상태 열기</span>로 동작 확인. Stream Deck에서는 "웹사이트"의 "백그라운드에서 GET"에 URL 전체를 설정). <span class="ui">외부 조작 (OSC / HTTP)</span>을 켜면 Stream Deck이나 OSC 앱에서 표정을 전환할 수 있습니다 (이 PC에서만. 예: <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>, OSC <code>/vrcast/expression "Smile"</code>. 번호는 0 = 무표정, 1 이후 = 표정 순서).</p>
+  <p class="zh-hans">在 <span class="ui">身体·姿势</span> 标签页中可以更改虚拟形象的朝向和手臂姿势，在 <span class="ui">面部·表情</span> 标签页中可以更改表情。
     可为每种表情分配快捷键（默认全部未分配）。点击按键按钮后按下要分配的键（也可使用 <code>Ctrl+Alt+N</code> 等组合键、小键盘（NumLock 开启时与数字键区分）、符号键、右 Ctrl 等单独按键（按下后松开）以及鼠标侧键），按 <span class="ui">Esc</span> 取消（不能使用 Tab）。旁边的 <span class="ui">重置</span> 可取消分配（按虚拟形象分别保存）。
     开启 <span class="ui">VRCast 在后台时也可使用</span>（默认开启）后，操作 OBS 等时也能切换。在其他应用中输入时也会响应，建议与 Ctrl 或 Alt 组合使用。
     通过按钮或快捷键选择的表情会被固定，不会被自动检测改变。再次选择同一表情或点击 <span class="ui">恢复自动检测</span> 即可恢复。
     从还包含道具切换等的剪辑中只取出 BlendShape 的表情默认不显示在列表中，打开 <span class="ui">也显示其他剪辑</span> 即可显示（仅在虚拟形象有此类剪辑时出现）。
-    <span class="ui">OSC / HTTP</span> 标签页（输出与设置之间）会列出当前虚拟形象每个表情的命令（点击 <span class="ui">复制</span> 复制），端口下方显示 OSC 目标和 HTTP URL（点击 <span class="ui">在浏览器中打开状态</span> 测试；在 Stream Deck 中将完整 URL 设置到“网站”的“在后台发送 GET 请求”）。开启 <span class="ui">外部操作（OSC / HTTP）</span> 后，可从 Stream Deck 或 OSC 应用切换表情（仅限本机。例如 <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>、OSC <code>/vrcast/expression "Smile"</code>。编号 0 = 无表情，1 起 = 表情顺序）。</p>
-  <p class="zh-hant">在 <span class="ui">姿勢·表情</span> 分頁中可以變更虛擬形象的朝向、手臂姿勢和表情。
+    <span class="ui">快捷键·联动</span> 标签页会列出当前虚拟形象每个表情的命令（点击 <span class="ui">复制</span> 复制），端口下方显示 OSC 目标和 HTTP URL（点击 <span class="ui">在浏览器中打开状态</span> 测试；在 Stream Deck 中将完整 URL 设置到“网站”的“在后台发送 GET 请求”）。开启 <span class="ui">外部操作（OSC / HTTP）</span> 后，可从 Stream Deck 或 OSC 应用切换表情（仅限本机。例如 <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>、OSC <code>/vrcast/expression "Smile"</code>。编号 0 = 无表情，1 起 = 表情顺序）。</p>
+  <p class="zh-hant">在 <span class="ui">身體·姿勢</span> 分頁中可以變更虛擬形象的朝向和手臂姿勢，在 <span class="ui">臉部·表情</span> 分頁中可以變更表情。
     可為每種表情分配快捷鍵（預設全部未分配）。點擊按鍵按鈕後按下要分配的鍵（也可使用 <code>Ctrl+Alt+N</code> 等組合鍵、數字鍵台（NumLock 開啟時與數字鍵區分）、符號鍵、右 Ctrl 等單獨按鍵（按下後放開）以及滑鼠側鍵），按 <span class="ui">Esc</span> 取消（不能使用 Tab）。旁邊的 <span class="ui">重設</span> 可取消分配（依虛擬形象分別儲存）。
     開啟 <span class="ui">VRCast 在背景時也可使用</span>（預設開啟）後，操作 OBS 等時也能切換。在其他應用程式中輸入時也會回應，建議與 Ctrl 或 Alt 組合使用。
     透過按鈕或快捷鍵選擇的表情會被固定，不會被自動偵測改變。再次選擇同一表情或點擊 <span class="ui">恢復自動偵測</span> 即可恢復。
     從還包含道具切換等的剪輯中只取出 BlendShape 的表情預設不顯示在列表中，開啟 <span class="ui">也顯示其他剪輯</span> 即可顯示（僅在虛擬形象有此類剪輯時出現）。
-    <span class="ui">OSC / HTTP</span> 分頁（輸出與設定之間）會列出目前虛擬形象每個表情的命令（點擊 <span class="ui">複製</span> 複製），連接埠下方顯示 OSC 目標和 HTTP URL（點擊 <span class="ui">在瀏覽器中開啟狀態</span> 測試；在 Stream Deck 中將完整 URL 設定到「網站」的「在背景傳送 GET 請求」）。開啟 <span class="ui">外部操作（OSC / HTTP）</span> 後，可從 Stream Deck 或 OSC 應用程式切換表情（僅限本機。例如 <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>、OSC <code>/vrcast/expression "Smile"</code>。編號 0 = 無表情，1 起 = 表情順序）。</p>
-  <p class="ja"><span class="ui">待機モーション</span>（既定 ON、Humanoid のみ）は、Web カメラを使っていないときにアバターが完全に止まって見えないよう、呼吸・体の揺れ・頭のゆらぎを少し足します。
+    <span class="ui">快捷鍵·連動</span> 分頁會列出目前虛擬形象每個表情的命令（點擊 <span class="ui">複製</span> 複製），連接埠下方顯示 OSC 目標和 HTTP URL（點擊 <span class="ui">在瀏覽器中開啟狀態</span> 測試；在 Stream Deck 中將完整 URL 設定到「網站」的「在背景傳送 GET 請求」）。開啟 <span class="ui">外部操作（OSC / HTTP）</span> 後，可從 Stream Deck 或 OSC 應用程式切換表情（僅限本機。例如 <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>、OSC <code>/vrcast/expression "Smile"</code>。編號 0 = 無表情，1 起 = 表情順序）。</p>
+  <p class="ja"><span class="ui">体・ポーズ</span> タブの <span class="ui">待機モーション</span>（既定 ON、Humanoid のみ）は、Web カメラを使っていないときにアバターが完全に止まって見えないよう、呼吸・体の揺れ・頭のゆらぎを少し足します。
     <span class="ui">呼吸・体の揺れ</span> を OFF にすると止まります。ON のときは <span class="ui">呼吸</span>・<span class="ui">体の揺れ</span>・<span class="ui">頭のゆらぎ</span> の強さ（0〜2、1 が標準）と <span class="ui">速さ</span>（0.5〜2 倍）を調整できます。
-    顔のトラッキング中は頭のゆらぎを止め、本人の動きに任せます。</p>
-  <p class="en"><span class="ui">Idle motion</span> (on by default, Humanoid only) adds a little breathing, body sway and head motion so the avatar does not freeze when you are not using a webcam.
+    顔のトラッキング中は頭のゆらぎを止め、本人の動きに任せます。
+    同じタブの <span class="ui">揺れもの</span> で、揺れもの（PhysBone の近似）を ON/OFF できます。</p>
+  <p class="en"><span class="ui">Idle motion</span> in the <span class="ui">Body &amp; pose</span> tab (on by default, Humanoid only) adds a little breathing, body sway and head motion so the avatar does not freeze when you are not using a webcam.
     Turn off <span class="ui">Breathing and sway</span> to stop it. While it is on, adjust the strength of <span class="ui">Breathing</span>, <span class="ui">Body sway</span> and <span class="ui">Head motion</span> (0 to 2, 1 is standard) and <span class="ui">Speed</span> (0.5 to 2×).
-    Head motion pauses while face tracking is active, so your own movement is used.</p>
-  <p class="ko"><span class="ui">대기 모션</span>(기본 켜짐, Humanoid만)은 웹캠을 쓰지 않을 때 아바타가 완전히 멈춰 보이지 않도록 호흡·몸 흔들림·머리 흔들림을 조금 더합니다.
+    Head motion pauses while face tracking is active, so your own movement is used.
+    <span class="ui">Physics</span> in the same tab turns PhysBone physics (approximation) on or off.</p>
+  <p class="ko"><span class="ui">몸·포즈</span> 탭의 <span class="ui">대기 모션</span>(기본 켜짐, Humanoid만)은 웹캠을 쓰지 않을 때 아바타가 완전히 멈춰 보이지 않도록 호흡·몸 흔들림·머리 흔들림을 조금 더합니다.
     <span class="ui">호흡 · 몸 흔들림</span>을 끄면 멈춥니다. 켜져 있을 때는 <span class="ui">호흡</span>·<span class="ui">몸 흔들림</span>·<span class="ui">머리 흔들림</span>의 강도 (0~2, 1이 표준)와 <span class="ui">속도</span> (0.5~2배)를 조정할 수 있습니다.
-    얼굴 트래킹 중에는 머리 흔들림을 멈추고 본인의 움직임을 따릅니다.</p>
-  <p class="zh-hans"><span class="ui">待机动作</span>（默认开启，仅限 Humanoid）会在不使用摄像头时，稍微加上呼吸、身体摇摆和头部晃动，避免虚拟形象完全静止。
+    얼굴 트래킹 중에는 머리 흔들림을 멈추고 본인의 움직임을 따릅니다.
+    같은 탭의 <span class="ui">흔들림</span>에서 흔들림 (PhysBone 근사)을 켜고 끌 수 있습니다.</p>
+  <p class="zh-hans"><span class="ui">身体·姿势</span> 标签页的 <span class="ui">待机动作</span>（默认开启，仅限 Humanoid）会在不使用摄像头时，稍微加上呼吸、身体摇摆和头部晃动，避免虚拟形象完全静止。
     关闭 <span class="ui">呼吸 · 身体摇摆</span> 后会停止。开启时可以调整 <span class="ui">呼吸</span>、<span class="ui">身体摇摆</span>、<span class="ui">头部晃动</span> 的强度（0～2，1 为标准）和 <span class="ui">速度</span>（0.5～2 倍）。
-    面部追踪时会停止头部晃动，跟随本人的动作。</p>
-  <p class="zh-hant"><span class="ui">待機動作</span>（預設開啟，僅限 Humanoid）會在不使用攝影機時，稍微加上呼吸、身體搖擺和頭部晃動，避免虛擬形象完全靜止。
+    面部追踪时会停止头部晃动，跟随本人的动作。
+    同一标签页的 <span class="ui">物理摆动</span> 可开启或关闭物理摆动（PhysBone 近似）。</p>
+  <p class="zh-hant"><span class="ui">身體·姿勢</span> 分頁的 <span class="ui">待機動作</span>（預設開啟，僅限 Humanoid）會在不使用攝影機時，稍微加上呼吸、身體搖擺和頭部晃動，避免虛擬形象完全靜止。
     關閉 <span class="ui">呼吸 · 身體搖擺</span> 後會停止。開啟時可以調整 <span class="ui">呼吸</span>、<span class="ui">身體搖擺</span>、<span class="ui">頭部晃動</span> 的強度（0～2，1 為標準）和 <span class="ui">速度</span>（0.5～2 倍）。
-    臉部追蹤時會停止頭部晃動，跟隨本人的動作。</p>
-  <p class="ja">アバターにパーティクル（Particle System）があると、<span class="ui">パーティクル</span> 欄が出ます。エフェクトごとのスイッチ、または <span class="ui">すべて ON</span> / <span class="ui">すべて OFF</span> で表示を切り替えられます（アバターごとに保存）。
-    最初は VRChat の初期状態（FX のトグル）どおりで、ON にすると非表示の親のオブジェクトも表示します。新しい書き出しツールで書き出し直したアバターで使えます。
-    書き出し時に OFF のパーティクルも書き出されるので、書き出し前にすべて ON にする必要はありません。VRChat で一緒に ON/OFF するもの（FX のトグル・エフェクトのフォルダー）は 1 つにまとめて表示します。
-    <span class="ui">名前を変更</span> で表示名を付けられ（空にすると Unity 上の名前に戻ります）、各行の下に Unity 上の場所（パス）が出ます。</p>
-  <p class="en">If the avatar has particles (Particle System), a <span class="ui">Particles</span> card appears. Turn each effect on or off with its switch, or use <span class="ui">All on</span> / <span class="ui">All off</span> (saved per avatar).
-    They start as in VRChat's default state (FX toggles), and turning one on also shows its hidden parent objects. Re-export the avatar with the new exporter to use this.
-    Particles that are off are exported too, so you don't need to turn everything on before exporting. Particles switched together in VRChat (FX toggles and effect folders) are shown as one entry.
-    Use <span class="ui">Rename</span> to give an entry a name (leave it empty to use the name in Unity); its path in Unity is shown under each entry.</p>
-  <p class="ko">아바타에 파티클(Particle System)이 있으면 <span class="ui">파티클</span> 항목이 나옵니다. 이펙트별 스위치나 <span class="ui">모두 켜기</span> / <span class="ui">모두 끄기</span>로 표시를 전환할 수 있습니다 (아바타별로 저장).
-    처음에는 VRChat의 초기 상태(FX 토글) 그대로이며, 켜면 숨겨진 상위 오브젝트도 표시합니다. 새 내보내기 도구로 다시 내보낸 아바타에서 사용할 수 있습니다.
-    꺼져 있는 파티클도 내보내므로 내보내기 전에 모두 켤 필요가 없습니다. VRChat에서 함께 켜고 끄는 것(FX 토글·이펙트 폴더)은 하나로 묶어 표시합니다.
-    <span class="ui">이름 변경</span>으로 표시 이름을 붙일 수 있고 (비워 두면 Unity의 이름으로 돌아감), 각 행 아래에 Unity의 경로가 나옵니다.</p>
-  <p class="zh-hans">虚拟形象带有粒子（Particle System）时，会出现 <span class="ui">粒子</span> 栏。可以用每个特效的开关，或 <span class="ui">全部开启</span> / <span class="ui">全部关闭</span> 切换显示（按虚拟形象分别保存）。
-    初始状态与 VRChat 的初始状态（FX 开关）一致，开启时也会显示被隐藏的父对象。需要用新的导出工具重新导出虚拟形象。
-    导出时关闭的粒子也会被导出，因此导出前无需全部开启。在 VRChat 中一起开关的粒子（FX 开关、特效文件夹）会合并为一项显示。
-    可用 <span class="ui">重命名</span> 设置显示名称（留空则恢复为 Unity 中的名称），每行下方会显示 Unity 中的路径。</p>
-  <p class="zh-hant">虛擬形象帶有粒子（Particle System）時，會出現 <span class="ui">粒子</span> 欄。可以用每個特效的開關，或 <span class="ui">全部開啟</span> / <span class="ui">全部關閉</span> 切換顯示（依虛擬形象分別儲存）。
-    初始狀態與 VRChat 的初始狀態（FX 開關）一致，開啟時也會顯示被隱藏的父物件。需要用新的匯出工具重新匯出虛擬形象。
-    匯出時關閉的粒子也會被匯出，因此匯出前無需全部開啟。在 VRChat 中一起開關的粒子（FX 開關、特效資料夾）會合併為一項顯示。
-    可用 <span class="ui">重新命名</span> 設定顯示名稱（留空則恢復為 Unity 中的名稱），每行下方會顯示 Unity 中的路徑。</p>
+    臉部追蹤時會停止頭部晃動，跟隨本人的動作。
+    同一分頁的 <span class="ui">物理擺動</span> 可開啟或關閉物理擺動（PhysBone 近似）。</p>
 </section>
 
 <section id="objects">
-  <h2><span class="ja">衣装・小物の ON/OFF（オブジェクトタブ）</span><span class="en">Outfits &amp; accessories on/off (Objects tab)</span><span class="ko">의상·소품 켜고 끄기 (오브젝트 탭)</span><span class="zh-hans">服装与小物的开关（对象标签页）</span><span class="zh-hant">服裝與小物的開關（物件分頁）</span></h2>
+  <h2><span class="ja">衣装・小物・パーティクルの ON/OFF（オブジェクトタブ）</span><span class="en">Outfits, accessories &amp; particles on/off (Objects tab)</span><span class="ko">의상·소품·파티클 켜고 끄기 (오브젝트 탭)</span><span class="zh-hans">服装、小物与粒子的开关（对象标签页）</span><span class="zh-hant">服裝、小物與粒子的開關（物件分頁）</span></h2>
+  <p class="ja">アバターにパーティクル（Particle System）があると、<span class="ui">オブジェクト</span> タブの下に <span class="ui">パーティクル</span> 欄が出ます。エフェクトごとのスイッチ、または <span class="ui">すべて ON</span> / <span class="ui">すべて OFF</span> で表示を切り替えられます（アバターごとに保存）。
+    最初は VRChat の初期状態（FX のトグル）どおりで、ON にすると非表示の親のオブジェクトも表示します。新しい書き出しツールで書き出し直したアバターで使えます。
+    書き出し時に OFF のパーティクルも書き出されるので、書き出し前にすべて ON にする必要はありません。VRChat で一緒に ON/OFF するもの（FX のトグル・エフェクトのフォルダー）は 1 つにまとめて表示します。
+    <span class="ui">名前を変更</span> で表示名を付けられ（空にすると Unity 上の名前に戻ります）、各行の下に Unity 上の場所（パス）が出ます。</p>
+  <p class="en">If the avatar has particles (Particle System), a <span class="ui">Particles</span> card appears at the bottom of the <span class="ui">Objects</span> tab. Turn each effect on or off with its switch, or use <span class="ui">All on</span> / <span class="ui">All off</span> (saved per avatar).
+    They start as in VRChat's default state (FX toggles), and turning one on also shows its hidden parent objects. Re-export the avatar with the new exporter to use this.
+    Particles that are off are exported too, so you don't need to turn everything on before exporting. Particles switched together in VRChat (FX toggles and effect folders) are shown as one entry.
+    Use <span class="ui">Rename</span> to give an entry a name (leave it empty to use the name in Unity); its path in Unity is shown under each entry.</p>
+  <p class="ko">아바타에 파티클(Particle System)이 있으면 <span class="ui">오브젝트</span> 탭 아래에 <span class="ui">파티클</span> 항목이 나옵니다. 이펙트별 스위치나 <span class="ui">모두 켜기</span> / <span class="ui">모두 끄기</span>로 표시를 전환할 수 있습니다 (아바타별로 저장).
+    처음에는 VRChat의 초기 상태(FX 토글) 그대로이며, 켜면 숨겨진 상위 오브젝트도 표시합니다. 새 내보내기 도구로 다시 내보낸 아바타에서 사용할 수 있습니다.
+    꺼져 있는 파티클도 내보내므로 내보내기 전에 모두 켤 필요가 없습니다. VRChat에서 함께 켜고 끄는 것(FX 토글·이펙트 폴더)은 하나로 묶어 표시합니다.
+    <span class="ui">이름 변경</span>으로 표시 이름을 붙일 수 있고 (비워 두면 Unity의 이름으로 돌아감), 각 행 아래에 Unity의 경로가 나옵니다.</p>
+  <p class="zh-hans">虚拟形象带有粒子（Particle System）时，<span class="ui">对象</span> 标签页下方会出现 <span class="ui">粒子</span> 栏。可以用每个特效的开关，或 <span class="ui">全部开启</span> / <span class="ui">全部关闭</span> 切换显示（按虚拟形象分别保存）。
+    初始状态与 VRChat 的初始状态（FX 开关）一致，开启时也会显示被隐藏的父对象。需要用新的导出工具重新导出虚拟形象。
+    导出时关闭的粒子也会被导出，因此导出前无需全部开启。在 VRChat 中一起开关的粒子（FX 开关、特效文件夹）会合并为一项显示。
+    可用 <span class="ui">重命名</span> 设置显示名称（留空则恢复为 Unity 中的名称），每行下方会显示 Unity 中的路径。</p>
+  <p class="zh-hant">虛擬形象帶有粒子（Particle System）時，<span class="ui">物件</span> 分頁下方會出現 <span class="ui">粒子</span> 欄。可以用每個特效的開關，或 <span class="ui">全部開啟</span> / <span class="ui">全部關閉</span> 切換顯示（依虛擬形象分別儲存）。
+    初始狀態與 VRChat 的初始狀態（FX 開關）一致，開啟時也會顯示被隱藏的父物件。需要用新的匯出工具重新匯出虛擬形象。
+    匯出時關閉的粒子也會被匯出，因此匯出前無需全部開啟。在 VRChat 中一起開關的粒子（FX 開關、特效資料夾）會合併為一項顯示。
+    可用 <span class="ui">重新命名</span> 設定顯示名稱（留空則恢復為 Unity 中的名稱），每行下方會顯示 Unity 中的路徑。</p>
   <p class="ja">アバターの中身が Unity のヒエラルキーと同じ並びで出ます。チェックを入れると表示、外すと非表示になります（Unity のインスペクターのチェックと同じ）。切り替えはアバターごとに保存されます。
     書き出しツールの <span class="ui">非アクティブのオブジェクトも書き出す</span>（既定 ON）を ON にして書き出すと、シーンで OFF にしていた衣装・小物も OFF のまま入るので、ここで ON にできます（1.18.7 以降の書き出しツール）。</p>
   <p class="ja"><span class="ui">VRChat のメニューで切り替えるものだけ</span> を ON にすると、VRChat の Expression Menu（FX のトグル）で切り替えている衣装・小物だけが並びます（該当するものがあるアバターでは最初から ON）。
@@ -604,7 +616,7 @@
 </section>
 
 <section id="face">
-  <h2><span class="ja">口パク・まばたき（顔タブ）</span><span class="en">Lip sync &amp; blink (Face tab)</span><span class="ko">립싱크·눈 깜빡임 (얼굴 탭)</span><span class="zh-hans">口型同步与眨眼（面部标签页）</span><span class="zh-hant">口型同步與眨眼（臉部分頁）</span></h2>
+  <h2><span class="ja">口パク・まばたき（顔・表情タブ）</span><span class="en">Lip sync &amp; blink (Face &amp; expressions tab)</span><span class="ko">립싱크·눈 깜빡임 (얼굴·표정 탭)</span><span class="zh-hans">口型同步与眨眼（面部·表情标签页）</span><span class="zh-hant">口型同步與眨眼（臉部·表情分頁）</span></h2>
   <ul>
     <li><span class="ja"><span class="ui">マイクで口パク</span> を ON にしてマイクを選び、<span class="ui">音量</span> メーターを見ながら
         <span class="ui">マイク感度</span> と <span class="ui">ノイズゲート</span>（この音量以下は無音）を調整します。</span>
@@ -626,21 +638,21 @@
         判断不准时，请调整 <span class="ui">音高校正</span>（声音较高的人向右）。</span>
         <span class="zh-hant">開啟 <span class="ui">依母音改變嘴型</span> 後，會像 VRChat 一樣依母音（A I U E O）改變嘴型。
         判斷不準時，請調整 <span class="ui">音高校正</span>（聲音較高的人向右）。</span></li>
-    <li><span class="ja">揺れもの（PhysBone の近似）と自動まばたきも ON/OFF できます。</span>
-        <span class="en">PhysBone physics (approximation) and auto blink can be turned on or off.</span>
-        <span class="ko">흔들림 (PhysBone 근사)과 자동 눈 깜빡임도 켜고 끌 수 있습니다.</span>
-        <span class="zh-hans">物理摆动（PhysBone 近似）和自动眨眼也可以开启或关闭。</span>
-        <span class="zh-hant">物理擺動（PhysBone 近似）和自動眨眼也可以開啟或關閉。</span></li>
+    <li><span class="ja">自動まばたきも ON/OFF できます（揺れものは <span class="ui">体・ポーズ</span> タブ）。</span>
+        <span class="en">Auto blink can be turned on or off (physics is in the <span class="ui">Body &amp; pose</span> tab).</span>
+        <span class="ko">자동 눈 깜빡임도 켜고 끌 수 있습니다 (흔들림은 <span class="ui">몸·포즈</span> 탭).</span>
+        <span class="zh-hans">自动眨眼也可以开启或关闭（物理摆动在 <span class="ui">身体·姿势</span> 标签页）。</span>
+        <span class="zh-hant">自動眨眼也可以開啟或關閉（物理擺動在 <span class="ui">身體·姿勢</span> 分頁）。</span></li>
     <li><span class="ja"><span class="ui">表情中はまばたきしない</span> を ON にすると、表情を出している間は自動まばたきもトラッキングのまばたきも止まり、表情の目の形が崩れません。</span>
         <span class="en">Turn on <span class="ui">Don't blink during expressions</span> to stop both auto blink and blinks from face tracking while an expression is shown, so they do not distort the expression's eyes.</span>
         <span class="ko"><span class="ui">표정 중에는 눈 깜빡이지 않기</span>를 켜면 표정을 짓는 동안 자동 눈 깜빡임과 트래킹의 눈 깜빡임이 모두 멈춰 표정의 눈 모양이 흐트러지지 않습니다.</span>
         <span class="zh-hans">开启 <span class="ui">表情期间不眨眼</span> 后，显示表情期间会同时停止自动眨眼和面部追踪的眨眼，表情的眼睛形状不会被破坏。</span>
         <span class="zh-hant">開啟 <span class="ui">表情期間不眨眼</span> 後，顯示表情期間會同時停止自動眨眼和臉部追蹤的眨眼，表情的眼睛形狀不會被破壞。</span></li>
-    <li><span class="ja"><span class="ui">揺れもの / まばたき / 目線</span> の <span class="ui">カメラ目線</span> を ON にすると、目を画面に向けます（トラッキングの視線の代わりに使い、トラッキングを切っていても効きます）。パネル下部のボタンやショートカットキー（既定はテンキーの 5。<span class="ui">設定</span> タブで変更可）でも切り替えられます。</span>
-        <span class="en">Turn on <span class="ui">Look at camera</span> in <span class="ui">Physics / Blink / Gaze</span> to point the eyes at the screen (used instead of tracked gaze; works even with tracking off). You can also toggle it with the button at the bottom of the panel or its shortcut key (default: numeric keypad 5; change it in the <span class="ui">Settings</span> tab).</span>
-        <span class="ko"><span class="ui">흔들림 / 눈 깜빡임 / 시선</span>의 <span class="ui">카메라 시선</span>을 켜면 눈을 화면으로 향하게 합니다 (트래킹 시선 대신 사용하며 트래킹을 꺼도 동작). 패널 아래 버튼이나 단축키 (기본값: 숫자 키패드 5. <span class="ui">설정</span> 탭에서 변경 가능)로도 전환할 수 있습니다.</span>
-        <span class="zh-hans">开启 <span class="ui">物理摆动 / 眨眼 / 视线</span> 中的 <span class="ui">看向镜头</span> 后，眼睛会看向画面（代替追踪的视线，关闭追踪时也有效）。也可用面板底部的按钮或快捷键（默认：小键盘 5，可在 <span class="ui">设置</span> 标签页更改）切换。</span>
-        <span class="zh-hant">開啟 <span class="ui">物理擺動 / 眨眼 / 視線</span> 中的 <span class="ui">看向鏡頭</span> 後，眼睛會看向畫面（代替追蹤的視線，關閉追蹤時也有效）。也可用面板底部的按鈕或快捷鍵（預設：數字鍵台 5，可在 <span class="ui">設定</span> 分頁變更）切換。</span></li>
+    <li><span class="ja"><span class="ui">まばたき / 目線</span> の <span class="ui">カメラ目線</span> を ON にすると、目を画面に向けます（トラッキングの視線の代わりに使い、トラッキングを切っていても効きます）。パネル下部のボタンやショートカットキー（既定はテンキーの 5。<span class="ui">操作・連携</span> タブで変更可）でも切り替えられます。</span>
+        <span class="en">Turn on <span class="ui">Look at camera</span> in <span class="ui">Blink / Gaze</span> to point the eyes at the screen (used instead of tracked gaze; works even with tracking off). You can also toggle it with the button at the bottom of the panel or its shortcut key (default: numeric keypad 5; change it in the <span class="ui">Hotkeys / OSC</span> tab).</span>
+        <span class="ko"><span class="ui">눈 깜빡임 / 시선</span>의 <span class="ui">카메라 시선</span>을 켜면 눈을 화면으로 향하게 합니다 (트래킹 시선 대신 사용하며 트래킹을 꺼도 동작). 패널 아래 버튼이나 단축키 (기본값: 숫자 키패드 5. <span class="ui">단축키·연동</span> 탭에서 변경 가능)로도 전환할 수 있습니다.</span>
+        <span class="zh-hans">开启 <span class="ui">眨眼 / 视线</span> 中的 <span class="ui">看向镜头</span> 后，眼睛会看向画面（代替追踪的视线，关闭追踪时也有效）。也可用面板底部的按钮或快捷键（默认：小键盘 5，可在 <span class="ui">快捷键·联动</span> 标签页更改）切换。</span>
+        <span class="zh-hant">開啟 <span class="ui">眨眼 / 視線</span> 中的 <span class="ui">看向鏡頭</span> 後，眼睛會看向畫面（代替追蹤的視線，關閉追蹤時也有效）。也可用面板底部的按鈕或快捷鍵（預設：數字鍵台 5，可在 <span class="ui">快捷鍵·連動</span> 分頁變更）切換。</span></li>
     <li><span class="ja"><span class="ui">表情中はマイクの口パクを止める</span>・<span class="ui">表情中はトラッキングの口を止める</span> を ON にすると、表情を出している間はそれぞれの口の動きが止まります（別々に選べ、両方 ON にもできます。表情の口とリップシンクが重なると崩れるアバター向け）。</span>
         <span class="en">Turn on <span class="ui">Pause microphone lip sync during expressions</span> and/or <span class="ui">Pause tracked mouth during expressions</span> to stop that mouth movement while an expression is shown (each can be turned on separately, or both; for avatars whose expression mouth breaks when combined with lip sync).</span>
         <span class="ko"><span class="ui">표정 중에는 마이크 립싱크 멈추기</span>·<span class="ui">표정 중에는 트래킹의 입 멈추기</span>를 켜면 표정을 짓는 동안 각각의 입 움직임이 멈춥니다 (따로 고를 수 있고 둘 다 켤 수도 있습니다. 표정의 입과 립싱크가 겹치면 깨지는 아바타용).</span>
@@ -667,11 +679,11 @@
   <p class="zh-hans">即使虚拟形象没有 ARKit 名称的 BlendShape，只要在脸上放置标记，就能自动生成完美同步使用的 51 种形状。虚拟形象原本就有的 BlendShape（“あ”、眨眼、笑脸等）会自动分配使用。结果会另存为新的 <code>.vrcaster</code>，不会更改原文件。</p>
   <p class="zh-hant">即使虛擬形象沒有 ARKit 名稱的 BlendShape，只要在臉上放置標記，就能自動產生完美同步使用的 51 種形狀。虛擬形象原本就有的 BlendShape（「あ」、眨眼、笑臉等）會自動分配使用。結果會另存為新的 <code>.vrcaster</code>，不會變更原檔案。</p>
   <ul>
-    <li><span class="ja">メッシュの頂点を読むため、2.0.0 以降の書き出しツールで書き出し直した <code>.vrcaster</code> が必要です（VRM は対象外）。タブの <span class="ui">編集を始める</span> で編集画面に移ります。編集中は出力にも顔のアップが映り、揺れもの・待機モーション・トラッキング・まばたき・口パクは止まります（閉じると元に戻ります）。</span>
-        <span class="en">Because it reads the mesh vertices, the <code>.vrcaster</code> must be exported again with exporter 2.0.0 or later (VRM is not supported). Press <span class="ui">Start editing</span> in the tab to open the editor. While editing, the output also shows the face close-up, and physics, idle motion, tracking, blinking and lip sync are paused (they resume when you close it).</span>
-        <span class="ko">메시의 정점을 읽기 때문에 2.0.0 이후의 내보내기 도구로 다시 내보낸 <code>.vrcaster</code>가 필요합니다 (VRM은 대상 외). 탭의 <span class="ui">편집 시작</span>으로 편집 화면으로 이동합니다. 편집 중에는 출력에도 얼굴 클로즈업이 나오고, 흔들림·대기 모션·트래킹·눈 깜빡임·립싱크는 멈춥니다 (닫으면 원래대로 돌아옵니다).</span>
-        <span class="zh-hans">由于需要读取网格顶点，需使用 2.0.0 及以后的导出工具重新导出的 <code>.vrcaster</code>（不支持 VRM）。点击标签页中的 <span class="ui">开始编辑</span> 进入编辑画面。编辑期间输出画面也会显示脸部特写，物理摆动、待机动作、追踪、眨眼和口型同步会暂停（关闭后恢复）。</span>
-        <span class="zh-hant">由於需要讀取網格頂點，需使用 2.0.0 及以後的匯出工具重新匯出的 <code>.vrcaster</code>（不支援 VRM）。點擊分頁中的 <span class="ui">開始編輯</span> 進入編輯畫面。編輯期間輸出畫面也會顯示臉部特寫，物理擺動、待機動作、追蹤、眨眼和口型同步會暫停（關閉後恢復）。</span></li>
+    <li><span class="ja">メッシュの頂点を読むため、2.0.0 以降の書き出しツールで書き出し直した <code>.vrcaster</code> が必要です（VRM は対象外）。タブ一覧の一番下にある紫色の <span class="ui">パーフェクトシンク化</span> タブの <span class="ui">編集を始める</span> で編集画面に移ります。編集中は出力にも顔のアップが映り、揺れもの・待機モーション・トラッキング・まばたき・口パクは止まります（閉じると元に戻ります）。</span>
+        <span class="en">Because it reads the mesh vertices, the <code>.vrcaster</code> must be exported again with exporter 2.0.0 or later (VRM is not supported). Press <span class="ui">Start editing</span> in the purple <span class="ui">Perfect sync setup</span> tab at the bottom of the tab list to open the editor. While editing, the output also shows the face close-up, and physics, idle motion, tracking, blinking and lip sync are paused (they resume when you close it).</span>
+        <span class="ko">메시의 정점을 읽기 때문에 2.0.0 이후의 내보내기 도구로 다시 내보낸 <code>.vrcaster</code>가 필요합니다 (VRM은 대상 외). 탭 목록 맨 아래의 보라색 <span class="ui">퍼펙트 싱크화</span> 탭에서 <span class="ui">편집 시작</span>으로 편집 화면으로 이동합니다. 편집 중에는 출력에도 얼굴 클로즈업이 나오고, 흔들림·대기 모션·트래킹·눈 깜빡임·립싱크는 멈춥니다 (닫으면 원래대로 돌아옵니다).</span>
+        <span class="zh-hans">由于需要读取网格顶点，需使用 2.0.0 及以后的导出工具重新导出的 <code>.vrcaster</code>（不支持 VRM）。点击标签页列表最下方紫色的 <span class="ui">完美同步化</span> 标签页中的 <span class="ui">开始编辑</span> 进入编辑画面。编辑期间输出画面也会显示脸部特写，物理摆动、待机动作、追踪、眨眼和口型同步会暂停（关闭后恢复）。</span>
+        <span class="zh-hant">由於需要讀取網格頂點，需使用 2.0.0 及以後的匯出工具重新匯出的 <code>.vrcaster</code>（不支援 VRM）。點擊分頁列表最下方紫色的 <span class="ui">完美同步化</span> 分頁中的 <span class="ui">開始編輯</span> 進入編輯畫面。編輯期間輸出畫面也會顯示臉部特寫，物理擺動、待機動作、追蹤、眨眼和口型同步會暫停（關閉後恢復）。</span></li>
     <li><span class="ja"><span class="ui">1. 目印</span>: <span class="ui">顔メッシュ</span> と <span class="ui">細かさ</span>（<span class="ui">最小（約 10 点）</span> / <span class="ui">標準（約 20 点）</span> / <span class="ui">詳細（約 40 点）</span>）を選び、図で光っている目印を顔の上で左クリックして打ちます。ドラッグで動かせます（視点は顔の正面に固定され、ホイールで拡大・中ドラッグで移動。<span class="ui">視点を顔の正面に固定</span> を外すと右ドラッグで回転）。間違えたときは図の下の <span class="ui">元に戻す</span>（Ctrl+Z）で 1 つずつ戻せ、<span class="ui">消す</span>（Delete キー）で選択中の目印（打っていなければ直前に打った目印）を消せます。
         <span class="ui">左側の目印を右側にも反映（左右対称）</span> が ON なら右側は自動で置かれます。「アバターの左」は正面から見て右側です（目印の名前にも「画面の右・アバターの左」のように出ます）。最小の目印（目・眉・口角・唇・あご）がそろったら <span class="ui">生成して試す</span> を押します。</span>
         <span class="en"><span class="ui">1. Points</span>: choose the <span class="ui">Face mesh</span> and the <span class="ui">Detail</span> (<span class="ui">Minimal (about 10 points)</span> / <span class="ui">Standard (about 20 points)</span> / <span class="ui">Detailed (about 40 points)</span>), then left-click the face to place the point highlighted in the diagram. Drag a point to move it (the view stays facing the face; the wheel zooms and middle-drag pans, and right-drag rotates after you turn off <span class="ui">Keep the view facing the face</span>). If you make a mistake, <span class="ui">Undo</span> (Ctrl+Z) below the diagram steps back one action at a time, and <span class="ui">Remove</span> (Delete key) removes the selected point (or the one you just placed).
@@ -687,11 +699,11 @@
         <span class="ko"><span class="ui">2. 형상</span>: 형상마다 <span class="ui">자동 생성</span> / <span class="ui">기존 BlendShape</span> / <span class="ui">없음</span>과 <span class="ui">강도</span>를 고르고 <span class="ui">반영</span>으로 확인합니다. 눈의 움직임(eyeLook)은 눈 본이 시선으로 움직이므로 기본값은 <span class="ui">없음</span>입니다(눈 본이 없는 아바타는 <span class="ui">자동 생성</span>). 만들어도 움직일 부분이 없었던 형상에는 <span class="ui">움직일 부분 없음</span>이 표시되므로 <span class="ui">기존 BlendShape</span> 또는 <span class="ui">없음</span>을 고르세요.</span>
         <span class="zh-hans"><span class="ui">2. 形状</span>：为每个形状选择 <span class="ui">自动生成</span> / <span class="ui">现有 BlendShape</span> / <span class="ui">无</span> 以及 <span class="ui">强度</span>，然后点击 <span class="ui">应用</span> 试用。眼睛的动作（eyeLook）因眼睛骨骼已随视线移动，默认为 <span class="ui">无</span>（没有眼睛骨骼的形象为 <span class="ui">自动生成</span>）。生成后没有可移动部分的形状会显示 <span class="ui">无可移动部分</span>，请为其选择 <span class="ui">现有 BlendShape</span> 或 <span class="ui">无</span>。</span>
         <span class="zh-hant"><span class="ui">2. 形狀</span>：為每個形狀選擇 <span class="ui">自動生成</span> / <span class="ui">現有 BlendShape</span> / <span class="ui">無</span> 以及 <span class="ui">強度</span>，然後點擊 <span class="ui">套用</span> 試用。眼睛的動作（eyeLook）因眼睛骨骼已隨視線移動，預設為 <span class="ui">無</span>（沒有眼睛骨骼的形象為 <span class="ui">自動生成</span>）。生成後沒有可移動部分的形狀會顯示 <span class="ui">無可移動部分</span>，請為其選擇 <span class="ui">現有 BlendShape</span> 或 <span class="ui">無</span>。</span></li>
-    <li><span class="ja"><span class="ui">このアバターに無い部位</span> で <span class="ui">眉</span> / <span class="ui">鼻</span> / <span class="ui">口の中</span> を選ぶと、その部位の目印は打たずに済み、その部位の形状は既定で <span class="ui">なし</span> になります（口の中や舌が作られていないアバターは、「あ」などの既存の BlendShape で口を動かします）。別の歯・舌のメッシュが無いアバターでは <span class="ui">歯・舌のメッシュも顎と一緒に動かす</span> は選べません。</span>
-        <span class="en">Under <span class="ui">Parts this avatar doesn't have</span>, select <span class="ui">Brows</span> / <span class="ui">Nose</span> / <span class="ui">Inside of the mouth</span> to skip those points; their shapes default to <span class="ui">None</span> (avatars without a modelled mouth interior or tongue can move the mouth with existing blend shapes such as "aa"). <span class="ui">Also move teeth and tongue meshes with the jaw</span> is disabled when there are no separate teeth or tongue meshes.</span>
-        <span class="ko"><span class="ui">이 아바타에 없는 부위</span>에서 <span class="ui">눈썹</span> / <span class="ui">코</span> / <span class="ui">입 안</span>을 고르면 그 부위의 표시는 찍지 않아도 되고, 그 부위의 형상은 기본값이 <span class="ui">없음</span>이 됩니다(입 안이나 혀가 만들어지지 않은 아바타는 '아' 등 기존 BlendShape로 입을 움직입니다). 별도의 치아·혀 메시가 없는 아바타에서는 <span class="ui">치아·혀 메시도 턱과 함께 움직이기</span>를 고를 수 없습니다.</span>
-        <span class="zh-hans">在 <span class="ui">此形象没有的部位</span> 中选择 <span class="ui">眉毛</span> / <span class="ui">鼻子</span> / <span class="ui">口腔内部</span> 后，无需放置该部位的标记，该部位的形状默认为 <span class="ui">无</span>（没有制作口腔内部或舌头的形象，可用“あ”等现有 BlendShape 动嘴）。没有单独牙齿·舌头网格的形象无法选择 <span class="ui">牙齿·舌头网格也随下巴一起移动</span>。</span>
-        <span class="zh-hant">在 <span class="ui">此形象沒有的部位</span> 中選擇 <span class="ui">眉毛</span> / <span class="ui">鼻子</span> / <span class="ui">口腔內部</span> 後，無需放置該部位的標記，該部位的形狀預設為 <span class="ui">無</span>（沒有製作口腔內部或舌頭的形象，可用「あ」等現有 BlendShape 動嘴）。沒有單獨牙齒·舌頭網格的形象無法選擇 <span class="ui">牙齒·舌頭網格也隨下巴一起移動</span>。</span></li>
+    <li><span class="ja"><span class="ui">このアバターに無い部位</span> で <span class="ui">眉</span> / <span class="ui">鼻</span> / <span class="ui">口の中</span> を選ぶと、その部位の目印は打たずに済み、その部位の形状は既定で <span class="ui">なし</span> になります（口の中や舌が作られていないアバターは、「あ」などの既存の BlendShape で口を動かします）。別の歯・舌のメッシュが無いアバターでは <span class="ui">歯・舌のメッシュも顎と一緒に動かす</span> は選べません。存在しない部位があるアバターでは、期待どおりの動きにならない可能性があります。</span>
+        <span class="en">Under <span class="ui">Parts this avatar doesn't have</span>, select <span class="ui">Brows</span> / <span class="ui">Nose</span> / <span class="ui">Inside of the mouth</span> to skip those points; their shapes default to <span class="ui">None</span> (avatars without a modelled mouth interior or tongue can move the mouth with existing blend shapes such as "aa"). <span class="ui">Also move teeth and tongue meshes with the jaw</span> is disabled when there are no separate teeth or tongue meshes. On avatars missing some face parts, the generated shapes may not move as expected.</span>
+        <span class="ko"><span class="ui">이 아바타에 없는 부위</span>에서 <span class="ui">눈썹</span> / <span class="ui">코</span> / <span class="ui">입 안</span>을 고르면 그 부위의 표시는 찍지 않아도 되고, 그 부위의 형상은 기본값이 <span class="ui">없음</span>이 됩니다(입 안이나 혀가 만들어지지 않은 아바타는 '아' 등 기존 BlendShape로 입을 움직입니다). 별도의 치아·혀 메시가 없는 아바타에서는 <span class="ui">치아·혀 메시도 턱과 함께 움직이기</span>를 고를 수 없습니다. 없는 부위가 있는 아바타에서는 기대한 대로 움직이지 않을 수 있습니다.</span>
+        <span class="zh-hans">在 <span class="ui">此形象没有的部位</span> 中选择 <span class="ui">眉毛</span> / <span class="ui">鼻子</span> / <span class="ui">口腔内部</span> 后，无需放置该部位的标记，该部位的形状默认为 <span class="ui">无</span>（没有制作口腔内部或舌头的形象，可用“あ”等现有 BlendShape 动嘴）。没有单独牙齿·舌头网格的形象无法选择 <span class="ui">牙齿·舌头网格也随下巴一起移动</span>。对于缺少部分部位的形象，生成的形状可能无法按预期动作。</span>
+        <span class="zh-hant">在 <span class="ui">此形象沒有的部位</span> 中選擇 <span class="ui">眉毛</span> / <span class="ui">鼻子</span> / <span class="ui">口腔內部</span> 後，無需放置該部位的標記，該部位的形狀預設為 <span class="ui">無</span>（沒有製作口腔內部或舌頭的形象，可用「あ」等現有 BlendShape 動嘴）。沒有單獨牙齒·舌頭網格的形象無法選擇 <span class="ui">牙齒·舌頭網格也隨下巴一起移動</span>。對於缺少部分部位的形象，生成的形狀可能無法按預期動作。</span></li>
     <li><span class="ja"><span class="ui">自動で置く</span> の 2 つのボタンで、まだ打っていない目印を自動で置けます（打った目印は変わりません。<span class="ui">元に戻す</span> で取り消せます）。<span class="ui">BlendShape から</span> はアバターのまばたき・「あ」「う」・眉の BlendShape で動く部分から目・口・眉・鼻先を求めます。<span class="ui">画像認識</span> は顔を正面に向けてから押すと、今の画面の顔を MediaPipe で認識して置きます（アニメ調の顔は見つからないことがあります）。どちらも位置は目安なので、ずれた目印はドラッグで直してください。</span>
         <span class="en">The two <span class="ui">Place automatically</span> buttons fill in points you have not placed yet (placed points are kept; <span class="ui">Undo</span> removes them). <span class="ui">From blend shapes</span> finds the eyes, mouth, brows and nose tip from the parts that the avatar's blink, "aa", "ou" and brow blend shapes move. <span class="ui">Image recognition</span> recognizes the face on screen with MediaPipe (face the camera first; cartoon faces are sometimes not found). The results are approximate, so drag any points that are off.</span>
         <span class="ko"><span class="ui">자동으로 찍기</span>의 두 버튼으로 아직 찍지 않은 표시를 자동으로 놓을 수 있습니다(찍은 표시는 바뀌지 않으며 <span class="ui">실행 취소</span>로 취소할 수 있습니다). <span class="ui">BlendShape에서</span>는 아바타의 눈 깜빡임·'아'·'우'·눈썹 BlendShape로 움직이는 부분에서 눈·입·눈썹·코끝을 구합니다. <span class="ui">이미지 인식</span>은 얼굴을 정면으로 한 뒤 누르면 지금 화면의 얼굴을 MediaPipe로 인식해 놓습니다(애니메이션풍 얼굴은 찾지 못할 수 있습니다). 둘 다 위치는 대략적이므로 어긋난 표시는 드래그로 고치세요.</span>
@@ -728,11 +740,11 @@
         <span class="ko"><span class="ui">입력 소스</span>는 세로로 나열된 스위치 중 하나를 켜서 고릅니다. 각 줄 오른쪽 (폭이 부족하면 스위치 아래)에 권장 (MediaPipe)과 PC 부하 기준 (낮음·보통·높음)이 표시됩니다. MediaPipe는 <span class="ui">팔·손</span>을 끄면 가벼워지고, iPhone 등에서 받는 입력 소스는 스마트폰에서 추정하므로 PC 부하가 낮습니다.</span>
         <span class="zh-hans"><span class="ui">输入源</span> 通过打开纵向排列的开关之一来选择。每行右侧（宽度不足时在开关下方）会显示推荐（MediaPipe）以及电脑负载参考（低 / 中 / 高）。MediaPipe 关闭 <span class="ui">手臂 / 手</span> 后会更轻，从 iPhone 等接收的输入源由手机进行追踪，因此电脑负载较低。</span>
         <span class="zh-hant"><span class="ui">輸入來源</span> 透過開啟縱向排列的開關之一來選擇。每列右側（寬度不足時在開關下方）會顯示推薦（MediaPipe）以及電腦負載參考（低 / 中 / 高）。MediaPipe 關閉 <span class="ui">手臂 / 手</span> 後會更輕，從 iPhone 等接收的輸入來源由手機進行追蹤，因此電腦負載較低。</span></li>
-    <li><span class="ja"><span class="ui">まばたきをトラッキング</span>（既定は ON）を OFF にすると、目の開閉は追わず、顔タブの自動まばたきでまばたきします（パーフェクトシンクでもまばたきだけは動かしません）。</span>
-        <span class="en">Turn off <span class="ui">Track blinks</span> (on by default) to ignore your eye openness and use auto blink from the Face tab instead (perfect sync also leaves blinking alone).</span>
-        <span class="ko"><span class="ui">눈 깜빡임 트래킹</span>(기본은 켜짐)을 끄면 눈의 개폐를 따라가지 않고 얼굴 탭의 자동 눈 깜빡임을 사용합니다 (퍼펙트 싱크에서도 눈 깜빡임만은 움직이지 않습니다).</span>
-        <span class="zh-hans">关闭 <span class="ui">追踪眨眼</span>（默认开启）后，不再跟随眼睛开合，改用面部标签的自动眨眼（完美同步也不驱动眨眼）。</span>
-        <span class="zh-hant">關閉 <span class="ui">追蹤眨眼</span>（預設開啟）後，不再跟隨眼睛開合，改用臉部分頁的自動眨眼（完美同步也不驅動眨眼）。</span></li>
+    <li><span class="ja"><span class="ui">まばたきをトラッキング</span>（既定は ON）を OFF にすると、目の開閉は追わず、顔・表情タブの自動まばたきでまばたきします（パーフェクトシンクでもまばたきだけは動かしません）。</span>
+        <span class="en">Turn off <span class="ui">Track blinks</span> (on by default) to ignore your eye openness and use auto blink from the Face &amp; expressions tab instead (perfect sync also leaves blinking alone).</span>
+        <span class="ko"><span class="ui">눈 깜빡임 트래킹</span>(기본은 켜짐)을 끄면 눈의 개폐를 따라가지 않고 얼굴·표정 탭의 자동 눈 깜빡임을 사용합니다 (퍼펙트 싱크에서도 눈 깜빡임만은 움직이지 않습니다).</span>
+        <span class="zh-hans">关闭 <span class="ui">追踪眨眼</span>（默认开启）后，不再跟随眼睛开合，改用面部·表情标签页的自动眨眼（完美同步也不驱动眨眼）。</span>
+        <span class="zh-hant">關閉 <span class="ui">追蹤眨眼</span>（預設開啟）後，不再跟隨眼睛開合，改用臉部·表情分頁的自動眨眼（完美同步也不驅動眨眼）。</span></li>
     <li><span class="ja">目を開けているのにアバターが半目になるときは、<span class="ui">目の開きの補正</span>（既定は 0）を上げます。値までの目の閉じ具合は開いた目として扱い、まばたきでは閉じ切ります（パーフェクトシンクと、表情を反映のジト目の判定にも効きます。<span class="ui">まばたきをトラッキング</span> が ON のときだけ出ます）。</span>
         <span class="en">If the avatar's eyes look half-closed while yours are open, raise <span class="ui">Eye open correction</span> (0 by default). Eyes closed up to that amount count as open, and blinks still close fully (also applies to perfect sync and to detecting the "Half-closed eyes" expression; shown only while <span class="ui">Track blinks</span> is on).</span>
         <span class="ko">눈을 뜨고 있는데 아바타가 반쯤 감은 눈이 되면 <span class="ui">눈 뜨기 보정</span>(기본값 0)을 올립니다. 그 값까지 감긴 정도는 뜬 눈으로 취급하고, 깜빡임에서는 완전히 감깁니다 (퍼펙트 싱크와 표정 반영의 실눈 판정에도 적용되며, <span class="ui">눈 깜빡임 트래킹</span>이 켜져 있을 때만 표시됩니다).</span>
@@ -859,11 +871,37 @@
         <span class="ko"><span class="ui">패널 불투명도</span>: 조작 패널과 퍼펙트 싱크화 편집 화면의 배경을 20%~100%로 비치게 할 수 있습니다 (글자는 흐려지지 않습니다).</span>
         <span class="zh-hans"><span class="ui">面板不透明度</span>：可将操作面板和完美同步化编辑画面的背景调为 20%～100% 的透明度（文字不会变淡）。</span>
         <span class="zh-hant"><span class="ui">面板不透明度</span>：可將操作面板和完美同步化編輯畫面的背景調為 20%～100% 的透明度（文字不會變淡）。</span></li>
-    <li><span class="ja"><span class="ui">テーマ</span>: ライト（既定）/ ダーク。背景色を表示タブで変えていなければ、背景もテーマに合わせて切り替わります。</span>
-        <span class="en"><span class="ui">Theme</span>: Light (default) / Dark. The background also follows the theme unless you changed its color in the Display tab.</span>
-        <span class="ko"><span class="ui">테마</span>: 라이트 (기본) / 다크. 표시 탭에서 배경색을 바꾸지 않았다면 배경도 테마에 맞춰 바뀝니다.</span>
-        <span class="zh-hans"><span class="ui">主题</span>：浅色（默认）/ 深色。如果未在显示标签页中更改背景色，背景也会随主题切换。</span>
-        <span class="zh-hant"><span class="ui">主題</span>：淺色（預設）/ 深色。若未在顯示分頁中變更背景色，背景也會隨主題切換。</span></li>
+    <li><span class="ja"><span class="ui">テーマ</span>: ライト（既定）/ ダーク。背景色をグラフィックタブで変えていなければ、背景もテーマに合わせて切り替わります。</span>
+        <span class="en"><span class="ui">Theme</span>: Light (default) / Dark. The background also follows the theme unless you changed its color in the Graphics tab.</span>
+        <span class="ko"><span class="ui">테마</span>: 라이트 (기본) / 다크. 그래픽 탭에서 배경색을 바꾸지 않았다면 배경도 테마에 맞춰 바뀝니다.</span>
+        <span class="zh-hans"><span class="ui">主题</span>：浅色（默认）/ 深色。如果未在图形标签页中更改背景色，背景也会随主题切换。</span>
+        <span class="zh-hant"><span class="ui">主題</span>：淺色（預設）/ 深色。若未在圖形分頁中變更背景色，背景也會隨主題切換。</span></li>
+    <li><span class="ja">設定は VRCast の終了時に自動で保存され、次回起動時に復元されます。</span>
+        <span class="en">Settings are saved when VRCast closes and restored next time.</span>
+        <span class="ko">설정은 VRCast 종료 시 자동으로 저장되고, 다음 실행 시 복원됩니다.</span>
+        <span class="zh-hans">设置会在 VRCast 退出时自动保存，并在下次启动时恢复。</span>
+        <span class="zh-hant">設定會在 VRCast 結束時自動儲存，並在下次啟動時還原。</span></li>
+    <li><span class="ja"><span class="ui">設定プリセット</span>: 設定をカテゴリ（動作最適化・トラッキング・出力など）ごとに選んで <code>.vrcastpreset</code> ファイルに書き出し（<span class="ui">書き出す...</span>）、別の PC や後から読み込めます（<span class="ui">読み込む...</span>、またはファイルをウィンドウにドロップ）。読み込むときは反映するカテゴリを選んでから <span class="ui">適用</span> を押します。<span class="ui">アバター関連を外す</span> で、ライト・ポーズ・表情の割り当てなどアバターごとに合わせる設定だけをまとめて外せます。アバターごとの記録（シェイプキー・カメラ・表情のキー）と、マイク・カメラ・ポートなど PC ごとの値は含みません。ファイルはテキストなので、いらないカテゴリを消して使うこともできます。</span>
+        <span class="en"><span class="ui">Settings preset</span>: choose categories (performance, tracking, output and so on) and export them to a <code>.vrcastpreset</code> file (<span class="ui">Export...</span>), then load it on another PC or later (<span class="ui">Import...</span>, or drop the file onto the window). When loading, choose the categories to apply and press <span class="ui">Apply</span>. <span class="ui">Exclude avatar-related</span> removes the settings you tune per avatar, such as light, pose and expression mapping, in one go. Per-avatar data (shape keys, camera, expression keys) and PC-specific values such as microphone, camera and ports are not included. The file is plain text, so you can also delete categories you don't need.</span>
+        <span class="ko"><span class="ui">설정 프리셋</span>: 설정을 카테고리(동작 최적화·트래킹·출력 등)별로 골라 <code>.vrcastpreset</code> 파일로 내보내고(<span class="ui">내보내기...</span>), 다른 PC나 나중에 불러올 수 있습니다(<span class="ui">불러오기...</span> 또는 파일을 창에 끌어다 놓기). 불러올 때는 적용할 카테고리를 고른 뒤 <span class="ui">적용</span>을 누릅니다. <span class="ui">아바타 관련 제외</span>로 조명·포즈·표정 할당 등 아바타마다 맞추는 설정만 한 번에 뺄 수 있습니다. 아바타별 기록(셰이프 키·카메라·표정 키)과 마이크·카메라·포트 등 PC별 값은 포함하지 않습니다. 파일은 텍스트이므로 필요 없는 카테고리를 지워서 쓸 수도 있습니다.</span>
+        <span class="zh-hans"><span class="ui">设置预设</span>：按类别（运行优化、追踪、输出等）选择设置并导出为 <code>.vrcastpreset</code> 文件（<span class="ui">导出...</span>），可在其他电脑或之后导入（<span class="ui">导入...</span>，或将文件拖放到窗口）。导入时选择要应用的类别后按 <span class="ui">应用</span>。<span class="ui">排除虚拟形象相关</span> 可一次性去掉灯光、姿势、表情映射等按虚拟形象调整的设置。不包含各虚拟形象的记录（形态键、相机、表情按键）以及麦克风、摄像头、端口等各电脑的值。文件是文本，也可以删除不需要的类别后使用。</span>
+        <span class="zh-hant"><span class="ui">設定預設</span>：依類別（執行最佳化、追蹤、輸出等）選擇設定並匯出為 <code>.vrcastpreset</code> 檔案（<span class="ui">匯出...</span>），可在其他電腦或之後匯入（<span class="ui">匯入...</span>，或將檔案拖放到視窗）。匯入時選擇要套用的類別後按 <span class="ui">套用</span>。<span class="ui">排除虛擬形象相關</span> 可一次去掉燈光、姿勢、表情對應等依虛擬形象調整的設定。不包含各虛擬形象的紀錄（形態鍵、相機、表情按鍵）以及麥克風、攝影機、連接埠等各電腦的值。檔案是文字，也可以刪除不需要的類別後使用。</span></li>
+  </ul>
+  <p class="note danger ja"><span class="ui">全ての設定をリセット</span>（赤いボタン）を押し、確認で <span class="ui">リセットする</span> を押すと、全ての設定が初期状態に戻ります
+    （ウィンドウサイズと最後に開いたアバターは残ります）。元に戻せません。</p>
+  <p class="note danger en">Press <span class="ui">Reset all settings</span> (red button), then <span class="ui">Yes, reset</span> to restore every setting to its default
+    (window size and the last avatar are kept). This cannot be undone.</p>
+  <p class="note danger ko"><span class="ui">모든 설정 초기화</span> (빨간 버튼)를 누르고 확인에서 <span class="ui">초기화하기</span>를 누르면 모든 설정이 초기 상태로 돌아갑니다
+    (창 크기와 마지막으로 연 아바타는 유지됩니다). 되돌릴 수 없습니다.</p>
+  <p class="note danger zh-hans">点击 <span class="ui">重置所有设置</span>（红色按钮），再在确认中点击 <span class="ui">确定重置</span>，所有设置将恢复为默认值
+    （窗口大小和上次打开的虚拟形象会保留）。此操作无法撤销。</p>
+  <p class="note danger zh-hant">點擊 <span class="ui">重設所有設定</span>（紅色按鈕），再在確認中點擊 <span class="ui">確定重設</span>，所有設定將恢復為預設值
+    （視窗大小和上次開啟的虛擬形象會保留）。此操作無法復原。</p>
+</section>
+
+<section id="performance">
+  <h2><span class="ja">パフォーマンス（パフォーマンスタブ）</span><span class="en">Performance (Performance tab)</span><span class="ko">성능 (성능 탭)</span><span class="zh-hans">性能（性能标签页）</span><span class="zh-hant">效能（效能分頁）</span></h2>
+  <ul>
     <li><span class="ja"><span class="ui">軽量モード</span>（既定は ON）: 描画を 30fps（OFF なら 60fps）に抑え、OpenSeeFace は軽いモデルを使って、ゲームや OBS と同時に使うときの負荷を減らします。MediaPipe の重さはトラッキングタブの <span class="ui">トラッカーの動作</span> で選びます。</span>
         <span class="en"><span class="ui">Low load mode</span> (on by default): limits drawing to 30 fps (60 fps when off) and makes OpenSeeFace use a lighter model to reduce load when running with games or OBS. For MediaPipe, choose the load with <span class="ui">Tracker mode</span> in the Tracking tab.</span>
         <span class="ko"><span class="ui">저부하 모드</span> (기본은 켜짐): 화면을 30fps (끄면 60fps)로 제한하고 OpenSeeFace는 가벼운 모델을 써서 게임이나 OBS와 함께 쓸 때의 부하를 줄입니다. MediaPipe의 부하는 트래킹 탭의 <span class="ui">트래커 동작</span>에서 고릅니다.</span>
@@ -899,6 +937,12 @@
         <span class="ko"><span class="ui">NVIDIA 인스턴트 리플레이</span> (NVIDIA GPU가 있는 PC에서만 표시): <span class="ui">NVIDIA 인스턴트 리플레이가 감지하지 않게 하기</span>를 누르면 VRCast가 인스턴트 리플레이(ShadowPlay)에 게임으로 감지되지 않도록 드라이버 설정에 VRCast용 프로필을 씁니다. VRCast를 다시 시작하면 적용됩니다. <span class="ui">NVIDIA 인스턴트 리플레이 감지 되돌리기</span>로 되돌릴 수 있습니다. 비공식 설정이라 드라이버에 따라 효과가 없을 수 있습니다. 변경하지 못했다고 표시되면 VRCast를 관리자 권한으로 실행해 보세요.</span>
         <span class="zh-hans"><span class="ui">NVIDIA 即时重放</span>（仅在有 NVIDIA GPU 的电脑上显示）：按下 <span class="ui">不让 NVIDIA 即时重放检测</span> 后，会在驱动设置中写入 VRCast 专用配置文件，使 VRCast 不被即时重放（ShadowPlay）识别为游戏。重新启动 VRCast 后生效。按 <span class="ui">恢复 NVIDIA 即时重放的检测</span> 可还原。这是非官方设置，部分驱动可能无效。如提示无法更改，请尝试以管理员身份运行 VRCast。</span>
         <span class="zh-hant"><span class="ui">NVIDIA 即時重播</span>（僅在有 NVIDIA GPU 的電腦上顯示）：按下 <span class="ui">不讓 NVIDIA 即時重播偵測</span> 後，會在驅動程式設定中寫入 VRCast 專用設定檔，使 VRCast 不被即時重播（ShadowPlay）視為遊戲。重新啟動 VRCast 後生效。按 <span class="ui">還原 NVIDIA 即時重播的偵測</span> 可還原。這是非官方設定，部分驅動程式可能無效。如提示無法變更，請嘗試以系統管理員身分執行 VRCast。</span></li>
+  </ul>
+</section>
+
+<section id="info">
+  <h2><span class="ja">情報（情報タブ）</span><span class="en">Info (Info tab)</span><span class="ko">정보 (정보 탭)</span><span class="zh-hans">信息（信息标签页）</span><span class="zh-hant">資訊（資訊分頁）</span></h2>
+  <ul>
     <li><span class="ja"><span class="ui">アップデート</span>: 起動時に新しいバージョンがあるかを確認し、あればパネル上部に通知します（<span class="ui">GitHub からダウンロード</span> / <span class="ui">BOOTH からダウンロード</span> / <span class="ui">更新履歴を表示する（GitHub）</span>）。
         確認は最新のバージョン番号を読むためだけに Web サイト（coffin299.github.io）へ接続します。OFF にもできます。
         <span class="ui">今すぐ更新</span> を押すと、GitHub から新しいバージョンをダウンロードしてファイルを入れ替え、VRCast が自動で起動し直します（設定はそのまま）。OBS や Discord で仮想カメラを使ったままでも更新できます。VRCast を Program Files など管理者権限の必要なフォルダに置いている場合は自動更新できないため、ダウンロードのボタンから入手してください。アバターのプロジェクトに入れた書き出しツールは自動では更新されません。お手すきの際に、zip から最新版をインポートしてください。</span>
@@ -914,42 +958,27 @@
         <span class="zh-hant"><span class="ui">更新</span>：啟動時檢查是否有新版本，如有則在面板頂部提示（<span class="ui">從 GitHub 下載</span> / <span class="ui">從 BOOTH 下載</span> / <span class="ui">查看更新紀錄（GitHub）</span>）。
         僅為讀取最新版本號而連線網站（coffin299.github.io），也可以關閉。
         按下 <span class="ui">立即更新</span> 後，會從 GitHub 下載新版本並替換檔案，VRCast 將自動重新啟動（設定會保留）。即使 OBS 或 Discord 正在使用虛擬攝影機也能更新。若 VRCast 位於 Program Files 等需要系統管理員權限的資料夾中，則無法自動更新，請透過下載按鈕取得。放入頭像專案中的匯出工具不會自動更新。方便時請從 zip 匯入最新版。</span></li>
-    <li><span class="ja">設定は VRCast の終了時に自動で保存され、次回起動時に復元されます。</span>
-        <span class="en">Settings are saved when VRCast closes and restored next time.</span>
-        <span class="ko">설정은 VRCast 종료 시 자동으로 저장되고, 다음 실행 시 복원됩니다.</span>
-        <span class="zh-hans">设置会在 VRCast 退出时自动保存，并在下次启动时恢复。</span>
-        <span class="zh-hant">設定會在 VRCast 結束時自動儲存，並在下次啟動時還原。</span></li>
-    <li><span class="ja"><span class="ui">設定プリセット</span>: 設定をカテゴリ（動作最適化・トラッキング・出力など）ごとに選んで <code>.vrcastpreset</code> ファイルに書き出し（<span class="ui">書き出す...</span>）、別の PC や後から読み込めます（<span class="ui">読み込む...</span>、またはファイルをウィンドウにドロップ）。読み込むときは反映するカテゴリを選んでから <span class="ui">適用</span> を押します。<span class="ui">アバター関連を外す</span> で、ライト・ポーズ・表情の割り当てなどアバターごとに合わせる設定だけをまとめて外せます。アバターごとの記録（シェイプキー・カメラ・表情のキー）と、マイク・カメラ・ポートなど PC ごとの値は含みません。ファイルはテキストなので、いらないカテゴリを消して使うこともできます。</span>
-        <span class="en"><span class="ui">Settings preset</span>: choose categories (performance, tracking, output and so on) and export them to a <code>.vrcastpreset</code> file (<span class="ui">Export...</span>), then load it on another PC or later (<span class="ui">Import...</span>, or drop the file onto the window). When loading, choose the categories to apply and press <span class="ui">Apply</span>. <span class="ui">Exclude avatar-related</span> removes the settings you tune per avatar, such as light, pose and expression mapping, in one go. Per-avatar data (shape keys, camera, expression keys) and PC-specific values such as microphone, camera and ports are not included. The file is plain text, so you can also delete categories you don't need.</span>
-        <span class="ko"><span class="ui">설정 프리셋</span>: 설정을 카테고리(동작 최적화·트래킹·출력 등)별로 골라 <code>.vrcastpreset</code> 파일로 내보내고(<span class="ui">내보내기...</span>), 다른 PC나 나중에 불러올 수 있습니다(<span class="ui">불러오기...</span> 또는 파일을 창에 끌어다 놓기). 불러올 때는 적용할 카테고리를 고른 뒤 <span class="ui">적용</span>을 누릅니다. <span class="ui">아바타 관련 제외</span>로 조명·포즈·표정 할당 등 아바타마다 맞추는 설정만 한 번에 뺄 수 있습니다. 아바타별 기록(셰이프 키·카메라·표정 키)과 마이크·카메라·포트 등 PC별 값은 포함하지 않습니다. 파일은 텍스트이므로 필요 없는 카테고리를 지워서 쓸 수도 있습니다.</span>
-        <span class="zh-hans"><span class="ui">设置预设</span>：按类别（运行优化、追踪、输出等）选择设置并导出为 <code>.vrcastpreset</code> 文件（<span class="ui">导出...</span>），可在其他电脑或之后导入（<span class="ui">导入...</span>，或将文件拖放到窗口）。导入时选择要应用的类别后按 <span class="ui">应用</span>。<span class="ui">排除虚拟形象相关</span> 可一次性去掉灯光、姿势、表情映射等按虚拟形象调整的设置。不包含各虚拟形象的记录（形态键、相机、表情按键）以及麦克风、摄像头、端口等各电脑的值。文件是文本，也可以删除不需要的类别后使用。</span>
-        <span class="zh-hant"><span class="ui">設定預設</span>：依類別（執行最佳化、追蹤、輸出等）選擇設定並匯出為 <code>.vrcastpreset</code> 檔案（<span class="ui">匯出...</span>），可在其他電腦或之後匯入（<span class="ui">匯入...</span>，或將檔案拖放到視窗）。匯入時選擇要套用的類別後按 <span class="ui">套用</span>。<span class="ui">排除虛擬形象相關</span> 可一次去掉燈光、姿勢、表情對應等依虛擬形象調整的設定。不包含各虛擬形象的紀錄（形態鍵、相機、表情按鍵）以及麥克風、攝影機、連接埠等各電腦的值。檔案是文字，也可以刪除不需要的類別後使用。</span></li>
-    <li><span class="ja">開発者・協力者とライセンスは <span class="ui">クレジット</span> タブで確認できます。
+    <li><span class="ja">開発者・協力者とライセンスは <span class="ui">クレジット</span> で確認できます。
         開発者の <a href="https://www.twitch.tv/coffinnoob299">Twitch チャンネル</a> もここから開けます。フォローや Prime サブスクをしてくれると開発の励みになります。</span>
-        <span class="en">The developer, collaborator and licenses are shown in the <span class="ui">Credits</span> tab.
+        <span class="en">The developer, collaborator and licenses are shown under <span class="ui">Credits</span>.
         You can also open the developer's <a href="https://www.twitch.tv/coffinnoob299">Twitch channel</a> there. Following or a Prime sub really keeps development going.</span>
-        <span class="ko">개발자·협력자와 라이선스는 <span class="ui">크레딧</span> 탭에서 확인할 수 있습니다.
+        <span class="ko">개발자·협력자와 라이선스는 <span class="ui">크레딧</span>에서 확인할 수 있습니다.
         개발자의 <a href="https://www.twitch.tv/coffinnoob299">Twitch 채널</a>도 여기서 열 수 있습니다. 팔로우나 Prime 구독을 해 주시면 개발에 큰 힘이 됩니다.</span>
-        <span class="zh-hans">开发者、协力者和许可证可在 <span class="ui">致谢</span> 标签页中查看。
+        <span class="zh-hans">开发者、协力者和许可证可在 <span class="ui">致谢</span> 中查看。
         也可以在这里打开开发者的 <a href="https://www.twitch.tv/coffinnoob299">Twitch 频道</a>。关注或使用 Prime 订阅会成为开发的动力。</span>
-        <span class="zh-hant">開發者、協力者和授權條款可在 <span class="ui">致謝</span> 分頁中查看。
+        <span class="zh-hant">開發者、協力者和授權條款可在 <span class="ui">致謝</span> 中查看。
         也可以在這裡開啟開發者的 <a href="https://www.twitch.tv/coffinnoob299">Twitch 頻道</a>。追隨或使用 Prime 訂閱會成為開發的動力。</span></li>
-    <li><span class="ja">タブ一覧の一番下の <span class="ui">公式 Discord</span> タブでは、<a href="https://discord.gg/vM5RH52HdF">公式 Discord</a> に参加するボタンと、サーバーのオンライン人数・オンラインのメンバー、コピーできる招待コード（<code>vM5RH52HdF</code>）を表示します。</span>
-        <span class="en">The <span class="ui">Official Discord</span> tab at the bottom of the tab list has a button to join the <a href="https://discord.gg/vM5RH52HdF">official Discord</a> and shows who is online on the server and the invite code (<code>vM5RH52HdF</code>) you can copy.</span>
-        <span class="ko">탭 목록 맨 아래의 <span class="ui">공식 Discord</span> 탭에서는 <a href="https://discord.gg/vM5RH52HdF">공식 Discord</a>에 참여하는 버튼과 서버의 온라인 인원·온라인 멤버, 복사할 수 있는 초대 코드(<code>vM5RH52HdF</code>)를 표시합니다.</span>
-        <span class="zh-hans">标签列表最下方的 <span class="ui">官方 Discord</span> 标签中有加入<a href="https://discord.gg/vM5RH52HdF">官方 Discord</a>的按钮，并显示服务器的在线人数、在线成员和可复制的邀请码（<code>vM5RH52HdF</code>）。</span>
-        <span class="zh-hant">分頁列表最下方的 <span class="ui">官方 Discord</span> 分頁中有加入<a href="https://discord.gg/vM5RH52HdF">官方 Discord</a>的按鈕，並顯示伺服器的線上人數、線上成員和可複製的邀請碼（<code>vM5RH52HdF</code>）。</span></li>
+    <li><span class="ja"><span class="ui">公式 Discord</span> では、<a href="https://discord.gg/vM5RH52HdF">公式 Discord</a> に参加するボタンと、サーバーのオンライン人数・オンラインのメンバー、コピーできる招待コード（<code>vM5RH52HdF</code>）を表示します。</span>
+        <span class="en"><span class="ui">Official Discord</span> has a button to join the <a href="https://discord.gg/vM5RH52HdF">official Discord</a> and shows who is online on the server and the invite code (<code>vM5RH52HdF</code>) you can copy.</span>
+        <span class="ko"><span class="ui">공식 Discord</span>에서는 <a href="https://discord.gg/vM5RH52HdF">공식 Discord</a>에 참여하는 버튼과 서버의 온라인 인원·온라인 멤버, 복사할 수 있는 초대 코드(<code>vM5RH52HdF</code>)를 표시합니다.</span>
+        <span class="zh-hans"><span class="ui">官方 Discord</span> 中有加入<a href="https://discord.gg/vM5RH52HdF">官方 Discord</a>的按钮，并显示服务器的在线人数、在线成员和可复制的邀请码（<code>vM5RH52HdF</code>）。</span>
+        <span class="zh-hant"><span class="ui">官方 Discord</span> 中有加入<a href="https://discord.gg/vM5RH52HdF">官方 Discord</a>的按鈕，並顯示伺服器的線上人數、線上成員和可複製的邀請碼（<code>vM5RH52HdF</code>）。</span></li>
+    <li><span class="ja">一番下の <span class="ui">デバッグログ</span> で、カメラ一覧・トラッカーの状態とログを確認できます（<a href="#trouble">困ったとき</a>）。</span>
+        <span class="en">The <span class="ui">Debug log</span> at the bottom shows the camera list, the tracker status and the logs (see <a href="#trouble">Troubleshooting</a>).</span>
+        <span class="ko">맨 아래의 <span class="ui">디버그 로그</span>에서 카메라 목록·트래커 상태와 로그를 확인할 수 있습니다 (<a href="#trouble">문제 해결</a>).</span>
+        <span class="zh-hans">最下方的 <span class="ui">调试日志</span> 可查看摄像头列表、追踪器状态和日志（参见<a href="#trouble">故障排除</a>）。</span>
+        <span class="zh-hant">最下方的 <span class="ui">偵錯日誌</span> 可查看攝影機清單、追蹤器狀態和日誌（參見<a href="#trouble">疑難排解</a>）。</span></li>
   </ul>
-  <p class="note danger ja"><span class="ui">全ての設定をリセット</span>（赤いボタン）を押し、確認で <span class="ui">リセットする</span> を押すと、全ての設定が初期状態に戻ります
-    （ウィンドウサイズと最後に開いたアバターは残ります）。元に戻せません。</p>
-  <p class="note danger en">Press <span class="ui">Reset all settings</span> (red button), then <span class="ui">Yes, reset</span> to restore every setting to its default
-    (window size and the last avatar are kept). This cannot be undone.</p>
-  <p class="note danger ko"><span class="ui">모든 설정 초기화</span> (빨간 버튼)를 누르고 확인에서 <span class="ui">초기화하기</span>를 누르면 모든 설정이 초기 상태로 돌아갑니다
-    (창 크기와 마지막으로 연 아바타는 유지됩니다). 되돌릴 수 없습니다.</p>
-  <p class="note danger zh-hans">点击 <span class="ui">重置所有设置</span>（红色按钮），再在确认中点击 <span class="ui">确定重置</span>，所有设置将恢复为默认值
-    （窗口大小和上次打开的虚拟形象会保留）。此操作无法撤销。</p>
-  <p class="note danger zh-hant">點擊 <span class="ui">重設所有設定</span>（紅色按鈕），再在確認中點擊 <span class="ui">確定重設</span>，所有設定將恢復為預設值
-    （視窗大小和上次開啟的虛擬形象會保留）。此操作無法復原。</p>
 </section>
 
 <section id="keys">
@@ -974,17 +1003,17 @@
             <span class="zh-hans">头部朝向 / 视线 / 表情（无表情）/ 相机，在任意标签页中都可使用（按钮第二行显示已分配的快捷键）</span>
             <span class="zh-hant">頭部朝向 / 視線 / 表情（無表情）/ 相機，在任意分頁中都可使用（按鈕第二行顯示已分配的快捷鍵）</span></td></tr>
     <tr><td><span class="ja">パネル下部のアンケート</span><span class="en">Survey (panel bottom)</span><span class="ko">패널 아래쪽 설문</span><span class="zh-hans">面板底部的问卷</span><span class="zh-hant">面板底部的問卷</span></td>
-        <td><span class="ja">次に対応してほしい機能などの募集です。<a href="https://github.com/coffin299/VRCast/issues/11">GitHub の Issue</a> か <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google フォーム</a> から自由に書いてください。タブ一覧の一番下の <span class="ui">公式 Discord</span> タブから <a href="https://discord.gg/vM5RH52HdF">公式 Discord</a> にも参加できます</span>
-            <span class="en">We're collecting ideas for what to support next. Write anything on <a href="https://github.com/coffin299/VRCast/issues/11">GitHub Issues</a> or in the <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google Form</a>. The <span class="ui">Official Discord</span> tab at the bottom of the tab list lets you join the <a href="https://discord.gg/vM5RH52HdF">official Discord</a></span>
-            <span class="ko">다음에 지원했으면 하는 기능 등을 모집합니다. <a href="https://github.com/coffin299/VRCast/issues/11">GitHub Issue</a> 또는 <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google 폼</a>에 자유롭게 적어 주세요. 탭 목록 맨 아래의 <span class="ui">공식 Discord</span> 탭에서 <a href="https://discord.gg/vM5RH52HdF">공식 Discord</a>에도 참여할 수 있습니다</span>
-            <span class="zh-hans">征集希望接下来支持的功能等建议。欢迎在 <a href="https://github.com/coffin299/VRCast/issues/11">GitHub Issue</a> 或 <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google 表单</a> 中自由填写。可在标签列表最下方的 <span class="ui">官方 Discord</span> 标签中加入<a href="https://discord.gg/vM5RH52HdF">官方 Discord</a></span>
-            <span class="zh-hant">徵集希望接下來支援的功能等建議。歡迎在 <a href="https://github.com/coffin299/VRCast/issues/11">GitHub Issue</a> 或 <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google 表單</a> 中自由填寫。可在分頁列表最下方的 <span class="ui">官方 Discord</span> 分頁中加入<a href="https://discord.gg/vM5RH52HdF">官方 Discord</a></span></td></tr>
+        <td><span class="ja">次に対応してほしい機能などの募集です。<a href="https://github.com/coffin299/VRCast/issues/11">GitHub の Issue</a> か <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google フォーム</a> から自由に書いてください。<span class="ui">情報</span> タブの <span class="ui">公式 Discord</span> から <a href="https://discord.gg/vM5RH52HdF">公式 Discord</a> にも参加できます</span>
+            <span class="en">We're collecting ideas for what to support next. Write anything on <a href="https://github.com/coffin299/VRCast/issues/11">GitHub Issues</a> or in the <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google Form</a>. <span class="ui">Official Discord</span> in the <span class="ui">Info</span> tab lets you join the <a href="https://discord.gg/vM5RH52HdF">official Discord</a></span>
+            <span class="ko">다음에 지원했으면 하는 기능 등을 모집합니다. <a href="https://github.com/coffin299/VRCast/issues/11">GitHub Issue</a> 또는 <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google 폼</a>에 자유롭게 적어 주세요. <span class="ui">정보</span> 탭의 <span class="ui">공식 Discord</span>에서 <a href="https://discord.gg/vM5RH52HdF">공식 Discord</a>에도 참여할 수 있습니다</span>
+            <span class="zh-hans">征集希望接下来支持的功能等建议。欢迎在 <a href="https://github.com/coffin299/VRCast/issues/11">GitHub Issue</a> 或 <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google 表单</a> 中自由填写。可在 <span class="ui">信息</span> 标签页的 <span class="ui">官方 Discord</span> 中加入<a href="https://discord.gg/vM5RH52HdF">官方 Discord</a></span>
+            <span class="zh-hant">徵集希望接下來支援的功能等建議。歡迎在 <a href="https://github.com/coffin299/VRCast/issues/11">GitHub Issue</a> 或 <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google 表單</a> 中自由填寫。可在 <span class="ui">資訊</span> 分頁的 <span class="ui">官方 Discord</span> 中加入<a href="https://discord.gg/vM5RH52HdF">官方 Discord</a></span></td></tr>
     <tr><td><span class="ja">テンキー 1〜5</span><span class="en">Numpad 1–5</span><span class="ko">숫자 키패드 1~5</span><span class="zh-hans">小键盘 1～5</span><span class="zh-hant">數字鍵台 1～5</span></td>
-        <td><span class="ja">リセット（1 顔の向き / 2 視線 / 3 表情 / 4 カメラ）と 5 カメラ目線の ON / OFF。パネルを隠していても使え、<span class="ui">設定</span> タブの <span class="ui">ショートカットキー（リセット・カメラ目線）</span> で変更・解除できます（NumLock ON。<span class="ui">VRCast が背面にあるときも使う</span> は既定 ON）。表情のショートカットキーと同じキーにすると警告が出て、表情が優先されます</span>
-            <span class="en">Resets (1 Head / 2 Gaze / 3 Expression / 4 Camera) and 5 Look at camera on / off. Works while the panel is hidden; change or remove the keys in <span class="ui">Shortcut keys (reset / look at camera)</span> in the <span class="ui">Settings</span> tab (NumLock on; <span class="ui">Also work when VRCast is in the background</span> is on by default). If a key is the same as an expression shortcut, a warning is shown and the expression takes priority</span>
-            <span class="ko">초기화 (1 얼굴 방향 / 2 시선 / 3 표정 / 4 카메라)와 5 카메라 시선 켜기 / 끄기. 패널을 숨겨도 사용할 수 있으며 <span class="ui">설정</span> 탭의 <span class="ui">단축키 (초기화·카메라 시선)</span>에서 변경·해제할 수 있습니다 (NumLock 켜짐. <span class="ui">VRCast가 뒤에 있을 때도 사용</span>은 기본 켜짐). 표정 단축키와 같은 키로 하면 경고가 나오고 표정이 우선됩니다</span>
-            <span class="zh-hans">重置（1 头部朝向 / 2 视线 / 3 表情 / 4 相机）和 5 看向镜头开关。隐藏面板时也可使用，可在 <span class="ui">设置</span> 标签页的 <span class="ui">快捷键（重置·看向镜头）</span> 中更改或清除（需开启 NumLock；<span class="ui">VRCast 在后台时也可使用</span> 默认开启）。若与表情快捷键相同，会显示警告且表情优先</span>
-            <span class="zh-hant">重設（1 頭部朝向 / 2 視線 / 3 表情 / 4 相機）和 5 看向鏡頭開關。隱藏面板時也可使用，可在 <span class="ui">設定</span> 分頁的 <span class="ui">快捷鍵（重設·看向鏡頭）</span> 中變更或清除（需開啟 NumLock；<span class="ui">VRCast 在背景時也可使用</span> 預設開啟）。若與表情快捷鍵相同，會顯示警告且表情優先</span></td></tr>
+        <td><span class="ja">リセット（1 顔の向き / 2 視線 / 3 表情 / 4 カメラ）と 5 カメラ目線の ON / OFF。パネルを隠していても使え、<span class="ui">操作・連携</span> タブの <span class="ui">ショートカットキー（リセット・カメラ目線）</span> で変更・解除できます（NumLock ON。<span class="ui">VRCast が背面にあるときも使う</span> は既定 ON）。表情のショートカットキーと同じキーにすると警告が出て、表情が優先されます</span>
+            <span class="en">Resets (1 Head / 2 Gaze / 3 Expression / 4 Camera) and 5 Look at camera on / off. Works while the panel is hidden; change or remove the keys in <span class="ui">Shortcut keys (reset / look at camera)</span> in the <span class="ui">Hotkeys / OSC</span> tab (NumLock on; <span class="ui">Also work when VRCast is in the background</span> is on by default). If a key is the same as an expression shortcut, a warning is shown and the expression takes priority</span>
+            <span class="ko">초기화 (1 얼굴 방향 / 2 시선 / 3 표정 / 4 카메라)와 5 카메라 시선 켜기 / 끄기. 패널을 숨겨도 사용할 수 있으며 <span class="ui">단축키·연동</span> 탭의 <span class="ui">단축키 (초기화·카메라 시선)</span>에서 변경·해제할 수 있습니다 (NumLock 켜짐. <span class="ui">VRCast가 뒤에 있을 때도 사용</span>은 기본 켜짐). 표정 단축키와 같은 키로 하면 경고가 나오고 표정이 우선됩니다</span>
+            <span class="zh-hans">重置（1 头部朝向 / 2 视线 / 3 表情 / 4 相机）和 5 看向镜头开关。隐藏面板时也可使用，可在 <span class="ui">快捷键·联动</span> 标签页的 <span class="ui">快捷键（重置·看向镜头）</span> 中更改或清除（需开启 NumLock；<span class="ui">VRCast 在后台时也可使用</span> 默认开启）。若与表情快捷键相同，会显示警告且表情优先</span>
+            <span class="zh-hant">重設（1 頭部朝向 / 2 視線 / 3 表情 / 4 相機）和 5 看向鏡頭開關。隱藏面板時也可使用，可在 <span class="ui">快捷鍵·連動</span> 分頁的 <span class="ui">快捷鍵（重設·看向鏡頭）</span> 中變更或清除（需開啟 NumLock；<span class="ui">VRCast 在背景時也可使用</span> 預設開啟）。若與表情快捷鍵相同，會顯示警告且表情優先</span></td></tr>
     <tr><td><span class="ja">右ドラッグ</span><span class="en">Right-drag</span><span class="ko">오른쪽 드래그</span><span class="zh-hans">右键拖动</span><span class="zh-hant">右鍵拖曳</span></td>
         <td><span class="ja">カメラを回転</span><span class="en">Rotate the camera</span><span class="ko">카메라 회전</span><span class="zh-hans">旋转相机</span><span class="zh-hant">旋轉相機</span></td></tr>
     <tr><td><span class="ja">中ドラッグ</span><span class="en">Middle-drag</span><span class="ko">가운데 드래그</span><span class="zh-hans">中键拖动</span><span class="zh-hant">中鍵拖曳</span></td>
@@ -992,11 +1021,11 @@
     <tr><td><span class="ja">ホイール</span><span class="en">Wheel</span><span class="ko">휠</span><span class="zh-hans">滚轮</span><span class="zh-hant">滾輪</span></td>
         <td><span class="ja">ズーム</span><span class="en">Zoom</span><span class="ko">확대·축소</span><span class="zh-hans">缩放</span><span class="zh-hant">縮放</span></td></tr>
     <tr><td><span class="ja">割り当てたキー</span><span class="en">Assigned keys</span><span class="ko">할당한 키</span><span class="zh-hans">已分配的按键</span><span class="zh-hant">已指定的按鍵</span></td>
-        <td><span class="ja">表情の切り替え / ニュートラル（<span class="ui">ポーズ</span> タブで表情ごとに割り当て。既定は未割り当て）</span>
-            <span class="en">Switch expression / neutral (assign one per expression in the <span class="ui">Pose</span> tab; unassigned by default)</span>
-            <span class="ko">표정 전환 / 무표정 (<span class="ui">포즈</span> 탭에서 표정마다 할당. 기본값은 할당 없음)</span>
-            <span class="zh-hans">切换表情 / 无表情（在 <span class="ui">姿势</span> 标签页中为每个表情分配，默认未分配）</span>
-            <span class="zh-hant">切換表情 / 無表情（在 <span class="ui">姿勢</span> 分頁中為每個表情指定，預設未指定）</span></td></tr>
+        <td><span class="ja">表情の切り替え / ニュートラル（<span class="ui">顔・表情</span> タブで表情ごとに割り当て。既定は未割り当て）</span>
+            <span class="en">Switch expression / neutral (assign one per expression in the <span class="ui">Face &amp; expressions</span> tab; unassigned by default)</span>
+            <span class="ko">표정 전환 / 무표정 (<span class="ui">얼굴·표정</span> 탭에서 표정마다 할당. 기본값은 할당 없음)</span>
+            <span class="zh-hans">切换表情 / 无表情（在 <span class="ui">面部·表情</span> 标签页中为每个表情分配，默认未分配）</span>
+            <span class="zh-hant">切換表情 / 無表情（在 <span class="ui">臉部·表情</span> 分頁中為每個表情指定，預設未指定）</span></td></tr>
   </table>
 </section>
 
@@ -1004,23 +1033,23 @@
   <h2><span class="ja">困ったとき</span><span class="en">Troubleshooting</span><span class="ko">문제 해결</span><span class="zh-hans">故障排除</span><span class="zh-hant">疑難排解</span></h2>
 
   <h3><span class="ja">アバターが暗い</span><span class="en">The avatar looks dark</span><span class="ko">아바타가 어둡다</span><span class="zh-hans">虚拟形象偏暗</span><span class="zh-hant">虛擬形象偏暗</span></h3>
-  <p class="ja"><span class="ui">表示</span> タブの <span class="ui">晴れ</span> プリセットを押すか、<span class="ui">環境光</span> を上げてください。
+  <p class="ja"><span class="ui">グラフィック</span> タブの <span class="ui">晴れ</span> プリセットを押すか、<span class="ui">環境光</span> を上げてください。
     <span class="ui">向き</span> を 0 付近にすると正面から光が当たります。
     lilToon 等は明るさがテクスチャの色までに制限されるため、太陽光を上げても一定以上は明るくなりません。
     その場合は <span class="ui">アバターの明るさ</span> を上げてください（0.1〜10、1 = マテリアルのまま）。</p>
-  <p class="en">Press the <span class="ui">Sunny</span> preset in the <span class="ui">Display</span> tab or raise <span class="ui">Ambient</span>.
+  <p class="en">Press the <span class="ui">Sunny</span> preset in the <span class="ui">Graphics</span> tab or raise <span class="ui">Ambient</span>.
     Set <span class="ui">Direction</span> near 0 to light the avatar from the front.
     Shaders such as lilToon cap brightness at the texture color, so raising Sunlight stops helping past a point.
     In that case, raise <span class="ui">Avatar brightness</span> (0.1 to 10, 1 = material as is).</p>
-  <p class="ko"><span class="ui">표시</span> 탭의 <span class="ui">맑음</span> 프리셋을 누르거나 <span class="ui">환경광</span>을 올리세요.
+  <p class="ko"><span class="ui">그래픽</span> 탭의 <span class="ui">맑음</span> 프리셋을 누르거나 <span class="ui">환경광</span>을 올리세요.
     <span class="ui">방향</span>을 0 근처로 하면 정면에서 빛이 비춥니다.
     lilToon 등은 밝기가 텍스처 색까지로 제한되므로, 태양광을 올려도 일정 이상은 밝아지지 않습니다.
     그럴 때는 <span class="ui">아바타 밝기</span>를 올리세요 (0.1~10, 1 = 머티리얼 그대로).</p>
-  <p class="zh-hans">请点击 <span class="ui">显示</span> 标签页的 <span class="ui">晴天</span> 预设，或调高 <span class="ui">环境光</span>。
+  <p class="zh-hans">请点击 <span class="ui">图形</span> 标签页的 <span class="ui">晴天</span> 预设，或调高 <span class="ui">环境光</span>。
     将 <span class="ui">方向</span> 设为 0 附近可从正面照射。
     lilToon 等着色器的亮度上限为贴图颜色，因此调高阳光超过一定程度后不会再变亮。
     此时请调高 <span class="ui">虚拟形象亮度</span>（0.1～10，1 = 保持材质原样）。</p>
-  <p class="zh-hant">請點擊 <span class="ui">顯示</span> 分頁的 <span class="ui">晴天</span> 預設，或調高 <span class="ui">環境光</span>。
+  <p class="zh-hant">請點擊 <span class="ui">圖形</span> 分頁的 <span class="ui">晴天</span> 預設，或調高 <span class="ui">環境光</span>。
     將 <span class="ui">方向</span> 設為 0 附近可從正面照射。
     lilToon 等著色器的亮度上限為貼圖顏色，因此調高陽光超過一定程度後不會再變亮。
     此時請調高 <span class="ui">虛擬形象亮度</span>（0.1～10，1 = 保持材質原樣）。</p>
@@ -1052,22 +1081,22 @@
   <p class="zh-hant">以系統管理員身分執行 VRCast 時，Windows 會阻止拖放。請正常啟動，或使用 <span class="ui">選擇檔案...</span>。</p>
 
   <h3><span class="ja">ゲームや OBS と一緒に使うとトラッキングがカクつく</span><span class="en">Tracking stutters while running games or OBS</span><span class="ko">게임이나 OBS와 함께 쓰면 트래킹이 끊긴다</span><span class="zh-hans">与游戏或 OBS 同时使用时追踪卡顿</span><span class="zh-hant">與遊戲或 OBS 同時使用時追蹤卡頓</span></h3>
-  <p class="ja"><span class="ui">設定</span> タブの <span class="ui">軽量モード</span> が ON になっているか確認してください（既定は ON）。MediaPipe ならトラッキングタブの <span class="ui">トラッカーの動作</span> を <span class="ui">なめらか</span> にすると負荷が下がり、<span class="ui">エコ</span> にするとさらに半分ほどになります（既定の <span class="ui">ぬるぬる（高負荷）</span> は指をなめらかに動かすため重めです）。それでも重いときは、使わない <span class="ui">腕・手</span> のトラッキングを OFF にすると負荷が下がります。<span class="ui">プロセスの優先度</span> を「通常以上」にするのも効果があります。</p>
-  <p class="en">Make sure <span class="ui">Low load mode</span> in the <span class="ui">Settings</span> tab is on (it is on by default). With MediaPipe, setting <span class="ui">Tracker mode</span> in the Tracking tab to <span class="ui">Smooth</span> lowers the load, and <span class="ui">Eco</span> roughly halves it again (the default, <span class="ui">Fluid (high load)</span>, is heavier because it moves fingers smoothly). If it is still heavy, turning off arm/hand tracking when you do not need it reduces the load. Setting <span class="ui">Process priority</span> to Above normal can also help.</p>
-  <p class="ko"><span class="ui">설정</span> 탭의 <span class="ui">저부하 모드</span>가 켜져 있는지 확인하세요 (기본은 켜짐). MediaPipe라면 트래킹 탭의 <span class="ui">트래커 동작</span>을 <span class="ui">부드럽게</span>로 하면 부하가 줄고, <span class="ui">절약</span>으로 하면 다시 절반 정도가 됩니다 (기본값인 <span class="ui">매끄럽게 (고부하)</span>는 손가락을 매끄럽게 움직이기 위해 무거운 편입니다). 그래도 무거우면 쓰지 않는 팔·손 트래킹을 끄면 부하가 줄어듭니다. <span class="ui">프로세스 우선순위</span>를 「보통 이상」으로 하는 것도 효과가 있습니다.</p>
-  <p class="zh-hans">请确认 <span class="ui">设置</span> 标签页中的 <span class="ui">低负载模式</span> 已开启（默认开启）。使用 MediaPipe 时，将追踪标签页的 <span class="ui">追踪器模式</span> 设为 <span class="ui">流畅</span> 可降低负载，设为 <span class="ui">节能</span> 可再减半左右（默认的 <span class="ui">丝滑（高负载）</span> 为了让手指顺滑移动，负载较高）。仍然卡顿时，关闭不需要的手臂和手的追踪可以降低负载。将 <span class="ui">进程优先级</span> 设为“高于正常”也有帮助。</p>
-  <p class="zh-hant">請確認 <span class="ui">設定</span> 分頁中的 <span class="ui">低負載模式</span> 已開啟（預設開啟）。使用 MediaPipe 時，將追蹤分頁的 <span class="ui">追蹤器模式</span> 設為 <span class="ui">流暢</span> 可降低負載，設為 <span class="ui">節能</span> 可再減半左右（預設的 <span class="ui">絲滑（高負載）</span> 為了讓手指順滑移動，負載較高）。仍然卡頓時，關閉不需要的手臂和手的追蹤可以降低負載。將 <span class="ui">處理程序優先順序</span> 設為「高於正常」也有幫助。</p>
+  <p class="ja"><span class="ui">パフォーマンス</span> タブの <span class="ui">軽量モード</span> が ON になっているか確認してください（既定は ON）。MediaPipe ならトラッキングタブの <span class="ui">トラッカーの動作</span> を <span class="ui">なめらか</span> にすると負荷が下がり、<span class="ui">エコ</span> にするとさらに半分ほどになります（既定の <span class="ui">ぬるぬる（高負荷）</span> は指をなめらかに動かすため重めです）。それでも重いときは、使わない <span class="ui">腕・手</span> のトラッキングを OFF にすると負荷が下がります。<span class="ui">プロセスの優先度</span> を「通常以上」にするのも効果があります。</p>
+  <p class="en">Make sure <span class="ui">Low load mode</span> in the <span class="ui">Performance</span> tab is on (it is on by default). With MediaPipe, setting <span class="ui">Tracker mode</span> in the Tracking tab to <span class="ui">Smooth</span> lowers the load, and <span class="ui">Eco</span> roughly halves it again (the default, <span class="ui">Fluid (high load)</span>, is heavier because it moves fingers smoothly). If it is still heavy, turning off arm/hand tracking when you do not need it reduces the load. Setting <span class="ui">Process priority</span> to Above normal can also help.</p>
+  <p class="ko"><span class="ui">성능</span> 탭의 <span class="ui">저부하 모드</span>가 켜져 있는지 확인하세요 (기본은 켜짐). MediaPipe라면 트래킹 탭의 <span class="ui">트래커 동작</span>을 <span class="ui">부드럽게</span>로 하면 부하가 줄고, <span class="ui">절약</span>으로 하면 다시 절반 정도가 됩니다 (기본값인 <span class="ui">매끄럽게 (고부하)</span>는 손가락을 매끄럽게 움직이기 위해 무거운 편입니다). 그래도 무거우면 쓰지 않는 팔·손 트래킹을 끄면 부하가 줄어듭니다. <span class="ui">프로세스 우선순위</span>를 「보통 이상」으로 하는 것도 효과가 있습니다.</p>
+  <p class="zh-hans">请确认 <span class="ui">性能</span> 标签页中的 <span class="ui">低负载模式</span> 已开启（默认开启）。使用 MediaPipe 时，将追踪标签页的 <span class="ui">追踪器模式</span> 设为 <span class="ui">流畅</span> 可降低负载，设为 <span class="ui">节能</span> 可再减半左右（默认的 <span class="ui">丝滑（高负载）</span> 为了让手指顺滑移动，负载较高）。仍然卡顿时，关闭不需要的手臂和手的追踪可以降低负载。将 <span class="ui">进程优先级</span> 设为“高于正常”也有帮助。</p>
+  <p class="zh-hant">請確認 <span class="ui">效能</span> 分頁中的 <span class="ui">低負載模式</span> 已開啟（預設開啟）。使用 MediaPipe 時，將追蹤分頁的 <span class="ui">追蹤器模式</span> 設為 <span class="ui">流暢</span> 可降低負載，設為 <span class="ui">節能</span> 可再減半左右（預設的 <span class="ui">絲滑（高負載）</span> 為了讓手指順滑移動，負載較高）。仍然卡頓時，關閉不需要的手臂和手的追蹤可以降低負載。將 <span class="ui">處理程序優先順序</span> 設為「高於正常」也有幫助。</p>
 
   <h3><span class="ja">口パクしない</span><span class="en">Lip sync does not move</span><span class="ko">립싱크가 안 된다</span><span class="zh-hans">口型不动</span><span class="zh-hant">嘴型不動</span></h3>
-  <p class="ja"><span class="ui">顔</span> タブで正しいマイクが選ばれているか、<span class="ui">音量</span> メーターが動くか確認し、
+  <p class="ja"><span class="ui">顔・表情</span> タブで正しいマイクが選ばれているか、<span class="ui">音量</span> メーターが動くか確認し、
     動かなければ <span class="ui">マイク感度</span> を上げるか <span class="ui">ノイズゲート</span> を下げてください。</p>
-  <p class="en">In the <span class="ui">Face</span> tab, check the selected microphone and that the <span class="ui">Level</span> meter moves.
+  <p class="en">In the <span class="ui">Face &amp; expressions</span> tab, check the selected microphone and that the <span class="ui">Level</span> meter moves.
     If not, raise <span class="ui">Mic gain</span> or lower <span class="ui">Mic gate</span>.</p>
-  <p class="ko"><span class="ui">얼굴</span> 탭에서 올바른 마이크가 선택되어 있는지, <span class="ui">음량</span> 미터가 움직이는지 확인하고,
+  <p class="ko"><span class="ui">얼굴·표정</span> 탭에서 올바른 마이크가 선택되어 있는지, <span class="ui">음량</span> 미터가 움직이는지 확인하고,
     움직이지 않으면 <span class="ui">마이크 감도</span>를 올리거나 <span class="ui">노이즈 게이트</span>를 낮추세요.</p>
-  <p class="zh-hans">请在 <span class="ui">面部</span> 标签页中确认选择了正确的麦克风，以及 <span class="ui">音量</span> 表是否有反应。
+  <p class="zh-hans">请在 <span class="ui">面部·表情</span> 标签页中确认选择了正确的麦克风，以及 <span class="ui">音量</span> 表是否有反应。
     如果没有反应，请调高 <span class="ui">麦克风灵敏度</span> 或调低 <span class="ui">噪声门</span>。</p>
-  <p class="zh-hant">請在 <span class="ui">臉部</span> 分頁中確認選擇了正確的麥克風，以及 <span class="ui">音量</span> 表是否有反應。
+  <p class="zh-hant">請在 <span class="ui">臉部·表情</span> 分頁中確認選擇了正確的麥克風，以及 <span class="ui">音量</span> 表是否有反應。
     如果沒有反應，請調高 <span class="ui">麥克風靈敏度</span> 或調低 <span class="ui">噪音閘</span>。</p>
 
   <h3><span class="ja">表情が変わらない</span><span class="en">Expressions do not change</span><span class="ko">표정이 바뀌지 않는다</span><span class="zh-hans">表情不变化</span><span class="zh-hant">表情不變化</span></h3>
@@ -1098,19 +1127,19 @@
     如果选择了 <code>VRCast Camera</code>（VRCast 的虚拟摄像头）、<code>OBS Virtual Camera</code> 等虚拟摄像头，或用于人脸登录的红外（IR）摄像头，即使有画面也无法识别面部。</p>
   <p class="zh-hant">請先在 <span class="ui">追蹤</span> 分頁的 <span class="ui">相機</span> 中確認選擇的是您的網路攝影機。
     如果選擇了 <code>VRCast Camera</code>（VRCast 的虛擬攝影機）、<code>OBS Virtual Camera</code> 等虛擬攝影機，或用於臉部登入的紅外線（IR）攝影機，即使有畫面也無法辨識臉部。</p>
-  <p class="ja"><span class="ui">デバッグログ</span> タブを開くと、カメラ一覧・トラッカーの状態と、起動してからのログを確認できます。
+  <p class="ja"><span class="ui">情報</span> タブの一番下の <span class="ui">デバッグログ</span> では、カメラ一覧・トラッカーの状態と、起動してからのログを確認できます。
     <span class="ui">WARN</span> / <span class="ui">ERROR</span> だけを表示したり、カテゴリを <code>Tracker</code> / <code>TrackerOutput</code> / <code>Tracking</code>（カメラ関係）に絞ったりできます。
     不具合を報告するときは <span class="ui">表示中をコピー</span> を押して、ログと環境をそのまま貼り付けてください。</p>
-  <p class="en">Open the <span class="ui">Debug log</span> tab to see the camera list, the tracker status and the logs since startup.
+  <p class="en">Use the <span class="ui">Debug log</span> at the bottom of the <span class="ui">Info</span> tab to see the camera list, the tracker status and the logs since startup.
     You can show only <span class="ui">WARN</span> / <span class="ui">ERROR</span>, or narrow the category to <code>Tracker</code> / <code>TrackerOutput</code> / <code>Tracking</code> (camera related).
     When reporting a problem, press <span class="ui">Copy shown</span> and paste the logs and environment as they are.</p>
-  <p class="ko"><span class="ui">디버그 로그</span> 탭을 열면 카메라 목록·트래커 상태와 시작 후의 로그를 확인할 수 있습니다.
+  <p class="ko"><span class="ui">정보</span> 탭 맨 아래의 <span class="ui">디버그 로그</span>에서 카메라 목록·트래커 상태와 시작 후의 로그를 확인할 수 있습니다.
     <span class="ui">WARN</span> / <span class="ui">ERROR</span>만 표시하거나, 카테고리를 <code>Tracker</code> / <code>TrackerOutput</code> / <code>Tracking</code>(카메라 관련)으로 좁힐 수 있습니다.
     문제를 보고할 때는 <span class="ui">표시 중 복사</span>를 눌러 로그와 환경을 그대로 붙여 넣어 주세요.</p>
-  <p class="zh-hans">打开 <span class="ui">调试日志</span> 标签页，可以查看摄像头列表、追踪器状态以及启动以来的日志。
+  <p class="zh-hans">在 <span class="ui">信息</span> 标签页最下方的 <span class="ui">调试日志</span> 中，可以查看摄像头列表、追踪器状态以及启动以来的日志。
     可以只显示 <span class="ui">WARN</span> / <span class="ui">ERROR</span>，或将类别限定为 <code>Tracker</code> / <code>TrackerOutput</code> / <code>Tracking</code>（与摄像头相关）。
     报告问题时，请点击 <span class="ui">复制显示内容</span>，然后直接粘贴日志和环境信息。</p>
-  <p class="zh-hant">開啟 <span class="ui">偵錯日誌</span> 分頁，可以查看攝影機清單、追蹤器狀態以及啟動以來的日誌。
+  <p class="zh-hant">在 <span class="ui">資訊</span> 分頁最下方的 <span class="ui">偵錯日誌</span> 中，可以查看攝影機清單、追蹤器狀態以及啟動以來的日誌。
     可以只顯示 <span class="ui">WARN</span> / <span class="ui">ERROR</span>，或將類別限定為 <code>Tracker</code> / <code>TrackerOutput</code> / <code>Tracking</code>（與攝影機相關）。
     回報問題時，請點擊 <span class="ui">複製顯示內容</span>，然後直接貼上日誌和環境資訊。</p>
   <p class="ja">原因がわからないときは <span class="ui">詳細ログ</span> を ON にして、症状が出るまで待ってからコピーしてください。
