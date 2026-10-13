@@ -47,10 +47,12 @@ namespace VRCast.Converter.Editor
                 }
             }
 
-            // VRChat の FX 等は VRC 固有の StateMachineBehaviour を含むため Controller は外す
-            foreach (Animator animator in root.GetComponentsInChildren<Animator>(true))
+            // ルートの Controller（VRChat の FX 等）は人体のポーズまで動かすため外す。
+            // 小物の Animator の Controller は PropAnimationExporter が書き出せる形にして残す
+            var rootAnimator = root.GetComponent<Animator>();
+            if (rootAnimator != null)
             {
-                animator.runtimeAnimatorController = null;
+                rootAnimator.runtimeAnimatorController = null;
             }
 
             return result;

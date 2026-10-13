@@ -89,6 +89,67 @@ namespace VRCast.Converter.Editor
         }
 
         /// <summary>
+        /// 初期状態で再生されるクリップ（レイヤー番号・BlendTree の重み・ステートの速さ付き）を、レイヤー順に返す。
+        /// 対象のレイヤーとステートの決め方は <see cref="Bake"/> と同じ。
+        /// </summary>
+        internal static List<DefaultMotion> CollectDefaultMotions(
+            AnimatorController controller, IReadOnlyDictionary<string, float> overrides)
+        {
+            Dictionary<string, float> values = BuildParameterValues(controller, overrides);
+            var motions = new List<DefaultMotion>();
+            AnimatorControllerLayer[] layers = controller.layers;
+            for (int i = 0; i < layers.Length; i++)
+            {
+                AnimatorControllerLayer layer = layers[i];
+                if ((i > 0 && layer.defaultWeight <= 0f) || layer.syncedLayerIndex >= 0)
+                {
+                    continue;
+                }
+
+                AnimatorState state = ResolveState(layer.stateMachine, values);
+                if (state == null)
+                {
+                    continue;
+                }
+
+                // 速さのパラメーターが有効なら、その既定値を掛ける
+                float speed = state.speed;
+                if (state.speedParameterActive && values.TryGetValue(state.speedParameter, out float multiplier))
+                {
+                    speed *= multiplier;
+                }
+
+                var clips = new List<WeightedClip>();
+                CollectClips(state.motion, 1f, values, clips);
+                foreach (WeightedClip clip in clips)
+                {
+                    motions.Add(new DefaultMotion(i, clip.Clip, clip.Weight, speed));
+                }
+            }
+
+            return motions;
+        }
+
+        /// <summary>
+        /// 初期状態で再生される 1 つのクリップ。
+        /// </summary>
+        internal readonly struct DefaultMotion
+        {
+            public readonly int Layer;
+            public readonly AnimationClip Clip;
+            public readonly float Weight;
+            public readonly float Speed;
+
+            public DefaultMotion(int layer, AnimationClip clip, float weight, float speed)
+            {
+                Layer = layer;
+                Clip = clip;
+                Weight = weight;
+                Speed = speed;
+            }
+        }
+
+        /// <summary>
         /// FX のいずれかのクリップで表示 ON/OFF（m_IsActive）を動かしているオブジェクトを集める（ステートは問わない）。
         /// movedObjects は Bake と同じく、付け替え前のパスで書かれたカーブの読み替えに使う。
         /// </summary>
@@ -206,7 +267,7 @@ namespace VRCast.Converter.Editor
             return propertyName.StartsWith(BlendShapePrefix, System.StringComparison.Ordinal);
         }
 
-        private static Object ResolveAnimatedObject(
+        internal static Object ResolveAnimatedObject(
             GameObject root, EditorCurveBinding binding, IReadOnlyDictionary<string, Transform> movedObjects)
         {
             // 通常はパスどおりに解決

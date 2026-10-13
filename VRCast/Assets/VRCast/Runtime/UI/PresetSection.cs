@@ -428,8 +428,8 @@ namespace VRCast.UI
                     return Loc.T("Background and camera lock", "背景・カメラの固定", "배경·카메라 고정", "背景·相机锁定",
                         "背景·相機鎖定");
                 case "motion":
-                    return Loc.T("Idle motion and physics", "待機モーション・揺れもの", "대기 모션·흔들림", "待机动作·物理摆动",
-                        "待機動作·物理擺動");
+                    return Loc.T("Idle motion, physics and prop animations", "待機モーション・揺れもの・小物のアニメーション",
+                        "대기 모션·흔들림·소품 애니메이션", "待机动作·物理摆动·小物件动画", "待機動作·物理擺動·小物件動畫");
                 case "face":
                     return Loc.T("Blinking and lip sync", "まばたき・口パク", "눈 깜빡임·립싱크", "眨眼·口型同步", "眨眼·口型同步");
                 case "tracking":

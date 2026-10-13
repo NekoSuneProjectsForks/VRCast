@@ -53,6 +53,9 @@ namespace VRCast.Converter.Editor
             public int ConstraintCount;
             public int BlendShapeSyncCount;
             public int ParticleSystemCount;
+            public int PropAnimators;
+            public int DroppedPropAnimators;
+            public int FxMotionClips;
             public AvatarPreprocessor.Mode Preprocess;
             public int OptimizerBlendShapeSettingsDisabled;
             public int ModularAvatarFallbackFixes;
@@ -205,11 +208,14 @@ namespace VRCast.Converter.Editor
                     : new HashSet<Transform>();
 
                 // VRChat 上の初期状態に近づけるため、除去前に FX の既定状態を焼き込む
+                // （パラメーターの既定値は小物の動きの取り込みでも使うため、Avatar Descriptor を外す前に読んでおく）
+                Dictionary<string, float> parameterDefaults = descriptor != null
+                    ? VrcDescriptorReader.GetExpressionParameterDefaults(descriptor)
+                    : new Dictionary<string, float>();
                 if (fx != null)
                 {
                     report.BakedFxClips = FxDefaultStateBaker.Bake(
-                        clone, fx, VrcDescriptorReader.GetExpressionParameterDefaults(descriptor), maFallback.MovedObjects,
-                        keepSceneBlendShapes);
+                        clone, fx, parameterDefaults, maFallback.MovedObjects, keepSceneBlendShapes);
                 }
 
                 // エディタで非アクティブにしたものは、FX の初期状態で表示されるものも OFF にそろえる（アプリで ON にできる）
@@ -278,6 +284,15 @@ namespace VRCast.Converter.Editor
 
                 // AssetBundle 化のため一時 Prefab として保存
                 AssetDatabase.CreateFolder(TempFolderParent, TempFolderName);
+
+                // 小物のアニメーション（小物の Animator と、FX の初期状態で再生され続ける小物の動き）を VRChat と同じく自動で再生させる
+                var props = new PropAnimationExporter.Result();
+                PropAnimationExporter.PrepareAnimators(clone, tempFolder, ref props);
+                PropAnimationExporter.AddFxMotions(clone, fx, parameterDefaults, maFallback.MovedObjects, tempFolder,
+                    ref props);
+                report.PropAnimators = props.Animators;
+                report.DroppedPropAnimators = props.DroppedAnimators;
+                report.FxMotionClips = props.FxMotions;
 
                 // アプリのパーフェクトシンク化で頂点を読めるよう、BlendShape を持つメッシュを読み書きできる複製にする
                 report.ReadableMeshes = ReadableMeshCopier.Apply(clone, tempFolder);

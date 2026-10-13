@@ -15,6 +15,7 @@ namespace VRCast.AvatarFormat
         {
             typeof(Transform),
             typeof(Animator),
+            typeof(Animation),
             typeof(SkinnedMeshRenderer),
             typeof(MeshRenderer),
             typeof(MeshFilter),

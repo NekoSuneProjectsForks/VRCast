@@ -211,6 +211,9 @@ namespace VRCast.Core
         // 揺れもの（PhysBone 近似）
         public bool physicsEnabled = true;
 
+        // 小物のアニメーション（小物の Animator と FX の初期状態の動き）を VRChat と同じく自動で再生する
+        public bool propAnimationsEnabled = true;
+
         // マイク音量によるリップシンク（デバイス名が空なら既定デバイス）
         public bool lipSyncEnabled = true;
         public string microphoneDevice = string.Empty;

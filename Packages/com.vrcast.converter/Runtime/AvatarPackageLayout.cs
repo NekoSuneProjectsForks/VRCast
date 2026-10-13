@@ -55,5 +55,9 @@ namespace VRCast.AvatarFormat
 
         // bundle 内のアバター Prefab のアセットパス（Exporter が一時的にこのパスへ保存する）
         public const string PrefabAssetPath = "Assets/__VRCastExport/avatar.prefab";
+
+        // FX の初期状態で再生され続ける小物の動きを legacy クリップにしたものの名前の接頭辞
+        // （アバタールートの Animation に入れる。Runtime はこの名前のクリップだけを同時に再生する）
+        public const string FxMotionClipPrefix = "VRCastFx_";
     }
 }

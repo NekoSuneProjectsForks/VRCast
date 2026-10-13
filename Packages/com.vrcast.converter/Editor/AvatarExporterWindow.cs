@@ -701,6 +701,15 @@ namespace VRCast.Converter.Editor
             int inactiveCount = report.IncludedInactiveObjects ? report.InactiveObjects : report.RemovedInactiveObjects;
             string fxToggles = L("Objects toggled by FX", "FX で切り替えるオブジェクト", "FX로 전환하는 오브젝트",
                 "由 FX 切换的对象", "由 FX 切換的物件");
+            string propAnimators = L("Prop animators", "小物の Animator", "소품 Animator", "小物件的 Animator",
+                "小物件的 Animator");
+            string fxMotions = L("prop motions from FX", "FX の小物の動き", "FX의 소품 움직임", "FX 中的小物件动作",
+                "FX 中的小物件動作");
+            // コントローラーを書き出せず再生されない小物の Animator（あるときだけ。パスは Console に出す）
+            string droppedAnimators = report.DroppedPropAnimators > 0
+                ? " " + L("not playable", "再生できない", "재생 불가", "无法播放", "無法播放") +
+                  $" {report.DroppedPropAnimators}"
+                : string.Empty;
 
             return
                 $"{exported}: {report.OutputPath}\n" +
@@ -722,6 +731,7 @@ namespace VRCast.Converter.Editor
                 $"Constraints: {report.ConstraintCount}\n" +
                 $"Blendshape Sync (MA): {report.BlendShapeSyncCount}\n" +
                 $"{particles}: {report.ParticleSystemCount}\n" +
+                $"{propAnimators}: {report.PropAnimators}{droppedAnimators}, {fxMotions}: {report.FxMotionClips}\n" +
                 $"{inactive}: {inactiveCount}, {fxToggles}: {report.FxToggleCount}\n" +
                 $"{removed}: {report.Strip.RemovedComponents}, " +
                 $"{missing}: {report.Strip.RemovedMissingScripts}, " +

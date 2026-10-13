@@ -371,13 +371,15 @@ namespace VRCast.Avatars
             Object.DestroyImmediate(vrm);
 
             // 後から付いたものほど依存する側なので、末尾から外す。
-            // RuntimeGltfInstance は読み込んだメッシュ・テクスチャ等をアバターの破棄時に解放するため残す
+            // RuntimeGltfInstance は読み込んだメッシュ・テクスチャ等をアバターの破棄時に解放するため残す。
+            // glTF のアニメーション（Animation）は人体のボーンも動かし得るため、許可リストにあっても外す
             Component[] components = instance.GetComponentsInChildren<Component>(true);
             int removed = 0;
             for (int i = components.Length - 1; i >= 0; i--)
             {
                 Component component = components[i];
-                if (component == null || AllowedComponents.IsAllowed(component) || component is RuntimeGltfInstance)
+                if (component == null || component is RuntimeGltfInstance
+                    || (AllowedComponents.IsAllowed(component) && !(component is Animation)))
                 {
                     continue;
                 }

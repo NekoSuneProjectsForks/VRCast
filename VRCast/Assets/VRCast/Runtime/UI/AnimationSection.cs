@@ -7,7 +7,7 @@ using VRCast.Dynamics;
 namespace VRCast.UI
 {
     /// <summary>
-    /// 体・ポーズタブ（待機ポーズ・待機モーション・揺れもの）。表示中アバターのコントローラーを操作する。
+    /// 体・ポーズタブ（待機ポーズ・待機モーション・揺れもの・小物のアニメーション）。表示中アバターのコントローラーを操作する。
     /// </summary>
     public class AnimationSection
     {
@@ -32,12 +32,14 @@ namespace VRCast.UI
                     "请先加载虚拟形象。", "請先載入虛擬形象。"));
                 GuiControls.EndCard();
                 DrawPhysics();
+                DrawPropAnimations();
                 return;
             }
 
             DrawPose();
             DrawIdleMotion();
             DrawPhysics();
+            DrawPropAnimations();
         }
 
         private bool RefreshControllers()
@@ -173,6 +175,35 @@ namespace VRCast.UI
                     ? Loc.T($"{chains} chains", $"{chains} チェーン", $"{chains} 체인", $"{chains} 条链", $"{chains} 條鏈")
                     : Loc.T("No PhysBones in this avatar", "このアバターには PhysBone がありません",
                         "이 아바타에는 PhysBone이 없습니다", "此虚拟形象没有 PhysBone", "此虛擬形象沒有 PhysBone"));
+            }
+
+            GuiControls.EndCard();
+        }
+
+        private void DrawPropAnimations()
+        {
+            GuiControls.BeginCard(Loc.T("Prop animations", "小物のアニメーション", "소품 애니메이션", "小物件动画", "小物件動畫"));
+            _settings.propAnimationsEnabled = GUILayout.Toggle(
+                _settings.propAnimationsEnabled, Loc.T("Play automatically (like VRChat)", "自動で再生する（VRChat と同じ）",
+                    "자동 재생 (VRChat과 동일)", "自动播放（与 VRChat 相同）", "自動播放（與 VRChat 相同）"));
+
+            // 再生するものの数、無ければ書き出し直しの案内
+            if (_avatar.HasAvatar)
+            {
+                var props = _avatar.Get<PropAnimationPlayer>();
+                int animators = props != null ? props.AnimatorCount : 0;
+                int motions = props != null ? props.FxMotionCount : 0;
+                GuiControls.Hint(props != null && props.IsAvailable
+                    ? Loc.T($"Prop animators: {animators}, motions from FX: {motions}",
+                        $"小物の Animator: {animators}、FX の動き: {motions}",
+                        $"소품 Animator: {animators}, FX 움직임: {motions}",
+                        $"小物件的 Animator：{animators}，FX 动作：{motions}",
+                        $"小物件的 Animator：{animators}，FX 動作：{motions}")
+                    : Loc.T("No prop animations in this avatar. Avatars exported with an older exporter need to be exported again.",
+                        "このアバターには小物のアニメーションがありません。以前の書き出しツールで書き出したアバターは、書き出し直すと取り込まれます。",
+                        "이 아바타에는 소품 애니메이션이 없습니다. 이전 내보내기 도구로 내보낸 아바타는 다시 내보내면 포함됩니다.",
+                        "此虚拟形象没有小物件动画。用旧版导出工具导出的虚拟形象，重新导出后即可包含。",
+                        "此虛擬形象沒有小物件動畫。用舊版匯出工具匯出的虛擬形象，重新匯出後即可包含。"));
             }
 
             GuiControls.EndCard();

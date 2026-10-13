@@ -124,7 +124,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 
 | クラス | 責務 |
 | :--- | :--- |
-| `AppRoot` | シーン読込後に `AvatarSession` / `OrbitCameraController` / `RenderingController` / `ProcessTuner` / `VirtualCameraOutput` / `SpoutOutput` / `MicrophoneInput` / `TrackingReceiver` / `TrackingSkeletonView` / `TrackerProcess` / `FileDropReceiver` / `RemoteControl` / `MainPanel` を生成して結線。読込完了時にアバターへ `PoseController` / `BlendShapeLimiter` / `ExpressionController` / `BlinkController` / `LipSyncController` / `FaceTrackingDriver` / `HandTrackingDriver` / `IdleMotionController` / `ConstraintSolver` / `PhysBoneSimulator` を付与。起動引数 `--avatar` または前回のアバターを自動読込。Windows ビルドではウィンドウのタイトルを「VRCast バージョン」に変更（`productName` は保存先フォルダに使われるため変えない） |
+| `AppRoot` | シーン読込後に `AvatarSession` / `OrbitCameraController` / `RenderingController` / `ProcessTuner` / `VirtualCameraOutput` / `SpoutOutput` / `MicrophoneInput` / `TrackingReceiver` / `TrackingSkeletonView` / `TrackerProcess` / `FileDropReceiver` / `RemoteControl` / `MainPanel` を生成して結線。読込完了時にアバターへ `PoseController` / `BlendShapeLimiter` / `ExpressionController` / `BlinkController` / `LipSyncController` / `FaceTrackingDriver` / `HandTrackingDriver` / `IdleMotionController` / `PropAnimationPlayer` / `ConstraintSolver` / `PhysBoneSimulator` を付与。起動引数 `--avatar` または前回のアバターを自動読込。Windows ビルドではウィンドウのタイトルを「VRCast バージョン」に変更（`productName` は保存先フォルダに使われるため変えない） |
 | `AvatarPackageReader` | `.vrcaster` の構造・サイズ・manifest・ハッシュを検証し、bundle を `temporaryCachePath/avatars/<sha256>/` に展開。`metadata/*.json`（expressions / descriptor / physbones / constraints）を読み込み（不正なら空） |
 | `AvatarLoader` | bundle を非同期読込してアバターを生成し、許可リスト外コンポーネントを除去 |
 | `VrmLoader` | `.vrm` をサイズ確認（`AvatarPackageReader.MaxPackageBytes` まで）後に UniVRM（`Vrm10.LoadPathAsync`、0.x は 1.0 へ変換）で非同期読込。`Vrm10Instance` を止めて表情・まばたき・口の形・SpringBone を `VrmAvatarData` へ写し、初期姿勢へ戻してから `RuntimeGltfInstance`（メッシュ・テクスチャ・マテリアルの所有者。破棄時に解放）以外の許可リスト外コンポーネントを除去 |
@@ -157,7 +157,8 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `MicrophoneInput` | マイクのループ録音と音量（RMS、ゲート・感度・平滑化）、声が出ている間の母音推定（`VowelAnalyzer`）と重みの平滑化。デバイス切替・切断時の再開 |
 | `VowelAnalyzer` | 約 11kHz へ間引き → 高域強調・ハミング窓 → LPC（12 次、Levinson-Durbin）の包絡から F1 / F2 を求め、母音（あいうえお）の代表値との対数周波数の距離で重み（合計 1）を出す。声の高さ補正は代表値に掛ける倍率 |
 | `PhysBoneSimulator` | アバターの全 PhysBone を 60Hz 固定ステップで更新。ON/OFF、粒子数上限。`Suspended` の間は設定に関係なく静止姿勢で止める（パーフェクトシンク化の編集中） |
-| `PhysBoneChain` | 1 PhysBone の Verlet 近似（pull / spring / stiffness / gravity / immobile / 角度制限 / 長さ拘束）と Transform への回転反映 |
+| `PhysBoneChain` | 1 PhysBone の Verlet 近似（pull / spring / stiffness / gravity / immobile / 角度制限 / 長さ拘束）と Transform への回転反映。前のフレームの最後に書いた回転と違っていれば（小物のアニメーション・Constraint が書き換えた）、その回転と今の位置を新しい静止姿勢にする（動いた姿勢に揺れを重ねる） |
+| `PropAnimationPlayer` | 小物のアニメーションの自動再生（設定 `propAnimationsEnabled`、既定 ON）。小物の Animator（コントローラー付き、ルート以外）・小物の Animation（`playAutomatically` のもの）と、ルートの Animation の `AvatarPackageLayout.FxMotionClipPrefix` のクリップ（FX の初期状態の動き。名前の番号順 = FX のレイヤー順に上のレイヤーへ置き、全部を同時に再生）。OFF では Animator は `Rebind` + `Update(0)`、Animation は時刻 0 を `Sample` してから止める。Animator・Animation の評価は `Update` の後なので、Constraint・揺れもの（LateUpdate）は動いた後の姿勢に重なる |
 | `PhysBoneCollider` | 球・カプセル・平面コライダーによるボーン線分（半径付き）の押し出し |
 | `ConstraintSolver` | アバターの全 Constraint をトラッキング適用後・揺れもの計算前（実行順 -50）に毎フレーム評価。参照関係で評価順を並べ替え。Humanoid ボーンと腰の親（Armature 等）を動かすものは対象外 |
 | `ConstraintEvaluator` | 1 Constraint（Position / Rotation / Scale / Parent / Aim / LookAt）の評価。重み付き平均・オフセット・静止値・軸マスク・ローカル空間 |
@@ -220,7 +221,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `FileDropReceiver` | Windows のスタンドアロン実行時に Unity のウィンドウへ `DragAcceptFiles` でドロップを許可し、メインスレッドの `WH_GETMESSAGE` フックで `WM_DROPFILES` を取り出してパスを `Update` で通知 |
 | `FileDialog` | Windows の「ファイルを開く」「名前を付けて保存」ダイアログ（`GetOpenFileNameW` / `GetSaveFileNameW`、モーダル。複数の拡張子を 1 つのフィルターで指定。保存は上書きの確認付き） |
 | `ObjectSection` | Objects タブ。`AvatarObjects` の行を、`▶` / `▼` で開閉する木（字下げ、既定はルートの子だけ。開閉ボタンは `UiTheme.FoldButton` でスイッチと同じ高さ・余白、子の無い行は同じ大きさの透明な `FoldSpacer` で位置をそろえる）か、平らな一覧（検索中・「VRChat のメニューで切り替えるものだけ」のとき。行の下にパス）で描き、チェックで表示を ON/OFF する。「ボーン・空のオブジェクトを隠す」（既定 ON）は子孫にも Renderer の無い行を省く。FX で切り替えるものが分かるアバターは「VRChat のメニューで切り替えるものだけ」から始め、その行には `[VRChat]` を付ける。親が OFF で見えていない行は薄く出す。1 回に描くのは 400 行まで。行の数が変わる操作（開閉・絞り込み・検索）は次の Layout イベントで当てる（Layout と他のイベントで配置を食い違わせないため）。変更は `AppSettings.SetObjectToggles` へ記録、「変更を元に戻す」で読込時の状態へ |
-| `AnimationSection` | Body & pose タブ（向き・待機ポーズ、待機モーション、揺れもの（PhysBone 近似の ON/OFF とチェーン数））。アバター未表示でも揺れものの ON/OFF は出す |
+| `AnimationSection` | Body & pose タブ（向き・待機ポーズ、待機モーション、揺れもの（PhysBone 近似の ON/OFF とチェーン数）、小物のアニメーション（自動再生の ON/OFF と、小物の Animator・FX の動きの数））。アバター未表示でも揺れもの・小物のアニメーションの ON/OFF は出す |
 | `ParticleSection` | Objects タブのパーティクルのカード（まとまりごとの ON/OFF・すべて ON / OFF・名前の変更とパス。`AppSettings.SetParticleToggles` へ記録）。パーティクルの無いアバターでは出さない |
 | `ExpressionSection` | Face & expressions タブの表情のカード（表情ごとに 1 行で「表情ボタン・キーの割り当てボタン（押すと割り当て待ち、Esc でやめる）・リセット」。割り当てはアバターごとに `AppSettings.SetExpressionHotkeys` へ記録。リセットのショートカットキーと同じなら行の下に警告）。表情ボタンは固定中の表情を押し直すと自動検出へ戻し、固定中は「自動検出に戻す」を出す |
 | `ExpressionHotkey` | アバターごとの表情のショートカットキー（プリセット名・Windows の仮想キー番号・Ctrl / Alt / Shift。ニュートラルは `<neutral>`） |
@@ -265,7 +266,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | :--- | :--- |
 | `AvatarPackageLayout` | `.vrcaster` のエントリ名・フォーマットバージョン・Prefab パス |
 | `AvatarManifest` | manifest.json のモデルと検証 |
-| `AllowedComponents` | bundle に含めてよいコンポーネントの許可リスト |
+| `AllowedComponents` | bundle に含めてよいコンポーネントの許可リスト（Transform・Animator・Animation・メッシュの描画・パーティクル）。VRM の読み込みでは glTF のアニメーション（Animation）は人体のボーンも動かし得るため外す |
 | `HashUtility` | SHA-256 計算 |
 | `IMetadata` | metadata モデル共通の検証インターフェース |
 | `ExpressionSet` | `metadata/expressions.json` のモデルと検証（Runtime と共有） |
@@ -283,7 +284,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `ReadableMeshCopier` | 書き出し用の複製で、BlendShape のある SkinnedMeshRenderer のメッシュを Read/Write 有効の複製（一時フォルダのアセット）へ差し替える（同じメッシュは 1 回だけ複製、BlendShape の値は引き継ぐ）。パーフェクトシンク化で頂点を読むため |
 | `BlendShapeSyncExtractor` | NDMF 実行前に MA Blendshape Sync（リフレクション。参照は MA の `AvatarObjectReference.Get`、無ければ `referencePath`）を Transform で控え、改変・除去の後のパスで BlendShapeSyncSet にする。消えたメッシュ・BlendShape、同じ同期先の重複は除外 |
 | `ReflectionUtility` | SDK 型をアセンブリ参照なしで読むためのフィールド取得（float / bool / Vector3）・型名検索・アバタールートからの相対パス |
-| `AvatarExporter` | 複製 → MA 設定の控え → 改変ツールの適用（`AvatarPreprocessor`） → MA 未適用分の付け替え → 複製からメタデータ抽出 → FX 既定状態の焼き込み・表情抽出 → 除去 → 読めるメッシュへの差し替え（`ReadableMeshCopier`） → 一時 Prefab → AssetBundle → ZIP の書き出し |
+| `AvatarExporter` | 複製 → MA 設定の控え → 改変ツールの適用（`AvatarPreprocessor`） → MA 未適用分の付け替え → 複製からメタデータ抽出 → FX 既定状態の焼き込み・表情抽出 → 除去 → 小物のアニメーション（`PropAnimationExporter`） → 読めるメッシュへの差し替え（`ReadableMeshCopier`） → 一時 Prefab → AssetBundle → ZIP の書き出し |
 | `AvatarPreprocessor` | VRChat SDK の `VRCBuildPipelineCallbacks.OnPreprocessAvatar` をリフレクションで複製に呼び、アップロード時と同じ前処理（VRCFury・NDMF 等）をすべて適用。SDK が無い・Avatar Descriptor が無いときは `NdmfProcessor` だけを適用。前処理が false を返したら例外で書き出しを中断 |
 | `NdmfProcessor` | NDMF（Modular Avatar 等）の `AvatarProcessor.ProcessAvatar` をリフレクションで複製に適用（`AvatarPreprocessor` が SDK の前処理を呼べないときの代わり）。書き出し中に `Assets/ZZZ_GeneratedAssets` へ増えた生成アセットだけを後始末 |
 | `ExporterLoc` | エクスポーターの表示言語（英日韓・中国語簡体/繁体）。アプリの `Loc` と同じく 5 言語の組で書く `T(...)`。選択は EditorPrefs に保存し、既定は OS の言語。変換パッケージはアプリのアセンブリを参照できないため別実装 |
@@ -296,7 +297,8 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `ExtraExpressionClips` | 書き出し画面の「追加の表情」の指定（AnimationClip / フォルダ）。アバターの GlobalObjectId ごとに GUID を EditorPrefs へ保存し、フォルダはサブフォルダ内のクリップまで展開 |
 | `VrcDescriptorReader` | VRChat SDK 非依存（リフレクション）で `VRCAvatarDescriptor` の FX コントローラー、Expression Parameters 既定値、Lip Sync・Eyelids 設定を取得 |
 | `FxDefaultStateBaker` | FX の各レイヤーで既定値により到達するステートのモーション（BlendTree は重み付き、1D は補間）から、表示 ON/OFF・BlendShape・マテリアル差し替えの 0 秒時点の値を複製へ適用。BlendShape はシーンの値を優先する設定（既定）では適用しない。`CollectToggledObjects` は FX の全クリップから `m_IsActive` を動かすオブジェクトを集め、`AvatarExporter` がそのうち除去後も残りパーティクルを含むものを `metadata/particle_groups.json` に書く |
-| `ComponentStripper` | 許可リスト外コンポーネント・Missing Script・EditorOnly オブジェクト・Animator Controller の除去。非アクティブのオブジェクトは書き出しウィンドウの「非アクティブのオブジェクトも書き出す」（`AvatarExporter.Export` の `includeInactiveObjects`、既定 ON、EditorPrefs に保存）で扱いを変える。ON: `AvatarExporter` が複製直後（NDMF の適用と FX の焼き込みより前）に `CollectInactiveObjects` で控え、FX の焼き込みの後に `Deactivate` で非アクティブに戻す（FX の初期状態で表示されるものも OFF にそろえ、アプリの Objects タブで ON にできるようにする。改変・最適化で消えたものは数えない）。OFF: 同じ時点で `RemoveInactiveObjects` で子ごと除去（残るメッシュがボーンとして使う Transform はコンポーネントだけ外して残す。パーティクルは非アクティブのまま ParticleSystem / ParticleSystemRenderer と親の Transform だけを残す）。ボーンを失った SkinnedMeshRenderer の警告（`WarnMissingBones`） |
+| `PropAnimationExporter` | 小物のアニメーションの書き出し。小物の Animator（ルート以外）のコントローラーは残し、StateMachineBehaviour（VRChat 固有のスクリプト）があれば一時フォルダへ複製して外す（Override はその複製に同じ差し替えを当てた複製。アセットとして保存されていないものは外して警告、1 ファイルに複数入ったものは複製できないのでそのまま = アプリでは中身の無い参照）。FX の初期状態のクリップ（`FxDefaultStateBaker.CollectDefaultMotions`、BlendTree の重み 0.5 以上・速さ 0 でないもの）から、ルート・人体のボーン以外の Transform を時間で動かすカーブ（位置・回転・大きさのまとまりのどれかが動けばまとまりごと。オイラー角は 60Hz で標本を取って四元数へ）だけを legacy クリップにし（ステートの速さを時間に反映、ループの設定は `loopTime`）、`FxMotionClipPrefix` + レイヤー順の番号の名前でルートの Animation に入れる（自動再生しない） |
+| `ComponentStripper` | 許可リスト外コンポーネント・Missing Script・EditorOnly オブジェクト・ルートの Animator Controller の除去（小物の Animator のコントローラーは `PropAnimationExporter` に任せる）。非アクティブのオブジェクトは書き出しウィンドウの「非アクティブのオブジェクトも書き出す」（`AvatarExporter.Export` の `includeInactiveObjects`、既定 ON、EditorPrefs に保存）で扱いを変える。ON: `AvatarExporter` が複製直後（NDMF の適用と FX の焼き込みより前）に `CollectInactiveObjects` で控え、FX の焼き込みの後に `Deactivate` で非アクティブに戻す（FX の初期状態で表示されるものも OFF にそろえ、アプリの Objects タブで ON にできるようにする。改変・最適化で消えたものは数えない）。OFF: 同じ時点で `RemoveInactiveObjects` で子ごと除去（残るメッシュがボーンとして使う Transform はコンポーネントだけ外して残す。パーティクルは非アクティブのまま ParticleSystem / ParticleSystemRenderer と親の Transform だけを残す）。ボーンを失った SkinnedMeshRenderer の警告（`WarnMissingBones`） |
 | `AvatarExporterWindow` | `VRCast > Avatar Exporter` ウィンドウ |
 
 ## Editor
@@ -332,5 +334,6 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `ExpressionMappingTests` | プリセット名のキーワード推定（英語・日本語）、保存した名前の優先、空欄・他アバターの名前は推定へ、割り当てなし・ニュートラル |
 | `VrmMetadataBuilderTests` | VRM の表情の変換（重み・空の除外・同名の番号付け）、まばたき（最も多いメッシュ・ウインク・左右のみ・無し）、口の形（母音の位置・無し）、SpringBone の変換（関節の追従・ignore・pull / spring・半径のカーブ・カプセル・コライダー番号）、途切れた鎖・関節 1 つの除外 |
 | `AvatarPackageReaderTests` | 正常展開、キャッシュ再利用、ハッシュ不一致・manifest 欠落・未対応バージョン・パストラバーサル・非 ZIP の拒否、エントリ名判定、表情・descriptor・physbones・constraints・blendshape_sync・particle_groups・fx_toggles データの読込・不正時の空扱い |
+| `PropAnimationPlayerTests` | FX の動きの同時再生（後のレイヤーが優先・ルートの Animator があっても動く）、接頭辞の無いクリップを対象にしないこと、OFF で最初の姿勢に戻して止めること、コントローラーの無い小物の Animator の除外 |
 | `AvatarObjectsTests` | 階層の行の並び（ルートを除く深さ優先）・子孫の範囲・Renderer と FX の印、読込時と違うものだけの記録、記録の復元（見つからないパス・ルートは無視）、記録したものだけを戻す `ResetAll` |
 | `ConstraintEvaluatorTests` | Constraint の重み付き平均・軸マスク・重み 0 の静止値・無効時の非適用・Parent のオフセット・Aim / LookAt の向き・評価順の並べ替え・検証 |

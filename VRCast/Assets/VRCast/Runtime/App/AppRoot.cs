@@ -230,6 +230,9 @@ namespace VRCast.App
                 avatar.Animator, _settings, () => face != null && face.IsTracking,
                 () => fullBody != null && fullBody.IsTracking);
 
+            // 小物のアニメーション（小物の Animator と FX の初期状態の動き）。Constraint・揺れものは動いた後の姿勢に重ねる
+            avatar.Instance.AddComponent<PropAnimationPlayer>().Initialize(root, _settings);
+
             // Constraint（揺れものの静止姿勢に反映されるよう先に初期化）
             avatar.Instance.AddComponent<ConstraintSolver>().Initialize(avatar.Animator, avatar.Constraints);
 

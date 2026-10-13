@@ -31,6 +31,10 @@ namespace VRCast.Dynamics
             public Vector3 RestLocalPosition;
             public Quaternion RestLocalRotation;
 
+            // 前のフレームの最後に書いた回転（違っていればアニメーション・Constraint が書き換えた）
+            public Quaternion WrittenLocalRotation;
+            public bool HasWritten;
+
             // Humanoid ボーンは動かさず追従のみ、回転固定は複数子 Ignore 等
             public bool Fixed;
             public bool RotationLocked;
@@ -236,15 +240,19 @@ namespace VRCast.Dynamics
                 if (particle.Transform != null && !particle.Fixed)
                 {
                     particle.Transform.localRotation = particle.RestLocalRotation;
+                    particle.HasWritten = false;
                 }
             }
         }
 
         /// <summary>
         /// フレーム開始処理: 回転を静止姿勢へ戻して静止位置を記録し、アバター移動分を immobile に応じて追従させる。
+        /// 前のフレームの後に他（小物のアニメーション・Constraint）が書き換えた姿勢は、新しい静止姿勢にする
+        /// （VRChat と同じく、動いた姿勢に揺れを重ねる）。
         /// </summary>
         public void BeginFrame()
         {
+            AdoptExternalPose();
             RestoreRestPose();
 
             // 親から順に静止姿勢でのワールド位置を計算（仮想粒子は親 Transform 基準）
@@ -263,6 +271,27 @@ namespace VRCast.Dynamics
                 Vector3 delta = movement * _particles[i].Immobile;
                 _particles[i].Position += delta;
                 _particles[i].PreviousPosition += delta;
+            }
+        }
+
+        private void AdoptExternalPose()
+        {
+            foreach (Particle particle in _particles)
+            {
+                if (particle.Transform == null || particle.Fixed)
+                {
+                    continue;
+                }
+
+                // 揺れものは位置を書かないので、位置は常に今の値が静止位置
+                particle.RestLocalPosition = particle.Transform.localPosition;
+
+                // 書いた後に止めていた・書き換えられたなら、今の回転を静止回転にする
+                Quaternion current = particle.Transform.localRotation;
+                if (!particle.HasWritten || current != particle.WrittenLocalRotation)
+                {
+                    particle.RestLocalRotation = current;
+                }
             }
         }
 
@@ -394,6 +423,16 @@ namespace VRCast.Dynamics
                 // 静止方向を現在の方向へ向ける回転を追加
                 particle.Transform.rotation =
                     Quaternion.FromToRotation(restDirection, currentDirection) * particle.Transform.rotation;
+            }
+
+            // 次のフレームに他が書き換えたかを見分けるため、書いた回転を覚える
+            foreach (Particle particle in _particles)
+            {
+                if (particle.Transform != null && !particle.Fixed)
+                {
+                    particle.WrittenLocalRotation = particle.Transform.localRotation;
+                    particle.HasWritten = true;
+                }
             }
         }
     }
