@@ -9,7 +9,7 @@ using VRCast.Tracking;
 namespace VRCast.UI
 {
     /// <summary>
-    /// 顔・表情タブのまばたき・目線・口パクのカード（自動まばたき・表情中のまばたき停止・カメラ目線・マイクリップシンク・
+    /// 顔・表情タブのまばたき・目線・口パクのカード（自動まばたき・表情中のまばたき停止・まばたきの BlendShape の指定・カメラ目線・マイクリップシンク・
     /// 表情中の口の停止）。表情のカードは ExpressionSection。
     /// </summary>
     public class FaceSection
@@ -23,11 +23,15 @@ namespace VRCast.UI
         private readonly MicrophoneInput _microphone;
         private readonly AppSettings _settings;
 
+        // まばたきに使う BlendShape のアバターごとの指定
+        private readonly BlinkShapeEditor _blinkShapes;
+
         public FaceSection(AvatarSession session, MicrophoneInput microphone, AppSettings settings)
         {
             _avatar = new AvatarComponentCache(session);
             _microphone = microphone;
             _settings = settings;
+            _blinkShapes = new BlinkShapeEditor(session, _avatar, settings);
         }
 
         public void Draw()
@@ -57,6 +61,9 @@ namespace VRCast.UI
                 GuiControls.Hint(Loc.T("No eyelid blend shape", "まぶたの BlendShape がありません",
                     "눈꺼풀 BlendShape가 없습니다", "没有眼睑的 BlendShape", "沒有眼瞼的 BlendShape"));
             }
+
+            // まばたきに使う BlendShape をこのアバターだけ選び直す
+            _blinkShapes.Draw();
 
             DrawGaze();
             GuiControls.EndCard();

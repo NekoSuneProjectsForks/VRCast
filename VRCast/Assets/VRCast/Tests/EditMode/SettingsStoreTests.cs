@@ -73,6 +73,67 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void ResetHotkeys_ScreenshotDefaultsToNumpad6()
+        {
+            // スクリーンショットはリセットの後ろ（テンキーの 6）
+            Assert.That(new AppSettings().GetResetHotkey(ResetAction.Screenshot),
+                Is.EqualTo(new KeyCombo(0x66, false, false, false)));
+        }
+
+        [Test]
+        public void AutoReset_DefaultsToOff()
+        {
+            // 既定では自動リセットしない（ON にしたときの対象は全部）
+            var settings = new AppSettings();
+            Assert.That(settings.autoResetEnabled, Is.False);
+            Assert.That(settings.autoResetHead && settings.autoResetGaze && settings.autoResetExpression, Is.True);
+        }
+
+        [TestCase(0f, AppSettings.MinAutoResetIntervalMinutes)]
+        [TestCase(1000f, AppSettings.MaxAutoResetIntervalMinutes)]
+        [TestCase(float.NaN, AppSettings.DefaultAutoResetIntervalMinutes)]
+        public void Load_AutoResetInterval_IsClamped(float saved, float expected)
+        {
+            // 範囲外・壊れた間隔を保存して読み込む
+            _store.Save(new AppSettings { autoResetIntervalMinutes = saved });
+
+            // 範囲内（壊れた値は既定）になること
+            Assert.That(_store.Load().autoResetIntervalMinutes, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void BlinkShapes_RoundTripPerAvatar()
+        {
+            // 視点を記録したアバターにまばたきの BlendShape を指定して保存
+            const string avatar = "C:/avatars/a.vrcaster";
+            var saved = new AppSettings();
+            saved.SetAvatarCamera(avatar, new CameraPose());
+            var blink = new BlinkShapeOverride { enabled = true };
+            blink.both.Set("Body", "eye_close");
+            blink.left.Set("Body", "wink_L");
+            blink.right.Set("Body", "wink_R");
+            saved.SetBlinkShapes(avatar, blink);
+            _store.Save(saved);
+
+            // 読み込むと同じ指定が戻り、別のアバターは自動（未指定）のままであること
+            AppSettings loaded = _store.Load();
+            BlinkShapeOverride restored = loaded.GetBlinkShapes(avatar);
+            Assert.That(restored.enabled, Is.True);
+            Assert.That(restored.both.blendShape, Is.EqualTo("eye_close"));
+            Assert.That(restored.HasWinkPair, Is.True);
+            Assert.That(loaded.GetBlinkShapes("C:/avatars/other.vrcaster").enabled, Is.False);
+        }
+
+        [Test]
+        public void SetBlinkShapes_UnknownAvatar_IsIgnored()
+        {
+            // 視点を記録していないアバターには記録しない（記録を勝手に増やさない）
+            var settings = new AppSettings();
+            settings.SetBlinkShapes("C:/avatars/none.vrcaster", new BlinkShapeOverride { enabled = true });
+            Assert.That(settings.avatarCameras, Is.Empty);
+        }
+
+        [Test]
         public void SetResetHotkey_SameCombo_UnassignsOtherAction()
         {
             // カメラのキー（テンキー 4）を顔の向きにも割り当てる

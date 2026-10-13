@@ -22,6 +22,9 @@ namespace VRCast.Core
 
         // カメラ目線（目を画面に向ける）の ON / OFF を切り替える
         LookAtCamera = 4,
+
+        // アバターを背景透過の PNG で撮る
+        Screenshot = 5,
     }
 
     /// <summary>
@@ -33,7 +36,7 @@ namespace VRCast.Core
         /// <summary>
         /// リセットの種類の数（ResetAction の値は 0 から連続）。
         /// </summary>
-        public const int ActionCount = 5;
+        public const int ActionCount = 6;
 
         // テンキーの 1（VK_NUMPAD1）。既定は 1 から順に割り当てる
         private const int Numpad1 = 0x61;
@@ -41,7 +44,7 @@ namespace VRCast.Core
         public ResetAction action;
 
         /// <summary>
-        /// 既定の割り当て（顔の向き = テンキー 1、視線 = 2、表情 = 3、カメラ = 4、カメラ目線 = 5）。
+        /// 既定の割り当て（顔の向き = テンキー 1、視線 = 2、表情 = 3、カメラ = 4、カメラ目線 = 5、スクリーンショット = 6）。
         /// </summary>
         public static List<ResetHotkey> Defaults()
         {

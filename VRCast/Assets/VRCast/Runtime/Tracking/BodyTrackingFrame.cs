@@ -31,6 +31,10 @@ namespace VRCast.Tracking
         public ArmTrackingData Left;
         public ArmTrackingData Right;
 
+        // 体の推定での顔の位置（両目の中点、映っていなければ鼻。腕と同じ座標系）。古いトラッカー・顔が映っていなければ false
+        public bool HasFace;
+        public Vector3 Face;
+
         // 受信するたびに増える番号（新しい値が届いたかの判定用）
         public int Sequence;
     }

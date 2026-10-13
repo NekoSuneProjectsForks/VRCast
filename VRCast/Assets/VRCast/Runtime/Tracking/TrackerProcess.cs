@@ -125,7 +125,10 @@ namespace VRCast.Tracking
         /// 現在の入力元の同梱版が見つかったか（無ければ UI でパス入力を求める）。
         /// </summary>
         public bool HasBundled => _settings != null
-            && _bundledPaths.TryGetValue(_settings.trackingSource, out string bundled) && bundled != null;
+            && _bundledPaths.TryGetValue(BundledSource, out string bundled) && bundled != null;
+
+        // 起動する同梱トラッカーの入力元（併用の入力元は MediaPipe）
+        private TrackingSource BundledSource => TrackingSourceInfo.BundledTrackerOf(_settings.trackingSource);
 
         public string Status { get; private set; } = "Not started";
 
@@ -142,8 +145,8 @@ namespace VRCast.Tracking
             // 全入力元の同梱版を探しておく
             foreach (TrackingSource source in (TrackingSource[])Enum.GetValues(typeof(TrackingSource)))
             {
-                // 外部アプリから受信する入力元には同梱版が無い
-                if (!TrackingSourceInfo.UsesBundledTracker(source))
+                // 外部アプリから受信する入力元・併用の入力元には自分の同梱版が無い（併用は MediaPipe の同梱版を使う）
+                if (!TrackingSourceInfo.IsBundledTracker(source))
                 {
                     continue;
                 }
@@ -282,7 +285,7 @@ namespace VRCast.Tracking
             }
 
             // 実行ファイル無しなら取得済み扱い（パスが設定されるまで繰り返さない）
-            TrackingSource source = _settings.trackingSource;
+            TrackingSource source = BundledSource;
             _listedSource = source;
             if (!TryGetExecutable(out string path))
             {
@@ -328,7 +331,7 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 外部アプリ（VMC）から受信する間は同梱トラッカーを使わない（起動中なら止め、カメラも開かない）
+            // 外部アプリ（VMC・iFacialMocap）だけから受信する間は同梱トラッカーを使わない（起動中なら止め、カメラも開かない）
             if (!TrackingSourceInfo.UsesBundledTracker(_settings.trackingSource))
             {
                 if (IsRunning)
@@ -342,8 +345,8 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 有効化後の初回と入力元の変更時は一覧を自動取得
-            if (_listedSource != _settings.trackingSource)
+            // 有効化後の初回と入力元の変更時は一覧を自動取得（MediaPipe と併用の切り替えでは取り直さない）
+            if (_listedSource != BundledSource)
             {
                 RefreshCameras();
             }
@@ -387,7 +390,7 @@ namespace VRCast.Tracking
             // 受信ポート・カメラ・入力元・（MediaPipe の）手の有無・動作・（OpenSeeFace の）軽量モードが変わったら起動し直す
             bool mediaPipe = _startedSource == TrackingSource.MediaPipe;
             bool changed = _startedPort != _settings.trackingPort || _startedCamera != _settings.trackerCamera
-                || _startedSource != _settings.trackingSource || _startedHands != UsesHands()
+                || _startedSource != BundledSource || _startedHands != UsesHands()
                 || (mediaPipe ? _startedMode != _settings.trackerMode : _startedLowLoad != _settings.lowLoadMode);
             if (changed)
             {
@@ -539,7 +542,7 @@ namespace VRCast.Tracking
                 // ループバックの受信ポートへ送らせる（MediaPipe で腕・手が無効なら手の推定を止める）
                 _startedPort = _settings.trackingPort;
                 _startedCamera = _settings.trackerCamera;
-                _startedSource = _settings.trackingSource;
+                _startedSource = BundledSource;
                 _startedHands = UsesHands();
                 _startedLowLoad = _settings.lowLoadMode;
                 _startedMode = _settings.trackerMode;
@@ -697,7 +700,7 @@ namespace VRCast.Tracking
         private bool TryGetExecutable(out string path)
         {
             // 利用者指定のパスを優先し、無ければ同梱版
-            TrackingSource source = _settings.trackingSource;
+            TrackingSource source = BundledSource;
             string executable = ExecutableOf(source);
             string custom = PathUtility.NormalizeInput(_settings.trackerPath);
             _bundledPaths.TryGetValue(source, out string bundled);

@@ -231,6 +231,37 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void TryParse_Head_UsesEyesMidpointOrNose()
+        {
+            // 体が映り、両目が見えている（鼻・左目・右目の順）
+            MediaPipePacket.Message message = CreateMessage();
+            message.pose = true;
+            message.arms = new float[MediaPipePacket.ArmPointCount * 3];
+            message.visibility = new float[MediaPipePacket.ArmPointCount];
+            message.head = new float[MediaPipePacket.HeadPointCount * 3];
+            message.headVisibility = new[] { 1f, 1f, 1f };
+            WritePoint(message.head, 0, new Vector3(0f, 0.5f, -0.1f));
+            WritePoint(message.head, 1, new Vector3(0.03f, 0.4f, 0f));
+            WritePoint(message.head, 2, new Vector3(-0.03f, 0.4f, 0f));
+
+            // 両目の中点（y 反転）が顔の位置になること
+            Assert.That(Parse(message, out _, out _, out BodyTrackingFrame body), Is.True);
+            Assert.That(body.HasFace, Is.True);
+            Assert.That(Vector3.Distance(body.Face, new Vector3(0f, -0.4f, 0f)), Is.LessThan(1e-5f));
+
+            // 目が隠れていれば鼻を使うこと
+            message.headVisibility = new[] { 1f, 0.1f, 1f };
+            Assert.That(Parse(message, out _, out _, out body), Is.True);
+            Assert.That(Vector3.Distance(body.Face, new Vector3(0f, -0.5f, -0.1f)), Is.LessThan(1e-5f));
+
+            // 古いトラッカー（顔の点なし）は顔の位置なしになること
+            message.head = null;
+            message.headVisibility = null;
+            Assert.That(Parse(message, out _, out _, out body), Is.True);
+            Assert.That(body.HasFace, Is.False);
+        }
+
+        [Test]
         public void TryParse_Hands_ReadsOnlyVisibleHand()
         {
             // ラベルの左手だけ映っている（右手は空配列）

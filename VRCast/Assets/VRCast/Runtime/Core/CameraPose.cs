@@ -46,7 +46,7 @@ namespace VRCast.Core
     /// アバター（.vrcaster / .vrm のパス）ごとの記録。カメラの視点と見た目の設定（hasLook が false なら未記録）、
     /// BlendShape の上限（制限しているものだけ）、表情のショートカットキー（割り当てたものだけ）、
     /// パーティクルの ON/OFF（切り替えたことのあるアバターだけ）、オブジェクトの表示の ON/OFF（切り替えたものだけ）、最近使ったアバターの一覧に出す画像（サムネイル用フォルダ内のファイル名。空なら未設定）と、
-    /// VRCast に入れた日時（UNIX 時刻の秒・UTC。0 なら不明）。
+    /// VRCast に入れた日時（UNIX 時刻の秒・UTC。0 なら不明）、まばたきに使う BlendShape の指定（未指定なら自動）。
     /// </summary>
     [Serializable]
     public class AvatarEntry
@@ -61,5 +61,6 @@ namespace VRCast.Core
         public List<ObjectToggle> objects = new List<ObjectToggle>();
         public string thumbnail = string.Empty;
         public long addedAt;
+        public BlinkShapeOverride blinkShapes = new BlinkShapeOverride();
     }
 }

@@ -52,6 +52,11 @@ namespace VRCast.Core
         // iFacialMocap のポート（アプリ側で固定。送信開始の合図の宛先と、受信の待ち受けの両方に使う）
         public const int IFacialMocapPort = 49983;
 
+        // 自動リセットの間隔（分）の既定値と範囲
+        public const float DefaultAutoResetIntervalMinutes = 5f;
+        public const float MinAutoResetIntervalMinutes = 1f;
+        public const float MaxAutoResetIntervalMinutes = 60f;
+
         // 外部操作の待ち受けポートの既定値（範囲はトラッキングと同じ）
         public const int DefaultRemoteOscPort = 39570;
         public const int DefaultRemoteHttpPort = 39571;
@@ -165,6 +170,9 @@ namespace VRCast.Core
         // Spout2 への出力（OBS 等へ GPU 上で映像を渡す）
         public bool spoutEnabled;
 
+        // 背景透過のスクリーンショットの保存先フォルダ（空 = ピクチャ\VRCast）
+        public string screenshotFolder = string.Empty;
+
         // 太陽光（ディレクショナルライト）。向きはカメラ正面からの角度（0 = 正面から当たる）
         public float lightIntensity = 1.2f;
         public float lightYaw = -30f;
@@ -254,6 +262,9 @@ namespace VRCast.Core
         // 腕・手（指）のトラッキング（MediaPipe のみ）
         public bool trackingHands = true;
 
+        // 腕の位置をアバターの体格に合わせる（手首の位置を写して IK で届かせ、顔の近くの手は顔を基準にする。OFF なら腕の向きだけ合わせる）
+        public bool trackingArmMatchAvatar = true;
+
         // 上半身の向き（両肩の線から背骨・胸のひねり・左右の傾き。腕・手が ON のときだけ。MediaPipe のみ）
         public bool trackingTorso = true;
 
@@ -306,6 +317,13 @@ namespace VRCast.Core
         // リセット（顔の向き・視線・表情・カメラ）のショートカットキー（アプリ全体。既定はテンキー 1〜4）と、背面でも使うか
         public List<ResetHotkey> resetHotkeys = ResetHotkey.Defaults();
         public bool resetHotkeysInBackground = true;
+
+        // 一定時間ごとの自動リセット（既定 OFF）。間隔（分）と、対象（顔の向き・視線は正面付近で静止したときに取り直す）
+        public bool autoResetEnabled;
+        public float autoResetIntervalMinutes = DefaultAutoResetIntervalMinutes;
+        public bool autoResetHead = true;
+        public bool autoResetGaze = true;
+        public bool autoResetExpression = true;
 
         // 外部（Stream Deck・OSC アプリ等）からの表情の操作。127.0.0.1 の OSC（UDP）と HTTP で待ち受ける（既定 OFF）
         public bool remoteControlEnabled;
@@ -457,6 +475,35 @@ namespace VRCast.Core
 
             // 壊れた値は除いて複製を持つ
             avatarCameras[index].expressionHotkeys = hotkeys.FindAll(hotkey => hotkey != null && hotkey.IsValid);
+        }
+
+        /// <summary>
+        /// アバターのまばたきに使う BlendShape の指定を返す（未記録なら自動。複製なので書き換えても記録は変わらない）。
+        /// </summary>
+        public BlinkShapeOverride GetBlinkShapes(string avatarPath)
+        {
+            int index = FindAvatarCamera(avatarPath);
+            return index >= 0 && avatarCameras[index].blinkShapes != null
+                ? avatarCameras[index].blinkShapes.Clone()
+                : new BlinkShapeOverride();
+        }
+
+        /// <summary>
+        /// アバターのまばたきに使う BlendShape の指定を記録する。カメラの視点を記録済みのアバターだけが対象（読込時に記録される）。
+        /// </summary>
+        public void SetBlinkShapes(string avatarPath, BlinkShapeOverride blinkShapes)
+        {
+            // 記録の無いアバター・値の無いときは対象外（視点の無い記録を作らない）
+            int index = FindAvatarCamera(avatarPath);
+            if (index < 0 || blinkShapes == null)
+            {
+                return;
+            }
+
+            // 欠けを補った複製を持つ（呼び出し側と共有しない）
+            BlinkShapeOverride copy = blinkShapes.Clone();
+            copy.Sanitize();
+            avatarCameras[index].blinkShapes = copy;
         }
 
         /// <summary>
@@ -812,6 +859,10 @@ namespace VRCast.Core
 
                 // 一覧の画像はフォルダの外を指しうる名前（手編集）を未設定にする（旧版の設定には無いので空にする）
                 entry.thumbnail = IsThumbnailFileName(entry.thumbnail) ? entry.thumbnail : string.Empty;
+
+                // まばたきの BlendShape の指定は欠けを未指定で補う（旧版の設定には無いので自動のままになる）
+                entry.blinkShapes ??= new BlinkShapeOverride();
+                entry.blinkShapes.Sanitize();
             }
 
             // リセットのショートカットキーは種類ごとに 1 つへそろえる（旧版の設定には無いので既定のキーになる）
@@ -854,6 +905,8 @@ namespace VRCast.Core
 
             // null の GPU 名は直接指定なしの空文字へ
             gpuAdapter ??= string.Empty;
+            // スクリーンショットの保存先は前後の空白・" を除く（null は既定の保存先の空文字へ）
+            screenshotFolder = PathUtility.NormalizeInput(screenshotFolder);
             // ライト強度は 0〜上限に制限
             lightIntensity = Mathf.Clamp(lightIntensity, 0f, MaxLightIntensity);
             // 仰角は真上〜真下の範囲に制限
@@ -900,6 +953,10 @@ namespace VRCast.Core
             trackingPort = Mathf.Clamp(trackingPort, MinTrackingPort, MaxTrackingPort);
             // VMC の受信ポートも同じ範囲に制限
             vmcPort = Mathf.Clamp(vmcPort, MinTrackingPort, MaxTrackingPort);
+            // 自動リセットの間隔は範囲内へ（壊れた値は既定へ）
+            autoResetIntervalMinutes = float.IsNaN(autoResetIntervalMinutes) || float.IsInfinity(autoResetIntervalMinutes)
+                ? DefaultAutoResetIntervalMinutes
+                : Mathf.Clamp(autoResetIntervalMinutes, MinAutoResetIntervalMinutes, MaxAutoResetIntervalMinutes);
             // iPhone の IP アドレスは前後の空白を除く（null は未設定の空文字へ）
             iFacialMocapAddress = (iFacialMocapAddress ?? string.Empty).Trim();
             // 外部操作のポートも同じ範囲に制限

@@ -373,16 +373,10 @@ namespace VRCast.UI
                 return;
             }
 
-            try
+            // 開けなかったときだけ理由を残す
+            if (!FolderOpener.Open(folder, out string error))
             {
-                // 日本語を含むパスでも確実に開けるよう、URL ではなくエクスプローラーにパスを渡す
-                // （IL2CPP の Process.Start は起動できないため CreateProcessW で起動する）
-                string explorer = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
-                NativeProcess.Start(explorer, $"\"{folder}\"", null).Dispose();
-            }
-            catch (System.ComponentModel.Win32Exception e)
-            {
-                VRCastLog.Warning(LogCategory, "Failed to open log folder: " + e.Message);
+                VRCastLog.Warning(LogCategory, "Failed to open log folder: " + error);
             }
         }
 

@@ -88,9 +88,13 @@ namespace VRCast.UI
 
         private void DrawGeneral()
         {
-            // 見出しは入力元に合わせる（Web カメラ / iPhone 等の外部アプリ）
-            bool external = !TrackingSourceInfo.UsesBundledTracker(_settings.trackingSource);
-            GuiControls.BeginCard(external
+            // 見出しは入力元に合わせる（Web カメラ / iPhone 等の外部アプリ / 両方の併用）
+            TrackingSource source = _settings.trackingSource;
+            bool external = !TrackingSourceInfo.UsesBundledTracker(source);
+            GuiControls.BeginCard(TrackingSourceInfo.IsHybrid(source)
+                ? Loc.T("Tracking (iPhone + webcam)", "トラッキング（iPhone + Web カメラ）", "트래킹 (iPhone + 웹캠)",
+                    "追踪（iPhone + 摄像头）", "追蹤（iPhone + 網路攝影機）")
+                : external
                 ? Loc.T("Tracking (external app)", "トラッキング（外部アプリ）", "트래킹 (외부 앱)",
                     "追踪（外部应用）", "追蹤（外部應用程式）")
                 : Loc.T("Webcam tracking", "Web カメラトラッキング", "웹캠 트래킹", "摄像头追踪", "網路攝影機追蹤"));
@@ -103,12 +107,13 @@ namespace VRCast.UI
             {
                 DrawSource();
 
-                // 外部アプリは、接続に必要な IP アドレス・ポートを入力元のすぐ下に出す（見落とさないように）
-                if (_settings.trackingSource == TrackingSource.Vmc)
+                // 外部アプリ（併用を含む）は、接続に必要な IP アドレス・ポートを入力元のすぐ下に出す（見落とさないように）
+                TrackingSource network = TrackingSourceInfo.NetworkSourceOf(_settings.trackingSource);
+                if (network == TrackingSource.Vmc)
                 {
                     DrawVmcConnection();
                 }
-                else if (_settings.trackingSource == TrackingSource.IFacialMocap)
+                else if (network == TrackingSource.IFacialMocap)
                 {
                     DrawIFacialMocapConnection();
                 }
@@ -151,6 +156,12 @@ namespace VRCast.UI
                     "iPhone / 外部應用程式（VMC，臉部 + 全身）"),
                 Loc.T("iFacialMocap (iPhone, face only)", "iFacialMocap（iPhone、顔のみ）",
                     "iFacialMocap (iPhone, 얼굴만)", "iFacialMocap（iPhone，仅面部）", "iFacialMocap（iPhone，僅臉部）"),
+                Loc.T("iPhone (VMC) face + MediaPipe hands", "iPhone（VMC）の顔 + MediaPipe の手",
+                    "iPhone (VMC) 얼굴 + MediaPipe 손", "iPhone（VMC）面部 + MediaPipe 手",
+                    "iPhone（VMC）臉部 + MediaPipe 手"),
+                Loc.T("iFacialMocap face + MediaPipe hands", "iFacialMocap の顔 + MediaPipe の手",
+                    "iFacialMocap 얼굴 + MediaPipe 손", "iFacialMocap 面部 + MediaPipe 手",
+                    "iFacialMocap 臉部 + MediaPipe 手"),
             };
             // 注記を横に並べるかは Layout のときだけ決める（Layout と Repaint で要素の数を変えない）
             if (Event.current.type == EventType.Layout)
@@ -271,8 +282,10 @@ namespace VRCast.UI
         {
             switch (source)
             {
-                // MediaPipe はエコ・腕と手の推定を止めるとそれぞれ 1 段軽くなる
+                // MediaPipe（併用を含む）はエコ・腕と手の推定を止めるとそれぞれ 1 段軽くなる
                 case TrackingSource.MediaPipe:
+                case TrackingSource.MediaPipeVmc:
+                case TrackingSource.MediaPipeIFacialMocap:
                     int level = (_settings.trackingHands ? 1 : 0) + (_settings.trackerMode == TrackerMode.Eco ? 0 : 1);
                     // ぬるぬるは手を毎フレーム推定するので、手を使うときだけさらに重い
                     if (level >= 2 && _settings.trackerMode == TrackerMode.Fluid)
@@ -294,8 +307,19 @@ namespace VRCast.UI
 
         private void DrawSourceFeatures()
         {
-            // トラッカーの動作は同梱の MediaPipe 版のみ
-            if (_settings.trackingSource == TrackingSource.MediaPipe)
+            // 併用では、顔と腕・手をどちらから受け取るかを伝える
+            if (TrackingSourceInfo.IsHybrid(_settings.trackingSource))
+            {
+                GuiControls.Hint(Loc.T(
+                    "The face comes from the iPhone and the arms / hands from the webcam (MediaPipe). While nothing arrives from the iPhone, the webcam's face is used instead.",
+                    "顔は iPhone、腕・手は Web カメラ（MediaPipe）から受け取ります。iPhone から届かない間は Web カメラの顔を使います。",
+                    "얼굴은 iPhone, 팔·손은 웹캠 (MediaPipe)에서 받습니다. iPhone에서 데이터가 오지 않는 동안에는 웹캠의 얼굴을 사용합니다.",
+                    "面部来自 iPhone，手臂和手来自摄像头（MediaPipe）。iPhone 没有数据时改用摄像头的面部。",
+                    "臉部來自 iPhone，手臂和手來自網路攝影機（MediaPipe）。iPhone 沒有資料時改用網路攝影機的臉部。"));
+            }
+
+            // トラッカーの動作は同梱の MediaPipe 版（併用を含む）のみ
+            if (TrackingSourceInfo.BundledTrackerOf(_settings.trackingSource) == TrackingSource.MediaPipe)
             {
                 DrawTrackerMode();
             }
@@ -371,10 +395,30 @@ namespace VRCast.UI
                         "팔·손: 보이지 않음 (대기 포즈)", "手臂 / 手：未拍到（待机姿势）", "手臂 / 手：未拍到（待機姿勢）"));
             }
 
-            // 上半身の向き（両肩の線）は腕・手の体の推定を使うため、腕・手が ON のときだけ選べる
+            // 腕の位置合わせと上半身の向き（両肩の線）は腕・手の体の推定を使うため、腕・手が ON のときだけ選べる
             if (_settings.trackingHands)
             {
+                DrawArmMatch();
                 DrawTorso();
+            }
+        }
+
+        private void DrawArmMatch()
+        {
+            _settings.trackingArmMatchAvatar = GUILayout.Toggle(
+                _settings.trackingArmMatchAvatar,
+                Loc.T("Match hand positions to the avatar", "手の位置をアバターに合わせる", "손 위치를 아바타에 맞추기",
+                    "让手的位置匹配虚拟形象", "讓手的位置符合虛擬形象"));
+
+            // ON の間だけ、何をするかを案内する
+            if (_settings.trackingArmMatchAvatar)
+            {
+                GuiControls.Hint(Loc.T(
+                    "Places the hands by the avatar's body size instead of only copying arm angles. A hand in front of your face stays in front of the avatar's face. Turn off for the previous behavior.",
+                    "腕の角度をまねるだけでなく、アバターの体格に合わせて手の位置を決めます。顔の前の手はアバターの顔の前に来ます。OFF で以前の動きに戻ります。",
+                    "팔의 각도만 따라 하지 않고 아바타의 체격에 맞춰 손 위치를 정합니다. 얼굴 앞의 손은 아바타의 얼굴 앞에 옵니다. 끄면 이전 동작으로 돌아갑니다.",
+                    "不只是模仿手臂角度，而是按虚拟形象的体型决定手的位置。脸前的手会位于虚拟形象的脸前。关闭则恢复以前的动作。",
+                    "不只是模仿手臂角度，而是依虛擬形象的體型決定手的位置。臉前的手會位於虛擬形象的臉前。關閉則恢復以前的動作。"));
             }
         }
 
@@ -812,7 +856,7 @@ namespace VRCast.UI
         private void DrawLauncher()
         {
             // 同梱版が無い（開発ビルド等）か、既にパス指定済みのときだけパス入力を出す
-            string executable = TrackerProcess.ExecutableOf(_settings.trackingSource);
+            string executable = TrackerProcess.ExecutableOf(TrackingSourceInfo.BundledTrackerOf(_settings.trackingSource));
             if (!_process.HasBundled || !string.IsNullOrEmpty(_settings.trackerPath))
             {
                 string bundled = _process.HasBundled

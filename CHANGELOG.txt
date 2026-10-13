@@ -4,6 +4,22 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 2.1.0 (2026-10-13)
+
+[日本語]
+- トラッキングの入力元に「iPhone（VMC）の顔 + MediaPipe の手」と「iFacialMocap の顔 + MediaPipe の手」を追加（顔は iPhone のパーフェクトシンク、腕・手は Web カメラで動かします。iPhone からの受信が止まっている間は、顔も Web カメラで動かします）
+- 背景を透過したアバターのスクリーンショットを撮る機能を追加（出力タブのボタンか、ショートカットキー（既定はテンキーの 6）で PNG を保存します。保存先は既定でピクチャの VRCast フォルダで、出力タブで変更できます）
+- まばたきに使う BlendShape をアバターごとに指定できる機能を追加（顔・表情タブで、両目と左右のウインクの BlendShape を一覧から選べます。自動で見つからないアバターや、違う形が選ばれるアバター向けです）
+- トラッキングタブに「手の位置をアバターに合わせる」を追加（腕の角度をまねるだけでなく、アバターの体格に合わせて手の位置を決めます。本人の手が顔の前にあれば、アバターの手も顔の前に来ます。既定 ON。OFF で以前の動きに戻ります）
+- 一定時間ごとの自動リセットを追加（操作・連携タブで ON にすると、1〜60 分ごとに顔の向き・視線・表情を起動したときと同じ状態へ戻します。顔の向き・視線は正面付近で頭を止めたときに取り直すので、よそ見中の向きは正面になりません。既定 OFF）
+
+[English]
+- Added "iPhone (VMC) face + MediaPipe hands" and "iFacialMocap face + MediaPipe hands" tracking sources (the face is driven by perfect sync from the iPhone and the arms and hands by the webcam; while nothing is received from the iPhone, the webcam drives the face too)
+- Added transparent-background avatar screenshots (save a PNG with the button in the Output tab or a shortcut key, Numpad 6 by default; files go to Pictures\VRCast by default, which can be changed in the Output tab)
+- Added a per-avatar choice of the blend shapes used for blinking (pick the shapes for both eyes and for left/right winks from a list in the Face & expressions tab, for avatars where they are not found automatically or the wrong ones are picked)
+- Added "Match hand positions to the avatar" to the Tracking tab (places the hands by the avatar's body size instead of only copying arm angles; a hand in front of your face stays in front of the avatar's face; on by default; turn it off for the previous behavior)
+- Added automatic reset at a fixed interval (turn it on in the Hotkeys / OSC tab to return the head, gaze and expression to their state at startup every 1 to 60 minutes; the head and gaze are reset when you hold your head still facing the front, so looking away is never taken as the front; off by default)
+
 ■ 2.0.0 (2026-10-12)
 
 [日本語]

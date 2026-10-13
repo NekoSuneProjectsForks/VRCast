@@ -35,6 +35,9 @@ namespace VRCast.Tracking
         private const float CalibrationStableAngle = 3f;
         private const float CalibrationStableSeconds = 0.5f;
 
+        // 自動リセットで取り直すのは、今の正面からこの角度（度）以内で静止したときだけ（よそ見を正面にしないため）
+        private const float RecalibrationMaxAngle = 20f;
+
         // 見失った顔を再検出した直後、頭の向きを使わない秒数（再検出直後の不正確な値で頭が跳ねないように）
         private const float ReacquireSettleSeconds = 0.3f;
 
@@ -135,6 +138,10 @@ namespace VRCast.Tracking
         // 自動キャリブレーションの静止判定の基準の向きと、その向きになった時刻
         private Quaternion _stableReference = Quaternion.identity;
         private float _stableSince;
+
+        // 自動リセットで頼まれ、正面付近で静止するのを待っている取り直し（頭の向き・視線）
+        private bool _pendingHead;
+        private bool _pendingGaze;
 
         // 前フレームに受信していたかと、再検出直後で頭の向きを使わない期限
         private bool _wasReceived;
@@ -311,6 +318,9 @@ namespace VRCast.Tracking
         /// </summary>
         public void Calibrate()
         {
+            // 待っていた自動リセットの取り直しは、これで済んだことにする
+            _pendingHead = false;
+
             // 受信済みフレームが無ければ次のフレームで行う
             _calibrated = IsTracking;
             _neutral = _lastFrame.HeadRotation;
@@ -326,8 +336,31 @@ namespace VRCast.Tracking
         /// </summary>
         public void CalibrateGaze()
         {
+            // 待っていた自動リセットの取り直しは、これで済んだことにする
+            _pendingGaze = false;
+
             // 有効なフレームが来たときに取り直す
             _gazeCalibrated = false;
+        }
+
+        /// <summary>
+        /// 自動リセットで待っている取り直しがあれば true（正面付近で静止するのを待っている）。
+        /// </summary>
+        public bool RecalibrationPending => _pendingHead || _pendingGaze;
+
+        /// <summary>
+        /// 起動時と同じく、頭が正面付近で静止したところで頭の向き・視線を取り直すよう頼む（自動リセット用）。
+        /// すぐに取り直す Calibrate と違い、よそ見中や動いている間は待つので、頭の動きは止めない。
+        /// </summary>
+        public void RequestRecalibration(bool head, bool gaze)
+        {
+            // 前の依頼が残っていれば合わせる
+            _pendingHead |= head;
+            _pendingGaze |= gaze;
+
+            // 静止の計測は今から始める
+            _stableReference = _lastFrame.HeadRotation;
+            _stableSince = Time.unscaledTime;
         }
 
         private static Quaternion RestOf(Transform bone)
@@ -348,13 +381,15 @@ namespace VRCast.Tracking
             bool received = !Suspended && _settings.trackingEnabled && _provider != null
                 && _provider.TryGetFrame(out _lastFrame);
 
-            // 無効化中や入力元・カメラの変更後は、次に映ったときに正面を取り直す
+            // 無効化中や顔の入力元（併用で iPhone と Web カメラが入れ替わったときを含む）・カメラの変更後は、
+            // 次に映ったときに正面を取り直す
             // （顔を見失っただけなら正面は保持する。再検出直後の不正確な向きで取り直すと以後ずっとずれるため）
-            if (!_settings.trackingEnabled || _settings.trackingSource != _calibratedSource
+            TrackingSource faceSource = _provider != null ? _provider.FaceSource : _settings.trackingSource;
+            if (!_settings.trackingEnabled || faceSource != _calibratedSource
                 || _settings.trackerCamera != _calibratedCamera)
             {
                 _calibrated = false;
-                _calibratedSource = _settings.trackingSource;
+                _calibratedSource = faceSource;
                 _calibratedCamera = _settings.trackerCamera;
             }
 
@@ -385,6 +420,11 @@ namespace VRCast.Tracking
             {
                 TryAutoCalibrate();
             }
+            // 自動リセットの依頼があれば、正面付近で静止したところで取り直す
+            else if (received && RecalibrationPending)
+            {
+                TryPendingRecalibration();
+            }
 
             // パーフェクトシンクは ARKit の値を受信中（MediaPipe・VMC・iFacialMocap）・設定 ON・対応アバターのときだけ
             IsPerfectSyncActive = received && _settings.trackingPerfectSync
@@ -414,6 +454,36 @@ namespace VRCast.Tracking
             if (now - _stableSince >= CalibrationStableSeconds)
             {
                 Calibrate();
+            }
+        }
+
+        private void TryPendingRecalibration()
+        {
+            // 静止の判定は起動時の自動キャリブレーションと同じ（動いていれば計測をやり直す）
+            float now = Time.unscaledTime;
+            if (now < _settleUntil
+                || Quaternion.Angle(_stableReference, _lastFrame.HeadRotation) > CalibrationStableAngle)
+            {
+                _stableReference = _lastFrame.HeadRotation;
+                _stableSince = now;
+                return;
+            }
+
+            // 静止が足りない・今の正面から大きく外れている（よそ見・下を向いている等）なら待つ
+            if (now - _stableSince < CalibrationStableSeconds
+                || Quaternion.Angle(_neutral, _lastFrame.HeadRotation) > RecalibrationMaxAngle)
+            {
+                return;
+            }
+
+            // 頭の向きを取り直すなら視線も一緒に、視線だけなら視線だけを取り直す
+            if (_pendingHead)
+            {
+                Calibrate();
+            }
+            else
+            {
+                CalibrateGaze();
             }
         }
 

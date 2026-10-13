@@ -17,6 +17,8 @@ VRCast から同じ手順で起動・カメラ一覧取得ができる。
     pose        体が映っているか
     arms        左肩・右肩・左肘・右肘・左手首・右手首の world 座標（m）
     visibility  arms の各点の可視度
+    head        鼻・左目・右目の world 座標（m。arms と同じ座標系。手の位置を顔に合わせるのに使う）
+    headVisibility head の各点の可視度
     leftHand    左手 21 点の world 座標（映っていなければ空）
     rightHand   右手 21 点の world 座標（映っていなければ空）
 
@@ -100,6 +102,8 @@ BLENDSHAPE_NAMES = (
 
 # Pose Landmarker の点番号（左肩・右肩・左肘・右肘・左手首・右手首）
 POSE_ARM_POINTS = (11, 12, 13, 14, 15, 16)
+# Pose Landmarker の点番号（鼻・左目・右目。腕と同じ world 座標で顔の位置を送る）
+POSE_HEAD_POINTS = (0, 2, 5)
 POSE_LEFT_WRIST = 15
 POSE_RIGHT_WRIST = 16
 
@@ -478,6 +482,9 @@ class Smoother:
         self._head_position = OneEuroFilter(HEAD_POSITION_FILTER)
         self._arms = OneEuroFilter(ARM_FILTER)
         self._visibility = OneEuroFilter(VISIBILITY_FILTER)
+        # 体の推定の顔の点（鼻・両目）は腕と同じ強さで平滑化する
+        self._head_points = OneEuroFilter(ARM_FILTER)
+        self._head_visibility = OneEuroFilter(VISIBILITY_FILTER)
         self._hands = {
             "leftHand": OneEuroFilter(HAND_FILTER),
             "rightHand": OneEuroFilter(HAND_FILTER),
@@ -522,10 +529,17 @@ class Smoother:
         if not packet["pose"]:
             self._arms.reset()
             self._visibility.reset()
+            self._head_points.reset()
+            self._head_visibility.reset()
             return
         packet["arms"] = rounded(self._arms.apply(packet["arms"], now))
         packet["visibility"] = rounded(
             self._visibility.apply(packet["visibility"], now))
+        # 顔の点も同じく平滑化する
+        packet["head"] = rounded(
+            self._head_points.apply(packet["head"], now))
+        packet["headVisibility"] = rounded(
+            self._head_visibility.apply(packet["headVisibility"], now))
 
 
 def landmark_box(landmarks):
@@ -940,15 +954,21 @@ def pose_fields(result):
     """体の推定結果を腕の送信フィールドにする（映っていなければ pose = False）。"""
     # world 座標と可視度の両方がそろったときだけ体あり
     if not result.pose_world_landmarks or not result.pose_landmarks:
-        return {"pose": False, "arms": [], "visibility": []}
+        return {"pose": False, "arms": [], "visibility": [],
+                "head": [], "headVisibility": []}
     world = result.pose_world_landmarks[0]
     image = result.pose_landmarks[0]
     points = [world[index] for index in POSE_ARM_POINTS]
+    # 顔の点（鼻・両目）も腕と同じ world 座標で送る（手を顔の前に合わせる基準）
+    head = [world[index] for index in POSE_HEAD_POINTS]
     return {
         "pose": True,
         "arms": flatten_points(points),
         "visibility": rounded(image[index].visibility
                               for index in POSE_ARM_POINTS),
+        "head": flatten_points(head),
+        "headVisibility": rounded(image[index].visibility
+                                  for index in POSE_HEAD_POINTS),
     }
 
 

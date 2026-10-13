@@ -1,18 +1,26 @@
 using System.Threading.Tasks;
 using UnityEngine;
+using VRCast.Core;
 using VRCast.Output;
+using VRCast.Platform;
 using VRCast.Rendering;
 
 namespace VRCast.UI
 {
     /// <summary>
-    /// Output タブ（仮想カメラの ON/OFF、ドライバーの登録・解除と状態、Spout2 の ON/OFF と状態）。
+    /// Output タブ（仮想カメラの ON/OFF、ドライバーの登録・解除と状態、Spout2 の ON/OFF と状態、
+    /// 背景透過のスクリーンショットの保存先と撮影）。
     /// </summary>
     public class OutputSection
     {
+        // 保存先フォルダの入力欄の最大文字数（Windows の長いパスに余裕を持たせる）
+        private const int MaxFolderLength = 260;
+
         private readonly VirtualCameraOutput _output;
         private readonly SpoutOutput _spout;
         private readonly RenderingController _rendering;
+        private readonly AvatarScreenshot _screenshot;
+        private readonly AppSettings _settings;
 
         // 現在の登録状態（表示時に毎回レジストリを読まないよう、開始時・方式の切り替え時・登録・解除の後に更新）と、読んだときの方式
         private VirtualCameraRegistration _registration;
@@ -23,11 +31,14 @@ namespace VRCast.UI
         private bool _hasResult;
         private string _error;
 
-        public OutputSection(VirtualCameraOutput output, SpoutOutput spout, RenderingController rendering)
+        public OutputSection(VirtualCameraOutput output, SpoutOutput spout, RenderingController rendering,
+            AvatarScreenshot screenshot, AppSettings settings)
         {
             _output = output;
             _spout = spout;
             _rendering = rendering;
+            _screenshot = screenshot;
+            _settings = settings;
             _registration = output.GetRegistration();
             _registrationMediaFoundation = output.UseMediaFoundation;
         }
@@ -65,6 +76,93 @@ namespace VRCast.UI
 
             GuiControls.EndCard();
             DrawSpout();
+            DrawScreenshot();
+        }
+
+        private void DrawScreenshot()
+        {
+            GuiControls.BeginCard(Loc.T("Screenshot (transparent background)", "スクリーンショット（背景透過）",
+                "스크린샷 (배경 투명)", "截图（背景透明）", "截圖（背景透明）"));
+            GuiControls.Hint(Loc.T(
+                "Saves the avatar as it looks on screen as a PNG with a transparent background (this panel is not included). " +
+                "Also available from the button at the bottom of the panel and its shortcut key (default: numeric keypad 6).",
+                "画面と同じ見た目のアバターを、背景を透過した PNG で保存します（このパネルは写りません）。" +
+                "パネル下部のボタンやショートカットキー（既定はテンキーの 6）でも撮れます。",
+                "화면과 같은 모습의 아바타를 배경이 투명한 PNG로 저장합니다 (이 패널은 찍히지 않습니다). " +
+                "패널 아래 버튼이나 단축키 (기본값: 숫자 키패드 6)로도 찍을 수 있습니다.",
+                "将与画面相同外观的虚拟形象保存为背景透明的 PNG（不包含此面板）。也可用面板底部的按钮或快捷键（默认：小键盘 6）拍摄。",
+                "將與畫面相同外觀的虛擬形象儲存為背景透明的 PNG（不包含此面板）。也可用面板底部的按鈕或快捷鍵（預設：數字鍵台 6）拍攝。"));
+
+            // 保存先（空欄なら既定の保存先。入力中は空白を消さず、使うときに前後の空白・" を除く）
+            _settings.screenshotFolder = GuiControls.TextField(
+                Loc.T("Save to", "保存先", "저장 위치", "保存位置", "儲存位置"), _settings.screenshotFolder,
+                MaxFolderLength);
+            bool useDefault = PathUtility.NormalizeInput(_settings.screenshotFolder).Length == 0;
+            GuiControls.Hint(useDefault
+                ? Loc.T("Empty = ", "空欄 = ", "비워 두면 = ", "留空 = ", "留空 = ") + AvatarScreenshot.DefaultFolder
+                : _screenshot.Folder);
+
+            GUILayout.BeginHorizontal();
+
+            // 今すぐ撮る
+            if (GUILayout.Button(Loc.T("Take screenshot", "今すぐ撮る", "지금 찍기", "立即截图", "立即截圖"),
+                    GuiControls.Shrinkable))
+            {
+                _screenshot.Capture();
+            }
+
+            // 保存先をエクスプローラーで開く（まだ無ければ作ってから開く）
+            if (GUILayout.Button(Loc.T("Open folder", "フォルダを開く", "폴더 열기", "打开文件夹", "開啟資料夾"),
+                    GuiControls.Shrinkable))
+            {
+                OpenScreenshotFolder();
+            }
+
+            // 既定の保存先へ戻す
+            GUI.enabled = !useDefault;
+            if (GUILayout.Button(Loc.T("Use default", "既定に戻す", "기본값으로", "恢复默认", "恢復預設"),
+                    GuiControls.Shrinkable))
+            {
+                _settings.screenshotFolder = string.Empty;
+            }
+
+            GUI.enabled = true;
+            GUILayout.EndHorizontal();
+
+            // 直前の結果（失敗の理由は英語のまま添える）
+            if (_screenshot.LastError != null)
+            {
+                GuiControls.Warning(Loc.T("Could not save: ", "保存できませんでした: ", "저장하지 못했습니다: ",
+                    "无法保存：", "無法儲存：") + _screenshot.LastError);
+            }
+            else if (_screenshot.LastPath != null)
+            {
+                GuiControls.Hint(Loc.T("Saved: ", "保存しました: ", "저장했습니다: ", "已保存：", "已儲存：")
+                    + _screenshot.LastPath);
+            }
+
+            GuiControls.EndCard();
+        }
+
+        private void OpenScreenshotFolder()
+        {
+            // 保存先を作ってから開く（作れない・開けないときは理由を残す）
+            string folder = _screenshot.Folder;
+            try
+            {
+                System.IO.Directory.CreateDirectory(folder);
+            }
+            catch (System.Exception e) when (e is System.IO.IOException || e is System.UnauthorizedAccessException
+                || e is System.ArgumentException || e is System.NotSupportedException)
+            {
+                VRCastLog.Warning("Screenshot", $"Could not create {folder}: {e.Message}");
+                return;
+            }
+
+            if (!FolderOpener.Open(folder, out string error))
+            {
+                VRCastLog.Warning("Screenshot", "Failed to open the screenshot folder: " + error);
+            }
         }
 
         private void DrawSpout()

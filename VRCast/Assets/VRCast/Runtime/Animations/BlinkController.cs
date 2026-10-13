@@ -9,6 +9,7 @@ namespace VRCast.Animations
     /// まばたき。ランダム間隔の自動まばたき（AppSettings.autoBlink で ON/OFF）と、外部（トラッキング）からの左右別の閉じ具合。
     /// AppSettings.blinkPausedByExpression なら、ニュートラル以外の表情を出している間はどちらも止めて開いたままにする。
     /// 両目用の BlendShape には左右の小さい方（両目とも閉じている分）、片目用（ウインク）には左右の差分を上乗せし、二重に閉じないようにする。
+    /// 使う BlendShape は、アバターごとの指定（BlinkShapeOverride）が有効ならそれを、無ければアバターのまぶた設定を使う。
     /// </summary>
     public class BlinkController : MonoBehaviour
     {
@@ -32,6 +33,13 @@ namespace VRCast.Animations
 
         private readonly List<BlendShapeOverlay> _overlays = new List<BlendShapeOverlay>();
         private readonly List<EyeSide> _sides = new List<EyeSide>();
+
+        // 追加済みの BlendShape（パスと名前。同じ BlendShape に 2 つの上乗せを作らないため）
+        private readonly HashSet<(string, string)> _added = new HashSet<(string, string)>();
+
+        // 作り直しに使うアバターのルートとまぶた設定
+        private Transform _root;
+        private EyelidData _eyelids;
         private AppSettings _settings;
         private ExpressionController _expressions;
         private float _nextBlinkTime;
@@ -62,33 +70,120 @@ namespace VRCast.Animations
 
         /// <summary>
         /// expressions は表情中にまばたきを止める設定のために見る（無ければ止めない）。
+        /// custom はアバターごとのまばたきの BlendShape の指定（無効・null ならまぶた設定を使う）。
         /// </summary>
-        public void Initialize(Transform root, EyelidData data, AppSettings settings, ExpressionController expressions)
+        public void Initialize(Transform root, EyelidData data, BlinkShapeOverride custom, AppSettings settings,
+            ExpressionController expressions)
         {
+            _root = root;
+            _eyelids = data;
             _settings = settings;
             _expressions = expressions;
+            Build(custom);
+            ScheduleNext();
+        }
 
+        /// <summary>
+        /// まばたきの BlendShape の指定が変わったときに作り直す（今の上乗せは元の値へ戻してから）。
+        /// </summary>
+        public void Rebuild(BlinkShapeOverride custom)
+        {
+            // 未初期化なら何もしない
+            if (_root == null)
+            {
+                return;
+            }
+
+            Write(0f, 0f);
+            Build(custom);
+        }
+
+        /// <summary>
+        /// アバターのまぶた設定（自動）を指定の形で返す（指定を始めるときの初期値に使う）。
+        /// </summary>
+        public BlinkShapeOverride DescribeAutomatic()
+        {
+            var automatic = new BlinkShapeOverride();
+            if (_eyelids == null)
+            {
+                return automatic;
+            }
+
+            // 両目用は片目用と別名の最初のもの、片目用は左右そろっているときだけ
+            foreach (string shape in _eyelids.blinkBlendShapes)
+            {
+                if (shape != _eyelids.winkLeftBlendShape && shape != _eyelids.winkRightBlendShape)
+                {
+                    automatic.both.Set(_eyelids.meshPath, shape);
+                    break;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(_eyelids.winkLeftBlendShape) && !string.IsNullOrEmpty(_eyelids.winkRightBlendShape))
+            {
+                automatic.left.Set(_eyelids.meshPath, _eyelids.winkLeftBlendShape);
+                automatic.right.Set(_eyelids.meshPath, _eyelids.winkRightBlendShape);
+            }
+
+            return automatic;
+        }
+
+        private void Build(BlinkShapeOverride custom)
+        {
+            // 前の対象を捨てる
+            _overlays.Clear();
+            _sides.Clear();
+            _added.Clear();
+
+            // 指定が有効ならそれを、無ければまぶた設定を使う
+            if (custom != null && custom.enabled)
+            {
+                BuildCustom(custom);
+            }
+            else if (_eyelids != null)
+            {
+                BuildFromEyelids(_eyelids);
+            }
+
+            // 左右とも片目用があればウインク可能
+            _hasBoth = _sides.Contains(EyeSide.Both);
+            HasWink = _sides.Contains(EyeSide.Left) && _sides.Contains(EyeSide.Right);
+        }
+
+        private void BuildFromEyelids(EyelidData data)
+        {
             // まばたき用 BlendShape（ウインクと同名なら片目用として扱う）
             foreach (string shape in data.blinkBlendShapes)
             {
                 EyeSide side = shape == data.winkLeftBlendShape ? EyeSide.Left
                     : shape == data.winkRightBlendShape ? EyeSide.Right
                     : EyeSide.Both;
-                Add(root, data.meshPath, shape, side);
+                Add(data.meshPath, shape, side);
             }
 
-            // ウインク用 BlendShape（まばたき用と別名のときだけ追加。左右揃った場合のみ）
+            // ウインク用 BlendShape（まばたき用と別名のときだけ追加される。左右揃った場合のみ）
             bool winkPair = !string.IsNullOrEmpty(data.winkLeftBlendShape) && !string.IsNullOrEmpty(data.winkRightBlendShape);
             if (winkPair)
             {
-                AddIfNew(root, data.meshPath, data.winkLeftBlendShape, data.blinkBlendShapes, EyeSide.Left);
-                AddIfNew(root, data.meshPath, data.winkRightBlendShape, data.blinkBlendShapes, EyeSide.Right);
+                Add(data.meshPath, data.winkLeftBlendShape, EyeSide.Left);
+                Add(data.meshPath, data.winkRightBlendShape, EyeSide.Right);
+            }
+        }
+
+        private void BuildCustom(BlinkShapeOverride custom)
+        {
+            // 両目用（未指定なら片目用の左右だけで閉じる）
+            if (custom.both.IsSet)
+            {
+                Add(custom.both.path, custom.both.blendShape, EyeSide.Both);
             }
 
-            // 左右とも片目用があればウインク可能
-            _hasBoth = _sides.Contains(EyeSide.Both);
-            HasWink = _sides.Contains(EyeSide.Left) && _sides.Contains(EyeSide.Right);
-            ScheduleNext();
+            // 片目用は左右そろったときだけ（片方だけでは両目のまばたきで片目しか閉じない）
+            if (custom.HasWinkPair)
+            {
+                Add(custom.left.path, custom.left.blendShape, EyeSide.Left);
+                Add(custom.right.path, custom.right.blendShape, EyeSide.Right);
+            }
         }
 
         /// <summary>
@@ -109,23 +204,20 @@ namespace VRCast.Animations
             _hasExternal = false;
         }
 
-        private void Add(Transform root, string meshPath, string shape, EyeSide side)
+        private void Add(string meshPath, string shape, EyeSide side)
         {
+            // 同じ BlendShape に 2 つの上乗せを作らない（互いの書き込みを元の値と誤認して閉じたままになる）
+            if (!_added.Add((meshPath ?? string.Empty, shape)))
+            {
+                return;
+            }
+
             // 見つかった BlendShape だけを対象にする
-            BlendShapeOverlay overlay = BlendShapeOverlay.Create(root, meshPath, shape);
+            BlendShapeOverlay overlay = BlendShapeOverlay.Create(_root, meshPath, shape);
             if (overlay != null)
             {
                 _overlays.Add(overlay);
                 _sides.Add(side);
-            }
-        }
-
-        private void AddIfNew(Transform root, string meshPath, string shape, string[] existing, EyeSide side)
-        {
-            // 同じ BlendShape に 2 つの上乗せを作らない（互いの書き込みを元の値と誤認して閉じたままになる）
-            if (System.Array.IndexOf(existing, shape) < 0)
-            {
-                Add(root, meshPath, shape, side);
             }
         }
 

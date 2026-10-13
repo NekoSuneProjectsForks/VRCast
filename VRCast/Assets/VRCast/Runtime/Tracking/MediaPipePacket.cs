@@ -25,6 +25,12 @@ namespace VRCast.Tracking
         public const int LeftWrist = 4;
         public const int RightWrist = 5;
 
+        // 体の推定の顔の点の数と並び（鼻・左目・右目）
+        public const int HeadPointCount = 3;
+        private const int Nose = 0;
+        private const int LeftEye = 1;
+        private const int RightEye = 2;
+
         // 手の点の数
         public const int HandPointCount = 21;
 
@@ -63,6 +69,10 @@ namespace VRCast.Tracking
             public bool pose;
             public float[] arms;
             public float[] visibility;
+
+            // 体の推定の顔の点: HeadPointCount 点の world 座標と可視度（古いトラッカーは送らず null）
+            public float[] head;
+            public float[] headVisibility;
 
             // 手: 本人の左手・右手の 21 点の world 座標（映っていなければ空）
             public float[] leftHand;
@@ -125,6 +135,7 @@ namespace VRCast.Tracking
             if (message.pose)
             {
                 ReadArms(message.arms, message.visibility, ref body);
+                ReadHead(message.head, message.headVisibility, ref body);
             }
 
             // 手の左右は体のラベル（本人基準）に合わせて送られてくるため、そのまま使う
@@ -198,6 +209,29 @@ namespace VRCast.Tracking
                 Elbow = ToUnity(points, elbow),
                 Wrist = ToUnity(points, wrist),
             };
+        }
+
+        private static void ReadHead(float[] points, float[] visibility, ref BodyTrackingFrame body)
+        {
+            // 要素数の不一致・非有限値（古いトラッカーは null）は顔の位置なし
+            bool sized = points != null && points.Length == HeadPointCount * 3
+                && visibility != null && visibility.Length == HeadPointCount;
+            if (!sized || !TrackingMath.AllFinite(points) || !TrackingMath.AllFinite(visibility))
+            {
+                return;
+            }
+
+            // 両目が映っていればその中点、無ければ鼻を顔の位置にする
+            if (visibility[LeftEye] >= MinVisibility && visibility[RightEye] >= MinVisibility)
+            {
+                body.HasFace = true;
+                body.Face = (ToUnity(points, LeftEye) + ToUnity(points, RightEye)) * 0.5f;
+            }
+            else if (visibility[Nose] >= MinVisibility)
+            {
+                body.HasFace = true;
+                body.Face = ToUnity(points, Nose);
+            }
         }
 
         private static Vector3[] ReadHand(float[] values)

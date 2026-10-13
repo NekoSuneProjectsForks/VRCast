@@ -96,6 +96,7 @@ namespace VRCast.UI
         private GraphicsSection _graphicsSection;
         private OutputSection _outputSection;
         private ShortcutSection _shortcutSection;
+        private AutoResetSection _autoResetSection;
         private RemoteSection _remoteSection;
         private PerformanceSection _performanceSection;
         private SettingsSection _settingsSection;
@@ -147,7 +148,10 @@ namespace VRCast.UI
             _trackingSection = new TrackingSection(session, tracker, trackerProcess, skeleton, settings);
             _displaySection = new DisplaySection(orbit, rendering, settings);
             _graphicsSection = new GraphicsSection(rendering);
-            _outputSection = new OutputSection(virtualCamera, spout, rendering);
+
+            // 背景透過のスクリーンショットは画面と同じカメラの視点で撮る（出力タブ・パネル下部のボタン・ショートカットキーで共用）
+            var screenshot = new AvatarScreenshot(orbit.GetComponent<UnityEngine.Camera>(), settings);
+            _outputSection = new OutputSection(virtualCamera, spout, rendering, screenshot, settings);
             _shortcutSection = new ShortcutSection(session, settings);
             _remoteSection = new RemoteSection(session, remote, settings);
             _performanceSection = new PerformanceSection(settings, rendering);
@@ -157,9 +161,14 @@ namespace VRCast.UI
                 new LogSection(trackerProcess, tracker, settings));
 
             // リセットはパネル下部のボタンとショートカットキー（パネルを隠していても動く）で共用する
-            var resetActions = new ResetActions(session, orbit, settings);
+            var resetActions = new ResetActions(session, orbit, screenshot, settings);
             _resetBar = new ResetBar(resetActions, settings);
             gameObject.AddComponent<ResetHotkeyListener>().Initialize(resetActions, session, settings);
+
+            // 一定時間ごとの自動リセット（パネルを隠していても動く）
+            var autoReset = gameObject.AddComponent<AutoResetScheduler>();
+            autoReset.Initialize(session, settings);
+            _autoResetSection = new AutoResetSection(autoReset, settings);
             _performanceBar = new PerformanceBar(settings, tracker, trackerProcess);
 
             // ウィンドウへのドロップで読み込む
@@ -626,6 +635,7 @@ namespace VRCast.UI
                     break;
                 case Tab.Control:
                     _shortcutSection.Draw();
+                    _autoResetSection.Draw();
                     _remoteSection.Draw();
                     break;
                 case Tab.Performance:

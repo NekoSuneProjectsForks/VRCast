@@ -5,7 +5,10 @@ using VRCast.Core;
 namespace VRCast.Tracking
 {
     /// <summary>
-    /// 腕・手（指）のトラッキングをアバターへ適用する。各ボーンを「子ボーンへの向き」がトラッキングの点の向きに一致するよう回す。
+    /// 腕・手（指）のトラッキングをアバターへ適用する。
+    /// 腕は設定 trackingArmMatchAvatar（既定 ON）なら、手首の位置を本人の体格からアバターの体格へ写して 2 関節 IK で届かせる
+    /// （手首が顔に近いほど顔を基準にし、本人の手が顔の前ならアバターの手も顔の前に来る。ArmIk）。OFF なら上腕・前腕の向きを合わせる。
+    /// 手首・指は各ボーンを「子ボーンへの向き」がトラッキングの点の向きに一致するよう回す。
     /// 腕・手が映っていない間は待機ポーズへ戻し、全く使っていない間はボーンを触らない（待機ポーズの変更を妨げない）。
     /// 上半身の傾き（FaceTrackingDriver）の後、揺れもの（PhysBoneSimulator）の前に実行する。
     /// </summary>
@@ -18,6 +21,10 @@ namespace VRCast.Tracking
 
         // 映った・消えたときに待機ポーズとの間を切り替える秒数
         private const float FadeSeconds = 0.3f;
+
+        // 本人の腕の長さ（肩→肘→手首、m）をなめらかに追う秒数と、体格の比に使う下限（推定が潰れたときに手が飛ばないように）
+        private const float ArmLengthSmoothSeconds = 1f;
+        private const float MinTrackedArmLength = 0.3f;
 
         // 手首の可動域（前腕に沿って伸ばした向きからの角度）。曲げ・反らし・横振りと、前腕まわりのひねり
         // 腕の交差などで手の推定が崩れたときに、手首が人には無理な向きへ折れるのを防ぐ
@@ -87,28 +94,45 @@ namespace VRCast.Tracking
             public Quaternion[] Snapshot;
             public Quaternion[] Applied;
 
-            // 平滑化済みの上腕・前腕の向きと手の 21 点（アバタールート基準）
-            public Vector3 UpperDirection;
-            public Vector3 LowerDirection;
+            // 平滑化済みの肩→肘・肩→手首・顔→手首（アバタールート基準、本人の m）と手の 21 点（アバタールート基準）
+            public Vector3 ElbowFromShoulder;
+            public Vector3 WristFromShoulder;
+            public Vector3 WristFromFace;
             public Vector3[] HandPoints = new Vector3[MediaPipePacket.HandPointCount];
 
-            // 届いた値（上腕・前腕の向き、手の 21 点）へ描画の毎フレームなめらかに寄せる
-            public readonly PointSmoother ArmPath = new PointSmoother(2, ArmSmoothTime);
+            // なめらかに追った本人の腕の長さ（m。0 = まだ無い）
+            public float TrackedLength;
+
+            // 届いた値（肩→肘・肩→手首・顔→手首、手の 21 点）へ描画の毎フレームなめらかに寄せる
+            public readonly PointSmoother ArmPath = new PointSmoother(ArmSampleCount, ArmSmoothTime);
             public readonly PointSmoother HandPath = new PointSmoother(MediaPipePacket.HandPointCount, HandSmoothTime);
 
-            // 届いた値をアバタールート基準へ直す作業領域（毎回の確保を避ける）
-            public readonly Vector3[] ArmSample = new Vector3[2];
+            // 届いた値をアバタールート基準へ直す作業領域（毎回の確保を避ける。顔→手首は顔が映らない間は前の値のまま）
+            public readonly Vector3[] ArmSample = new Vector3[ArmSampleCount];
             public readonly Vector3[] HandSample = new Vector3[MediaPipePacket.HandPointCount];
 
-            // 待機ポーズ（0）とトラッキング（1）の混ぜ具合
+            // 待機ポーズ（0）とトラッキング（1）の混ぜ具合と、顔を基準にした位置合わせを使う割合（顔が映っているか）
             public float ArmWeight;
             public float HandWeight;
+            public float FaceWeight;
         }
+
+        // 腕の値の並び（肩→肘・肩→手首・顔→手首）
+        private const int ArmSampleCount = 3;
+        private const int ElbowSample = 0;
+        private const int WristSample = 1;
+        private const int FaceSample = 2;
 
         private IBodyTrackingProvider _provider;
         private AppSettings _settings;
         private ArmRig _left;
         private ArmRig _right;
+
+        // アバターの顔の位置の基準（両目のボーン、無ければ頭のボーンと、その座標系での目の高さの点）
+        private Transform _leftEye;
+        private Transform _rightEye;
+        private Transform _head;
+        private Vector3 _headFaceOffset;
 
         // 待機ポーズを記録してボーンを操作中なら true
         private bool _engaged;
@@ -139,6 +163,37 @@ namespace VRCast.Tracking
 
             _left = CreateRig(animator, LeftBones);
             _right = CreateRig(animator, RightBones);
+
+            // 顔の位置の基準。目のボーンが無ければ、頭のボーンから首→頭の長さほど上（目の高さの目安）を頭と一緒に動かす
+            _leftEye = animator.GetBoneTransform(HumanBodyBones.LeftEye);
+            _rightEye = animator.GetBoneTransform(HumanBodyBones.RightEye);
+            _head = animator.GetBoneTransform(HumanBodyBones.Head);
+            Transform neck = animator.GetBoneTransform(HumanBodyBones.Neck);
+            if (_head != null)
+            {
+                float rise = neck != null ? Vector3.Distance(neck.position, _head.position) : 0.1f;
+                _headFaceOffset = _head.InverseTransformPoint(_head.position + transform.up * rise);
+            }
+        }
+
+        private bool TryGetFaceAnchor(out Vector3 anchor)
+        {
+            // 両目があればその中点（頭の向き・体の傾きを反映した今の位置）
+            if (_leftEye != null && _rightEye != null)
+            {
+                anchor = (_leftEye.position + _rightEye.position) * 0.5f;
+                return true;
+            }
+
+            // 無ければ頭のボーンと一緒に動く目の高さの点
+            if (_head != null)
+            {
+                anchor = _head.TransformPoint(_headFaceOffset);
+                return true;
+            }
+
+            anchor = default;
+            return false;
         }
 
         private static ArmRig CreateRig(Animator animator, HumanBodyBones[] ids)
@@ -239,8 +294,8 @@ namespace VRCast.Tracking
             // 鏡像モードでは本人の右腕がアバターの左腕
             bool mirror = _settings.trackingMirror;
             float now = Time.unscaledTime;
-            UpdateTargets(_left, mirror ? frame.Right : frame.Left, received, fresh, now);
-            UpdateTargets(_right, mirror ? frame.Left : frame.Right, received, fresh, now);
+            UpdateTargets(_left, mirror ? frame.Right : frame.Left, frame, received, fresh, now);
+            UpdateTargets(_right, mirror ? frame.Left : frame.Right, frame, received, fresh, now);
             IsTracking = received && (HasWeight(_left) || HasWeight(_right));
 
             // 操作中に待機ポーズが変更されていたら記録し直す
@@ -283,7 +338,8 @@ namespace VRCast.Tracking
             return rig != null && (rig.ArmWeight > 0f || rig.HandWeight > 0f);
         }
 
-        private void UpdateTargets(ArmRig rig, ArmTrackingData data, bool received, bool fresh, float now)
+        private void UpdateTargets(ArmRig rig, ArmTrackingData data, BodyTrackingFrame frame, bool received, bool fresh,
+            float now)
         {
             // 対象外の腕は何もしない
             if (rig == null)
@@ -293,20 +349,35 @@ namespace VRCast.Tracking
 
             float fade = Time.deltaTime / FadeSeconds;
 
-            // 腕: 新しい値が届いたら目標にし、毎フレームなめらかに寄せた向きを使う（映り始めは寄せずに合わせる）
+            // 腕: 新しい値が届いたら目標にし、毎フレームなめらかに寄せた位置を使う（映り始めは寄せずに合わせる）
             bool hasArm = received && data.HasArm;
+            bool hasFace = hasArm && frame.HasFace;
             if (hasArm)
             {
                 if (fresh || !rig.ArmPath.HasValue)
                 {
-                    rig.ArmSample[0] = ToAvatar(data.Elbow - data.Shoulder).normalized;
-                    rig.ArmSample[1] = ToAvatar(data.Wrist - data.Elbow).normalized;
+                    rig.ArmSample[ElbowSample] = ToAvatar(data.Elbow - data.Shoulder);
+                    rig.ArmSample[WristSample] = ToAvatar(data.Wrist - data.Shoulder);
+
+                    // 顔が映っていなければ顔→手首は前の値のまま（顔を基準にする割合を下げていく）
+                    if (hasFace)
+                    {
+                        rig.ArmSample[FaceSample] = ToAvatar(data.Wrist - frame.Face);
+                    }
+
                     rig.ArmPath.Push(rig.ArmSample, now);
                 }
 
                 rig.ArmPath.Update(now);
-                rig.UpperDirection = rig.ArmPath.Current[0].normalized;
-                rig.LowerDirection = rig.ArmPath.Current[1].normalized;
+                rig.ElbowFromShoulder = rig.ArmPath.Current[ElbowSample];
+                rig.WristFromShoulder = rig.ArmPath.Current[WristSample];
+                rig.WristFromFace = rig.ArmPath.Current[FaceSample];
+
+                // 本人の腕の長さ（上腕 + 前腕）をなめらかに追う（体格の比に使う。推定の奥行きの揺れで手が伸び縮みしないように）
+                float length = rig.ElbowFromShoulder.magnitude + (rig.WristFromShoulder - rig.ElbowFromShoulder).magnitude;
+                rig.TrackedLength = rig.TrackedLength > 0f
+                    ? Mathf.Lerp(rig.TrackedLength, length, 1f - Mathf.Exp(-Time.deltaTime / ArmLengthSmoothSeconds))
+                    : length;
             }
             else
             {
@@ -339,6 +410,7 @@ namespace VRCast.Tracking
             // 映っている間はトラッキングへ、消えたら待機ポーズへ徐々に切り替える（最後の値を保持したまま）
             rig.ArmWeight = Mathf.MoveTowards(rig.ArmWeight, hasArm ? 1f : 0f, fade);
             rig.HandWeight = Mathf.MoveTowards(rig.HandWeight, hasHand ? 1f : 0f, fade);
+            rig.FaceWeight = Mathf.MoveTowards(rig.FaceWeight, hasFace ? 1f : 0f, fade);
         }
 
         private Vector3 ToAvatar(Vector3 cameraVector)
@@ -357,11 +429,10 @@ namespace VRCast.Tracking
 
             RestoreSnapshot(rig);
 
-            // 腕: 上腕 → 前腕の順に向きを合わせる（親を回してから子の現在の向きを求める）
+            // 腕: 手首の位置を合わせる（できなければ上腕 → 前腕の順に向きを合わせる）
             if (rig.ArmWeight > 0f)
             {
-                Aim(rig, UpperArm, rig.UpperDirection, rig.ArmWeight);
-                Aim(rig, LowerArm, rig.LowerDirection, rig.ArmWeight);
+                ApplyArm(rig);
             }
 
             // 手: 手首の向きを合わせてから、各指を付け根側から順に合わせる
@@ -378,6 +449,57 @@ namespace VRCast.Tracking
                     }
                 }
             }
+        }
+
+        private void ApplyArm(ArmRig rig)
+        {
+            Transform upper = rig.Bones[UpperArm];
+            Transform lower = rig.Bones[LowerArm];
+            Transform hand = rig.Bones[Hand];
+            Vector3 upperDirection = rig.ElbowFromShoulder;
+            Vector3 lowerDirection = rig.WristFromShoulder - rig.ElbowFromShoulder;
+
+            // アバターの上腕・前腕の長さ（手のボーンが無い・潰れていれば位置は合わせられない）
+            float upperLength = Vector3.Distance(upper.position, lower.position);
+            float lowerLength = hand != null ? Vector3.Distance(lower.position, hand.position) : 0f;
+            bool matchPosition = _settings.trackingArmMatchAvatar && upperLength > 1e-4f && lowerLength > 1e-4f
+                && rig.TrackedLength > 0f;
+
+            // 位置を合わせない（設定 OFF・合わせられない）ときは、上腕 → 前腕の順に向きを合わせる（親を回してから子の向きを求める）
+            if (!matchPosition)
+            {
+                Aim(rig, UpperArm, upperDirection, rig.ArmWeight);
+                Aim(rig, LowerArm, lowerDirection, rig.ArmWeight);
+                return;
+            }
+
+            // 本人の腕の長さに対するアバターの腕の長さの比で、本人の m をアバターの大きさへ直す
+            Quaternion root = transform.rotation;
+            float scale = (upperLength + lowerLength) / Mathf.Max(rig.TrackedLength, MinTrackedArmLength);
+
+            // 肩を基準にした手首の目標（腕の届き方は本人と同じ割合）
+            Vector3 target = upper.position + root * (rig.WristFromShoulder * scale);
+
+            // 手首が顔に近いほど、アバターの顔を基準にした目標へ寄せる（顔の正面の手はめり込まない手前に置く）
+            if (rig.FaceWeight > 0f && TryGetFaceAnchor(out Vector3 face))
+            {
+                float near = ArmIk.FaceWeight(rig.WristFromFace.magnitude) * rig.FaceWeight;
+                if (near > 0f)
+                {
+                    Vector3 fromFace = ArmIk.KeepInFrontOfFace(rig.WristFromFace) * scale;
+                    target = Vector3.Lerp(target, face + root * fromFace, near);
+                }
+            }
+
+            // 本人の肘の曲げ方の向きで、届く肘の位置を求める
+            Vector3 bend = root * ArmIk.BendDirection(rig.ElbowFromShoulder, rig.WristFromShoulder);
+            Vector3 elbow = ArmIk.SolveElbow(upper.position, upperLength, lowerLength, target, bend,
+                root * upperDirection, out _);
+
+            // 上腕を肘へ、前腕を手首の目標へ向ける（アバタールート基準の向きにして渡す）
+            Quaternion toRoot = Quaternion.Inverse(root);
+            Aim(rig, UpperArm, toRoot * (elbow - upper.position), rig.ArmWeight);
+            Aim(rig, LowerArm, toRoot * (target - lower.position), rig.ArmWeight);
         }
 
         private void Aim(ArmRig rig, int index, Vector3 avatarDirection, float weight)

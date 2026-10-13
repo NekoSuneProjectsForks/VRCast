@@ -42,7 +42,7 @@ namespace VRCast.Editor.Build
         private const string ProductName = "VRCast";
 
         // アプリのバージョン（CHANGELOG.txt と converter の package.json の version に合わせる）
-        private const string AppVersion = "2.0.0";
+        private const string AppVersion = "2.1.0";
 
         // 初回起動時のウィンドウサイズ（以降は settings.json の値を使う）
         private const int DefaultWidth = 1280;
@@ -275,8 +275,8 @@ namespace VRCast.Editor.Build
             // 入力元ごとに Trackers/(フォルダ) 以下に実行ファイルがあればビルド後に同梱される（BundledTrackerCopier）
             foreach (TrackingSource source in (TrackingSource[])System.Enum.GetValues(typeof(TrackingSource)))
             {
-                // 外部アプリから受信する入力元には同梱版が無い
-                if (!TrackingSourceInfo.UsesBundledTracker(source))
+                // 外部アプリ・併用の入力元には自分の同梱版が無い
+                if (!TrackingSourceInfo.IsBundledTracker(source))
                 {
                     continue;
                 }

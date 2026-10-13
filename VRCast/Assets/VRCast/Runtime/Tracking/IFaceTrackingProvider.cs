@@ -1,3 +1,5 @@
+using VRCast.Core;
+
 namespace VRCast.Tracking
 {
     /// <summary>
@@ -14,6 +16,11 @@ namespace VRCast.Tracking
         /// 直近 1 秒に受信したフレーム数（途絶・無効時は 0）。
         /// </summary>
         int FramesPerSecond { get; }
+
+        /// <summary>
+        /// 顔のフレームを受け取っている入力元（併用では外部アプリか MediaPipe か）。変わったら頭の正面を取り直す。
+        /// </summary>
+        TrackingSource FaceSource { get; }
 
         /// <summary>
         /// 有効かつ新しいフレームがあれば true。途絶・無効時は false。
