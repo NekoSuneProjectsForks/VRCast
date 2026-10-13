@@ -16,6 +16,7 @@ Newest first. Each version is written in Japanese, then English.
 - 設定プリセットの書き出しを JSON ファイル（.json）に変更（以前の版で書き出した .vrcastpreset もこれまでどおり読み込めます）
 - アニメーションで動く小物の揺れものが、動きを打ち消して元の姿勢に戻ってしまう問題を修正（VRChat と同じく、動いた姿勢に揺れを重ねます）
 - まばたきの動きがカクつく問題を修正（トラッキング・自動まばたきとも、なめらかに閉じて開くようにしました）
+- トラッキングの値を表示している間、設定画面がガタつく問題を修正（状態の表示が太字に切り替わらないようにしました）
 
 [English]
 - Added "iPhone (VMC) face + MediaPipe hands" and "iFacialMocap face + MediaPipe hands" tracking sources (the face is driven by perfect sync from the iPhone and the arms and hands by the webcam; while nothing is received from the iPhone, the webcam drives the face too)
@@ -27,6 +28,7 @@ Newest first. Each version is written in Japanese, then English.
 - Changed settings presets to be exported as JSON files (.json); presets saved by older versions (.vrcastpreset) can still be loaded
 - Fixed PhysBones on animated props cancelling the animation and snapping back to their original pose (the sway is now added on top of the animated pose, like in VRChat)
 - Fixed choppy blinking (both tracked and automatic blinks now close and open smoothly)
+- Fixed the settings screen jittering while live tracking values were shown (status lines no longer switch to bold text)
 
 ■ 2.0.0 (2026-10-12)
 

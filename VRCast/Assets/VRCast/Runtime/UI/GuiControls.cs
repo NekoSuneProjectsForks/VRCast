@@ -192,12 +192,12 @@ namespace VRCast.UI
         }
 
         /// <summary>
-        /// 状態の 1 行（ok なら緑の太字、そうでなければ控えめな文字）。
+        /// 状態の 1 行（ok なら緑、そうでなければ控えめな文字。大きさは同じで、切り替わっても UI がずれない）。
         /// </summary>
         public static void Status(string text, bool ok)
         {
             UiTheme theme = UiTheme.Current;
-            GUIStyle style = theme == null ? GUI.skin.label : ok ? theme.SuccessWrapped : theme.Hint;
+            GUIStyle style = theme == null ? GUI.skin.label : ok ? theme.HintSuccess : theme.Hint;
             GUILayout.Label(text, style);
         }
 

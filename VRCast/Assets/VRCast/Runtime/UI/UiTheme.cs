@@ -225,6 +225,9 @@ namespace VRCast.UI
 
         // 長い結果の文（成功は緑・失敗は赤の太字で、幅に合わせて折り返す）
         public GUIStyle SuccessWrapped { get; private set; }
+
+        // 状態の 1 行の正常時（Hint と同じ大きさで緑。切り替わっても行の高さ・幅が変わらない）
+        public GUIStyle HintSuccess { get; private set; }
         public GUIStyle ErrorWrapped { get; private set; }
 
         /// <summary>
@@ -358,6 +361,8 @@ namespace VRCast.UI
             ErrorText.normal.textColor = DangerColor;
             SuccessWrapped = new GUIStyle(Success) { wordWrap = true };
             ErrorWrapped = new GUIStyle(ErrorText) { wordWrap = true };
+            HintSuccess = new GUIStyle(Hint);
+            HintSuccess.normal.textColor = SuccessColor;
         }
 
         private void BuildButton()
