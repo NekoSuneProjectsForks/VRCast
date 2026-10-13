@@ -471,14 +471,18 @@ namespace VRCast.UI
             if (!face)
             {
                 FinishWithoutImage(hybrid, hybrid != null
-                    ? Loc.T("No face was found in the image.", "画像から顔を見つけられませんでした。", "이미지에서 얼굴을 찾지 못했습니다.",
-                        "未能在图像中找到面部。", "未能在影像中找到臉部。")
+                    ? Loc.T(
+                        "No face was found in the image. Press \"Face the camera\", or change the view slightly (zoom in or out, move it a little) and try again.",
+                        "画像から顔を見つけられませんでした。「顔を正面に」を押すか、視点を少し変えて（拡大・縮小したり、位置を少しずらしたり）再試行してください。",
+                        "이미지에서 얼굴을 찾지 못했습니다. '얼굴 정면으로'를 누르거나 시점을 조금 바꿔서(확대·축소하거나 위치를 조금 옮겨서) 다시 시도하세요.",
+                        "未能在图像中找到面部。请按“正对脸部”，或稍微改变视角（放大·缩小或稍微移动位置）后重试。",
+                        "未能在影像中找到臉部。請按「正對臉部」，或稍微改變視角（放大·縮小或稍微移動位置）後重試。")
                     : Loc.T(
-                        "No face was found in the image. Cartoon faces are often hard to recognize; try \"From blend shapes\" or face the camera first.",
-                        "画像から顔を見つけられませんでした。アニメ調の顔は認識しにくいことがあります。「BlendShape から」を試すか、顔を正面に向けてからやり直してください。",
-                        "이미지에서 얼굴을 찾지 못했습니다. 애니메이션풍 얼굴은 인식하기 어려울 수 있습니다. 'BlendShape에서'를 시도하거나 얼굴을 정면으로 한 뒤 다시 하세요.",
-                        "未能在图像中找到面部。动漫风格的脸可能难以识别。请尝试“从 BlendShape”，或先正对脸部后重试。",
-                        "未能在影像中找到臉部。動漫風格的臉可能難以辨識。請嘗試「從 BlendShape」，或先正對臉部後重試。"));
+                        "No face was found in the image. Cartoon faces are often hard to recognize. Press \"Face the camera\", or change the view slightly (zoom in or out, move it a little) and try again, or try \"From blend shapes\".",
+                        "画像から顔を見つけられませんでした。アニメ調の顔は認識しにくいことがあります。「顔を正面に」を押すか、視点を少し変えて（拡大・縮小したり、位置を少しずらしたり）再試行するか、「BlendShape から」を試してください。",
+                        "이미지에서 얼굴을 찾지 못했습니다. 애니메이션풍 얼굴은 인식하기 어려울 수 있습니다. '얼굴 정면으로'를 누르거나 시점을 조금 바꿔서(확대·축소하거나 위치를 조금 옮겨서) 다시 시도하거나, 'BlendShape에서'를 시도하세요.",
+                        "未能在图像中找到面部。动漫风格的脸可能难以识别。请按“正对脸部”，或稍微改变视角（放大·缩小或稍微移动位置）后重试，或尝试“从 BlendShape”。",
+                        "未能在影像中找到臉部。動漫風格的臉可能難以辨識。請按「正對臉部」，或稍微改變視角（放大·縮小或稍微移動位置）後重試，或嘗試「從 BlendShape」。"));
                 return;
             }
 

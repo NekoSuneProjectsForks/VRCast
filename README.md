@@ -440,7 +440,7 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
 - 「自動で置く」の 3 つのボタンで、まだ打っていない目印を自動で置ける（手で打った目印は変えない。置いたら数を表示し、Undo で取り消せる。ずれた目印はドラッグで直す）。
   **From blend shapes**（BlendShape から）はアバターのまばたき・「あ」「う」・眉の BlendShape で動く頂点から目・唇・あご・口角・眉・鼻先を求める。顔の肌の目・口の穴の縁（閉じた唇の線を含む）があればその線に沿って置き、まつ毛・眉・歯などの部品には置かない（BlendShape が無い部位は比率で目安の位置に置き、メッセージに名前を出す）。
   **Image recognition**（画像認識）は今の視点の顔のまわりを画像にして同梱の MediaPipe トラッカーで顔の点を求め、顔の肌に当てる（顔を正面に向けてから押す。アニメ調の顔は見つからないことがある。数秒〜数十秒かかり、その間も視点は動かせる）。
-  **Blend shapes + image recognition**（BlendShape + 画像認識）は BlendShape から点を打ち、その点に合わせて MediaPipe の点のずれを補正してから、BlendShape では求められない目印（頬・小鼻・エラ・目安の位置だった目印など）を補う。顔が見つからなければ BlendShape の結果だけを置く。
+  **Blend shapes + image recognition**（BlendShape + 画像認識。おすすめとして一番上に緑の文字で表示）は BlendShape から点を打ち、その点に合わせて MediaPipe の点のずれを補正してから、BlendShape では求められない目印（頬・小鼻・エラ・目安の位置だった目印など）を補う。顔が見つからなければ BlendShape の結果だけを置く。
 - 少ない段階で打たない目印（目頭・目尻・鼻先・頬・エラなど）は、打った目印から推定する。生成には最小の段階の目印（両目の上下・眉・口角・上下の唇・あご）が必要。
 - 「このアバターに無い部位」で **Brows**（眉）・**Nose**（鼻）・**Inside of the mouth**（口の中）を選ぶと、その部位の目印は打たずに済み（眉は目の上に推定する）、
   その部位の形状（眉: browDown / browInnerUp / browOuterUp、鼻: noseSneer、口の中: jawOpen・mouthClose・mouthFunnel・mouthLowerDown・mouthUpperUp）は既定で「なし」になる

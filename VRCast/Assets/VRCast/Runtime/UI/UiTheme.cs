@@ -208,6 +208,9 @@ namespace VRCast.UI
         // 長い文字のボタン（幅に収まらなければ折り返して高くする。目印の名前が入るボタンなど）
         public GUIStyle WrapButton { get; private set; }
 
+        // おすすめの操作を示す、文字を緑にした長い文字のボタン
+        public GUIStyle RecommendedWrapButton { get; private set; }
+
         // 実際に動かして試すトグルボタン（OFF は緑の塗り、ON はアクセント色。長い文字は折り返す）
         public GUIStyle TryButton { get; private set; }
 
@@ -384,6 +387,11 @@ namespace VRCast.UI
             OverflowButton = new GUIStyle(Skin.button) { clipping = TextClipping.Overflow };
             // 折り返した最終行の代替フォントの字形が下へはみ出しても切らない
             WrapButton = new GUIStyle(Skin.button) { wordWrap = true, clipping = TextClipping.Overflow };
+            RecommendedWrapButton = new GUIStyle(WrapButton);
+            RecommendedWrapButton.normal.textColor = SuccessColor;
+            RecommendedWrapButton.hover.textColor = SuccessColor;
+            RecommendedWrapButton.active.textColor = SuccessColor;
+            RecommendedWrapButton.focused.textColor = SuccessColor;
 
             // 開閉ボタン（記号が削れないよう余白を無くし、スイッチと同じ高さ・上下の余白にして縦位置をそろえる）
             FoldButton = new GUIStyle(Skin.button)
