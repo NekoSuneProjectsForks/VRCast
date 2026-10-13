@@ -18,10 +18,15 @@ namespace VRCast.Animations
         private const float MaxInterval = 6f;
 
         // 閉じる・閉じたまま・開くの時間（秒）
-        private const float CloseDuration = 0.06f;
-        private const float HoldDuration = 0.04f;
-        private const float OpenDuration = 0.12f;
+        private const float CloseDuration = 0.07f;
+        private const float HoldDuration = 0.05f;
+        private const float OpenDuration = 0.16f;
         private const float TotalDuration = CloseDuration + HoldDuration + OpenDuration;
+
+        // 表示する閉じ具合を目標へ寄せる速さ（1/秒）。閉じるときは速く、開くときはややゆっくり
+        // （トラッキングの値は描画より粗い間隔で届くため、そのまま書くと段々に動く）
+        private const float CloseSharpness = 60f;
+        private const float OpenSharpness = 30f;
 
         // BlendShape が受け持つ目（アバターから見た左右）
         private enum EyeSide
@@ -49,6 +54,10 @@ namespace VRCast.Animations
         private bool _hasExternal;
         private float _externalLeft;
         private float _externalRight;
+
+        // 今表示している左右の閉じ具合（0〜1）
+        private float _shownLeft;
+        private float _shownRight;
 
         // まばたき開始時刻（負なら非まばたき中）
         private float _blinkStart = -1f;
@@ -233,7 +242,7 @@ namespace VRCast.Animations
             if (Suspended || IsPausedByExpression)
             {
                 SuspendAuto();
-                Write(0f, 0f);
+                Show(0f, 0f);
                 return;
             }
 
@@ -241,7 +250,7 @@ namespace VRCast.Animations
             if (_hasExternal)
             {
                 SuspendAuto();
-                Write(_externalLeft, _externalRight);
+                Show(_externalLeft, _externalRight);
                 return;
             }
 
@@ -249,7 +258,7 @@ namespace VRCast.Animations
             if (!_settings.autoBlink)
             {
                 SuspendAuto();
-                Write(0f, 0f);
+                Show(0f, 0f);
                 return;
             }
 
@@ -282,7 +291,21 @@ namespace VRCast.Animations
                 }
             }
 
-            Write(closed, closed);
+            Show(closed, closed);
+        }
+
+        private void Show(float left, float right)
+        {
+            // 目標へなめらかに寄せてから書く（モードの切り替わりでも跳ねない）
+            _shownLeft = Approach(_shownLeft, left);
+            _shownRight = Approach(_shownRight, right);
+            Write(_shownLeft, _shownRight);
+        }
+
+        private static float Approach(float current, float target)
+        {
+            float sharpness = target > current ? CloseSharpness : OpenSharpness;
+            return Mathf.Lerp(current, target, 1f - Mathf.Exp(-sharpness * Time.deltaTime));
         }
 
         // ニュートラル以外の表情を出していて、その間は止める設定なら true
@@ -313,10 +336,11 @@ namespace VRCast.Animations
 
         private static float Evaluate(float elapsed)
         {
-            // 閉じる途中
+            // 閉じる途中（加速して閉じきる）
             if (elapsed < CloseDuration)
             {
-                return elapsed / CloseDuration;
+                float t = elapsed / CloseDuration;
+                return t * t;
             }
 
             // 閉じたまま
@@ -325,8 +349,9 @@ namespace VRCast.Animations
                 return 1f;
             }
 
-            // 開く途中
-            return 1f - Mathf.Clamp01((elapsed - CloseDuration - HoldDuration) / OpenDuration);
+            // 開く途中（ゆっくり開き始めて減速しながら開ききる）
+            float open = Mathf.Clamp01((elapsed - CloseDuration - HoldDuration) / OpenDuration);
+            return 1f - Mathf.SmoothStep(0f, 1f, open);
         }
 
         private void ScheduleNext()
