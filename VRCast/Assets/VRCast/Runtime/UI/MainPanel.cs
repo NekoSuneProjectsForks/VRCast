@@ -154,6 +154,12 @@ namespace VRCast.UI
             _outputSection = new OutputSection(virtualCamera, spout, rendering, screenshot, settings);
             _shortcutSection = new ShortcutSection(session, settings);
             _remoteSection = new RemoteSection(session, remote, settings);
+
+            // パーフェクトシンク化の編集中は、外部からアバターを切り替えさせない（編集中のアバターが消えるため）
+            if (remote != null)
+            {
+                remote.AvatarSwitchBlocker = () => _perfectSyncEditor.IsOpen ? "the perfect sync editor is open" : null;
+            }
             _performanceSection = new PerformanceSection(settings, rendering);
             _presetSection = new PresetSection(settings, ReapplySettings);
             _settingsSection = new SettingsSection(settings, rendering, ResetAllSettings, _presetSection);
@@ -274,6 +280,9 @@ namespace VRCast.UI
             // 詳細ログの ON/OFF を反映（設定のリセットにも追従するよう毎フレーム）
             LogBuffer.DetailEnabled = _settings.detailedLogging;
 
+            // 表情のキャリブレーションの記録を進める（タブを切り替えても続ける）
+            _trackingSection.Update();
+
             // 表示切替（隠すと背景も透過）。表情のキーの割り当て中は、押したキーでパネルを消さない
             if (Input.GetKeyDown(ToggleKey) && !HotkeyPoller.Suspended)
             {
@@ -356,6 +365,9 @@ namespace VRCast.UI
                 _windowRect = GUILayout.Window(
                     WindowId, _windowRect, DrawWindow, GUIContent.none, _theme.Skin.window,
                     GUILayout.Width(_windowRect.width), GUILayout.Height(_windowRect.height));
+
+                // 表情のキャリブレーション中は、何の顔をするかを画面の上中央に大きく出す
+                ExpressionCalibrationControls.DrawOverlay(_trackingSection.CalibrationRecorder, Screen.width / scale);
             }
 
             GUI.backgroundColor = previousBackground;

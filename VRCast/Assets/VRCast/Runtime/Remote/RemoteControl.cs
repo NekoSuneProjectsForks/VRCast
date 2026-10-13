@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -52,6 +53,11 @@ namespace VRCast.Remote
             public string current = string.Empty;
             public bool manual;
             public string[] expressions = new string[0];
+
+            // 表示中のアバター（拡張子を除いたファイル名、空 = なし）・読み込み中か・切り替えに使える名前
+            public string avatar = string.Empty;
+            public bool loading;
+            public string[] avatars = new string[0];
         }
 
         private readonly byte[] _buffer = new byte[65536];
@@ -75,6 +81,11 @@ namespace VRCast.Remote
         /// HTTP の待ち受けの状態（表示用）。
         /// </summary>
         public string HttpStatus { get; private set; } = "Disabled";
+
+        /// <summary>
+        /// アバターを切り替えられない理由を返す（切り替えられるなら null。パーフェクトシンク化の編集中など）。
+        /// </summary>
+        public Func<string> AvatarSwitchBlocker { get; set; }
 
         public void Initialize(AvatarSession session, AppSettings settings)
         {
@@ -332,23 +343,27 @@ namespace VRCast.Remote
                 return;
             }
 
-            // 操作して、結果と今の状態を返す
-            bool ok = Run(command, $"HTTP {request.Path}", out string error);
+            // 操作して、結果と今の状態を返す（読み込み中などで今はできないなら 409、対象が無ければ 404）
+            bool ok = Run(command, $"HTTP {request.Path}", out string error, out bool busy);
             Response response = StatusResponse();
             response.ok = ok;
             response.error = error ?? string.Empty;
-            Send(socket, ok ? 200 : 404, ok ? "OK" : "Not Found", JsonUtility.ToJson(response));
+            int status = ok ? 200 : busy ? 409 : 404;
+            Send(socket, status, ok ? "OK" : busy ? "Conflict" : "Not Found", JsonUtility.ToJson(response));
         }
 
         private void Run(RemoteCommand command, string source)
         {
-            Run(command, source, out _);
+            Run(command, source, out _, out _);
         }
 
-        private bool Run(RemoteCommand command, string source, out string error)
+        private bool Run(RemoteCommand command, string source, out string error, out bool busy)
         {
-            // 表示中のアバターの表情に対して行い、結果を詳細ログへ残す
-            bool ok = command.Execute(CurrentExpressions(), out error);
+            // アバターの切り替えか、表示中のアバターの表情に対して行い、結果を詳細ログへ残す
+            busy = false;
+            bool ok = command.Action == RemoteAction.Avatar
+                ? SwitchAvatar(command.Name, out error, out busy)
+                : command.Execute(CurrentExpressions(), out error);
             if (ok)
             {
                 VRCastLog.Detail(LogCategory, $"{source}: {command.Action} {command.Name ?? command.Index.ToString()}");
@@ -361,6 +376,44 @@ namespace VRCast.Remote
             return ok;
         }
 
+        private bool SwitchAvatar(string name, out string error, out bool busy)
+        {
+            error = null;
+            busy = false;
+
+            // 切り替えられない状態（編集中・読み込み中）
+            string blocked = AvatarSwitchBlocker?.Invoke();
+            if (blocked == null && _session != null && _session.IsLoading)
+            {
+                blocked = "an avatar is loading";
+            }
+
+            if (blocked != null || _session == null)
+            {
+                error = blocked ?? "avatars are not available";
+                busy = true;
+                return false;
+            }
+
+            // 一度読み込んだアバターの中からファイル名で探す（任意のパスは読まない）
+            string path = RemoteAvatars.Find(_settings.KnownAvatars(), name, File.Exists);
+            if (path == null)
+            {
+                error = $"avatar not found: {name}";
+                return false;
+            }
+
+            // 表示中のアバターなら何もしない
+            LoadedAvatar current = _session.Current;
+            if (current != null && string.Equals(current.SourcePath, path, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            _session.Load(path);
+            return true;
+        }
+
         private ExpressionController CurrentExpressions()
         {
             // 表示中のアバターが無ければ null
@@ -370,8 +423,20 @@ namespace VRCast.Remote
 
         private Response StatusResponse()
         {
-            // 選択中の表情・手動で固定中か・表情の一覧（Pose タブの並び順。番号はこの位置 + 1）
+            // 表示中のアバターと、切り替えに使える名前（新しい順）
             var response = new Response();
+            if (_session != null)
+            {
+                response.loading = _session.IsLoading;
+                response.avatar = _session.Current != null ? RemoteAvatars.NameOf(_session.Current.SourcePath) : string.Empty;
+            }
+
+            if (_settings != null)
+            {
+                response.avatars = RemoteAvatars.Names(_settings.KnownAvatars(), File.Exists).ToArray();
+            }
+
+            // 選択中の表情・手動で固定中か・表情の一覧（Pose タブの並び順。番号はこの位置 + 1）
             ExpressionController expressions = CurrentExpressions();
             if (expressions == null)
             {

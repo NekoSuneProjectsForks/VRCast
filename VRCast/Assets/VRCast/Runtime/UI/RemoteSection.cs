@@ -27,6 +27,11 @@ namespace VRCast.UI
         // 表情のコマンドに toggle を付けて表示するか（同じ表情をもう一度送ると自動検出へ戻る。保存しない表示の切替）
         private bool _toggle = true;
 
+        // アバターのコマンドに並べる名前と、次に読み直す時刻（ファイルの有無を毎回確かめないよう間隔を空ける）
+        private const float AvatarNamesRefreshSeconds = 2f;
+        private List<string> _avatarNames = new List<string>();
+        private float _avatarNamesRefreshAt;
+
         public RemoteSection(AvatarSession session, RemoteControl remote, AppSettings settings)
         {
             _avatar = new AvatarComponentCache(session);
@@ -49,7 +54,46 @@ namespace VRCast.UI
             _avatar.Refresh();
             DrawGeneral();
             DrawCommonCommands();
+            DrawAvatarCommands();
             DrawExpressionCommands();
+        }
+
+        private void DrawAvatarCommands()
+        {
+            GuiControls.BeginCard(Loc.T("Avatar commands (HTTP)", "アバターのコマンド（HTTP）", "아바타 명령 (HTTP)",
+                "虚拟形象命令（HTTP）", "虛擬形象命令（HTTP）"));
+            GuiControls.Hint(Loc.T(
+                "Switches to an avatar you have opened in VRCast before, by its file name (with or without the extension). Other files cannot be opened this way. Not available while the perfect sync editor is open.",
+                "VRCast で一度開いたことのあるアバターに、ファイル名（拡張子は省略可）で切り替えます。それ以外のファイルはこの方法では開けません。パーフェクトシンク化の編集中は使えません。",
+                "VRCast에서 한 번 연 적이 있는 아바타로 파일 이름(확장자 생략 가능)으로 전환합니다. 그 밖의 파일은 이 방법으로 열 수 없습니다. 퍼펙트 싱크화 편집 중에는 사용할 수 없습니다.",
+                "按文件名（可省略扩展名）切换到在 VRCast 中打开过的虚拟形象。其他文件无法用此方式打开。完美同步化编辑期间不可用。",
+                "依檔案名稱（可省略副檔名）切換到在 VRCast 中開啟過的虛擬形象。其他檔案無法用此方式開啟。完美同步化編輯期間不可用。"));
+
+            // 記録のあるアバター（新しい順。ファイルが無いものは出さない）。ファイルの確認は間隔を空けて Layout のときだけ行う
+            if (Event.current.type == EventType.Layout && Time.unscaledTime >= _avatarNamesRefreshAt)
+            {
+                _avatarNames = RemoteAvatars.Names(_settings.KnownAvatars(), System.IO.File.Exists);
+                _avatarNamesRefreshAt = Time.unscaledTime + AvatarNamesRefreshSeconds;
+            }
+
+            List<string> names = _avatarNames;
+            if (names.Count == 0)
+            {
+                GuiControls.Hint(Loc.T("Open an avatar once to list its command here.",
+                    "アバターを一度開くと、ここにコマンドが並びます。",
+                    "아바타를 한 번 열면 여기에 명령이 표시됩니다.",
+                    "打开一次虚拟形象后，命令会列在这里。",
+                    "開啟一次虛擬形象後，命令會列在這裡。"));
+            }
+
+            int port = _settings.remoteHttpPort;
+            foreach (string name in names)
+            {
+                GuiControls.SubHeading(name);
+                DrawCommand("HTTP", RemoteCommandText.HttpAvatar(port, name));
+            }
+
+            GuiControls.EndCard();
         }
 
         private void DrawGeneral()
@@ -60,11 +104,11 @@ namespace VRCast.UI
             _settings.remoteControlEnabled = GUILayout.Toggle(
                 _settings.remoteControlEnabled,
                 Loc.T("Enable external control", "外部から操作する", "외부 조작 사용", "启用外部操作", "啟用外部操作"));
-            GuiControls.Hint(Loc.T("Switch expressions from Stream Deck, OSC apps, curl, etc.",
-                "Stream Deck や OSC アプリ、curl などから表情を切り替えられます。",
-                "Stream Deck·OSC 앱·curl 등에서 표정을 전환할 수 있습니다.",
-                "可从 Stream Deck、OSC 应用、curl 等切换表情。",
-                "可從 Stream Deck、OSC 應用程式、curl 等切換表情。"));
+            GuiControls.Hint(Loc.T("Switch expressions (and avatars over HTTP) from Stream Deck, OSC apps, curl, etc.",
+                "Stream Deck や OSC アプリ、curl などから表情を（HTTP ではアバターも）切り替えられます。",
+                "Stream Deck·OSC 앱·curl 등에서 표정을 (HTTP로는 아바타도) 전환할 수 있습니다.",
+                "可从 Stream Deck、OSC 应用、curl 等切换表情（HTTP 还可切换虚拟形象）。",
+                "可從 Stream Deck、OSC 應用程式、curl 等切換表情（HTTP 還可切換虛擬形象）。"));
 
             // 待ち受けポート（範囲内の数値になったときだけ反映し、待ち受けが開き直す）と状態
             _settings.remoteOscPort = GuiControls.PortField(

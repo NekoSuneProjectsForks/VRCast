@@ -5,13 +5,14 @@ using VRCast.Animations;
 namespace VRCast.Remote
 {
     /// <summary>
-    /// 外部操作の種類（表情を選ぶ / 自動検出へ戻す / 状態を返すだけ）。
+    /// 外部操作の種類（表情を選ぶ / 自動検出へ戻す / 状態を返すだけ / アバターを切り替える）。
     /// </summary>
     public enum RemoteAction
     {
         Select,
         Auto,
         Status,
+        Avatar,
     }
 
     /// <summary>
@@ -44,6 +45,14 @@ namespace VRCast.Remote
         public static RemoteCommand SelectName(string name, bool toggle)
         {
             return new RemoteCommand(RemoteAction.Select, name, -1, toggle);
+        }
+
+        /// <summary>
+        /// 名前（ファイル名）でアバターを切り替える操作（RemoteControl が記録のあるアバターから探す）。
+        /// </summary>
+        public static RemoteCommand SelectAvatar(string name)
+        {
+            return new RemoteCommand(RemoteAction.Avatar, name, -1, false);
         }
 
         /// <summary>
@@ -99,6 +108,13 @@ namespace VRCast.Remote
                 return true;
             }
 
+            // アバターの切り替えは表情ではなく RemoteControl が行う
+            if (Action == RemoteAction.Avatar)
+            {
+                error = "avatar commands are not expression commands";
+                return false;
+            }
+
             // アバター・表情データが無ければ操作できない
             if (expressions == null || expressions.Names.Count == 0)
             {
@@ -127,7 +143,7 @@ namespace VRCast.Remote
 
         /// <summary>
         /// HTTP の要求を操作として読む（未知のパス・引数不足なら false）。
-        /// /expression?name=名前 または ?index=番号（toggle=1 で切り替え）、/neutral、/auto、/status。
+        /// /expression?name=名前 または ?index=番号（toggle=1 で切り替え）、/neutral、/auto、/status、/avatar?name=ファイル名。
         /// </summary>
         public static bool TryParseHttp(HttpRequest request, out RemoteCommand command)
         {
@@ -158,6 +174,15 @@ namespace VRCast.Remote
                     return true;
                 case "/auto":
                     command = Auto;
+                    return true;
+                case "/avatar":
+                    string avatar = request.QueryValue("name");
+                    if (string.IsNullOrWhiteSpace(avatar))
+                    {
+                        return false;
+                    }
+
+                    command = SelectAvatar(avatar);
                     return true;
                 case "":
                 case "/status":

@@ -246,11 +246,11 @@ namespace VRCast.Tracking
         /// 受信値を書き込む（毎フレーム呼ぶ）。range は入力元のまばたきの値の範囲。
         /// drivesBlink が false なら eyeBlinkLeft / Right は元の値へ戻して書かない（自動まばたきに任せる）。
         /// eyes はまばたきの補正（目の開きの補正・左右をそろえる補正。既定値なら補正なし）。
-        /// boost は口・頬の強調（既定値なら強調なし）。
+        /// boost は口・頬の強調（既定値なら強調なし）。jaw は口の開きの補正（既定値なら補正なし）。
         /// </summary>
         public void Apply(
             float[] scores, ArKitRange range, bool mirror, float deltaTime, bool drivesBlink, EyeAdjustment eyes = default,
-            PerfectSyncBoost boost = default)
+            PerfectSyncBoost boost = default, JawOpenAdjustment jaw = default)
         {
             // 要素数が合わない値は使わない
             if (scores == null || scores.Length != _targets.Length)
@@ -282,9 +282,10 @@ namespace VRCast.Tracking
                     continue;
                 }
 
-                // 左右を合わせた値（まばたきは補正済みの閉じ具合、口・頬は強調後）を平滑化して 0〜100 にする
+                // 左右を合わせた値（まばたきは補正済みの閉じ具合、口の開きは補正後、口・頬は強調後）を平滑化して 0〜100 にする
                 float target = i == EyeBlinkLeft ? blinkLeft
                     : i == EyeBlinkRight ? blinkRight
+                    : i == JawOpen ? jaw.Apply(Mathf.Clamp01(scores[SourceIndex(i, mirror)]))
                     : boost.Apply(i, Mathf.Clamp01(scores[SourceIndex(i, mirror)]));
 
                 _current[i] = Mathf.Lerp(_current[i], target, blend);

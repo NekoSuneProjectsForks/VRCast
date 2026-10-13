@@ -138,6 +138,15 @@ namespace VRCast.Tests
                 Assert.That(Weight(renderer, "jawOpen"), Is.EqualTo(50f).Within(0.01f));
                 Assert.That(Weight(renderer, "eyeBlinkRight"), Is.EqualTo(100f).Within(0.01f));
 
+                // 口の開きの補正: 無視する開き以下は閉じ、倍率で抑えられること（ほかの形は変わらない）
+                sync.Apply(scores, ArKitRange.MediaPipe, false, 10f, true, default, default,
+                    new JawOpenAdjustment { Deadzone = 0.5f });
+                Assert.That(Weight(renderer, "jawOpen"), Is.EqualTo(0f).Within(0.01f));
+                Assert.That(Weight(renderer, "mouthSmileRight"), Is.EqualTo(100f).Within(0.01f));
+                sync.Apply(scores, ArKitRange.MediaPipe, false, 10f, true, default, default,
+                    new JawOpenAdjustment { Gain = 0.5f });
+                Assert.That(Weight(renderer, "jawOpen"), Is.EqualTo(25f).Within(0.01f));
+
                 // 目の開きの補正: 閉じ切ったまばたきは閉じたまま、補正分までの半目は開いた目になること
                 var open = new EyeAdjustment { OpenOffset = 0.5f };
                 sync.Apply(scores, ArKitRange.MediaPipe, false, 10f, true, open);
@@ -168,6 +177,23 @@ namespace VRCast.Tests
                 UnityEngine.Object.DestroyImmediate(root);
                 UnityEngine.Object.DestroyImmediate(mesh);
             }
+        }
+
+        [Test]
+        public void JawOpenAdjustment_IgnoresSmallOpeningAndScales()
+        {
+            // 既定値は何も変えないこと
+            Assert.That(default(JawOpenAdjustment).Apply(0.3f), Is.EqualTo(0.3f).Within(0.0001f));
+
+            // 無視する開きまでは 0、残りは 0〜1 に広げること
+            var deadzone = new JawOpenAdjustment { Deadzone = 0.2f, Gain = 1f };
+            Assert.That(deadzone.Apply(0.15f), Is.EqualTo(0f).Within(0.0001f));
+            Assert.That(deadzone.Apply(0.6f), Is.EqualTo(0.5f).Within(0.0001f));
+            Assert.That(deadzone.Apply(1f), Is.EqualTo(1f).Within(0.0001f));
+
+            // 倍率で抑え・強め、1 を超えないこと
+            Assert.That(new JawOpenAdjustment { Gain = 0.5f }.Apply(0.8f), Is.EqualTo(0.4f).Within(0.0001f));
+            Assert.That(new JawOpenAdjustment { Gain = 2f }.Apply(0.8f), Is.EqualTo(1f).Within(0.0001f));
         }
 
         [Test]

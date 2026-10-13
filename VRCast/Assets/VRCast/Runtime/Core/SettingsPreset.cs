@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using UnityEngine;
 
 namespace VRCast.Core
@@ -36,6 +37,15 @@ namespace VRCast.Core
         NotPreset,
         Malformed,
         Empty,
+    }
+
+    /// <summary>
+    /// 書き出すファイルの形式（YAML は手で編集しやすいので推奨）。
+    /// </summary>
+    public enum PresetFormat
+    {
+        Yaml,
+        Json,
     }
 
     /// <summary>
@@ -75,21 +85,51 @@ namespace VRCast.Core
     }
 
     /// <summary>
-    /// 設定プリセット（.json）の書き出し・解析・適用。中身は人が読める JSON テキストで、設定はカテゴリごとのブロックに分ける。
+    /// 設定プリセット（.yaml / .json）の書き出し・解析・適用。中身は人が読めるテキストで、設定はカテゴリごとのブロックに分ける。
+    /// YAML は JSON と同じ構造（SimpleYaml で相互に変換）で、読み込みは拡張子でなく中身で判定する（{ で始まれば JSON）。
     /// 将来の版との互換のため、知らないカテゴリ・キーは無視し、無いキーは現在の値のまま残す。
     /// アバターごとの記録（シェイプキーの上限・視点・表情のキー等）と PC 固有の値は含めない。
     /// </summary>
     public static class SettingsPreset
     {
-        // 書き出す拡張子と、以前の版が書き出していた拡張子（中身は同じ形式なので読み込みだけ受け付ける）
-        public const string Extension = ".json";
+        // 書き出す拡張子と、以前の版が書き出していた拡張子（中身は JSON と同じ形式なので読み込みだけ受け付ける）
+        public const string YamlExtension = ".yaml";
+        public const string JsonExtension = ".json";
         public const string LegacyExtension = ".vrcastpreset";
 
         // 読み込みで受け付ける拡張子（ダイアログの絞り込み・ドロップの振り分け）
-        public static readonly string[] ImportExtensions = { Extension, LegacyExtension };
+        public static readonly string[] ImportExtensions = { YamlExtension, ".yml", JsonExtension, LegacyExtension };
 
-        // 書き出すときの最初のファイル名
-        public const string DefaultFileName = "VRCast-preset" + Extension;
+        // 書き出すときの最初のファイル名（拡張子を除く）
+        public const string DefaultFileStem = "VRCast-preset";
+
+        // YAML の先頭に付ける説明（# の行はコメント。日本語、英語の順）
+        private const string YamlHeader =
+            "# VRCast 設定プリセット / VRCast settings preset\n" +
+            "#\n" +
+            "# 「#」で始まる行はコメントです。設定の行を消すと、読み込むときその設定は今の値のままになります。\n" +
+            "# 文字列は引用符なしで書けます。数字や true / false に見える文字列は \"...\" で囲んでください。\n" +
+            "# 字下げは空白で書いてください（タブは使えません）。\n" +
+            "#\n" +
+            "# Lines starting with \"#\" are comments. Delete a setting's line to keep its current value when loading.\n" +
+            "# Text can be written without quotes. Put text that looks like a number or true / false in \"...\".\n" +
+            "# Indent with spaces (tabs are not allowed).\n" +
+            "\n";
+
+        // YAML のカテゴリの前に付けるコメント（日本語 / 英語）
+        private static readonly Dictionary<string, string> CategoryComments = new Dictionary<string, string>
+        {
+            ["performance"] = "動作最適化（軽量モード・優先度・CPU・GPU・トラッカーの動作） / Performance (low load, priority, CPU, GPU, tracker mode)",
+            ["display"] = "背景・カメラの固定 / Background and camera lock",
+            ["motion"] = "待機モーション・揺れもの・小物のアニメーション / Idle motion, physics and prop animations",
+            ["face"] = "まばたき・口パク / Blinking and lip sync",
+            ["tracking"] = "トラッキング / Tracking",
+            ["output"] = "出力（仮想カメラ・Spout2） / Output (virtual camera, Spout2)",
+            ["shortcuts"] = "ショートカットキー・OSC / HTTP / Shortcut keys and OSC / HTTP",
+            ["interface"] = "パネル（言語・大きさ・不透明度・テーマ・アップデート・ログ） / Panel (language, size, opacity, theme, updates, logs)",
+            ["avatarLook"] = "アバター関連: ライト・明るさ・輪郭線・ポーズ・向き / Avatar-related: light, brightness, outline, pose and direction",
+            ["expressionMapping"] = "アバター関連: 表情反映の割り当て・しきい値 / Avatar-related: expression mapping and thresholds",
+        };
 
         // 形式名・形式のバージョン（キー名の変更など互換性のない変更をしたら上げ、読み込み時に読み替える）
         public const string FormatName = "VRCastPreset";
@@ -120,7 +160,10 @@ namespace VRCast.Core
                 nameof(AppSettings.idleHeadMotion), nameof(AppSettings.idleMotionSpeed), nameof(AppSettings.physicsEnabled),
                 nameof(AppSettings.propAnimationsEnabled)),
             new PresetCategory("face", false,
-                nameof(AppSettings.autoBlink), nameof(AppSettings.blinkPausedByExpression), nameof(AppSettings.lipSyncEnabled),
+                nameof(AppSettings.autoBlink), nameof(AppSettings.blinkCloseSeconds), nameof(AppSettings.blinkHoldSeconds),
+                nameof(AppSettings.blinkOpenSeconds), nameof(AppSettings.blinkIntervalMin),
+                nameof(AppSettings.blinkIntervalMax),
+                nameof(AppSettings.blinkPausedByExpression), nameof(AppSettings.lipSyncEnabled),
                 nameof(AppSettings.micGain), nameof(AppSettings.micThreshold), nameof(AppSettings.lipSyncVowels),
                 nameof(AppSettings.lipSyncVoiceScale), nameof(AppSettings.lipSyncPausedByExpression),
                 nameof(AppSettings.trackingMouthPausedByExpression), nameof(AppSettings.showHiddenExpressions)),
@@ -132,7 +175,8 @@ namespace VRCast.Core
                 nameof(AppSettings.trackingHands), nameof(AppSettings.trackingArmMatchAvatar), nameof(AppSettings.trackingTorso),
                 nameof(AppSettings.trackingTorsoLockTwist), nameof(AppSettings.trackingLookAtCamera),
                 nameof(AppSettings.trackingPlantFeet), nameof(AppSettings.trackingPerfectSync),
-                nameof(AppSettings.trackingPerfectSyncAnyShape), nameof(AppSettings.trackingPerfectSyncBoost),
+                nameof(AppSettings.trackingPerfectSyncAnyShape), nameof(AppSettings.trackingJawOpenDeadzone),
+                nameof(AppSettings.trackingJawOpenGain), nameof(AppSettings.trackingPerfectSyncBoost),
                 nameof(AppSettings.trackingBoostPucker), nameof(AppSettings.trackingBoostMouth),
                 nameof(AppSettings.trackingBoostCheekPuff),
                 nameof(AppSettings.trackingBoostLips), nameof(AppSettings.trackingCheekPuffStart),
@@ -165,7 +209,8 @@ namespace VRCast.Core
                 nameof(AppSettings.thresholdSquint), nameof(AppSettings.thresholdPout)),
         };
 
-        // プリセットに含めないフィールド（形式・ウィンドウ・アバターごとの記録と、PC ごとに違うデバイス名・パス・ポート）
+        // プリセットに含めないフィールド（形式・ウィンドウ・アバターごとの記録と、PC ごとに違うデバイス名・パス・ポート、
+        // 本人の顔に合わせた表情のキャリブレーション）
         public static readonly IReadOnlyCollection<string> Excluded = new HashSet<string>
         {
             nameof(AppSettings.version),
@@ -183,10 +228,19 @@ namespace VRCast.Core
             nameof(AppSettings.iFacialMocapAddress),
             nameof(AppSettings.remoteOscPort),
             nameof(AppSettings.remoteHttpPort),
+            nameof(AppSettings.expressionCalibrations),
         };
 
         /// <summary>
-        /// パスが読み込める拡張子（.json・以前の .vrcastpreset）なら true。
+        /// 書き出す形式の拡張子。
+        /// </summary>
+        public static string ExtensionOf(PresetFormat format)
+        {
+            return format == PresetFormat.Yaml ? YamlExtension : JsonExtension;
+        }
+
+        /// <summary>
+        /// パスが読み込める拡張子（.yaml・.yml・.json・以前の .vrcastpreset）なら true。
         /// </summary>
         public static bool HasImportExtension(string path)
         {
@@ -220,6 +274,45 @@ namespace VRCast.Core
         /// 選んだカテゴリの設定をプリセットのテキストにする（カテゴリは Categories の並びで書く）。
         /// </summary>
         public static string Export(AppSettings settings, ICollection<string> categoryIds, string appVersion,
+            DateTimeOffset createdAt, PresetFormat format = PresetFormat.Json)
+        {
+            string json = ExportJson(settings, categoryIds, appVersion, createdAt);
+            if (format == PresetFormat.Json)
+            {
+                return json;
+            }
+
+            // 書き出した JSON は必ず変換できる形
+            SimpleYaml.TryFromJson(json, out string yaml);
+            return YamlHeader + AddCategoryComments(yaml);
+        }
+
+        private static string AddCategoryComments(string yaml)
+        {
+            // categories の直下（字下げ 2 段）のカテゴリの行の前に、空行とカテゴリの説明を入れる
+            var builder = new StringBuilder(yaml.Length + 1024);
+            bool inCategories = false;
+            foreach (string line in yaml.Split('\n'))
+            {
+                if (line == CategoriesKey + ":")
+                {
+                    inCategories = true;
+                }
+                else if (inCategories && line.Length > 3 && line[0] == ' ' && line[1] == ' ' && line[2] != ' '
+                         && line.EndsWith(":", StringComparison.Ordinal)
+                         && CategoryComments.TryGetValue(line.Substring(2, line.Length - 3), out string comment))
+                {
+                    builder.Append('\n').Append("  # ").Append(comment).Append('\n');
+                }
+
+                builder.Append(line).Append('\n');
+            }
+
+            // Split で増えた末尾の改行を 1 つに戻す
+            return builder.ToString().TrimEnd('\n') + "\n";
+        }
+
+        private static string ExportJson(AppSettings settings, ICollection<string> categoryIds, string appVersion,
             DateTimeOffset createdAt)
         {
             if (settings == null)
@@ -284,8 +377,16 @@ namespace VRCast.Core
                 return false;
             }
 
+            // { で始まらなければ YAML として JSON に直す
+            string json = text;
+            if (text != null && !LooksLikeJson(text) && !SimpleYaml.TryToJson(text, out json))
+            {
+                error = PresetError.Malformed;
+                return false;
+            }
+
             // 一番外側がオブジェクトでなければ壊れている
-            if (!JsonObjectText.TryParseObject(text, out List<KeyValuePair<string, string>> root))
+            if (!JsonObjectText.TryParseObject(json, out List<KeyValuePair<string, string>> root))
             {
                 error = PresetError.Malformed;
                 return false;
@@ -339,8 +440,9 @@ namespace VRCast.Core
             var blocks = new Dictionary<string, List<KeyValuePair<string, string>>>();
             foreach (KeyValuePair<string, string> block in blockTexts)
             {
+                // 知らないカテゴリと、中身を全部消したカテゴリ（YAML では値が null になる）は飛ばす
                 PresetCategory category = Find(block.Key);
-                if (category == null)
+                if (category == null || block.Value.Trim() == "null")
                 {
                     continue;
                 }
@@ -442,6 +544,20 @@ namespace VRCast.Core
             }
 
             return true;
+        }
+
+        private static bool LooksLikeJson(string text)
+        {
+            // 空白・BOM を除いた最初の文字が { なら JSON
+            foreach (char c in text)
+            {
+                if (!char.IsWhiteSpace(c) && c != '\uFEFF')
+                {
+                    return c == '{';
+                }
+            }
+
+            return false;
         }
 
         private static bool Contains(IReadOnlyList<string> fields, string field)

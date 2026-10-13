@@ -49,6 +49,14 @@ namespace VRCast.UI
         // 表情ごとに「自動」で推定されるプリセットの位置（FaceExpression の値で引く、-1 = なし）
         private readonly int[] _expressionGuesses = new int[(int)FaceExpressions.Last + 1];
 
+        // 表情のキャリブレーション（登録の操作と記録の進行）
+        private readonly ExpressionCalibrationControls _calibration = new ExpressionCalibrationControls();
+
+        /// <summary>
+        /// 表情のキャリブレーションの記録係（画面中央の案内の表示用）。
+        /// </summary>
+        public ExpressionCalibrationRecorder CalibrationRecorder => _calibration.Recorder;
+
         public TrackingSection(
             AvatarSession session, IFaceTrackingProvider tracker, TrackerProcess process,
             TrackingSkeletonView skeleton, AppSettings settings)
@@ -68,6 +76,14 @@ namespace VRCast.UI
         {
             _portInput = _settings.trackingPort.ToString();
             _vmcPortInput = _settings.vmcPort.ToString();
+        }
+
+        /// <summary>
+        /// 毎フレーム呼ぶ（パネルを隠していても表情のキャリブレーションの記録を進める）。
+        /// </summary>
+        public void Update()
+        {
+            _calibration.Tick(_tracker, _settings);
         }
 
         public void Draw()
@@ -662,7 +678,7 @@ namespace VRCast.UI
                 Loc.T("Enable when", "有効にする条件", "활성화 조건", "启用条件", "啟用條件"),
                 labels, _settings.trackingPerfectSyncAnyShape ? 1 : 0) == 1;
 
-            // 口・頬の強調（アバター未表示でも設定はできる）
+            // 口の開きの補正と口・頬の強調（アバター未表示でも設定はできる）
             var driver = _avatar.Get<FaceTrackingDriver>();
             PerfectSyncBoostControls.Draw(_settings, driver);
 
@@ -713,6 +729,14 @@ namespace VRCast.UI
                 return;
             }
 
+            DrawExpressionMappings();
+
+            // 本人の顔に合わせた表情のキャリブレーション（アバターが無くても登録できる）
+            _calibration.Draw(_tracker, _settings);
+        }
+
+        private void DrawExpressionMappings()
+        {
             // パーフェクトシンク中は表情プリセットへ切り替えない（顔の動きで表情が出るため）
             var face = _avatar.Get<FaceTrackingDriver>();
             if (face != null && face.PausesExpressions)
@@ -829,7 +853,7 @@ namespace VRCast.UI
             }
         }
 
-        private static string ExpressionLabel(FaceExpression expression)
+        internal static string ExpressionLabel(FaceExpression expression)
         {
             // 表情の表示名（表示言語に合わせる）
             switch (expression)
@@ -1053,10 +1077,13 @@ namespace VRCast.UI
                         + $"{Loc.T("tilt", "傾き", "기울기", "倾斜", "傾斜")} {torso.y:F1}°");
                 }
 
-                // 表情の強さ（MediaPipe・VMC・iFacialMocap のみ。しきい値調整の目安なので、判定と同じく目の開きの補正を反映）
+                // 表情の強さ（MediaPipe・VMC・iFacialMocap のみ。しきい値調整の目安なので、判定と同じく目の開きの補正と
+                // 表情のキャリブレーションを反映）
                 if (face.HasExpression)
                 {
-                    ExpressionScores scores = ArKitFace.AdjustExpression(face, _settings.trackingEyeOpenOffset);
+                    ExpressionScores scores = ExpressionCalibration.Apply(
+                        ArKitFace.AdjustExpression(face, _settings.trackingEyeOpenOffset), face.BlendShapes,
+                        _settings.expressionCalibrations, _tracker.FaceSource);
                     GuiControls.Hint($"{ExpressionLabel(FaceExpression.Smile)} {scores.Smile:F2}  "
                         + $"{ExpressionLabel(FaceExpression.Surprise)} {scores.Surprise:F2}  "
                         + $"{ExpressionLabel(FaceExpression.Angry)} {scores.Angry:F2}  "

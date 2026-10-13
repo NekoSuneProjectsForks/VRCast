@@ -176,6 +176,25 @@ namespace VRCast.App
             }
         }
 
+        private void LoadBlinkAnimation(BlinkController blink, string avatarPath)
+        {
+            // このアバターに .anim の指定があれば読む（読めなければ通常のまばたきのまま。理由は顔・表情タブに出る）
+            string path = _settings.GetBlinkAnimation(avatarPath);
+            if (path.Length == 0)
+            {
+                return;
+            }
+
+            if (BlinkAnimation.TryLoad(path, out BlinkAnimation animation, out BlinkAnimationError error))
+            {
+                blink.SetAnimation(animation);
+            }
+            else
+            {
+                VRCastLog.Warning("Blink", $"Could not load blink animation ({error}): {path}");
+            }
+        }
+
         private void OnAvatarLoaded(LoadedAvatar avatar)
         {
             // このアバターで前回使ったライト・待機ポーズ・向きに戻す（待機ポーズは次の PoseController が読む）。
@@ -200,6 +219,7 @@ namespace VRCast.App
             var blink = avatar.Instance.AddComponent<BlinkController>();
             blink.Initialize(root, avatar.Descriptor.eyelids, _settings.GetBlinkShapes(avatar.SourcePath), _settings,
                 expressions);
+            LoadBlinkAnimation(blink, avatar.SourcePath);
             var lipSync = avatar.Instance.AddComponent<LipSyncController>();
             lipSync.Initialize(root, avatar.Descriptor.lipSync, _microphone, _settings, expressions);
 

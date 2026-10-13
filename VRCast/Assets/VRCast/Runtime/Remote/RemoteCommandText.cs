@@ -57,6 +57,14 @@ namespace VRCast.Remote
         }
 
         /// <summary>
+        /// アバターを名前（拡張子を除いたファイル名）で切り替える HTTP の URL。
+        /// </summary>
+        public static string HttpAvatar(int port, string name)
+        {
+            return $"{HttpBase(port)}/avatar?name={Uri.EscapeDataString(name)}";
+        }
+
+        /// <summary>
         /// ニュートラルを選ぶ HTTP の URL。
         /// </summary>
         public static string HttpNeutral(int port, bool toggle)

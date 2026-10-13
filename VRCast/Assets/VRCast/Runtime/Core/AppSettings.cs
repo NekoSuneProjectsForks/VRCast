@@ -73,6 +73,23 @@ namespace VRCast.Core
         // パーフェクトシンクの口・頬の強調の倍率の上限（1 = 強調しない）
         public const float MaxPerfectSyncBoost = 5f;
 
+        // 自動まばたきの動きの既定値（秒）と範囲
+        public const float DefaultBlinkCloseSeconds = 0.07f;
+        public const float DefaultBlinkHoldSeconds = 0.05f;
+        public const float DefaultBlinkOpenSeconds = 0.16f;
+        public const float DefaultBlinkIntervalMin = 2f;
+        public const float DefaultBlinkIntervalMax = 6f;
+        public const float MinBlinkMoveSeconds = 0.02f;
+        public const float MaxBlinkMoveSeconds = 0.5f;
+        public const float MaxBlinkHoldSeconds = 1f;
+        public const float MinBlinkInterval = 0.5f;
+        public const float MaxBlinkInterval = 20f;
+
+        // パーフェクトシンクの口の開きの倍率の範囲（1 = そのまま）と、閉じた口とみなす開きの上限
+        public const float MinJawOpenGain = 0.2f;
+        public const float MaxJawOpenGain = 3f;
+        public const float MaxJawOpenDeadzone = 0.5f;
+
         // 頬のふくらみの推定で、頬の幅の広がり（%）として選べる上限と、出し始め〜最大の最小の間隔（%）
         public const float MaxCheekWidenPercent = 15f;
         public const float MinCheekWidenSpan = 0.5f;
@@ -205,6 +222,13 @@ namespace VRCast.Core
         // 自動まばたき
         public bool autoBlink = true;
 
+        // 自動まばたきの動き（閉じる・閉じたまま・開く時間（秒））と、次のまばたきまでの間隔（秒、この範囲でランダム）
+        public float blinkCloseSeconds = DefaultBlinkCloseSeconds;
+        public float blinkHoldSeconds = DefaultBlinkHoldSeconds;
+        public float blinkOpenSeconds = DefaultBlinkOpenSeconds;
+        public float blinkIntervalMin = DefaultBlinkIntervalMin;
+        public float blinkIntervalMax = DefaultBlinkIntervalMax;
+
         // 表情（ニュートラル以外）を出している間はまばたきしない（自動・トラッキングとも。表情の目の形を崩さないため）
         public bool blinkPausedByExpression;
 
@@ -286,6 +310,10 @@ namespace VRCast.Core
         // パーフェクトシンクを有効にする条件（false = ARKit 名が MinMatchedShapes 種類以上、true = 1 種類でもあれば）
         public bool trackingPerfectSyncAnyShape;
 
+        // パーフェクトシンクの口の開き（jawOpen）: この開きまでは閉じた口とみなし、残りを倍率で抑える・強める
+        public float trackingJawOpenDeadzone;
+        public float trackingJawOpenGain = 1f;
+
         // パーフェクトシンク中だけ、検出が弱い口・頬の動きを倍率で強める（とがらせる・口の左右・頬・唇）
         public bool trackingPerfectSyncBoost = true;
         public float trackingBoostPucker = 2f;
@@ -341,6 +369,9 @@ namespace VRCast.Core
         public float thresholdWink = UseCommonThreshold;
         public float thresholdSquint = UseCommonThreshold;
         public float thresholdPout = UseCommonThreshold;
+
+        // 表情のキャリブレーション（入力元ごとに記録した真顔と各表情の顔の数値。登録した表情だけ判定に使う）
+        public List<ExpressionCalibrationSample> expressionCalibrations = new List<ExpressionCalibrationSample>();
 
         // VRCast から起動するトラッカー（実行ファイルのパス（空 = 同梱版）と、使うカメラのデバイス名）
         public string trackerPath = string.Empty;
@@ -489,6 +520,27 @@ namespace VRCast.Core
             return index >= 0 && avatarCameras[index].blinkShapes != null
                 ? avatarCameras[index].blinkShapes.Clone()
                 : new BlinkShapeOverride();
+        }
+
+        /// <summary>
+        /// アバターの自動まばたきに使う .anim のパス（未記録・未指定なら空）。
+        /// </summary>
+        public string GetBlinkAnimation(string avatarPath)
+        {
+            int index = FindAvatarCamera(avatarPath);
+            return index >= 0 ? avatarCameras[index].blinkAnimation ?? string.Empty : string.Empty;
+        }
+
+        /// <summary>
+        /// アバターの自動まばたきに使う .anim のパスを記録する（空で解除）。カメラの視点を記録済みのアバターだけが対象。
+        /// </summary>
+        public void SetBlinkAnimation(string avatarPath, string animationPath)
+        {
+            int index = FindAvatarCamera(avatarPath);
+            if (index >= 0)
+            {
+                avatarCameras[index].blinkAnimation = animationPath ?? string.Empty;
+            }
         }
 
         /// <summary>
@@ -726,6 +778,20 @@ namespace VRCast.Core
         }
 
         /// <summary>
+        /// 記録のあるすべてのアバター（一度読み込んだもの）のパスを新しい順に返す。
+        /// </summary>
+        public List<string> KnownAvatars()
+        {
+            var paths = new List<string>(avatarCameras.Count);
+            for (int i = avatarCameras.Count - 1; i >= 0; i--)
+            {
+                paths.Add(avatarCameras[i].avatarPath);
+            }
+
+            return paths;
+        }
+
+        /// <summary>
         /// アバターを VRCast に入れた日時（UNIX 時刻の秒・UTC）を返す。記録が無い・不明なら 0。
         /// </summary>
         public long GetAvatarAddedAt(string avatarPath)
@@ -866,6 +932,7 @@ namespace VRCast.Core
                 // まばたきの BlendShape の指定は欠けを未指定で補う（旧版の設定には無いので自動のままになる）
                 entry.blinkShapes ??= new BlinkShapeOverride();
                 entry.blinkShapes.Sanitize();
+                entry.blinkAnimation ??= string.Empty;
             }
 
             // リセットのショートカットキーは種類ごとに 1 つへそろえる（旧版の設定には無いので既定のキーになる）
@@ -983,6 +1050,19 @@ namespace VRCast.Core
             trackingBoostMouth = Mathf.Clamp(trackingBoostMouth, 1f, MaxPerfectSyncBoost);
             trackingBoostCheekPuff = Mathf.Clamp(trackingBoostCheekPuff, 1f, MaxPerfectSyncBoost);
             trackingBoostLips = Mathf.Clamp(trackingBoostLips, 1f, MaxPerfectSyncBoost);
+            // 自動まばたきの動きも同様（壊れた値は既定値へ。間隔の最長は最短より短くしない）
+            blinkCloseSeconds = ClampOrDefault(blinkCloseSeconds, MinBlinkMoveSeconds, MaxBlinkMoveSeconds,
+                DefaultBlinkCloseSeconds);
+            blinkHoldSeconds = ClampOrDefault(blinkHoldSeconds, 0f, MaxBlinkHoldSeconds, DefaultBlinkHoldSeconds);
+            blinkOpenSeconds = ClampOrDefault(blinkOpenSeconds, MinBlinkMoveSeconds, MaxBlinkMoveSeconds,
+                DefaultBlinkOpenSeconds);
+            blinkIntervalMin = ClampOrDefault(blinkIntervalMin, MinBlinkInterval, MaxBlinkInterval,
+                DefaultBlinkIntervalMin);
+            blinkIntervalMax = Mathf.Max(blinkIntervalMin,
+                ClampOrDefault(blinkIntervalMax, MinBlinkInterval, MaxBlinkInterval, DefaultBlinkIntervalMax));
+            // 口の開きの補正も同様
+            trackingJawOpenDeadzone = Mathf.Clamp(trackingJawOpenDeadzone, 0f, MaxJawOpenDeadzone);
+            trackingJawOpenGain = Mathf.Clamp(trackingJawOpenGain, MinJawOpenGain, MaxJawOpenGain);
             // 頬のふくらみの推定は、出し始めより最大が必ず大きくなるよう間隔を空ける
             trackingCheekPuffStart = Mathf.Clamp(trackingCheekPuffStart, 0f, MaxCheekWidenPercent - MinCheekWidenSpan);
             trackingCheekPuffFull = Mathf.Clamp(trackingCheekPuffFull, trackingCheekPuffStart + MinCheekWidenSpan,
@@ -1028,6 +1108,15 @@ namespace VRCast.Core
             trackerPath ??= string.Empty;
             // カメラ名も同様
             trackerCamera ??= string.Empty;
+            // 表情のキャリブレーションは壊れた記録を捨てる
+            expressionCalibrations ??= new List<ExpressionCalibrationSample>();
+            expressionCalibrations.RemoveAll(sample => sample == null || !sample.IsValid);
+        }
+
+        private static float ClampOrDefault(float value, float min, float max, float fallback)
+        {
+            // NaN・無限大は既定値、それ以外は範囲内へ
+            return float.IsNaN(value) || float.IsInfinity(value) ? fallback : Mathf.Clamp(value, min, max);
         }
 
         /// <summary>

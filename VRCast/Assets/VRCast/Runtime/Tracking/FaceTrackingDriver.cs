@@ -188,6 +188,20 @@ namespace VRCast.Tracking
         public float CheekWiden => _lastFrame.CheekWiden;
 
         /// <summary>
+        /// 直近に受け取ったパーフェクトシンクの口の開き（jawOpen、0〜1、補正前。値が無い入力元は 0。表示用）。
+        /// </summary>
+        public float JawOpenReceived => _lastFrame.BlendShapes != null && _lastFrame.BlendShapes.Length > ArKitFace.JawOpen
+            ? Mathf.Clamp01(_lastFrame.BlendShapes[ArKitFace.JawOpen])
+            : 0f;
+
+        /// <summary>
+        /// 今の設定でのパーフェクトシンクの口の開きの補正。
+        /// </summary>
+        public JawOpenAdjustment CurrentJawOpenAdjustment => _settings == null
+            ? default
+            : new JawOpenAdjustment { Deadzone = _settings.trackingJawOpenDeadzone, Gain = _settings.trackingJawOpenGain };
+
+        /// <summary>
         /// 直近の頬の幅の広がりから推定した頬のふくらみ（0〜1、倍率を掛ける前。表示用）。
         /// </summary>
         public float CheekPuffEstimate => _settings == null
@@ -515,8 +529,11 @@ namespace VRCast.Tracking
                 _thresholds[(int)expression] = ExpressionMapping.GetThreshold(_settings, expression);
             }
 
-            // 目の開きの補正分の半目はジト目・ウインクにしない
+            // 目の開きの補正分の半目はジト目・ウインクにしない。キャリブレーションで登録した表情は登録した顔との比較で決める
             ExpressionScores scores = ArKitFace.AdjustExpression(_lastFrame, _settings.trackingEyeOpenOffset);
+            TrackingSource faceSource = _provider != null ? _provider.FaceSource : _settings.trackingSource;
+            scores = ExpressionCalibration.Apply(scores, _lastFrame.BlendShapes, _settings.expressionCalibrations,
+                faceSource);
 
             // 割り当て先の無い表情は選ばない（強く出ても、割り当てのある表情を押しのけてニュートラルにしない）
             FaceExpression detected = _detector.Update(
@@ -672,7 +689,8 @@ namespace VRCast.Tracking
             if (IsPerfectSyncActive)
             {
                 _perfectSync.Apply(_lastFrame.BlendShapes, _lastFrame.BlendShapeRange, _settings.FaceMirror,
-                    Time.deltaTime, _settings.trackingBlink, CurrentEyeAdjustment(), CurrentBoost());
+                    Time.deltaTime, _settings.trackingBlink, CurrentEyeAdjustment(), CurrentBoost(),
+                    CurrentJawOpenAdjustment);
             }
             else
             {

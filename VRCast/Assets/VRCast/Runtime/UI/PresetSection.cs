@@ -8,9 +8,9 @@ using VRCast.Platform;
 namespace VRCast.UI
 {
     /// <summary>
-    /// Settings タブの「設定プリセット」カード。選んだカテゴリの設定を .json へ書き出し、
+    /// Settings タブの「設定プリセット」カード。選んだカテゴリの設定を .yaml（推奨）か .json へ書き出し、
     /// 読み込むときはファイルに入っているカテゴリを確認・選択してから反映する（ドロップしたファイルも同じ確認を経る）。
-    /// 以前の版の .vrcastpreset も読み込める。
+    /// .yml と以前の版の .vrcastpreset も読み込める。
     /// </summary>
     public class PresetSection
     {
@@ -32,8 +32,9 @@ namespace VRCast.UI
         private readonly AppSettings _settings;
         private readonly Action _reapply;
 
-        // 書き出すカテゴリ（初期状態は全部）
+        // 書き出すカテゴリ（初期状態は全部）と形式（起動中だけ覚える）
         private readonly HashSet<string> _exportSelection = new HashSet<string>();
+        private PresetFormat _exportFormat = PresetFormat.Yaml;
 
         // 読み込み確認中のプリセット・ファイル名・反映するカテゴリ（null = 確認中でない）
         private PresetFile _pending;
@@ -59,21 +60,21 @@ namespace VRCast.UI
         {
             GuiControls.BeginCard(Loc.T("Settings preset", "設定プリセット", "설정 프리셋", "设置预设", "設定預設"));
             GuiControls.Hint(Loc.T(
-                "Save settings to a JSON file (.json, readable text) and load them on another PC or later. " +
-                "Presets saved by older versions (.vrcastpreset) can also be loaded. " +
+                "Save settings to a YAML (.yaml) or JSON (.json) text file and load them on another PC or later. " +
+                "Both can be loaded, as can presets saved by older versions (.vrcastpreset). " +
                 "Per-avatar data (shape keys, camera, expression keys) and PC-specific values " +
                 "(microphone, camera, GPU name, ports) are not included.",
-                "設定を JSON ファイル（.json。テキストで読めます）に書き出し、別の PC や後から読み込めます。" +
-                "以前の版で書き出したプリセット（.vrcastpreset）も読み込めます。" +
+                "設定を YAML（.yaml）か JSON（.json）のテキストファイルに書き出し、別の PC や後から読み込めます。" +
+                "どちらも読み込め、以前の版で書き出したプリセット（.vrcastpreset）も読み込めます。" +
                 "アバターごとの記録（シェイプキー・カメラ・表情のキー）と PC ごとの値（マイク・カメラ・GPU 名・ポート）は含みません。",
-                "설정을 JSON 파일(.json, 텍스트로 읽을 수 있음)로 내보내고 다른 PC나 나중에 불러올 수 있습니다. " +
-                "이전 버전에서 내보낸 프리셋(.vrcastpreset)도 불러올 수 있습니다. " +
+                "설정을 YAML(.yaml) 또는 JSON(.json) 텍스트 파일로 내보내고 다른 PC나 나중에 불러올 수 있습니다. " +
+                "둘 다 불러올 수 있으며, 이전 버전에서 내보낸 프리셋(.vrcastpreset)도 불러올 수 있습니다. " +
                 "아바타별 기록(셰이프 키·카메라·표정 키)과 PC별 값(마이크·카메라·GPU 이름·포트)은 포함하지 않습니다.",
-                "可将设置导出为 JSON 文件（.json，可作为文本阅读），并在其他电脑或之后导入。" +
-                "也可以导入旧版本导出的预设（.vrcastpreset）。" +
+                "可将设置导出为 YAML（.yaml）或 JSON（.json）文本文件，并在其他电脑或之后导入。" +
+                "两种都可导入，也可以导入旧版本导出的预设（.vrcastpreset）。" +
                 "不包含各虚拟形象的记录（形态键·相机·表情按键）和各电脑的值（麦克风·摄像头·GPU 名称·端口）。",
-                "可將設定匯出為 JSON 檔案（.json，可作為文字閱讀），並在其他電腦或之後匯入。" +
-                "也可以匯入舊版本匯出的預設（.vrcastpreset）。" +
+                "可將設定匯出為 YAML（.yaml）或 JSON（.json）文字檔案，並在其他電腦或之後匯入。" +
+                "兩種都可匯入，也可以匯入舊版本匯出的預設（.vrcastpreset）。" +
                 "不包含各虛擬形象的紀錄（形態鍵·相機·表情按鍵）和各電腦的值（麥克風·攝影機·GPU 名稱·連接埠）。"));
 
             // 確認中は読み込み、それ以外は書き出しと読み込みのボタン
@@ -144,6 +145,7 @@ namespace VRCast.UI
         {
             GuiControls.SubHeading(Loc.T("Export", "書き出し", "내보내기", "导出", "匯出"));
             DrawCategorySelection(SettingsPreset.Categories, _exportSelection);
+            DrawFormatSelection();
 
             // 選んだカテゴリが無ければ押せない
             GUI.enabled = FileDialog.IsSupported && _exportSelection.Count > 0;
@@ -168,6 +170,32 @@ namespace VRCast.UI
             }
 
             GUI.enabled = true;
+        }
+
+        private void DrawFormatSelection()
+        {
+            // 書き出す形式（どちらか 1 つ）
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(Loc.T("Format", "形式", "형식", "格式", "格式"), GUILayout.ExpandWidth(false));
+            if (GUILayout.Toggle(_exportFormat == PresetFormat.Yaml,
+                    Loc.T("YAML (recommended)", "YAML（おすすめ）", "YAML (권장)", "YAML（推荐）", "YAML（推薦）"),
+                    GUILayout.ExpandWidth(false)))
+            {
+                _exportFormat = PresetFormat.Yaml;
+            }
+
+            if (GUILayout.Toggle(_exportFormat == PresetFormat.Json, "JSON", GUILayout.ExpandWidth(false)))
+            {
+                _exportFormat = PresetFormat.Json;
+            }
+
+            GUILayout.EndHorizontal();
+            GuiControls.Hint(Loc.T(
+                "YAML is easier to edit by hand (no brackets or commas, and # comments are allowed).",
+                "YAML は手で編集しやすい形式です（括弧やカンマが要らず、# でコメントを書けます）。",
+                "YAML은 직접 편집하기 쉬운 형식입니다 (괄호나 쉼표가 필요 없고 #으로 주석을 쓸 수 있습니다).",
+                "YAML 更易于手动编辑（无需括号和逗号，可用 # 写注释）。",
+                "YAML 更易於手動編輯（不需括號和逗號，可用 # 寫註解）。"));
         }
 
         private void DrawImportConfirm()
@@ -325,7 +353,8 @@ namespace VRCast.UI
             string path = FileDialog.SaveFile(
                 Loc.T("Export settings preset", "設定プリセットを書き出す", "설정 프리셋 내보내기", "导出设置预设", "匯出設定預設"),
                 Loc.T("VRCast preset", "VRCast プリセット", "VRCast 프리셋", "VRCast 预设", "VRCast 預設"),
-                SettingsPreset.Extension, initial, SettingsPreset.DefaultFileName);
+                SettingsPreset.ExtensionOf(_exportFormat), initial,
+                SettingsPreset.DefaultFileStem + SettingsPreset.ExtensionOf(_exportFormat));
             if (path == null)
             {
                 return;
@@ -336,7 +365,8 @@ namespace VRCast.UI
             try
             {
                 // 選んだカテゴリをテキストにして書く
-                string text = SettingsPreset.Export(_settings, _exportSelection, Application.version, DateTimeOffset.Now);
+                string text = SettingsPreset.Export(_settings, _exportSelection, Application.version, DateTimeOffset.Now,
+                    _exportFormat);
                 AtomicFile.WriteAllText(path, text);
                 _result = Result.Exported;
             }

@@ -62,5 +62,8 @@ namespace VRCast.Core
         public string thumbnail = string.Empty;
         public long addedAt;
         public BlinkShapeOverride blinkShapes = new BlinkShapeOverride();
+
+        // 自動まばたきに使う .anim のパス（空なら使わない）
+        public string blinkAnimation = string.Empty;
     }
 }

@@ -5,7 +5,7 @@ using VRCast.Tracking;
 namespace VRCast.UI
 {
     /// <summary>
-    /// パーフェクトシンクの「口・頬の動きを強調」の設定（ON/OFF・組ごとの倍率・頬のしきい値と、頬・口の左右の今の値）。
+    /// パーフェクトシンクの口の開きの補正と「口・頬の動きを強調」の設定（ON/OFF・組ごとの倍率・頬のしきい値と、口の開き・頬・口の左右の今の値）。
     /// トラッキングタブと、パーフェクトシンク化の「実際のトラッキングで試す」で同じものを出す。
     /// </summary>
     public static class PerfectSyncBoostControls
@@ -22,9 +22,13 @@ namespace VRCast.UI
             private readonly float _lips;
             private readonly float _cheekStart;
             private readonly float _cheekFull;
+            private readonly float _jawDeadzone;
+            private readonly float _jawGain;
 
             private Snapshot(AppSettings settings)
             {
+                _jawDeadzone = settings.trackingJawOpenDeadzone;
+                _jawGain = settings.trackingJawOpenGain;
                 _enabled = settings.trackingPerfectSyncBoost;
                 _pucker = settings.trackingBoostPucker;
                 _mouth = settings.trackingBoostMouth;
@@ -47,6 +51,8 @@ namespace VRCast.UI
             /// </summary>
             public void Restore(AppSettings settings)
             {
+                settings.trackingJawOpenDeadzone = _jawDeadzone;
+                settings.trackingJawOpenGain = _jawGain;
                 settings.trackingPerfectSyncBoost = _enabled;
                 settings.trackingBoostPucker = _pucker;
                 settings.trackingBoostMouth = _mouth;
@@ -70,6 +76,8 @@ namespace VRCast.UI
         /// </summary>
         public static void Draw(AppSettings settings, FaceTrackingDriver driver)
         {
+            DrawJawOpen(settings, driver);
+
             // 口・頬の強調の ON/OFF（パーフェクトシンクで動かしている間だけ効く）
             settings.trackingPerfectSyncBoost = GUILayout.Toggle(
                 settings.trackingPerfectSyncBoost,
@@ -89,6 +97,37 @@ namespace VRCast.UI
 
             DrawGains(settings, driver);
             DrawCheekEstimate(settings, driver);
+        }
+
+        private static void DrawJawOpen(AppSettings settings, FaceTrackingDriver driver)
+        {
+            // 口の開き（パーフェクトシンクで動かしている間だけ効く。強調の ON/OFF とは別）
+            GUILayout.Label(Loc.T("Mouth opening (perfect sync)", "口の開き（パーフェクトシンク）", "입 벌림 (퍼펙트 싱크)",
+                "张嘴（完美同步）", "張嘴（完美同步）"));
+            settings.trackingJawOpenDeadzone = GuiControls.Slider(
+                "  " + Loc.T("Ignore below", "無視する開き", "무시할 벌림", "忽略的张开度", "忽略的張開度"),
+                settings.trackingJawOpenDeadzone, 0f, AppSettings.MaxJawOpenDeadzone, "F2");
+            settings.trackingJawOpenGain = GuiControls.Slider(
+                "  " + Loc.T("Strength", "強さ", "강도", "强度", "強度"),
+                settings.trackingJawOpenGain, AppSettings.MinJawOpenGain, AppSettings.MaxJawOpenGain, "F1");
+
+            // 受け取った値と補正後の値（トラッキング中だけ。真顔のときの値を見て「無視する開き」を決める）
+            if (driver != null && driver.IsTracking)
+            {
+                float received = driver.JawOpenReceived;
+                float applied = driver.CurrentJawOpenAdjustment.Apply(received);
+                GuiControls.Status(Loc.T($"Now: received {received:F2}, applied {applied:F2}",
+                    $"今: 受信 {received:F2}、反映 {applied:F2}", $"현재: 수신 {received:F2}, 반영 {applied:F2}",
+                    $"当前: 接收 {received:F2}，应用 {applied:F2}", $"目前: 接收 {received:F2}，套用 {applied:F2}"),
+                    applied > 0f);
+            }
+
+            GuiControls.Hint(Loc.T(
+                "If the mouth stays slightly open with your mouth closed, set Ignore below a little above the received value with your mouth closed. Lower Strength if the mouth opens too wide, raise it if it barely opens.",
+                "口を閉じているのにアバターの口が開く場合は、「無視する開き」を口を閉じたときの受信値より少し上にしてください。口が開きすぎるなら「強さ」を下げ、開きが小さいなら上げます。",
+                "입을 다물고 있는데 아바타의 입이 벌어지면 '무시할 벌림'을 입을 다물었을 때의 수신값보다 조금 높게 설정하세요. 입이 너무 크게 벌어지면 '강도'를 낮추고, 작게 벌어지면 올리세요.",
+                "闭着嘴时虚拟形象的嘴却张开的话，请把“忽略的张开度”设为比闭嘴时的接收值稍高。嘴张得太大就调低“强度”，张得太小就调高。",
+                "閉著嘴時虛擬形象的嘴卻張開的話，請把「忽略的張開度」設為比閉嘴時的接收值稍高。嘴張得太大就調低「強度」，張得太小就調高。"));
         }
 
         private static void DrawGains(AppSettings settings, FaceTrackingDriver driver)

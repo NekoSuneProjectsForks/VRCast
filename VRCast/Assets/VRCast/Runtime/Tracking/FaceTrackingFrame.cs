@@ -85,6 +85,37 @@ namespace VRCast.Tracking
                     return 0f;
             }
         }
+
+        /// <summary>
+        /// 表情の種類で値を書き換える（ニュートラルは何もしない）。
+        /// </summary>
+        public void Set(FaceExpression expression, float value)
+        {
+            switch (expression)
+            {
+                case FaceExpression.Smile:
+                    Smile = value;
+                    break;
+                case FaceExpression.Surprise:
+                    Surprise = value;
+                    break;
+                case FaceExpression.Angry:
+                    Angry = value;
+                    break;
+                case FaceExpression.Sad:
+                    Sad = value;
+                    break;
+                case FaceExpression.Wink:
+                    Wink = value;
+                    break;
+                case FaceExpression.Squint:
+                    Squint = value;
+                    break;
+                case FaceExpression.Pout:
+                    Pout = value;
+                    break;
+            }
+        }
     }
 
     /// <summary>

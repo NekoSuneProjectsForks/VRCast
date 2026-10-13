@@ -13,10 +13,14 @@ Newest first. Each version is written in Japanese, then English.
 - トラッキングタブに「手の位置をアバターに合わせる」を追加（腕の角度をまねるだけでなく、アバターの体格に合わせて手の位置を決めます。本人の手が顔の前にあれば、アバターの手も顔の前に来ます。既定 ON。OFF で以前の動きに戻ります）
 - 一定時間ごとの自動リセットを追加（操作・連携タブで ON にすると、1〜60 分ごとに顔の向き・視線・表情を起動したときと同じ状態へ戻します。顔の向き・視線は正面付近で頭を止めたときに取り直すので、よそ見中の向きは正面になりません。既定 OFF）
 - アバターに付いた小物のアニメーションを VRChat と同じように自動で再生する機能を追加（小物に付いた Animator と、FX で常に再生されている小物の動きを取り込みます。体・ポーズタブで ON/OFF できます。既定 ON。今までに書き出したアバターは、書き出し直すと取り込まれます）
-- 設定プリセットの書き出しを JSON ファイル（.json）に変更（以前の版で書き出した .vrcastpreset もこれまでどおり読み込めます）
+- 設定プリセットを YAML（.yaml）か JSON（.json）で書き出せるように変更（既定は手で編集しやすい YAML です。どちらも読み込め、以前の版で書き出した .vrcastpreset もこれまでどおり読み込めます）
 - アニメーションで動く小物の揺れものが、動きを打ち消して元の姿勢に戻ってしまう問題を修正（VRChat と同じく、動いた姿勢に揺れを重ねます）
 - まばたきの動きがカクつく問題を修正（トラッキング・自動まばたきとも、なめらかに閉じて開くようにしました）
 - トラッキングの値を表示している間、設定画面がガタつく問題を修正（状態の表示が太字に切り替わらないようにしました）
+- トラッキングタブに「口の開き（パーフェクトシンク）」の設定を追加（口を閉じているのにパーフェクトシンクのアバターの口が開く場合は「無視する開き」で小さな開きを無視し、「強さ」で口の開きを抑えたり強めたりできます。今の受信値と反映後の値を見ながら調整できます）
+- 表情を自分の顔に合わせるキャリブレーションを追加（トラッキングタブの表情の設定で、真顔と各表情を登録できます。画面に「悲しい顔をしてください」のような案内が出るので、その顔をすると記録され、以後はその顔に近づいたときにその表情に切り替わります。顔の画像は保存せず、顔の動きの数値だけを入力元ごとに保存します）
+- 自動まばたきの動きを変えられる機能を追加（顔・表情タブで、閉じる・閉じたまま・開く時間と、次のまばたきまでの間隔を変えられます。「試す」でその場で確かめられます。既定はこれまでと同じ動きです。アバターごとに Unity のまばたきのアニメーション（.anim）を選んで使うこともできます）
+- HTTP コマンドでアバターを切り替える機能を追加（VRCast で一度開いたことのあるアバターに、ファイル名で切り替えます。操作・連携タブにアバターごとの URL が並びます。それ以外のファイルはこの方法では開けません）
 
 [English]
 - Added "iPhone (VMC) face + MediaPipe hands" and "iFacialMocap face + MediaPipe hands" tracking sources (the face is driven by perfect sync from the iPhone and the arms and hands by the webcam; while nothing is received from the iPhone, the webcam drives the face too)
@@ -25,10 +29,14 @@ Newest first. Each version is written in Japanese, then English.
 - Added "Match hand positions to the avatar" to the Tracking tab (places the hands by the avatar's body size instead of only copying arm angles; a hand in front of your face stays in front of the avatar's face; on by default; turn it off for the previous behavior)
 - Added automatic reset at a fixed interval (turn it on in the Hotkeys / OSC tab to return the head, gaze and expression to their state at startup every 1 to 60 minutes; the head and gaze are reset when you hold your head still facing the front, so looking away is never taken as the front; off by default)
 - Added automatic playback of prop animations on avatars, like in VRChat (animators on props and prop motions that FX keeps playing are exported; can be turned on/off in the Body & pose tab; on by default; re-export existing avatars to include them)
-- Changed settings presets to be exported as JSON files (.json); presets saved by older versions (.vrcastpreset) can still be loaded
+- Changed settings presets to be exported as YAML (.yaml) or JSON (.json) files (YAML, which is easier to edit by hand, is the default; both can be loaded, and presets saved by older versions (.vrcastpreset) can still be loaded)
 - Fixed PhysBones on animated props cancelling the animation and snapping back to their original pose (the sway is now added on top of the animated pose, like in VRChat)
 - Fixed choppy blinking (both tracked and automatic blinks now close and open smoothly)
 - Fixed the settings screen jittering while live tracking values were shown (status lines no longer switch to bold text)
+- Added "Mouth opening (perfect sync)" settings to the Tracking tab (if a perfect sync avatar's mouth opens while yours is closed, use "Ignore below" to ignore small openings, and "Strength" to reduce or increase how far the mouth opens; the received and applied values are shown while you adjust)
+- Added expression calibration to match expressions to your own face (register your neutral face and each expression in the Tracking tab's expression settings; a prompt such as "Make a sad face" appears on screen, and afterwards the avatar switches to that expression when your face gets close to the registered one; no face images are saved, only the numbers describing your face's movement, separately for each source)
+- Added settings for the auto blink motion (change how long the eyes take to close, stay closed and open, and the interval between blinks in the Face & expressions tab; "Try" blinks once so you can check it; the defaults match the previous motion; you can also choose a Unity blink animation (.anim) for each avatar)
+- Added avatar switching over HTTP (switches by file name to avatars you have opened in VRCast before; the Hotkeys / OSC tab lists a URL for each avatar; other files cannot be opened this way)
 
 ■ 2.0.0 (2026-10-12)
 

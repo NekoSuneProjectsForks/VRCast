@@ -161,6 +161,48 @@ namespace VRCast.Tests
             Assert.That(OscCommand(Message(japanese.Address, ",s", Str("にっこり"))).ResolvePreset(Names), Is.EqualTo(2));
         }
 
+        [Test]
+        public void HttpAvatar_RoundTripsAndRequiresName()
+        {
+            // 一覧に出す URL（日本語・空白入りの名前も）を読み直すとアバターの切り替えになり、名前が無ければ操作にならないこと
+            string url = RemoteCommandText.HttpAvatar(39571, "ミント 2");
+            string target = url.Substring("http://127.0.0.1:39571".Length);
+            Assert.That(HttpRequest.TryParse($"GET {target} HTTP/1.1", out HttpRequest request), Is.True);
+            Assert.That(RemoteCommand.TryParseHttp(request, out RemoteCommand command), Is.True);
+            Assert.That(command.Action, Is.EqualTo(RemoteAction.Avatar));
+            Assert.That(command.Name, Is.EqualTo("ミント 2"));
+
+            HttpRequest.TryParse("GET /avatar HTTP/1.1", out HttpRequest noName);
+            HttpRequest.TryParse("GET /avatar?name=%20 HTTP/1.1", out HttpRequest blank);
+            Assert.That(RemoteCommand.TryParseHttp(noName, out _), Is.False);
+            Assert.That(RemoteCommand.TryParseHttp(blank, out _), Is.False);
+        }
+
+        [Test]
+        public void RemoteAvatars_FindsKnownAvatarsByFileName()
+        {
+            // 記録のあるアバターだけを、拡張子付きの名前を優先し、大文字・小文字を区別せずに探すこと（無いファイルは飛ばす）
+            string[] paths =
+            {
+                @"C:\Avatars\Mint.vrm",
+                @"D:\Old\Mint.vrca",
+                @"C:\Avatars\Mint.vrm.vrm",
+                @"C:\Gone\Rose.vrm",
+            };
+            Func<string, bool> exists = path => !path.StartsWith(@"C:\Gone");
+
+            Assert.That(RemoteAvatars.Find(paths, "mint", exists), Is.EqualTo(@"C:\Avatars\Mint.vrm"));
+            Assert.That(RemoteAvatars.Find(paths, "Mint.VRCA", exists), Is.EqualTo(@"D:\Old\Mint.vrca"));
+            Assert.That(RemoteAvatars.Find(paths, "Mint.vrm", exists), Is.EqualTo(@"C:\Avatars\Mint.vrm"));
+            Assert.That(RemoteAvatars.Find(paths, "Mint.vrm.vrm", exists), Is.EqualTo(@"C:\Avatars\Mint.vrm.vrm"));
+            Assert.That(RemoteAvatars.Find(paths, "Rose", exists), Is.Null);
+            Assert.That(RemoteAvatars.Find(paths, @"C:\Avatars\Mint.vrm", exists), Is.Null);
+            Assert.That(RemoteAvatars.Find(paths, " ", exists), Is.Null);
+
+            // 一覧の名前は、どれもそのアバター自身に戻ること（同名の別アバターは拡張子付きで出す）
+            Assert.That(RemoteAvatars.Names(paths, exists), Is.EqualTo(new[] { "Mint", "Mint.vrca", "Mint.vrm.vrm" }));
+        }
+
         private static OscMessage ParseSingle(byte[] packet)
         {
             // 1 つだけメッセージが読めること

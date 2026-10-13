@@ -9,7 +9,7 @@ using VRCast.Core;
 namespace VRCast.Tests
 {
     /// <summary>
-    /// 設定プリセット（.json・以前の .vrcastpreset）の書き出し・解析・適用と、JSON のキー単位の切り分けを検証する。
+    /// 設定プリセット（.yaml・.json・以前の .vrcastpreset）の書き出し・解析・適用と、YAML の変換・JSON のキー単位の切り分けを検証する。
     /// </summary>
     public class SettingsPresetTests
     {
@@ -54,14 +54,16 @@ namespace VRCast.Tests
         }
 
         [TestCase(@"C:\a\VRCast-preset.json", true)]
+        [TestCase(@"C:\a\VRCast-preset.yaml", true)]
+        [TestCase(@"C:\a\VRCast-preset.YML", true)]
         [TestCase(@"C:\a\Old.VRCASTPRESET", true)]
         [TestCase(@"C:\a\avatar.vrm", false)]
         [TestCase(@"C:\a\json", false)]
         [TestCase("", false)]
         [TestCase(null, false)]
-        public void HasImportExtension_AcceptsJsonAndLegacy(string path, bool expected)
+        public void HasImportExtension_AcceptsYamlJsonAndLegacy(string path, bool expected)
         {
-            // 書き出す .json と以前の版の .vrcastpreset を（大文字・小文字を問わず）読み込み対象にすること
+            // 書き出す .yaml・.json と .yml・以前の版の .vrcastpreset を（大文字・小文字を問わず）読み込み対象にすること
             Assert.That(SettingsPreset.HasImportExtension(path), Is.EqualTo(expected));
         }
 
@@ -273,6 +275,136 @@ namespace VRCast.Tests
             var target = new AppSettings();
             Assert.That(SettingsPreset.Apply(preset, Array.Empty<string>(), target), Is.False);
             Assert.That(target.uiScale, Is.EqualTo(new AppSettings().uiScale));
+        }
+
+        [Test]
+        public void YamlExport_RoundTripsLikeJson()
+        {
+            AppSettings source = Changed();
+            source.resetHotkeys[0].virtualKey = 0x41;
+            source.resetHotkeys[0].ctrl = true;
+            string yaml = SettingsPreset.Export(source, AllIds, "1.2.3", CreatedAt, PresetFormat.Yaml);
+            string json = SettingsPreset.Export(source, AllIds, "1.2.3", CreatedAt, PresetFormat.Json);
+
+            // YAML はコメントの見出しで始まり、括弧の無いブロック形式で書かれること
+            Assert.That(yaml, Does.StartWith("# VRCast 設定プリセット / VRCast settings preset\n"));
+            Assert.That(yaml, Does.Contain("\nformat: VRCastPreset\n"));
+
+            // 全カテゴリの前に日本語 / 英語の説明のコメントが付くこと
+            foreach (PresetCategory category in SettingsPreset.Categories)
+            {
+                Assert.That(yaml, Does.Match($@"\n  # [^\n]+ / [^\n]+\n  {category.Id}:\n"), category.Id);
+            }
+            Assert.That(yaml, Does.Contain("\n    backgroundColor:\n      r: "));
+            Assert.That(yaml, Does.Contain("\n    resetHotkeys:\n      - virtualKey: 65\n        ctrl: true\n"));
+
+            // 見出しが読め、YAML から反映した設定は JSON から反映した設定と同じになること（色・キーの一覧・引用符入りの文字列も）
+            PresetFile preset = Parse(yaml);
+            Assert.That(preset.AppVersion, Is.EqualTo("1.2.3"));
+            Assert.That(preset.CreatedAt, Is.EqualTo("2026-10-10T08:30:00+09:00"));
+            var fromYaml = new AppSettings();
+            var fromJson = new AppSettings();
+            Assert.That(SettingsPreset.Apply(preset, AllIds, fromYaml), Is.True);
+            Assert.That(SettingsPreset.Apply(Parse(json), AllIds, fromJson), Is.True);
+            Assert.That(JsonUtility.ToJson(fromYaml), Is.EqualTo(JsonUtility.ToJson(fromJson)));
+            Assert.That(fromYaml.expressionSmile, Is.EqualTo("Joy \"big\""));
+            Assert.That(fromYaml.backgroundColor, Is.EqualTo(Color.green));
+            Assert.That(fromYaml.resetHotkeys[0].virtualKey, Is.EqualTo(0x41));
+            Assert.That(fromYaml.resetHotkeys[0].ctrl, Is.True);
+        }
+
+        [Test]
+        public void Parse_HandEditedYaml_AcceptsCommentsQuotesAndFlowValues()
+        {
+            // 手で書いた YAML: コメント・引用符の有無・1 行の { }・知らないキー・中身を消したカテゴリ・CRLF
+            const string text =
+                "# my preset\r\n" +
+                "format: VRCastPreset   # header\r\n" +
+                "formatVersion: 1\r\n" +
+                "futureHeader: [1, \"]\", {a: b}]\r\n" +
+                "categories:\r\n" +
+                "  display:\r\n" +
+                "    backgroundColor: {r: 0, g: 0, b: 1, a: 1}\r\n" +
+                "    cameraLocked: True\r\n" +
+                "  face:\r\n" +
+                "  interface:\r\n" +
+                "    uiScale: +1.25\r\n" +
+                "    futureSetting: yes\r\n" +
+                "  expressionMapping:\r\n" +
+                "    expressionSmile: にっこり #1\r\n" +
+                "    expressionSad: 'it''s # sad'\r\n" +
+                "    thresholdSmile: .5\r\n";
+            PresetFile preset = Parse(text);
+            Assert.That(preset.Categories.Select(category => category.Id),
+                Is.EqualTo(new[] { "display", "interface", "expressionMapping" }));
+
+            var target = new AppSettings();
+            Assert.That(SettingsPreset.Apply(preset, AllIds, target), Is.True);
+            Assert.That(target.backgroundColor, Is.EqualTo(Color.blue));
+            Assert.That(target.cameraLocked, Is.True);
+            Assert.That(target.uiScale, Is.EqualTo(1.25f));
+            Assert.That(target.expressionSmile, Is.EqualTo("にっこり"));
+            Assert.That(target.expressionSad, Is.EqualTo("it's # sad"));
+            Assert.That(target.thresholdSmile, Is.EqualTo(0.5f));
+        }
+
+        [TestCase("format: VRCastPreset\nformatVersion: 1\ncategories:\n\tinterface:\n\t\tuiScale: 1")]
+        [TestCase("format: VRCastPreset\nformatVersion: 1\ncategories:\n  interface:\n      uiScale: 1\n    darkMode: true")]
+        [TestCase("format: VRCastPreset\nformatVersion: 1\ncategories:\n  interface:\n    uiLanguage: \"ja")]
+        [TestCase("format: VRCastPreset\nformatVersion: 1\ncategories:\n  interface:\n    uiLanguage: |\n      ja")]
+        [TestCase("format: VRCastPreset\nformatVersion: 1\ncategories:\n  interface: {uiScale: 1")]
+        [TestCase("just some text\nmore text")]
+        public void Parse_BrokenYaml_IsMalformed(string text)
+        {
+            // タブの字下げ・字下げのずれ・閉じていない引用符や括弧・複数行の文字列・ただのテキストは壊れたものとして扱うこと
+            Assert.That(SettingsPreset.TryParse(text, out _, out PresetError error), Is.False);
+            Assert.That(error, Is.EqualTo(PresetError.Malformed));
+        }
+
+        [Test]
+        public void Parse_YamlWithoutHeader_IsNotPreset()
+        {
+            Assert.That(SettingsPreset.TryParse("windowWidth: 1\n", out _, out PresetError error), Is.False);
+            Assert.That(error, Is.EqualTo(PresetError.NotPreset));
+        }
+
+        [TestCase("true")]
+        [TestCase("No")]
+        [TestCase("123")]
+        [TestCase("-1")]
+        [TestCase("a: b")]
+        [TestCase("#tag")]
+        [TestCase("x #y")]
+        [TestCase("[x]")]
+        [TestCase(" padded ")]
+        [TestCase("")]
+        [TestCase("line\nbreak")]
+        [TestCase("にっこり")]
+        [TestCase("Smile 2")]
+        public void SimpleYaml_StringsRoundTrip(string value)
+        {
+            // 数値・真偽値に見える文字列や記号入りの文字列も、YAML にして読み戻すと同じ文字列になること
+            string json = JsonObjectText.Build(new[] { new KeyValuePair<string, string>("k", JsonObjectText.Quote(value)) });
+            Assert.That(SimpleYaml.TryFromJson(json, out string yaml), Is.True);
+            Assert.That(SimpleYaml.TryToJson(yaml, out string back), Is.True, yaml);
+            Assert.That(JsonObjectText.TryParseObject(back, out var members), Is.True);
+            Assert.That(JsonObjectText.TryReadString(members[0].Value, out string read), Is.True, yaml);
+            Assert.That(read, Is.EqualTo(value), yaml);
+        }
+
+        [Test]
+        public void SimpleYaml_NestedSequencesRoundTrip()
+        {
+            // 入れ子の配列・オブジェクトの配列・空の入れ子が、YAML にして読み戻しても同じ構造になること
+            const string json = "{\"a\": [1, [2, 3], {\"b\": true, \"c\": [\"x\"]}, {}, []], \"d\": {}, \"e\": null}";
+            Assert.That(SimpleYaml.TryFromJson(json, out string yaml), Is.True);
+            Assert.That(SimpleYaml.TryToJson(yaml, out string back), Is.True, yaml);
+            Assert.That(Normalize(back), Is.EqualTo(Normalize(json)), yaml);
+        }
+
+        private static string Normalize(string json)
+        {
+            return new string(json.Where(c => !char.IsWhiteSpace(c)).ToArray());
         }
 
         [Test]

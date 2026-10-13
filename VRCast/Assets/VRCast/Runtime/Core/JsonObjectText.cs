@@ -77,6 +77,51 @@ namespace VRCast.Core
         }
 
         /// <summary>
+        /// 配列のテキストを、要素（JSON のテキスト）の並びへ切り分ける。配列でない・壊れているなら false。
+        /// </summary>
+        public static bool TryParseArray(string json, out List<string> items)
+        {
+            items = new List<string>();
+            if (json == null)
+            {
+                return false;
+            }
+
+            int index = 0;
+            SkipWhitespace(json, ref index);
+            if (!Consume(json, ref index, '['))
+            {
+                return false;
+            }
+
+            SkipWhitespace(json, ref index);
+            if (Consume(json, ref index, ']'))
+            {
+                return IsOnlyWhitespaceFrom(json, index);
+            }
+
+            while (true)
+            {
+                SkipWhitespace(json, ref index);
+                int start = index;
+                if (!SkipValue(json, ref index))
+                {
+                    return false;
+                }
+
+                items.Add(json.Substring(start, index - start));
+
+                SkipWhitespace(json, ref index);
+                if (Consume(json, ref index, ','))
+                {
+                    continue;
+                }
+
+                return Consume(json, ref index, ']') && IsOnlyWhitespaceFrom(json, index);
+            }
+        }
+
+        /// <summary>
         /// キーと値（JSON のテキスト）から、字下げ付きのオブジェクトのテキストを作る。depth は外側の字下げの段数。
         /// </summary>
         public static string Build(IEnumerable<KeyValuePair<string, string>> members, int depth = 0)

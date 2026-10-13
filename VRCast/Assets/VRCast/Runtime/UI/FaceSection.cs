@@ -26,12 +26,16 @@ namespace VRCast.UI
         // まばたきに使う BlendShape のアバターごとの指定
         private readonly BlinkShapeEditor _blinkShapes;
 
+        // 自動まばたきに使う .anim のアバターごとの指定
+        private readonly BlinkAnimationControls _blinkAnimation;
+
         public FaceSection(AvatarSession session, MicrophoneInput microphone, AppSettings settings)
         {
             _avatar = new AvatarComponentCache(session);
             _microphone = microphone;
             _settings = settings;
             _blinkShapes = new BlinkShapeEditor(session, _avatar, settings);
+            _blinkAnimation = new BlinkAnimationControls(session, _avatar, settings);
         }
 
         public void Draw()
@@ -46,6 +50,10 @@ namespace VRCast.UI
             GuiControls.BeginCard(Loc.T("Blink / Gaze", "まばたき / 目線", "눈 깜빡임 / 시선", "眨眼 / 视线", "眨眼 / 視線"));
             _settings.autoBlink = GUILayout.Toggle(
                 _settings.autoBlink, Loc.T("Auto blink", "自動まばたき", "자동 눈 깜빡임", "自动眨眼", "自動眨眼"));
+            if (_settings.autoBlink)
+            {
+                DrawAutoBlinkMotion();
+            }
 
             // 自動・トラッキングのどちらのまばたきにも効く
             _settings.blinkPausedByExpression = GUILayout.Toggle(
@@ -67,6 +75,60 @@ namespace VRCast.UI
 
             DrawGaze();
             GuiControls.EndCard();
+        }
+
+        private void DrawAutoBlinkMotion()
+        {
+            // 自動まばたきの動き（トラッキングのまばたきには効かない）。長さのある .anim を再生する間は閉じる・閉じたまま・開くの時間を使わない
+            _blinkAnimation.Draw();
+            var blink = _avatar.Get<BlinkController>();
+            bool playsClip = blink != null && blink.Animation != null && !blink.Animation.IsPose
+                && blink.AnimationTargetCount > 0;
+            if (!playsClip)
+            {
+                _settings.blinkCloseSeconds = GuiControls.Slider(
+                    "  " + Loc.T("Close (s)", "閉じる（秒）", "감기 (초)", "闭眼（秒）", "閉眼（秒）"),
+                    _settings.blinkCloseSeconds, AppSettings.MinBlinkMoveSeconds, AppSettings.MaxBlinkMoveSeconds, "F2");
+                _settings.blinkHoldSeconds = GuiControls.Slider(
+                    "  " + Loc.T("Stay closed (s)", "閉じたまま（秒）", "감은 채로 (초)", "保持闭眼（秒）", "保持閉眼（秒）"),
+                    _settings.blinkHoldSeconds, 0f, AppSettings.MaxBlinkHoldSeconds, "F2");
+                _settings.blinkOpenSeconds = GuiControls.Slider(
+                    "  " + Loc.T("Open (s)", "開く（秒）", "뜨기 (초)", "睁眼（秒）", "睜眼（秒）"),
+                    _settings.blinkOpenSeconds, AppSettings.MinBlinkMoveSeconds, AppSettings.MaxBlinkMoveSeconds, "F2");
+            }
+
+            // 間隔は最長を最短より短くしない（最短を上げたら最長も合わせて上げる）
+            _settings.blinkIntervalMin = GuiControls.Slider(
+                "  " + Loc.T("Interval, shortest (s)", "間隔・最短（秒）", "간격·최단 (초)", "间隔·最短（秒）", "間隔·最短（秒）"),
+                _settings.blinkIntervalMin, AppSettings.MinBlinkInterval, AppSettings.MaxBlinkInterval, "F1");
+            _settings.blinkIntervalMax = Mathf.Max(_settings.blinkIntervalMin, GuiControls.Slider(
+                "  " + Loc.T("Interval, longest (s)", "間隔・最長（秒）", "간격·최장 (초)", "间隔·最长（秒）", "間隔·最長（秒）"),
+                _settings.blinkIntervalMax, AppSettings.MinBlinkInterval, AppSettings.MaxBlinkInterval, "F1"));
+
+            GUILayout.BeginHorizontal();
+            GUI.enabled = blink != null && (blink.IsAvailable || blink.AnimationTargetCount > 0);
+            if (GUILayout.Button(Loc.T("Try", "試す", "시험", "试一下", "試一下"), GUILayout.ExpandWidth(false)))
+            {
+                blink.BlinkNow();
+            }
+
+            GUI.enabled = true;
+            if (GUILayout.Button(Loc.T("Default", "既定に戻す", "기본값으로", "恢复默认", "恢復預設"), GUILayout.ExpandWidth(false)))
+            {
+                _settings.blinkCloseSeconds = AppSettings.DefaultBlinkCloseSeconds;
+                _settings.blinkHoldSeconds = AppSettings.DefaultBlinkHoldSeconds;
+                _settings.blinkOpenSeconds = AppSettings.DefaultBlinkOpenSeconds;
+                _settings.blinkIntervalMin = AppSettings.DefaultBlinkIntervalMin;
+                _settings.blinkIntervalMax = AppSettings.DefaultBlinkIntervalMax;
+            }
+
+            GUILayout.EndHorizontal();
+            GuiControls.Hint(Loc.T(
+                "Only for auto blink (not face tracking). Each blink waits a random time between the shortest and longest interval.",
+                "自動まばたきだけに効きます（トラッキングのまばたきには効きません）。次のまばたきまでは最短と最長の間でランダムに待ちます。",
+                "자동 눈 깜빡임에만 적용됩니다 (트래킹의 눈 깜빡임에는 적용되지 않음). 다음 깜빡임까지 최단과 최장 사이에서 무작위로 기다립니다.",
+                "仅对自动眨眼有效（对面部追踪的眨眼无效）。下一次眨眼前会在最短与最长之间随机等待。",
+                "僅對自動眨眼有效（對臉部追蹤的眨眼無效）。下一次眨眼前會在最短與最長之間隨機等待。"));
         }
 
         private void DrawGaze()
