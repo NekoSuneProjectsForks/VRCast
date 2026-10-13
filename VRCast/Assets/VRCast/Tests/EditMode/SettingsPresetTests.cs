@@ -9,7 +9,7 @@ using VRCast.Core;
 namespace VRCast.Tests
 {
     /// <summary>
-    /// 設定プリセット（.vrcastpreset）の書き出し・解析・適用と、JSON のキー単位の切り分けを検証する。
+    /// 設定プリセット（.json・以前の .vrcastpreset）の書き出し・解析・適用と、JSON のキー単位の切り分けを検証する。
     /// </summary>
     public class SettingsPresetTests
     {
@@ -51,6 +51,18 @@ namespace VRCast.Tests
                 microphoneDevice = "My Mic",
                 trackingPort = 12000,
             };
+        }
+
+        [TestCase(@"C:\a\VRCast-preset.json", true)]
+        [TestCase(@"C:\a\Old.VRCASTPRESET", true)]
+        [TestCase(@"C:\a\avatar.vrm", false)]
+        [TestCase(@"C:\a\json", false)]
+        [TestCase("", false)]
+        [TestCase(null, false)]
+        public void HasImportExtension_AcceptsJsonAndLegacy(string path, bool expected)
+        {
+            // 書き出す .json と以前の版の .vrcastpreset を（大文字・小文字を問わず）読み込み対象にすること
+            Assert.That(SettingsPreset.HasImportExtension(path), Is.EqualTo(expected));
         }
 
         [Test]

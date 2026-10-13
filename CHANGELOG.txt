@@ -4,6 +4,14 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 未リリース / Unreleased
+
+[日本語]
+- 設定プリセットの書き出しを JSON ファイル（.json）に変更（以前の版で書き出した .vrcastpreset もこれまでどおり読み込めます）
+
+[English]
+- Changed settings presets to be exported as JSON files (.json); presets saved by older versions (.vrcastpreset) can still be loaded
+
 ■ 2.1.0 (2026-10-13)
 
 [日本語]

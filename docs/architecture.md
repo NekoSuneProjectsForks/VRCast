@@ -115,7 +115,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `BodyMotion` | 頭の位置に合わせた体の動かし方（Lean = 0: 足を固定して背骨・胸を傾ける / Move = 1: 腰ごと移動 / LeanAndMove = 2、設定に数値で保存） |
 | `SettingsStore` | `settings.json` の読込・保存。破損時は既定値にフォールバック |
 | `AtomicFile` | 一時ファイルに書いてから置き換える書き込み（`settings.json`・設定プリセットで共用） |
-| `SettingsPreset` | 設定プリセット（`.vrcastpreset`）の書き出し・解析・適用。`AppSettings` のフィールドをカテゴリ（`PresetCategory`。アバター関連の印付き）か除外のどちらかに必ず割り当てる（テストで検査）。ファイルはカテゴリごとのブロックに分けた JSON テキスト。知らないカテゴリ・キーは無視、無いキーは今の値のまま、カテゴリに属さないキーは反映しない。`formatVersion` は互換性のない変更時だけ上げる |
+| `SettingsPreset` | 設定プリセット（`.json`。以前の版の `.vrcastpreset` も読み込みだけ受け付ける。中身の形式は同じ）の書き出し・解析・適用。`AppSettings` のフィールドをカテゴリ（`PresetCategory`。アバター関連の印付き）か除外のどちらかに必ず割り当てる（テストで検査）。ファイルはカテゴリごとのブロックに分けた JSON テキスト。知らないカテゴリ・キーは無視、無いキーは今の値のまま、カテゴリに属さないキーは反映しない。`formatVersion` は互換性のない変更時だけ上げる |
 | `JsonObjectText` | JSON オブジェクトの一番外側のキーと値（JSON のテキストのまま）の切り分け・結合（`JsonUtility` で一部のキーだけを扱うため） |
 | `VersionUtility` | "1.2.0" 形式（先頭の v 可、欠けた桁は 0）のバージョン番号の解析と比較。読めない番号は「新しくない」扱い |
 | `AppBootstrap` | `RuntimeInitializeOnLoadMethod` で起動時に設定を読み込み（初回は既定値で作成）、終了時にウィンドウサイズを含めて保存する |
@@ -254,7 +254,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `NvidiaOverlayExclusion` | NVIDIA のオーバーレイ（ShadowPlay）に VRCast を検知させない設定。`nvapi64.dll` の `nvapi_QueryInterface` で DRS 関数を取り、プロファイル「VRCast」に VRCast.exe と非公開の設定 `0x809D5F60 = 0x10000000` を書く（`Exclude`）/ プロファイルを消す（`Restore`）/ 状態を調べる（`Query`、NVIDIA が無ければ `Unavailable`）。構造体は公開ヘッダーの V1 のバイト数で手書き。exe が別のプロファイルにあれば書き換えない。反映は次回起動から |
 | `PerformanceSection` | Performance タブ（軽量モード・動作状況の表示・プロセスの優先度、3D V-Cache の無い側のコアで動かす・使うコア（Intel）（どちらも全ての PC に表示し、対象の CPU とこの PC が対象かを添える）、描画に使う GPU（変更時は再起動ボタン）、NVIDIA ShadowPlay に検知させない設定（NVIDIA の PC のみ。状態は初回と変更後だけ調べる）） |
 | `SettingsSection` | Settings タブ（「パネル」カード 1 枚に表示言語・UI の大きさ（`GuiControls.LabeledChoice`）・背景の不透明度・テーマ（ライト / ダーク）、設定プリセット（`PresetSection`）、全設定のリセット（赤いボタン → 確認の 2 段階）） |
-| `PresetSection` | Settings タブの設定プリセットのカード。書き出すカテゴリの選択と保存、読み込んだファイルの確認欄（入っているカテゴリだけを選択、アバター関連をまとめて外す、適用 / キャンセル）。`.vrcastpreset` のドロップでも同じ確認欄を出し、反映後は `MainPanel` の各機能への反映（全設定のリセットと共用）を呼ぶ |
+| `PresetSection` | Settings タブの設定プリセットのカード。書き出すカテゴリの選択と保存、読み込んだファイルの確認欄（入っているカテゴリだけを選択、アバター関連をまとめて外す、適用 / キャンセル）。`.json`・`.vrcastpreset` のドロップでも同じ確認欄を出し（VRCast のプリセットでない JSON は「プリセットではありません」と表示）、反映後は `MainPanel` の各機能への反映（全設定のリセットと共用）を呼ぶ |
 | `AvatarComponentCache` | 表示中アバターのコンポーネントをアバター切替までキャッシュ |
 | `GuiControls` | セクション共通の IMGUI 部品（見出し付きカード、補足文、ラベル付きスライダー、`<` `>` の巡回選択・列挙値選択） |
 | `PathUtility` | 入力パスの整形（前後の空白・`"` を除去） |

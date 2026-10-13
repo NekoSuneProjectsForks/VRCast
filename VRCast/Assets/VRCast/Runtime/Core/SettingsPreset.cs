@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using UnityEngine;
 
 namespace VRCast.Core
@@ -74,14 +75,23 @@ namespace VRCast.Core
     }
 
     /// <summary>
-    /// 設定プリセット（.vrcastpreset）の書き出し・解析・適用。中身は人が読める JSON テキストで、設定はカテゴリごとのブロックに分ける。
+    /// 設定プリセット（.json）の書き出し・解析・適用。中身は人が読める JSON テキストで、設定はカテゴリごとのブロックに分ける。
     /// 将来の版との互換のため、知らないカテゴリ・キーは無視し、無いキーは現在の値のまま残す。
     /// アバターごとの記録（シェイプキーの上限・視点・表情のキー等）と PC 固有の値は含めない。
     /// </summary>
     public static class SettingsPreset
     {
-        // 拡張子・形式名・形式のバージョン（キー名の変更など互換性のない変更をしたら上げ、読み込み時に読み替える）
-        public const string Extension = ".vrcastpreset";
+        // 書き出す拡張子と、以前の版が書き出していた拡張子（中身は同じ形式なので読み込みだけ受け付ける）
+        public const string Extension = ".json";
+        public const string LegacyExtension = ".vrcastpreset";
+
+        // 読み込みで受け付ける拡張子（ダイアログの絞り込み・ドロップの振り分け）
+        public static readonly string[] ImportExtensions = { Extension, LegacyExtension };
+
+        // 書き出すときの最初のファイル名
+        public const string DefaultFileName = "VRCast-preset" + Extension;
+
+        // 形式名・形式のバージョン（キー名の変更など互換性のない変更をしたら上げ、読み込み時に読み替える）
         public const string FormatName = "VRCastPreset";
         public const int CurrentFormatVersion = 1;
 
@@ -173,6 +183,21 @@ namespace VRCast.Core
             nameof(AppSettings.remoteOscPort),
             nameof(AppSettings.remoteHttpPort),
         };
+
+        /// <summary>
+        /// パスが読み込める拡張子（.json・以前の .vrcastpreset）なら true。
+        /// </summary>
+        public static bool HasImportExtension(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return false;
+            }
+
+            string extension = Path.GetExtension(path);
+            return Array.Exists(ImportExtensions,
+                candidate => string.Equals(extension, candidate, StringComparison.OrdinalIgnoreCase));
+        }
 
         /// <summary>
         /// ID からカテゴリを探す（知らない ID は null）。

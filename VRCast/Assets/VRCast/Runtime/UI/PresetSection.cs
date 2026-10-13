@@ -8,14 +8,12 @@ using VRCast.Platform;
 namespace VRCast.UI
 {
     /// <summary>
-    /// Settings タブの「設定プリセット」カード。選んだカテゴリの設定を .vrcastpreset へ書き出し、
+    /// Settings タブの「設定プリセット」カード。選んだカテゴリの設定を .json へ書き出し、
     /// 読み込むときはファイルに入っているカテゴリを確認・選択してから反映する（ドロップしたファイルも同じ確認を経る）。
+    /// 以前の版の .vrcastpreset も読み込める。
     /// </summary>
     public class PresetSection
     {
-        // 書き出すときの最初のファイル名
-        private const string DefaultFileName = "VRCast" + SettingsPreset.Extension;
-
         // 結果表示の種類
         private enum Result
         {
@@ -61,16 +59,21 @@ namespace VRCast.UI
         {
             GuiControls.BeginCard(Loc.T("Settings preset", "設定プリセット", "설정 프리셋", "设置预设", "設定預設"));
             GuiControls.Hint(Loc.T(
-                "Save settings to a .vrcastpreset file (readable text) and load them on another PC or later. " +
+                "Save settings to a JSON file (.json, readable text) and load them on another PC or later. " +
+                "Presets saved by older versions (.vrcastpreset) can also be loaded. " +
                 "Per-avatar data (shape keys, camera, expression keys) and PC-specific values " +
                 "(microphone, camera, GPU name, ports) are not included.",
-                "設定を .vrcastpreset ファイル（テキストで読めます）に書き出し、別の PC や後から読み込めます。" +
+                "設定を JSON ファイル（.json。テキストで読めます）に書き出し、別の PC や後から読み込めます。" +
+                "以前の版で書き出したプリセット（.vrcastpreset）も読み込めます。" +
                 "アバターごとの記録（シェイプキー・カメラ・表情のキー）と PC ごとの値（マイク・カメラ・GPU 名・ポート）は含みません。",
-                "설정을 .vrcastpreset 파일(텍스트로 읽을 수 있음)로 내보내고 다른 PC나 나중에 불러올 수 있습니다. " +
+                "설정을 JSON 파일(.json, 텍스트로 읽을 수 있음)로 내보내고 다른 PC나 나중에 불러올 수 있습니다. " +
+                "이전 버전에서 내보낸 프리셋(.vrcastpreset)도 불러올 수 있습니다. " +
                 "아바타별 기록(셰이프 키·카메라·표정 키)과 PC별 값(마이크·카메라·GPU 이름·포트)은 포함하지 않습니다.",
-                "可将设置导出为 .vrcastpreset 文件（可作为文本阅读），并在其他电脑或之后导入。" +
+                "可将设置导出为 JSON 文件（.json，可作为文本阅读），并在其他电脑或之后导入。" +
+                "也可以导入旧版本导出的预设（.vrcastpreset）。" +
                 "不包含各虚拟形象的记录（形态键·相机·表情按键）和各电脑的值（麦克风·摄像头·GPU 名称·端口）。",
-                "可將設定匯出為 .vrcastpreset 檔案（可作為文字閱讀），並在其他電腦或之後匯入。" +
+                "可將設定匯出為 JSON 檔案（.json，可作為文字閱讀），並在其他電腦或之後匯入。" +
+                "也可以匯入舊版本匯出的預設（.vrcastpreset）。" +
                 "不包含各虛擬形象的紀錄（形態鍵·相機·表情按鍵）和各電腦的值（麥克風·攝影機·GPU 名稱·連接埠）。"));
 
             // 確認中は読み込み、それ以外は書き出しと読み込みのボタン
@@ -134,8 +137,7 @@ namespace VRCast.UI
         /// </summary>
         public static bool IsPresetFile(string path)
         {
-            return !string.IsNullOrEmpty(path)
-                && string.Equals(Path.GetExtension(path), SettingsPreset.Extension, StringComparison.OrdinalIgnoreCase);
+            return SettingsPreset.HasImportExtension(path);
         }
 
         private void DrawExport()
@@ -154,11 +156,11 @@ namespace VRCast.UI
 
             GuiControls.SubHeading(Loc.T("Import", "読み込み", "불러오기", "导入", "匯入"));
             GuiControls.Hint(Loc.T(
-                "After choosing a file you can pick which categories to apply. You can also drop a .vrcastpreset file onto the window.",
-                "ファイルを選んだ後で、反映するカテゴリを選べます。.vrcastpreset ファイルをウィンドウにドロップしても読み込めます。",
-                "파일을 고른 뒤 적용할 카테고리를 선택할 수 있습니다. .vrcastpreset 파일을 창에 끌어다 놓아도 불러옵니다.",
-                "选择文件后可以选择要应用的类别。也可以将 .vrcastpreset 文件拖放到窗口中导入。",
-                "選擇檔案後可以選擇要套用的類別。也可以將 .vrcastpreset 檔案拖放到視窗中匯入。"));
+                "After choosing a file you can pick which categories to apply. You can also drop a preset file onto the window.",
+                "ファイルを選んだ後で、反映するカテゴリを選べます。プリセットのファイルをウィンドウにドロップしても読み込めます。",
+                "파일을 고른 뒤 적용할 카테고리를 선택할 수 있습니다. 프리셋 파일을 창에 끌어다 놓아도 불러옵니다.",
+                "选择文件后可以选择要应用的类别。也可以将预设文件拖放到窗口中导入。",
+                "選擇檔案後可以選擇要套用的類別。也可以將預設檔案拖放到視窗中匯入。"));
             GUI.enabled = FileDialog.IsSupported;
             if (GUILayout.Button(Loc.T("Import...", "読み込む...", "불러오기...", "导入...", "匯入..."), GuiControls.Shrinkable))
             {
@@ -323,7 +325,7 @@ namespace VRCast.UI
             string path = FileDialog.SaveFile(
                 Loc.T("Export settings preset", "設定プリセットを書き出す", "설정 프리셋 내보내기", "导出设置预设", "匯出設定預設"),
                 Loc.T("VRCast preset", "VRCast プリセット", "VRCast 프리셋", "VRCast 预设", "VRCast 預設"),
-                SettingsPreset.Extension, initial, DefaultFileName);
+                SettingsPreset.Extension, initial, SettingsPreset.DefaultFileName);
             if (path == null)
             {
                 return;
@@ -355,7 +357,7 @@ namespace VRCast.UI
             string path = FileDialog.OpenFile(
                 Loc.T("Import settings preset", "設定プリセットを読み込む", "설정 프리셋 불러오기", "导入设置预设", "匯入設定預設"),
                 Loc.T("VRCast preset", "VRCast プリセット", "VRCast 프리셋", "VRCast 预设", "VRCast 預設"),
-                new[] { SettingsPreset.Extension }, initial);
+                SettingsPreset.ImportExtensions, initial);
             if (path != null)
             {
                 Open(path);

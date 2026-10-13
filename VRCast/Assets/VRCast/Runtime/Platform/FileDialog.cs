@@ -88,7 +88,7 @@ namespace VRCast.Platform
         /// </summary>
         /// <param name="title">ダイアログのタイトル</param>
         /// <param name="filterName">種類の表示名（例: "VRCast preset"）</param>
-        /// <param name="extension">拡張子（例: ".vrcastpreset"。名前に付けなければ自動で付く）</param>
+        /// <param name="extension">拡張子（例: ".json"。名前に付けなければ自動で付く）</param>
         /// <param name="initialPath">最初に開くフォルダを決めるパス（ファイル・フォルダ・空可）</param>
         /// <param name="fileName">最初に入れておくファイル名</param>
         public static string SaveFile(string title, string filterName, string extension, string initialPath,
