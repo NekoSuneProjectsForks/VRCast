@@ -4,6 +4,20 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 2.2.0 (2026-10-13)
+
+[日本語]
+- パーフェクトシンク化の目印の自動配置「BlendShape から」の精度を改善（まぶた・唇は顔の目・口の縁の線に沿って置き、まつ毛・眉・歯などの部品に引っ張られないようにしました。閉じた唇の口角、あご、眉もずれにくくなり、詳細の段階ではまぶた・唇の途中の点も置きます）
+- パーフェクトシンク化の目印の自動配置に「BlendShape + 画像認識」を追加（BlendShape から点を打ち、その点に合わせて画像認識の点のずれを直してから、頬・小鼻・エラなど BlendShape では求められない目印を補います。顔が見つからなければ BlendShape の結果だけを置きます）
+- パーフェクトシンク化の目印の自動配置「画像認識」で顔が見つかりにくい・目印がまつ毛などに乗ってしまう問題を修正（顔のまわりを大きく写して認識し、目印は顔の肌に置きます）
+- パーフェクトシンク化で目印を手で動かしているときに、ほかの目印までまとめて動いてしまう問題を修正（鼻先・唇・あごなど中央の目印を動かすと、左右対称で置いた右側の目印が全部ずれていました）
+
+[English]
+- Improved the accuracy of "From blend shapes" when placing perfect sync points automatically (eyelid and lip points now follow the edges of the eye and mouth openings and are no longer pulled onto eyelashes, brows or teeth; mouth corners of closed lips, the chin and the brows are placed more reliably, and the Detailed level also places the points along the eyelids and lips)
+- Added "Blend shapes + image recognition" for placing perfect sync points automatically (points are placed from blend shapes first, image recognition is aligned to them, and then it fills in points blend shapes cannot find, such as the cheeks, nose wings and jaw corners; if no face is found, only the blend shape points are placed)
+- Fixed "Image recognition" for perfect sync points often failing to find the face or placing points on eyelashes and other parts (the area around the face is captured at a larger size, and points are placed on the skin)
+- Fixed other perfect sync points moving together while dragging a point by hand (moving a center point such as the nose tip, lips or chin shifted all mirrored right-side points)
+
 ■ 2.1.0 (2026-10-13)
 
 [日本語]

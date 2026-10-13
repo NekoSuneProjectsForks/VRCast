@@ -32,14 +32,9 @@ namespace VRCast.Tests
                     Mathf.Abs(di) <= 4 && dj >= -18 && dj <= -8 ? new Vector3(0f, -0.1f, 0f) : Vector3.zero),
             };
 
-            var vertices = new List<int>();
-            for (int k = 0; k < positions.Length; k++)
-            {
-                vertices.Add(k);
-            }
-
             var axes = new FaceAxes(Vector3.zero, Vector3.right, Vector3.up, Vector3.forward);
-            LandmarkEstimate estimate = LandmarkEstimator.Estimate(positions, vertices, samples, axes);
+            LandmarkEstimate estimate = LandmarkEstimator.Estimate(positions, CreateTriangles((di, dj) => false), null,
+                samples, axes);
 
             // 目: 最も動く頂点が上まぶた、閉じた位置が下まぶた、動く範囲の端が目頭・目尻
             AssertPoint(estimate, LandmarkId.EyeUpperLeft, new Vector3(0.35f, 0.35f, 0f));
@@ -71,9 +66,184 @@ namespace VRCast.Tests
             // BlendShape が 1 つも無ければ何も置かないこと
             Vector3[] positions = CreateGrid();
             var axes = new FaceAxes(Vector3.zero, Vector3.right, Vector3.up, Vector3.forward);
-            LandmarkEstimate estimate = LandmarkEstimator.Estimate(positions, new[] { 0, 1, 2 },
+            LandmarkEstimate estimate = LandmarkEstimator.Estimate(positions, CreateTriangles((di, dj) => false), null,
                 new LandmarkShapeSamples(), axes);
             Assert.That(estimate.Points, Is.Empty);
+        }
+
+        [Test]
+        public void Estimator_UsesEyeAndMouthOpeningsOfTheSkin()
+        {
+            // 目の穴: 左は x = 0.2〜0.5、y = 0.30〜0.35（右はその鏡）。口の穴: x = -0.2〜0.2、y = -0.45〜-0.40
+            int grid = Size * Size;
+            var positions = new Vector3[grid + 4];
+            System.Array.Copy(CreateGrid(), positions, grid);
+            positions[Index(0, 0)].z = 0.1f;
+
+            // 左目の前に浮いた、まばたきで大きく動くまつ毛（肌とつながらない部品）
+            positions[grid] = new Vector3(0.2f, 0.36f, 0.05f);
+            positions[grid + 1] = new Vector3(0.5f, 0.36f, 0.05f);
+            positions[grid + 2] = new Vector3(0.2f, 0.40f, 0.05f);
+            positions[grid + 3] = new Vector3(0.5f, 0.40f, 0.05f);
+            var triangles = new List<int>(CreateTriangles((di, dj) =>
+                (dj == 6 && ((di >= 4 && di <= 9) || (di >= -10 && di <= -5))) || (dj == -9 && di >= -4 && di <= 3)));
+            triangles.AddRange(new[] { grid, grid + 1, grid + 2, grid + 1, grid + 3, grid + 2 });
+
+            // まばたきは上まぶたの縁（y = 0.35）とその上が下がる。「あ」は下唇から下が下がる
+            var samples = new LandmarkShapeSamples
+            {
+                BlinkLeft = Shaped(positions, (di, dj) => Lid(di, dj, 1)),
+                BlinkRight = Shaped(positions, (di, dj) => Lid(di, dj, -1)),
+                MouthOpen = Shaped(positions, (di, dj) =>
+                    Mathf.Abs(di) <= 5 && dj >= -18 && dj <= -9 ? new Vector3(0f, -0.1f, 0f) : Vector3.zero),
+            };
+            for (int k = grid; k < grid + 4; k++)
+            {
+                samples.BlinkLeft[k] += new Vector3(0f, -0.3f, 0f);
+            }
+
+            var axes = new FaceAxes(Vector3.zero, Vector3.right, Vector3.up, Vector3.forward);
+            LandmarkEstimate estimate = LandmarkEstimator.Estimate(positions, triangles.ToArray(), null, samples, axes);
+
+            // 目: 穴の上の縁 = 上まぶた、下の縁 = 下まぶた、左右の端 = 目頭・目尻（まつ毛には引っ張られない）
+            AssertPoint(estimate, LandmarkId.EyeUpperLeft, new Vector3(0.35f, 0.35f, 0f));
+            AssertPoint(estimate, LandmarkId.EyeLowerLeft, new Vector3(0.35f, 0.30f, 0f));
+            AssertPoint(estimate, LandmarkId.EyeUpperInnerLeft, new Vector3(0.275f, 0.35f, 0f));
+            AssertPoint(estimate, LandmarkId.EyeLowerOuterLeft, new Vector3(0.425f, 0.30f, 0f));
+            Assert.That(estimate.Points[LandmarkId.EyeInnerLeft].x, Is.EqualTo(0.2f).Within(Tolerance));
+            Assert.That(estimate.Points[LandmarkId.EyeOuterLeft].x, Is.EqualTo(0.5f).Within(Tolerance));
+            AssertPoint(estimate, LandmarkId.EyeUpperRight, new Vector3(-0.35f, 0.35f, 0f));
+            AssertPoint(estimate, LandmarkId.EyeLowerRight, new Vector3(-0.35f, 0.30f, 0f));
+
+            // 口: 穴の上下の縁 = 上唇・下唇、左右の端 = 口角、途中の点も縁の上
+            AssertPoint(estimate, LandmarkId.LipUpper, new Vector3(0f, -0.40f, 0f));
+            AssertPoint(estimate, LandmarkId.LipLower, new Vector3(0f, -0.45f, 0f));
+            Assert.That(estimate.Points[LandmarkId.MouthCornerLeft].x, Is.EqualTo(0.2f).Within(Tolerance));
+            Assert.That(estimate.Points[LandmarkId.MouthCornerRight].x, Is.EqualTo(-0.2f).Within(Tolerance));
+            Assert.That(estimate.Points[LandmarkId.LipUpperLeft].y, Is.EqualTo(-0.40f).Within(Tolerance));
+            Assert.That(estimate.Points[LandmarkId.LipLowerRight].y, Is.EqualTo(-0.45f).Within(Tolerance));
+            Assert.That(estimate.Guessed.Contains(LandmarkId.MouthCornerLeft), Is.False);
+
+            // あご・鼻先、置く面にまつ毛の三角形を含まない
+            Assert.That(estimate.Points[LandmarkId.Chin].y, Is.EqualTo(-0.9f).Within(Tolerance));
+            AssertPoint(estimate, LandmarkId.NoseTip, new Vector3(0f, 0f, 0.1f));
+            int lashTriangle = triangles.Count / 3 - 1;
+            Assert.That(estimate.Surface.Contains(lashTriangle), Is.False);
+            Assert.That(estimate.Surface.Contains(0), Is.True);
+        }
+
+        [Test]
+        public void Estimator_ClosedLipsAreSplitByTheirMotion()
+        {
+            // 口を閉じたメッシュ: 上唇と下唇の頂点が同じ位置にあり、つながっていない（「あ」で下唇だけ下がる）
+            Vector3[] grid = CreateGrid();
+            var positions = new List<Vector3>(grid);
+            var triangles = new List<int>(CreateTriangles((di, dj) => false));
+
+            // 口の線（y = -0.4、x = -0.2〜0.2）の下側の三角形が使う頂点を、同じ位置の別の頂点に付け替える（口角は共有）
+            var lower = new Dictionary<int, int>();
+            for (int di = -3; di <= 3; di++)
+            {
+                lower[Index(di, -8)] = positions.Count;
+                positions.Add(grid[Index(di, -8)]);
+            }
+
+            for (int t = 0; t < triangles.Count / 3; t++)
+            {
+                float centroidY = (positions[triangles[t * 3]].y + positions[triangles[t * 3 + 1]].y
+                    + positions[triangles[t * 3 + 2]].y) / 3f;
+                float centroidX = (positions[triangles[t * 3]].x + positions[triangles[t * 3 + 1]].x
+                    + positions[triangles[t * 3 + 2]].x) / 3f;
+                if (centroidY >= -0.4f || Mathf.Abs(centroidX) >= 0.2f)
+                {
+                    continue;
+                }
+
+                for (int c = 0; c < 3; c++)
+                {
+                    if (lower.TryGetValue(triangles[t * 3 + c], out int split))
+                    {
+                        triangles[t * 3 + c] = split;
+                    }
+                }
+            }
+
+            Vector3[] array = positions.ToArray();
+            Vector3[] open = (Vector3[])array.Clone();
+            for (int k = 0; k < array.Length; k++)
+            {
+                // 付け替えた下唇の頂点と、口の線より下のあごまで
+                if (k >= grid.Length || (array[k].y < -0.4f - 1e-4f && array[k].y > -0.9f - 1e-4f
+                        && Mathf.Abs(array[k].x) <= 0.25f + 1e-4f))
+                {
+                    open[k] += new Vector3(0f, -0.1f, 0f);
+                }
+            }
+
+            var samples = new LandmarkShapeSamples
+            {
+                BlinkLeft = Shaped(array, (di, dj) => Lid(di, dj, 1)),
+                BlinkRight = Shaped(array, (di, dj) => Lid(di, dj, -1)),
+                MouthOpen = open,
+            };
+
+            var axes = new FaceAxes(Vector3.zero, Vector3.right, Vector3.up, Vector3.forward);
+            LandmarkEstimate estimate = LandmarkEstimator.Estimate(array, triangles.ToArray(), null, samples, axes);
+
+            // 唇の線の両端が口角、中央が上唇・下唇（同じ位置）
+            Assert.That(estimate.Points[LandmarkId.MouthCornerLeft].x, Is.EqualTo(0.2f).Within(Tolerance));
+            Assert.That(estimate.Points[LandmarkId.MouthCornerRight].x, Is.EqualTo(-0.2f).Within(Tolerance));
+            AssertPoint(estimate, LandmarkId.LipUpper, new Vector3(0f, -0.4f, 0f));
+            AssertPoint(estimate, LandmarkId.LipLower, new Vector3(0f, -0.4f, 0f));
+        }
+
+        [Test]
+        public void Correction_RecoversAffineAndDropsOutliers()
+        {
+            // 画像認識の点を、拡大・傾き・平行移動した位置が正しい位置（1 組だけ大きく外れる）
+            var detected = new List<Vector2>();
+            var known = new List<Vector2>();
+            for (int i = 0; i < 8; i++)
+            {
+                float angle = i * Mathf.PI / 4f;
+                Vector2 point = new Vector2(0.5f, 0.5f) + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 0.2f;
+                detected.Add(point);
+                known.Add(Affine(point));
+            }
+
+            known[3] += new Vector2(0.3f, -0.2f);
+            ImageCorrection correction = ImageCorrection.Fit(detected, known);
+
+            // 外れた組を除き、ほかの点は変換どおりに直る
+            Assert.That(correction.AnchorCount, Is.EqualTo(7));
+            foreach (Vector2 point in new[] { new Vector2(0.5f, 0.5f), new Vector2(0.45f, 0.62f), new Vector2(0.1f, 0.9f) })
+            {
+                Assert.That(Vector2.Distance(correction.Apply(point), Affine(point)), Is.LessThan(1e-4f));
+            }
+        }
+
+        [Test]
+        public void Correction_AddsNearbyResiduals()
+        {
+            // 1 組だけ少しずれる（外れではない）と、その近くの点はずれた位置へ寄る
+            var detected = new List<Vector2>();
+            var known = new List<Vector2>();
+            for (int i = 0; i < 8; i++)
+            {
+                float angle = i * Mathf.PI / 4f;
+                Vector2 point = new Vector2(0.5f, 0.5f) + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 0.2f;
+                detected.Add(point);
+                known.Add(Affine(point));
+            }
+
+            known[0] += new Vector2(0.01f, 0f);
+            ImageCorrection correction = ImageCorrection.Fit(detected, known);
+            Assert.That(correction.AnchorCount, Is.EqualTo(8));
+            Assert.That(Vector2.Distance(correction.Apply(detected[0]), known[0]), Is.LessThan(0.004f));
+
+            // 組が無ければ何もしない
+            Vector2 same = ImageCorrection.Fit(new List<Vector2>(), new List<Vector2>()).Apply(new Vector2(0.3f, 0.7f));
+            Assert.That(Vector2.Distance(same, new Vector2(0.3f, 0.7f)), Is.LessThan(1e-6f));
         }
 
         [Test]
@@ -123,6 +293,48 @@ namespace VRCast.Tests
             }
 
             return positions;
+        }
+
+        private static int[] CreateTriangles(System.Func<int, int, bool> skip)
+        {
+            // 格子の四角を 2 つの三角形にする（前（+Z）向き）。skip が true の四角（左下の頂点のずれ）は穴にする
+            var triangles = new List<int>();
+            for (int i = 0; i < Size - 1; i++)
+            {
+                for (int j = 0; j < Size - 1; j++)
+                {
+                    if (skip(i - Half, j - Half))
+                    {
+                        continue;
+                    }
+
+                    int a = i * Size + j;
+                    int b = (i + 1) * Size + j;
+                    int c = i * Size + j + 1;
+                    int d = (i + 1) * Size + j + 1;
+                    triangles.AddRange(new[] { a, b, c, b, d, c });
+                }
+            }
+
+            return triangles.ToArray();
+        }
+
+        private static Vector3 Lid(int di, int dj, int side)
+        {
+            // side の目（1 = 左、-1 = 右）の上まぶたの縁（y = 0.35）が大きく、その上が半分だけ下がる
+            int x = di * side;
+            if (x < 4 || x > 10)
+            {
+                return Vector3.zero;
+            }
+
+            return dj == 7 ? new Vector3(0f, -0.05f, 0f) : dj == 8 ? new Vector3(0f, -0.025f, 0f) : Vector3.zero;
+        }
+
+        private static Vector2 Affine(Vector2 p)
+        {
+            // テスト用の拡大・傾き・平行移動
+            return new Vector2(1.2f * p.x + 0.1f * p.y + 0.03f, -0.05f * p.x + 0.9f * p.y - 0.02f);
         }
 
         private static int Index(int di, int dj)

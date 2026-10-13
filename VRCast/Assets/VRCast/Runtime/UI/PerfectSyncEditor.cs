@@ -958,14 +958,14 @@ namespace VRCast.UI
                     {
                         // 打つ前の状態を履歴に積み、打った目印を Delete の対象として覚える
                         PushUndo(Snapshot());
-                        PlaceLandmark(_selected.Value, hit, false);
+                        PlaceLandmark(_selected.Value, hit);
                         _lastPlaced = _selected;
                         _dragging = true;
                     }
                 }
             }
 
-            // ドラッグ中: 表面に沿って動かす（反対側は動かした目印の相手だけ決め直す）
+            // ドラッグ中: 表面に沿って動かす（反対側は動かした目印の相手だけ決め直し、ほかの目印は動かさない）
             if (_dragging && Input.GetMouseButton(0) && _selected.HasValue && RaycastFace(out PerfectSyncLandmark moved))
             {
                 // つかんだ目印を初めて動かしたときに、つかむ前の状態を履歴に積む
@@ -975,15 +975,14 @@ namespace VRCast.UI
                     _pendingUndo = null;
                 }
 
-                PlaceLandmark(_selected.Value, moved, true);
+                PlaceLandmark(_selected.Value, moved);
             }
 
-            // 離したとき: 反対側を全部決め直し、まだ打っていない次の目印を選ぶ
+            // 離したとき: まだ打っていない次の目印を選ぶ
             if (_dragging && !Input.GetMouseButton(0))
             {
                 _dragging = false;
                 _pendingUndo = null;
-                Remirror(null);
                 _selected = NextUnplaced() ?? _selected;
             }
         }
@@ -1167,14 +1166,19 @@ namespace VRCast.UI
             return _geometry.Raycast(_world, ray, _region, out hit, out float _);
         }
 
-        private void PlaceLandmark(LandmarkId id, PerfectSyncLandmark hit, bool partnerOnly)
+        private void PlaceLandmark(LandmarkId id, PerfectSyncLandmark hit)
         {
             // 手で打った目印にする（自動で決めた右側を動かしたら、手で打ったものとして扱う）
             hit.id = (int)id;
             _landmarks[id] = hit;
             _autoMirrored.Remove(id);
             _dirty = true;
-            Remirror(partnerOnly && FaceLandmarks.TryGetMirror(id, out LandmarkId partner) ? partner : (LandmarkId?)null);
+
+            // 反対側はこの目印の相手だけ決め直す（中央の目印など相手の無い目印では、ほかの目印を動かさない）
+            if (FaceLandmarks.TryGetMirror(id, out LandmarkId partner))
+            {
+                Remirror(partner);
+            }
         }
 
         private void RemoveLandmark(LandmarkId id)
@@ -1220,7 +1224,12 @@ namespace VRCast.UI
                 fallbackNormal = axes.Left;
             }
 
-            FaceRig.EstimateSymmetryPlane(manual, fallbackPoint, fallbackNormal, out Vector3 planePoint,
+            // 手で打った左右の組が無ければ、中央の目印（唇・あご・鼻）ではなく顔の中心で決める
+            // （中央の目印を少しずらしただけで、右側の目印が全部ずれないように）
+            IReadOnlyDictionary<LandmarkId, Vector3> planeSource = posed && !HasManualPair(manual)
+                ? new Dictionary<LandmarkId, Vector3>()
+                : manual;
+            FaceRig.EstimateSymmetryPlane(planeSource, fallbackPoint, fallbackNormal, out Vector3 planePoint,
                 out Vector3 planeNormal);
 
             // 右側の目印を、左側を面で反転した位置の最も近い表面に置く（手で打った右側はそのまま）
@@ -1251,6 +1260,20 @@ namespace VRCast.UI
                 _landmarks[id] = MirrorOf(_landmarks[left], leftPoint, planePoint, planeNormal, positions, posed, id);
                 _autoMirrored.Add(id);
             }
+        }
+
+        private static bool HasManualPair(Dictionary<LandmarkId, Vector3> manual)
+        {
+            // 左右の両方を手で打った組があれば true
+            foreach (LandmarkId id in manual.Keys)
+            {
+                if (FaceLandmarks.IsLeft(id) && FaceLandmarks.TryGetMirror(id, out LandmarkId right) && manual.ContainsKey(right))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void MarkRightsAutomatic()

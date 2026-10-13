@@ -470,7 +470,17 @@ namespace VRCast.UI
                     "画像認識（MediaPipe。顔を正面に向けてから）", "이미지 인식 (MediaPipe, 얼굴을 정면으로 한 뒤)",
                     "图像识别（MediaPipe，请先正对脸部）", "影像辨識（MediaPipe，請先正對臉部）"), wrap))
             {
-                _deferred = StartImageDetection;
+                _deferred = StartFaceDetection;
+            }
+
+            // 併用（BlendShape から打った点に合わせて、足りない点を MediaPipe で補う。正面に向けてから押す）
+            if (GUILayout.Button(Loc.T("Blend shapes + image recognition (fills the rest with MediaPipe, face the camera first)",
+                    "BlendShape + 画像認識（足りない点を MediaPipe で補う。顔を正面に向けてから）",
+                    "BlendShape + 이미지 인식 (부족한 점을 MediaPipe로 보완, 얼굴을 정면으로 한 뒤)",
+                    "BlendShape + 图像识别（用 MediaPipe 补足缺少的点，请先正对脸部）",
+                    "BlendShape + 影像辨識（用 MediaPipe 補足缺少的點，請先正對臉部）"), wrap))
+            {
+                _deferred = StartHybridDetection;
             }
 
             GUI.enabled = true;
