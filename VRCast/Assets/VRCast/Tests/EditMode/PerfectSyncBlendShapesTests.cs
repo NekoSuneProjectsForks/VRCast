@@ -56,14 +56,15 @@ namespace VRCast.Tests
             int mouthLeft = ArKitFace.IndexOf("mouthLeft");
             int mouthRight = ArKitFace.IndexOf("mouthRight");
 
-            // 映像の右へ 5%（開始 2%・最大 8%）= 右 0.5。倍率 2 なら 1、左は 0
+            // 映像の右へ 5%（開始 2%・最大 8%）= 右 0.5、左 0
             PerfectSyncBoost.EstimateMouthSides(0.05f, out float imageLeft, out float imageRight);
             Assert.That(imageLeft, Is.EqualTo(0f));
             Assert.That(imageRight, Is.EqualTo(0.5f).Within(1e-4f));
 
+            // 倍率 2: 右は推定 0.5 が受信 0.1 より大きいので 1、左は推定 0 なので受信 0.1 を強めた 0.2、口の左右以外は強めない
             var boost = new PerfectSyncBoost(1f, 2f, 1f, 1f, 0f, imageLeft, imageRight);
             Assert.That(boost.Apply(mouthRight, 0.1f), Is.EqualTo(1f).Within(1e-5f));
-            Assert.That(boost.Apply(mouthLeft, 0.1f), Is.EqualTo(0.1f).Within(1e-5f));
+            Assert.That(boost.Apply(mouthLeft, 0.1f), Is.EqualTo(0.2f).Within(1e-5f));
             Assert.That(boost.Apply(ArKitFace.JawOpen, 0.4f), Is.EqualTo(0.4f).Within(1e-5f));
         }
 

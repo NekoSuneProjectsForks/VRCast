@@ -77,13 +77,10 @@ namespace VRCast.Tests
                 .Select(field => field.Name)
                 .ToList();
 
-            // それぞれがちょうど 1 か所（いずれかのカテゴリか除外）に入っていること（設定の追加時に割り当て忘れを防ぐ）
-            foreach (string field in fields)
-            {
-                int count = SettingsPreset.Categories.Count(category => category.Fields.Contains(field))
-                    + (SettingsPreset.Excluded.Contains(field) ? 1 : 0);
-                Assert.That(count, Is.EqualTo(1), $"{field} must be in exactly one preset category or Excluded");
-            }
+            // それぞれがちょうど 1 か所（いずれかのカテゴリか除外）に入っていること（設定の追加時に割り当て忘れを防ぐ。外れたものはまとめて出す）
+            var wrong = fields.Where(field => SettingsPreset.Categories.Count(category => category.Fields.Contains(field))
+                + (SettingsPreset.Excluded.Contains(field) ? 1 : 0) != 1).ToList();
+            Assert.That(wrong, Is.Empty, "must be in exactly one preset category or Excluded: " + string.Join(", ", wrong));
 
             // カテゴリ・除外に、存在しないフィールド名が無いこと
             foreach (string name in SettingsPreset.Categories.SelectMany(category => category.Fields)
