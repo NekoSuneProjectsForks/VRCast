@@ -8,6 +8,12 @@
 /VRCast/[Rr]ecordings/
 /VRCast/[Bb]uild/
 /VRCast/[Bb]uilds/
+# Generated per checkout by the Unity Editor (only ProjectVersion.txt is shared)
+/VRCast/Assets/**/*.meta
+/VRCast/Assets/*.meta
+/VRCast/ProjectSettings/*
+!/VRCast/ProjectSettings/ProjectVersion.txt
+/VRCast/Packages/packages-lock.json
 
 # Bundled tracker binaries (OpenSeeFace / MediaPipe tracker; built or copied in locally, copied into builds)
 /VRCast/Trackers/
