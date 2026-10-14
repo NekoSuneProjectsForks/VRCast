@@ -88,6 +88,14 @@ namespace VRCast.Converter.Editor
             _log = new ExportLog();
         }
 
+        /// <summary>
+        /// 書き出したファイルのプレビューを出せるか（失敗したときは出さない）。
+        /// </summary>
+        public bool HasPreview => _hasResult && !_failed;
+
+        /// <summary>
+        /// 結果・プレビュー・記録を縦に並べて描く（ウィンドウの幅が狭いとき）。
+        /// </summary>
         public void Draw(Action repaint)
         {
             if (!_hasResult)
@@ -96,17 +104,38 @@ namespace VRCast.Converter.Editor
             }
 
             DrawStatus();
-            if (!_failed)
+            if (HasPreview)
             {
-                DrawPreview(repaint);
+                DrawPreview(repaint, PreviewHeight);
+            }
+
+            DrawDetails();
+        }
+
+        /// <summary>
+        /// 書き出しの記録と詳細を描く。
+        /// </summary>
+        public void DrawDetails()
+        {
+            if (!_hasResult)
+            {
+                return;
             }
 
             DrawLog();
             DrawSummary();
         }
 
-        private void DrawStatus()
+        /// <summary>
+        /// 結果の一言と、ファイル・記録のボタンを描く。
+        /// </summary>
+        public void DrawStatus()
         {
+            if (!_hasResult)
+            {
+                return;
+            }
+
             int errors = _log.Count(ExportLog.Level.Error);
             int warnings = _log.Count(ExportLog.Level.Warning);
             string status = _failed
@@ -151,8 +180,16 @@ namespace VRCast.Converter.Editor
             }
         }
 
-        private void DrawPreview(Action repaint)
+        /// <summary>
+        /// 書き出したファイルのプレビューを、指定の高さで描く。
+        /// </summary>
+        public void DrawPreview(Action repaint, float height)
         {
+            if (!HasPreview)
+            {
+                return;
+            }
+
             EditorGUILayout.Space();
             EditorGUILayout.LabelField(T("Preview (exported file)", "プレビュー（書き出したファイル）", "미리보기 (내보낸 파일)",
                 "预览（导出的文件）", "預覽（匯出的檔案）"), EditorStyles.boldLabel);
@@ -189,7 +226,7 @@ namespace VRCast.Converter.Editor
                 }
             }
 
-            Rect rect = GUILayoutUtility.GetRect(0f, PreviewHeight, GUILayout.ExpandWidth(true));
+            Rect rect = GUILayoutUtility.GetRect(0f, height, GUILayout.ExpandWidth(true));
             HandlePreviewInput(rect, repaint);
             if (Event.current.type == EventType.Repaint)
             {

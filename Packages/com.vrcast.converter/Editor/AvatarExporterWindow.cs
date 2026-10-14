@@ -45,12 +45,37 @@ namespace VRCast.Converter.Editor
         // 一覧の行の削除ボタンの幅
         private const float RemoveButtonWidth = 24f;
 
+        // この幅以上なら左に設定・右に結果の 2 列にする。左の列の幅（ウィンドウの幅に対する割合と上下限）と列の間隔
+        private const float SplitMinWidth = 760f;
+        private const float LeftPaneRatio = 0.42f;
+        private const float LeftPaneMinWidth = 340f;
+        private const float LeftPaneMaxWidth = 520f;
+        private const float PaneGap = 4f;
+        private static readonly Color SeparatorColor = new Color(0f, 0f, 0f, 0.3f);
+        private static readonly Color PlaceholderColor = new Color(0f, 0f, 0f, 0.12f);
+
+        // 2 列のときのプレビューの高さ（ウィンドウの高さに対する割合と下限）
+        private const float PreviewHeightRatio = 0.6f;
+        private const float MinPreviewHeight = 260f;
+
+        // 書き出すボタンの高さ
+        private const float ExportButtonHeight = 30f;
+
+        // 2 列にしたときの既定のウィンドウの大きさ
+        private static readonly Vector2 DefaultWindowSize = new Vector2(1000f, 720f);
+
         [SerializeField]
         private GameObject _avatar;
 
         private Texture2D _icon;
         private GUIStyle _titleStyle;
         private Vector2 _scroll;
+        private Vector2 _resultScroll;
+        private GUIStyle _placeholderStyle;
+
+        // 「書き出される内容について」を開いているか
+        [SerializeField]
+        private bool _showAbout;
 
         // 追加の表情クリップの指定と、その指定を読み込んだアバター（アバターが変わったら読み直す）
         private List<Object> _extraEntries = new List<Object>();
@@ -78,8 +103,14 @@ namespace VRCast.Converter.Editor
         [MenuItem("VRCast/Avatar Exporter")]
         private static void Open()
         {
-            // 既存ウィンドウがあれば再利用
-            GetWindow<AvatarExporterWindow>(Title);
+            // 既存ウィンドウがあれば再利用（大きさはそのまま）。新しく開くときは 2 列で収まる大きさにする
+            bool opened = HasOpenInstances<AvatarExporterWindow>();
+            var window = GetWindow<AvatarExporterWindow>(Title);
+            if (!opened && !window.docked && window.position.width < SplitMinWidth)
+            {
+                Rect rect = window.position;
+                window.position = new Rect(rect.x, rect.y, DefaultWindowSize.x, DefaultWindowSize.y);
+            }
         }
 
         private void OnEnable()
@@ -145,16 +176,98 @@ namespace VRCast.Converter.Editor
 
         private void OnGUI()
         {
-            // 追加の表情クリップの欄でウィンドウより長くなるため、全体をスクロールできるようにする
-            _scroll = EditorGUILayout.BeginScrollView(_scroll);
-            DrawContents();
+            // 狭いときは 1 列に並べ、全体をスクロールできるようにする
+            if (position.width < SplitMinWidth)
+            {
+                _scroll = EditorGUILayout.BeginScrollView(_scroll);
+                DrawHeader();
+                DrawSettings();
+                DrawExportButton();
+                DrawProgress();
+                if (_job == null && _result.HasResult)
+                {
+                    EditorGUILayout.Space();
+                    DrawResultTitle();
+                    _result.Draw(Repaint);
+                }
+
+                EditorGUILayout.EndScrollView();
+                return;
+            }
+
+            // 広いときは左に設定、右に書き出しの結果（プレビューを大きく出す）
+            DrawHeader();
+            using (new EditorGUILayout.HorizontalScope(GUILayout.ExpandHeight(true)))
+            {
+                float leftWidth = Mathf.Clamp(position.width * LeftPaneRatio, LeftPaneMinWidth, LeftPaneMaxWidth);
+                using (new EditorGUILayout.VerticalScope(GUILayout.Width(leftWidth)))
+                {
+                    // 書き出すボタンはスクロールさせず、左の列の下に固定する
+                    _scroll = EditorGUILayout.BeginScrollView(_scroll);
+                    DrawSettings();
+                    EditorGUILayout.EndScrollView();
+                    DrawExportButton();
+                    EditorGUILayout.Space();
+                }
+
+                GUILayout.Space(PaneGap);
+                Rect separator = GUILayoutUtility.GetRect(1f, 1f, GUILayout.Width(1f), GUILayout.ExpandHeight(true));
+                EditorGUI.DrawRect(separator, SeparatorColor);
+                GUILayout.Space(PaneGap);
+
+                using (new EditorGUILayout.VerticalScope())
+                {
+                    DrawResultPane();
+                }
+            }
+        }
+
+        private static void DrawResultTitle()
+        {
+            EditorGUILayout.LabelField(T("Export result", "書き出しの結果", "내보내기 결과", "导出结果", "匯出結果"),
+                EditorStyles.boldLabel);
+        }
+
+        private void DrawResultPane()
+        {
+            DrawResultTitle();
+
+            // 書き出し中は進み具合と中断のボタン
+            if (_job != null)
+            {
+                DrawProgress();
+                GUILayout.FlexibleSpace();
+                return;
+            }
+
+            // まだ書き出していなければ、ここに何が出るかを案内する
+            if (!_result.HasResult)
+            {
+                if (_placeholderStyle == null)
+                {
+                    _placeholderStyle = new GUIStyle(EditorStyles.wordWrappedLabel) { alignment = TextAnchor.MiddleCenter };
+                }
+
+                Rect area = GUILayoutUtility.GetRect(0f, 0f, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                EditorGUI.DrawRect(area, PlaceholderColor);
+                GUI.Label(area, T(
+                    "After exporting, the exported avatar is previewed here together with the export log.",
+                    "書き出すと、ここに書き出したアバターのプレビューと書き出しの記録が出ます。",
+                    "내보내면 여기에 내보낸 아바타의 미리보기와 내보내기 기록이 나옵니다.",
+                    "导出后，这里会显示导出的虚拟形象预览和导出记录。", "匯出後，這裡會顯示匯出的虛擬形象預覽和匯出記錄。"),
+                    _placeholderStyle);
+                return;
+            }
+
+            _result.DrawStatus();
+            _result.DrawPreview(Repaint, Mathf.Max(MinPreviewHeight, position.height * PreviewHeightRatio));
+            _resultScroll = EditorGUILayout.BeginScrollView(_resultScroll);
+            _result.DrawDetails();
             EditorGUILayout.EndScrollView();
         }
 
-        private void DrawContents()
+        private void DrawSettings()
         {
-            DrawHeader();
-
             // 書き出し中は設定を変えられないようにする（進み具合と中断のボタンだけ操作できる）
             bool enabled = GUI.enabled;
             GUI.enabled = enabled && _job == null;
@@ -177,6 +290,42 @@ namespace VRCast.Converter.Editor
                 EditorGUILayout.HelpBox(error, MessageType.Warning);
             }
 
+            // 長い説明は折りたたんでおく
+            _showAbout = EditorGUILayout.Foldout(_showAbout, T("What is exported", "書き出される内容について",
+                "내보내는 내용에 대해", "关于导出的内容", "關於匯出的內容"), true);
+            if (_showAbout)
+            {
+                DrawAbout();
+            }
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField(T("Options", "書き出しの設定", "내보내기 설정", "导出设置", "匯出設定"),
+                EditorStyles.boldLabel);
+            DrawBlendShapeOption();
+            DrawInactiveObjectsOption();
+            DrawOutfitPoseOption();
+            DrawExtraExpressions();
+
+            GUI.enabled = enabled;
+        }
+
+        private void DrawExportButton()
+        {
+            EditorGUILayout.Space();
+            using (new EditorGUI.DisabledScope(_job != null || AvatarExporter.Validate(_avatar) != null))
+            {
+                if (GUILayout.Button(T("Export...", "書き出す...", "내보내기...", "导出...", "匯出..."),
+                        GUILayout.Height(ExportButtonHeight)))
+                {
+                    ExportWithDialog();
+                    // ダイアログ中にレイアウトが崩れるため、この回の描画は打ち切る（EndLayoutGroup のエラーを防ぐ）
+                    GUIUtility.ExitGUI();
+                }
+            }
+        }
+
+        private static void DrawAbout()
+        {
             EditorGUILayout.HelpBox(
                 T(
                     "Only Unity built-in components (Transform, Animator, Renderers, MeshFilter, Particle System) are exported. " +
@@ -216,33 +365,6 @@ namespace VRCast.Converter.Editor
                     "用 MA Merge Armature / Bone Proxy 新增的服裝和小物如果未被合併，" +
                     "VRCast 會把它們重新掛到虛擬形象的骨骼上並跟隨身體。"),
                 MessageType.Info);
-
-            DrawBlendShapeOption();
-            DrawInactiveObjectsOption();
-            DrawOutfitPoseOption();
-            DrawExtraExpressions();
-
-            using (new EditorGUI.DisabledScope(error != null))
-            {
-                if (GUILayout.Button(T("Export...", "書き出す...", "내보내기...", "导出...", "匯出...")))
-                {
-                    ExportWithDialog();
-                    // ダイアログ中にレイアウトが崩れるため、この回の描画は打ち切る（EndLayoutGroup のエラーを防ぐ）
-                    GUIUtility.ExitGUI();
-                }
-            }
-
-            GUI.enabled = enabled;
-            DrawProgress();
-
-            // 書き出しの結果（プレビュー・記録）をこのウィンドウの下に出す
-            if (_job == null && _result.HasResult)
-            {
-                EditorGUILayout.Space();
-                EditorGUILayout.LabelField(T("Export result", "書き出しの結果", "내보내기 결과", "导出结果", "匯出結果"),
-                    EditorStyles.boldLabel);
-                _result.Draw(Repaint);
-            }
         }
 
         private void DrawProgress()
