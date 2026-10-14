@@ -145,9 +145,10 @@ namespace VRCast.Converter.Editor
                 }
 
                 count++;
-                Debug.LogWarning(
-                    $"[VRCast][Exporter] '{ReflectionUtility.PathOf(renderer.transform, rootTransform)}' has {missing} missing bone(s); " +
-                    "vertices weighted to them will stretch to the origin.");
+                ExportLog.Warn(
+                    $"A mesh has {missing} missing bone(s); the parts weighted to them will stretch to the feet (origin) in the app.",
+                    $"メッシュのボーンが {missing} 本見つかりません。そのボーンで動く部分は、アプリで足元（原点）へ伸びてしまいます。",
+                    ReflectionUtility.PathOf(renderer.transform, rootTransform));
             }
 
             return count;

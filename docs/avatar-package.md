@@ -101,10 +101,17 @@ VRCAvatarDescriptor の Lip Sync と Eyelids（BlendShape 方式）を変換し�
 
 | フィールド | 内容 |
 | :--- | :--- |
-| `lipSync.mode` | `none` / `visemeBlendShape` / `jawFlapBlendShape`（ボーン方式は `none`） |
+| `lipSync.mode` | `none` / `visemeBlendShape` / `jawFlapBlendShape` / `visemeAnimation`（ボーン方式は `none`） |
 | `lipSync.meshPath` | Viseme 用メッシュのアバタールートからの相対パス |
 | `lipSync.visemes` | 0 個または 15 個（sil, PP, FF, TH, DD, kk, CH, SS, nn, RR, aa, E, I, O, U） |
 | `lipSync.mouthOpenBlendShape` | JawFlap 方式の口開閉 BlendShape 名 |
+| `lipSync.visemePoses` | 0 個または 15 個（`visemeAnimation` では 15 個必須、並びは `visemes` と同じ）。各要素の `values` は `expressions.json` と同じ形の `{ path, blendShape, weight }`（0〜64 個、重みは 0〜100）で、その Viseme を出し切ったときの BlendShape |
+
+Descriptor の Lip Sync で口を動かせない（`none` になる）アバターは、Converter が改変適用後の FX から
+VRChat 組み込みの `Viseme` / `Voice` パラメーターを使うレイヤー（遷移の条件・BlendTree・ステートの速さや Motion Time）を探し、
+`Viseme` を 1〜14・`Voice` を 1 にして初期状態を辿ったときの BlendShape のうち、無音（`Viseme` 0・`Voice` 0）より 0.5 以上大きいものを
+`visemePoses` に書き出す（`visemeAnimation`）。サブステートマシンの中のステートは辿らない。
+この値を知らない旧版のアプリでは descriptor.json 全体が不正扱いになり、まばたきも使えない。
 | `eyelids.meshPath` / `blinkBlendShapes` | まばたき用メッシュと BlendShape 名（0〜4 個、左右別なら複数を同時に閉じる。空ならまばたき無し） |
 | `eyelids.winkLeftBlendShape` / `winkRightBlendShape` | 片目だけ閉じる BlendShape 名（アバターから見た左右、同じメッシュ。両方揃った場合のみ。空ならウインク無し。`blinkBlendShapes` と同名可） |
 

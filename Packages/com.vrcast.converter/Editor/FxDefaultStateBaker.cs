@@ -119,11 +119,18 @@ namespace VRCast.Converter.Editor
                     speed *= multiplier;
                 }
 
+                // Motion Time のパラメーターが有効なら、その値を再生位置（0〜1）にする
+                float normalizedTime = 0f;
+                if (state.timeParameterActive && values.TryGetValue(state.timeParameter, out float time))
+                {
+                    normalizedTime = Mathf.Clamp01(time);
+                }
+
                 var clips = new List<WeightedClip>();
                 CollectClips(state.motion, 1f, values, clips);
                 foreach (WeightedClip clip in clips)
                 {
-                    motions.Add(new DefaultMotion(i, clip.Clip, clip.Weight, speed));
+                    motions.Add(new DefaultMotion(i, clip.Clip, clip.Weight, speed, normalizedTime));
                 }
             }
 
@@ -140,12 +147,16 @@ namespace VRCast.Converter.Editor
             public readonly float Weight;
             public readonly float Speed;
 
-            public DefaultMotion(int layer, AnimationClip clip, float weight, float speed)
+            // Motion Time のパラメーターで決まる再生位置（0〜1、無ければ 0）
+            public readonly float NormalizedTime;
+
+            public DefaultMotion(int layer, AnimationClip clip, float weight, float speed, float normalizedTime)
             {
                 Layer = layer;
                 Clip = clip;
                 Weight = weight;
                 Speed = speed;
+                NormalizedTime = normalizedTime;
             }
         }
 

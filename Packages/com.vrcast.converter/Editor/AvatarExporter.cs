@@ -59,6 +59,8 @@ namespace VRCast.Converter.Editor
             public AvatarPreprocessor.Mode Preprocess;
             public int OptimizerBlendShapeSettingsDisabled;
             public int ModularAvatarFallbackFixes;
+            public int OutfitProblems;
+            public int OutfitPosesFixed;
             public bool IncludedInactiveObjects;
             public int InactiveObjects;
             public int RemovedInactiveObjects;
@@ -116,9 +118,22 @@ namespace VRCast.Converter.Editor
         /// extraExpressionClips は FX に無い表情として追加するクリップ（BlendShape だけを動かすものを取り込む）。
         /// シーンに FaceEmo の設定があれば、その表情を FaceEmo の名前で優先して取り込む。
         /// includeInactiveObjects が true なら、エディタで非アクティブにしたものも OFF のまま書き出す（false なら消す）。
+        /// log を渡すと、書き出し中の出来事（ほかのツールの警告・エラーを含む）をそこへ記録する。
+        /// fixOutfitPoses が true なら、アバターと姿勢が合わない衣装（T / A ポーズの違い）のボーンを複製の上でアバターの向きへ直す。
         /// </summary>
         public static Report Export(GameObject source, string outputPath, bool keepSceneBlendShapes = true,
-            IReadOnlyList<AnimationClip> extraExpressionClips = null, bool includeInactiveObjects = true)
+            IReadOnlyList<AnimationClip> extraExpressionClips = null, bool includeInactiveObjects = true,
+            ExportLog log = null, bool fixOutfitPoses = false)
+        {
+            using ((log ?? new ExportLog()).Begin())
+            {
+                return ExportCore(source, outputPath, keepSceneBlendShapes, extraExpressionClips, includeInactiveObjects,
+                    fixOutfitPoses);
+            }
+        }
+
+        private static Report ExportCore(GameObject source, string outputPath, bool keepSceneBlendShapes,
+            IReadOnlyList<AnimationClip> extraExpressionClips, bool includeInactiveObjects, bool fixOutfitPoses)
         {
             // 事前検証に失敗したら例外で中断
             string error = Validate(source);
@@ -177,10 +192,16 @@ namespace VRCast.Converter.Editor
 
                 // VRCFury・Modular Avatar 等の改変を VRChat のアップロード時と同じく複製へ適用（どれも無ければ何もしない）
                 report.Preprocess = AvatarPreprocessor.Process(clone);
+                LogPreprocess(report.Preprocess);
 
                 // NDMF で統合されなかった衣装・小物のボーンをアバターのボーンへ付け替え、追従させる
                 ModularAvatarFallback.Result maFallback = ModularAvatarFallback.Apply(maPlan);
                 report.ModularAvatarFallbackFixes = maFallback.FixedCount;
+
+                // 衣装の姿勢がアバターと合っていない（指定時は直す）・体に追従しないメッシュがあれば知らせる
+                OutfitPoseChecker.Result outfitCheck = OutfitPoseChecker.Check(clone, fixOutfitPoses);
+                report.OutfitProblems = outfitCheck.Problems;
+                report.OutfitPosesFixed = outfitCheck.Fixed;
 
                 // 以降は改変適用後の複製から読む（マージ後の FX・移動後のボーンを反映するため）
                 Component descriptor = VrcDescriptorReader.FindDescriptor(clone);
@@ -212,6 +233,16 @@ namespace VRCast.Converter.Editor
                 Dictionary<string, float> parameterDefaults = descriptor != null
                     ? VrcDescriptorReader.GetExpressionParameterDefaults(descriptor)
                     : new Dictionary<string, float>();
+
+                // Descriptor の設定で口を動かせないアバターは、FX の Viseme で動かすアニメーションから口の形を読む
+                if (descriptorData.lipSync.mode == LipSyncData.ModeNone && fx != null)
+                {
+                    descriptorData.lipSync = FxLipSyncReader.Read(clone, fx, parameterDefaults, maFallback.MovedObjects);
+                    report.LipSyncMode = descriptorData.lipSync.mode;
+                }
+
+                LogFace(report);
+
                 if (fx != null)
                 {
                     report.BakedFxClips = FxDefaultStateBaker.Bake(
@@ -274,8 +305,10 @@ namespace VRCast.Converter.Editor
                 report.UnresolvedDetails = pathFix.Unresolved;
                 if (pathFix.Unresolved.Count > 0)
                 {
-                    Debug.LogWarning("[VRCast][Exporter] Expressions whose meshes were not found " +
-                        "(not shown in the app):\n" + string.Join("\n", pathFix.Unresolved));
+                    ExportLog.Warn(
+                        $"{pathFix.Unresolved.Count} expression(s) will not appear in the app because their meshes were not found.",
+                        $"{pathFix.Unresolved.Count} 個の表情は動かすメッシュが見つからないため、アプリの表情一覧に出ません。",
+                        string.Join("\n", pathFix.Unresolved));
                 }
 
                 // BlendShape の同期（改変・除去の後のパスで。まばたき・口パク等の直接の書き込みにも同期させるため）
@@ -368,6 +401,10 @@ namespace VRCast.Converter.Editor
 
                 // ZIP にまとめて出力
                 WritePackage(outputPath, report.Manifest, bundlePath, metadata);
+                ExportLog.Info(
+                    $"Exported ({report.Manifest.bundleSize / (1024f * 1024f):F1} MB).",
+                    $"書き出しました（{report.Manifest.bundleSize / (1024f * 1024f):F1} MB）。",
+                    outputPath);
                 return report;
             }
             finally
@@ -437,6 +474,45 @@ namespace VRCast.Converter.Editor
             }
 
             return paths.ToArray();
+        }
+
+        private static void LogPreprocess(AvatarPreprocessor.Mode mode)
+        {
+            switch (mode)
+            {
+                case AvatarPreprocessor.Mode.VrcSdk:
+                    ExportLog.Info("Applied avatar tools with the VRChat SDK upload processing (VRCFury / NDMF etc.).",
+                        "VRChat SDK のアップロード時の処理で改変ツール（VRCFury・NDMF など）を適用しました。");
+                    break;
+                case AvatarPreprocessor.Mode.NdmfOnly:
+                    ExportLog.Info("Applied NDMF tools only (Modular Avatar etc.). VRCFury is not applied without the VRChat SDK.",
+                        "NDMF のツール（Modular Avatar など）だけを適用しました。VRChat SDK が無いと VRCFury は適用されません。");
+                    break;
+                default:
+                    ExportLog.Info("No avatar tools (VRCFury / NDMF) were applied.",
+                        "改変ツール（VRCFury・NDMF）は適用していません。");
+                    break;
+            }
+        }
+
+        private static void LogFace(Report report)
+        {
+            // 口・まばたきに使えるものが見つからなければ、アプリで動かないことを知らせる
+            if (report.LipSyncMode == LipSyncData.ModeNone)
+            {
+                ExportLog.Warn("No lip sync settings that VRCast can use were found (the mouth will not move with the microphone).",
+                    "VRCast で使えるリップシンクの設定が見つかりませんでした（マイクで口が動きません）。");
+            }
+            else
+            {
+                ExportLog.Info($"Lip sync: {report.LipSyncMode}", $"リップシンク: {report.LipSyncMode}");
+            }
+
+            if (!report.HasBlink)
+            {
+                ExportLog.Warn("No blink blend shape was found (it can be chosen in the app's Face tab).",
+                    "まばたきの BlendShape が見つかりませんでした（アプリの顔・表情タブで選べます）。");
+            }
         }
 
         private static void LogFaceEmo(List<string> trace, List<string> skipped)

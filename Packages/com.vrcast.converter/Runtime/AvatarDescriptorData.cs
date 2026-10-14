@@ -31,7 +31,7 @@ namespace VRCast.AvatarFormat
 
             // モードは既知の値のみ
             if (lipSync.mode != LipSyncData.ModeNone && lipSync.mode != LipSyncData.ModeVisemeBlendShape
-                && lipSync.mode != LipSyncData.ModeJawFlapBlendShape)
+                && lipSync.mode != LipSyncData.ModeJawFlapBlendShape && lipSync.mode != LipSyncData.ModeVisemeAnimation)
             {
                 return $"Unknown lipSync.mode '{lipSync.mode}'.";
             }
@@ -74,25 +74,72 @@ namespace VRCast.AvatarFormat
                 }
             }
 
+            return ValidateVisemePoses();
+        }
+
+        private string ValidateVisemePoses()
+        {
+            // Viseme ごとの口の形は 0 件または 15 件（visemeAnimation 方式では 15 件必須）
+            VisemePose[] poses = lipSync.visemePoses;
+            if (poses == null || (poses.Length != 0 && poses.Length != VisemeCount)
+                || (lipSync.mode == LipSyncData.ModeVisemeAnimation && poses.Length != VisemeCount))
+            {
+                return $"lipSync.visemePoses must have 0 or {VisemeCount} items.";
+            }
+
+            foreach (VisemePose pose in poses)
+            {
+                if (pose == null || pose.values == null || pose.values.Length > VisemePose.MaxValues)
+                {
+                    return $"lipSync.visemePoses items must have 0-{VisemePose.MaxValues} values.";
+                }
+
+                // パスは空（ルート）を許可、BlendShape 名は必須、重みは 0〜100
+                foreach (BlendShapeValue value in pose.values)
+                {
+                    if (value == null || !ExpressionSet.IsValidString(value.path, true)
+                        || !ExpressionSet.IsValidString(value.blendShape, false)
+                        || float.IsNaN(value.weight) || value.weight < 0f || value.weight > 100f)
+                    {
+                        return "lipSync.visemePoses contains an invalid blend shape value.";
+                    }
+                }
+            }
+
             return null;
         }
     }
 
     /// <summary>
-    /// リップシンク設定。mode に応じて visemes または mouthOpenBlendShape を使う。
+    /// リップシンク設定。mode に応じて visemes・mouthOpenBlendShape・visemePoses のどれかを使う。
     /// </summary>
     [Serializable]
     public class LipSyncData
     {
-        // 対応するモード（ジョーボーン等は未対応のため none として書き出す）
+        // 対応するモード（ジョーボーン等は未対応のため none として書き出す）。
+        // visemeAnimation は FX の Viseme パラメーターで口を動かすアバター向けで、Viseme ごとの BlendShape の組を使う
         public const string ModeNone = "none";
         public const string ModeVisemeBlendShape = "visemeBlendShape";
         public const string ModeJawFlapBlendShape = "jawFlapBlendShape";
+        public const string ModeVisemeAnimation = "visemeAnimation";
 
         public string mode = ModeNone;
         public string meshPath = string.Empty;
         public string[] visemes = Array.Empty<string>();
         public string mouthOpenBlendShape = string.Empty;
+        public VisemePose[] visemePoses = Array.Empty<VisemePose>();
+    }
+
+    /// <summary>
+    /// 1 つの Viseme で動かす BlendShape と、その Viseme を出し切ったときの重み（0〜100、複数メッシュ可）。
+    /// </summary>
+    [Serializable]
+    public class VisemePose
+    {
+        // 1 つの Viseme で動かす BlendShape 数の上限
+        public const int MaxValues = 64;
+
+        public BlendShapeValue[] values = Array.Empty<BlendShapeValue>();
     }
 
     /// <summary>

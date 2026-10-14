@@ -148,9 +148,11 @@ namespace VRCast.Converter.Editor
                     continue;
                 }
 
-                Debug.LogWarning(
-                    $"[VRCast][Exporter] Merge Armature was not applied by NDMF; merging '{entry.Source.name}' " +
-                    $"into '{entry.Target.name}' as a fallback.");
+                ExportLog.Warn(
+                    $"Merge Armature was not applied by NDMF, so VRCast merged \"{entry.Source.name}\" into " +
+                    $"\"{entry.Target.name}\" instead. If the outfit looks wrong in the preview, check that NDMF / Modular Avatar works.",
+                    $"Merge Armature が NDMF で適用されなかったため、VRCast が「{entry.Source.name}」を" +
+                    $"「{entry.Target.name}」に統合しました。プレビューで衣装がおかしければ、NDMF・Modular Avatar が動いているか確かめてください。");
                 MergeRecursive(entry, entry.Source, entry.Target, sources, originalPaths, result.MovedObjects);
                 result.FixedCount++;
             }
@@ -165,9 +167,9 @@ namespace VRCast.Converter.Editor
                     continue;
                 }
 
-                Debug.LogWarning(
-                    $"[VRCast][Exporter] Bone Proxy was not applied by NDMF; attaching '{entry.Proxy.name}' " +
-                    $"to '{entry.Target.name}' as a fallback.");
+                ExportLog.Warn(
+                    $"Bone Proxy was not applied by NDMF, so VRCast attached \"{entry.Proxy.name}\" to \"{entry.Target.name}\" instead.",
+                    $"Bone Proxy が NDMF で適用されなかったため、VRCast が「{entry.Proxy.name}」を「{entry.Target.name}」に付けました。");
                 Reparent(entry.Proxy, entry.Target, originalPaths, result.MovedObjects);
                 attached.Add(entry);
             }

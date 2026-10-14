@@ -84,9 +84,10 @@ namespace VRCast.Converter.Editor
                 else
                 {
                     result.DroppedAnimators++;
-                    Debug.LogWarning("[VRCast][Exporter] The animator controller of '" +
-                        ReflectionUtility.PathOf(animator.transform, root.transform) +
-                        "' could not be exported (not saved as an asset); its animation will not play.");
+                    ExportLog.Warn(
+                        "An animator controller could not be exported (not saved as an asset); its animation will not play.",
+                        "Animator Controller を書き出せませんでした（アセットとして保存されていません）。そのアニメーションは再生されません。",
+                        ReflectionUtility.PathOf(animator.transform, root.transform));
                 }
             }
         }

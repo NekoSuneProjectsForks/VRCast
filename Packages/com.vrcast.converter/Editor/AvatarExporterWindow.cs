@@ -24,6 +24,9 @@ namespace VRCast.Converter.Editor
         // 「非アクティブのオブジェクトも書き出す」の選択を保持する EditorPrefs キー
         private const string IncludeInactiveObjectsKey = "VRCast.Converter.IncludeInactiveObjects";
 
+        // 「アバターと合わない衣装の姿勢を直す」の選択を保持する EditorPrefs キー
+        private const string FixOutfitPosesKey = "VRCast.Converter.FixOutfitPoses";
+
         // ダイアログ・進捗バーのタイトル（製品名なので訳さない）
         private const string Title = "VRCast Exporter";
 
@@ -161,6 +164,7 @@ namespace VRCast.Converter.Editor
 
             DrawBlendShapeOption();
             DrawInactiveObjectsOption();
+            DrawOutfitPoseOption();
             DrawExtraExpressions();
 
             using (new EditorGUI.DisabledScope(error != null))
@@ -230,6 +234,35 @@ namespace VRCast.Converter.Editor
                     "关闭：不导出（只有粒子会以关闭状态导出）。",
                     "開啟：在場景中關閉的物件也以關閉狀態匯出，可在應用程式的「物件」分頁中開啟（檔案會變大）。" +
                     "關閉：不匯出（只有粒子會以關閉狀態匯出）。"),
+                MessageType.None);
+        }
+
+        private static void DrawOutfitPoseOption()
+        {
+            // 既定は OFF（衣装のボーンを動かすため、明示的に選んだときだけ）
+            bool fix = EditorPrefs.GetBool(FixOutfitPosesKey, false);
+            bool changed = EditorGUILayout.ToggleLeft(
+                T("Fix outfit poses that do not match the avatar", "アバターと合わない衣装の姿勢を直す",
+                    "아바타와 맞지 않는 의상 자세 바로잡기", "修正与虚拟形象不匹配的服装姿势", "修正與虛擬形象不符的服裝姿勢"),
+                fix);
+            if (changed != fix)
+            {
+                EditorPrefs.SetBool(FixOutfitPosesKey, changed);
+            }
+
+            EditorGUILayout.HelpBox(
+                T(
+                    "For outfits whose sleeves or legs float away from the body because a T-pose outfit was put on an " +
+                    "A-pose avatar (or the other way round). The outfit's arm and leg bones are turned to match the avatar " +
+                    "in the exported copy only. Check the result in the preview after exporting.",
+                    "T ポーズの衣装を A ポーズのアバターに着せた（またはその逆の）ために、袖や脚が体から浮いてしまう衣装向けです。" +
+                    "書き出し用の複製の上でだけ、衣装の腕・脚のボーンをアバターの向きに合わせます。書き出し後のプレビューで確かめてください。",
+                    "T 포즈 의상을 A 포즈 아바타에 입혀서(또는 그 반대) 소매나 다리가 몸에서 뜨는 의상용입니다. " +
+                    "내보내기용 복제본에서만 의상의 팔·다리 본을 아바타의 방향에 맞춥니다. 내보낸 후 미리보기로 확인하세요.",
+                    "适用于把 T 姿势的服装穿到 A 姿势的虚拟形象上（或相反）导致袖子或腿部离开身体的服装。" +
+                    "只在导出用的副本上把服装的手臂和腿部骨骼对齐到虚拟形象的方向。导出后请在预览中确认。",
+                    "適用於把 T 姿勢的服裝穿到 A 姿勢的虛擬形象上（或相反）導致袖子或腿部離開身體的服裝。" +
+                    "只在匯出用的副本上把服裝的手臂和腿部骨骼對齊到虛擬形象的方向。匯出後請在預覽中確認。"),
                 MessageType.None);
         }
 
@@ -567,6 +600,12 @@ namespace VRCast.Converter.Editor
             // 次回用に保存先フォルダを記憶
             EditorPrefs.SetString(LastDirectoryKey, Path.GetDirectoryName(path));
 
+            // 書き出しの記録（結果ウィンドウに出し、書き出したファイルの横にも保存する）
+            var log = new ExportLog();
+            string outputPath = path.EndsWith(AvatarPackageLayout.Extension, StringComparison.OrdinalIgnoreCase)
+                ? path
+                : path + AvatarPackageLayout.Extension;
+            string logPath = Path.ChangeExtension(outputPath, ".log.txt");
             try
             {
                 // 書き出し中は進捗バーを表示
@@ -576,28 +615,41 @@ namespace VRCast.Converter.Editor
                         "正在生成虚拟形象包...", "正在產生虛擬形象包..."),
                     0.5f);
                 AvatarExporter.Report report = AvatarExporter.Export(
-                    _avatar, path, EditorPrefs.GetBool(KeepSceneBlendShapesKey, true),
+                    _avatar, outputPath, EditorPrefs.GetBool(KeepSceneBlendShapesKey, true),
                     ExtraExpressionClips.Collect(_extraEntries),
-                    EditorPrefs.GetBool(IncludeInactiveObjectsKey, true));
+                    EditorPrefs.GetBool(IncludeInactiveObjectsKey, true), log,
+                    EditorPrefs.GetBool(FixOutfitPosesKey, false));
 
-                // Console のログは問い合わせ時に読みやすいよう英語固定、ダイアログは表示言語
-                Debug.Log("[VRCast][Exporter] " + BuildSummary(report, true).Replace("\n", " / "));
-                EditorUtility.DisplayDialog(Title, BuildSummary(report, false), "OK");
+                // Console と記録のファイルの概要は問い合わせ時に読みやすいよう英語固定、結果ウィンドウは表示言語
+                string englishSummary = BuildSummary(report, true);
+                Debug.Log("[VRCast][Exporter] " + englishSummary.Replace("\n", " / "));
+                EditorUtility.ClearProgressBar();
+                ExportResultWindow.Open(report.OutputPath, BuildSummary(report, false), log,
+                    log.Save(logPath, ExportLog.UseJapanese, LogHeader(englishSummary)), false);
             }
             catch (Exception e)
             {
-                // 失敗理由を表示（スタックトレースは Console へ）
+                // 失敗理由を記録して表示（スタックトレースは Console へ）
                 Debug.LogException(e);
-                EditorUtility.DisplayDialog(
-                    Title,
-                    T("Export failed:", "書き出しに失敗しました:", "내보내기에 실패했습니다:", "导出失败：", "匯出失敗：")
-                        + "\n" + e.Message,
-                    "OK");
+                log.Add(ExportLog.Level.Error, "Export failed: " + e.Message, "書き出しに失敗しました: " + e.Message);
+                EditorUtility.ClearProgressBar();
+                ExportResultWindow.Open(null, null, log,
+                    log.Save(logPath, ExportLog.UseJapanese, LogHeader(null)), true);
             }
             finally
             {
                 EditorUtility.ClearProgressBar();
             }
+        }
+
+        private string LogHeader(string englishSummary)
+        {
+            // 問い合わせ時に状況が分かるよう、書き出した日時・アバター・Unity の版を先頭に置く
+            string header = $"VRCast Exporter log\n" +
+                $"Date: {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
+                $"Avatar: {(_avatar != null ? _avatar.name : "-")}\n" +
+                $"Unity: {Application.unityVersion}";
+            return string.IsNullOrEmpty(englishSummary) ? header : header + "\n\n" + englishSummary;
         }
 
         private static string UnresolvedSamples(AvatarExporter.Report report)
@@ -676,11 +728,11 @@ namespace VRCast.Converter.Editor
             // メッシュが見つからずアプリの一覧に出ない表情があれば数を知らせる（名前は Console に出す）
             string unresolved = report.UnresolvedExpressions > 0
                 ? string.Format(L(
-                    "⚠ {0} expressions will not appear in the app because their meshes were not found (names are in the Console).",
-                    "⚠ {0} 個の表情は動かすメッシュが見つからないため、アプリの表情一覧に出ません（名前は Console に出ています）。",
-                    "⚠ 표정 {0}개는 움직일 메시를 찾지 못해 앱의 표정 목록에 나오지 않습니다 (이름은 Console에 있습니다).",
-                    "⚠ {0} 个表情因找不到要驱动的网格，不会出现在应用的表情列表中（名称见 Console）。",
-                    "⚠ {0} 個表情因找不到要驅動的網格，不會出現在應用程式的表情列表中（名稱見 Console）。"),
+                    "⚠ {0} expressions will not appear in the app because their meshes were not found (names are in the log).",
+                    "⚠ {0} 個の表情は動かすメッシュが見つからないため、アプリの表情一覧に出ません（名前は記録に出ています）。",
+                    "⚠ 표정 {0}개는 움직일 메시를 찾지 못해 앱의 표정 목록에 나오지 않습니다 (이름은 기록에 있습니다).",
+                    "⚠ {0} 个表情因找不到要驱动的网格，不会出现在应用的表情列表中（名称见记录）。",
+                    "⚠ {0} 個表情因找不到要驅動的網格，不會出現在應用程式的表情列表中（名稱見記錄）。"),
                     report.UnresolvedExpressions) + "\n" + UnresolvedSamples(report)
                 : string.Empty;
             string particles = L("Particle systems", "パーティクル", "파티클", "粒子系统", "粒子系統");

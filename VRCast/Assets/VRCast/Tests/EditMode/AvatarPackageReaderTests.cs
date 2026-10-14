@@ -217,6 +217,55 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Extract_WithVisemePoses_ParsesPerVisemeBlendShapes()
+        {
+            // FX のアニメーションから読んだ口の形（aa だけ顔と歯の 2 メッシュを動かす）
+            var poses = new VisemePose[AvatarDescriptorData.VisemeCount];
+            for (int i = 0; i < poses.Length; i++)
+            {
+                poses[i] = new VisemePose();
+            }
+
+            poses[AvatarDescriptorData.VisemeAa] = new VisemePose
+            {
+                values = new[]
+                {
+                    new BlendShapeValue { path = "Body", blendShape = "mouth_a", weight = 100f },
+                    new BlendShapeValue { path = "Teeth", blendShape = "open", weight = 40f },
+                },
+            };
+            var descriptor = new AvatarDescriptorData
+            {
+                lipSync = new LipSyncData { mode = LipSyncData.ModeVisemeAnimation, visemePoses = poses },
+            };
+            string path = WritePackage(CreateManifest(DummyBundle), DummyBundle,
+                AvatarPackageLayout.DescriptorEntry, JsonUtility.ToJson(descriptor));
+
+            AvatarPackage package = AvatarPackageReader.Extract(path, _cacheRoot);
+
+            LipSyncData lipSync = package.Descriptor.lipSync;
+            Assert.That(lipSync.mode, Is.EqualTo(LipSyncData.ModeVisemeAnimation));
+            Assert.That(lipSync.visemePoses, Has.Length.EqualTo(AvatarDescriptorData.VisemeCount));
+            BlendShapeValue[] aa = lipSync.visemePoses[AvatarDescriptorData.VisemeAa].values;
+            Assert.That(aa, Has.Length.EqualTo(2));
+            Assert.That(aa[1].path, Is.EqualTo("Teeth"));
+            Assert.That(aa[1].weight, Is.EqualTo(40f));
+        }
+
+        [Test]
+        public void Extract_VisemeAnimationWithoutPoses_IgnoredAsEmpty()
+        {
+            // visemeAnimation 方式なのに口の形が 15 件無いものは検証で弾かれること
+            const string json = "{\"lipSync\":{\"mode\":\"visemeAnimation\",\"visemes\":[],\"visemePoses\":[]},\"eyelids\":{}}";
+            string path = WritePackage(CreateManifest(DummyBundle), DummyBundle,
+                AvatarPackageLayout.DescriptorEntry, json);
+
+            AvatarPackage package = AvatarPackageReader.Extract(path, _cacheRoot);
+
+            Assert.That(package.Descriptor.lipSync.mode, Is.EqualTo(LipSyncData.ModeNone));
+        }
+
+        [Test]
         public void Extract_WithPhysBones_ParsesChainsAndColliders()
         {
             // コライダー 1 つを参照する PhysBone を同梱

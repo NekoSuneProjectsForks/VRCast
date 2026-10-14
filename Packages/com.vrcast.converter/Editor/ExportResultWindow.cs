@@ -1,0 +1,513 @@
+using System;
+using System.IO;
+using System.IO.Compression;
+using UnityEditor;
+using UnityEngine;
+using VRCast.AvatarFormat;
+using static VRCast.Converter.Editor.ExporterLoc;
+using Object = UnityEngine.Object;
+
+namespace VRCast.Converter.Editor
+{
+    /// <summary>
+    /// 書き出しの結果ウィンドウ。書き出した .vrcaster の中のアバターをプレビューし（腕を動かして体への追従を確かめられる）、
+    /// 書き出しの記録（日本語・英語）と概要を表示する。失敗したときは記録だけを出す。
+    /// </summary>
+    public class ExportResultWindow : EditorWindow
+    {
+        private const string Title = "VRCast Export Result";
+
+        // プレビューの高さと背景色
+        private const float PreviewHeight = 420f;
+        private static readonly Color PreviewBackground = new Color(0.32f, 0.33f, 0.36f);
+
+        // プレビューのカメラの画角と、ドラッグ・ホイールの感度
+        private const float FieldOfView = 30f;
+        private const float OrbitSpeed = 0.4f;
+        private const float ZoomSpeed = 0.05f;
+
+        // 「腕を動かす」の速さ（ラジアン / 秒）と、腕の上げ下げの範囲（Arm Down-Up のマッスル値）
+        private const float SwingSpeed = 2f;
+        private const float ArmDown = -0.8f;
+        private const float ArmUp = 0.6f;
+
+        // 書き出し一時ファイルを置くフォルダ（プロジェクトの Temp の下）
+        private const string PreviewFolder = "Temp/VRCastPreview";
+
+        [SerializeField] private string _outputPath;
+        [SerializeField] private string _logPath;
+        [SerializeField] private string _summary;
+        [SerializeField] private bool _failed;
+        [SerializeField] private ExportLog _log = new ExportLog();
+        [SerializeField] private bool _showInfo;
+        [SerializeField] private bool _showSummary;
+        [SerializeField] private bool _swingArms;
+
+        private Vector2 _scroll;
+
+        // プレビュー（ウィンドウを開き直す・スクリプトの再読み込みのたびに作り直す）
+        private PreviewRenderUtility _preview;
+        private AssetBundle _bundle;
+        private string _bundleFile;
+        private GameObject _instance;
+        private string _previewError;
+        private Bounds _bounds;
+        private Vector2 _orbit;
+        private float _distance;
+        private HumanPoseHandler _poseHandler;
+        private HumanPose _pose;
+        private float[] _baseMuscles;
+        private int[] _armMuscles;
+
+        /// <summary>
+        /// 結果を表示する。failed なら outputPath は使わない（プレビューなし）。
+        /// </summary>
+        public static void Open(string outputPath, string summary, ExportLog log, string logPath, bool failed)
+        {
+            var window = GetWindow<ExportResultWindow>(Title);
+            window.ReleasePreview();
+            window._outputPath = outputPath;
+            window._summary = summary;
+            window._log = log ?? new ExportLog();
+            window._logPath = logPath;
+            window._failed = failed;
+            window._previewError = null;
+            window._scroll = Vector2.zero;
+            window.Show();
+            window.Focus();
+        }
+
+        private void OnDisable()
+        {
+            ReleasePreview();
+        }
+
+        private void Update()
+        {
+            // 腕を動かしている間だけ描き直し続ける
+            if (_swingArms && _poseHandler != null)
+            {
+                Repaint();
+            }
+        }
+
+        private void OnGUI()
+        {
+            _scroll = EditorGUILayout.BeginScrollView(_scroll);
+            DrawStatus();
+            if (!_failed)
+            {
+                DrawPreview();
+            }
+
+            DrawLog();
+            DrawSummary();
+            EditorGUILayout.EndScrollView();
+        }
+
+        private void DrawStatus()
+        {
+            int errors = _log.Count(ExportLog.Level.Error);
+            int warnings = _log.Count(ExportLog.Level.Warning);
+            string status = _failed
+                ? T("Export failed. See the log below.", "書き出しに失敗しました。下の記録を確かめてください。",
+                    "내보내기에 실패했습니다. 아래 기록을 확인하세요.", "导出失败。请查看下方的记录。", "匯出失敗。請查看下方的記錄。")
+                : warnings + errors > 0
+                    ? T("Exported with warnings. Check the preview and the log below.",
+                        "書き出しましたが、注意があります。プレビューと下の記録を確かめてください。",
+                        "내보냈지만 주의할 점이 있습니다. 미리보기와 아래 기록을 확인하세요.",
+                        "已导出，但有需要注意的地方。请查看预览和下方的记录。",
+                        "已匯出，但有需要注意的地方。請查看預覽和下方的記錄。")
+                    : T("Exported. Check the preview to see how the avatar looks.",
+                        "書き出しました。プレビューで見た目を確かめてください。",
+                        "내보냈습니다. 미리보기로 모습을 확인하세요.", "已导出。请在预览中确认外观。", "已匯出。請在預覽中確認外觀。");
+            MessageType type = _failed || errors > 0 ? MessageType.Error : warnings > 0 ? MessageType.Warning : MessageType.Info;
+            EditorGUILayout.HelpBox(status, type);
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                using (new EditorGUI.DisabledScope(_failed || string.IsNullOrEmpty(_outputPath) || !File.Exists(_outputPath)))
+                {
+                    if (GUILayout.Button(T("Show exported file", "書き出したファイルを表示", "내보낸 파일 표시",
+                            "显示导出的文件", "顯示匯出的檔案")))
+                    {
+                        EditorUtility.RevealInFinder(_outputPath);
+                    }
+                }
+
+                using (new EditorGUI.DisabledScope(string.IsNullOrEmpty(_logPath) || !File.Exists(_logPath)))
+                {
+                    if (GUILayout.Button(T("Open log file", "記録のファイルを開く", "기록 파일 열기", "打开记录文件",
+                            "開啟記錄檔案")))
+                    {
+                        EditorUtility.OpenWithDefaultApp(_logPath);
+                    }
+                }
+
+                if (GUILayout.Button(T("Copy log", "記録をコピー", "기록 복사", "复制记录", "複製記錄")))
+                {
+                    EditorGUIUtility.systemCopyBuffer = _log.ToText(ExportLog.UseJapanese, _summary);
+                }
+            }
+        }
+
+        private void DrawPreview()
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField(T("Preview (exported file)", "プレビュー（書き出したファイル）", "미리보기 (내보낸 파일)",
+                "预览（导出的文件）", "預覽（匯出的檔案）"), EditorStyles.boldLabel);
+
+            EnsurePreview();
+            if (_instance == null)
+            {
+                EditorGUILayout.HelpBox(
+                    T("The preview cannot be shown: ", "プレビューを表示できません: ", "미리보기를 표시할 수 없습니다: ",
+                        "无法显示预览：", "無法顯示預覽：") + _previewError, MessageType.Warning);
+                return;
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                using (new EditorGUI.DisabledScope(_poseHandler == null))
+                {
+                    bool swing = GUILayout.Toggle(_swingArms, T("Move the arms to check that the outfit follows",
+                        "腕を動かして衣装の追従を確かめる", "팔을 움직여 의상이 따라오는지 확인", "移动手臂确认服装是否跟随",
+                        "移動手臂確認服裝是否跟隨"), "Button");
+                    if (swing != _swingArms)
+                    {
+                        _swingArms = swing;
+                        if (!swing)
+                        {
+                            ApplyArms(_baseMuscles);
+                        }
+                    }
+                }
+
+                if (GUILayout.Button(T("Reset view", "視点を戻す", "시점 초기화", "重置视角", "重設視角"), GUILayout.Width(120f)))
+                {
+                    ResetView();
+                }
+            }
+
+            Rect rect = GUILayoutUtility.GetRect(0f, PreviewHeight, GUILayout.ExpandWidth(true));
+            HandlePreviewInput(rect);
+            if (Event.current.type == EventType.Repaint)
+            {
+                RenderPreview(rect);
+            }
+
+            EditorGUILayout.LabelField(T("Drag to rotate, scroll to zoom. Physics (PhysBones) are not simulated in the preview.",
+                "ドラッグで回転、ホイールで拡大縮小。揺れもの（PhysBone）はプレビューでは動きません。",
+                "드래그로 회전, 휠로 확대·축소. 흔들림(PhysBone)은 미리보기에서 움직이지 않습니다.",
+                "拖动旋转，滚轮缩放。摇晃物（PhysBone）在预览中不会动。", "拖曳旋轉，滾輪縮放。搖晃物（PhysBone）在預覽中不會動。"),
+                EditorStyles.miniLabel);
+        }
+
+        private void DrawLog()
+        {
+            EditorGUILayout.Space();
+            bool japanese = ExportLog.UseJapanese;
+            int infos = _log.Count(ExportLog.Level.Info);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.LabelField(japanese ? "記録" : "Log", EditorStyles.boldLabel);
+                GUILayout.FlexibleSpace();
+                _showInfo = GUILayout.Toggle(_showInfo,
+                    (japanese ? "情報も表示" : "Show info") + $" ({infos})", EditorStyles.miniButton);
+            }
+
+            int shown = 0;
+            foreach (ExportLog.Entry entry in _log.entries)
+            {
+                if (entry.level == ExportLog.Level.Info && !_showInfo)
+                {
+                    continue;
+                }
+
+                shown++;
+                string message = (entry.external ? (japanese ? "（ほかのツール）" : "(other tool) ") : string.Empty)
+                    + entry.Message(japanese)
+                    + (string.IsNullOrEmpty(entry.detail) ? string.Empty : "\n" + entry.detail);
+                EditorGUILayout.HelpBox(message, ToMessageType(entry.level));
+            }
+
+            if (shown == 0)
+            {
+                EditorGUILayout.LabelField(japanese ? "注意すべき点はありません。" : "Nothing to note.", EditorStyles.miniLabel);
+            }
+        }
+
+        private void DrawSummary()
+        {
+            if (string.IsNullOrEmpty(_summary))
+            {
+                return;
+            }
+
+            EditorGUILayout.Space();
+            _showSummary = EditorGUILayout.Foldout(_showSummary, T("Details", "詳細", "상세", "详细信息", "詳細資訊"), true);
+            if (_showSummary)
+            {
+                EditorGUILayout.SelectableLabel(_summary, EditorStyles.wordWrappedLabel,
+                    GUILayout.Height(EditorStyles.wordWrappedLabel.CalcHeight(new GUIContent(_summary), position.width - 30f)));
+            }
+        }
+
+        private static MessageType ToMessageType(ExportLog.Level level)
+        {
+            switch (level)
+            {
+                case ExportLog.Level.Error:
+                    return MessageType.Error;
+                case ExportLog.Level.Warning:
+                    return MessageType.Warning;
+                default:
+                    return MessageType.Info;
+            }
+        }
+
+        private void EnsurePreview()
+        {
+            // 作成済み、または作れなかった理由が分かっていれば作り直さない
+            if (_instance != null || _previewError != null)
+            {
+                return;
+            }
+
+            try
+            {
+                LoadPreview();
+            }
+            catch (Exception e)
+            {
+                _previewError = e.Message;
+                ReleasePreview(false);
+            }
+        }
+
+        private void LoadPreview()
+        {
+            if (string.IsNullOrEmpty(_outputPath) || !File.Exists(_outputPath))
+            {
+                throw new FileNotFoundException(T("The exported file was not found.", "書き出したファイルが見つかりません。",
+                    "내보낸 파일을 찾을 수 없습니다.", "找不到导出的文件。", "找不到匯出的檔案。"));
+            }
+
+            // .vrcaster（ZIP）から AssetBundle を取り出す
+            Directory.CreateDirectory(PreviewFolder);
+            _bundleFile = Path.Combine(PreviewFolder, Guid.NewGuid().ToString("N") + ".bundle");
+            using (FileStream stream = File.OpenRead(_outputPath))
+            using (var zip = new ZipArchive(stream, ZipArchiveMode.Read))
+            {
+                ZipArchiveEntry entry = zip.GetEntry(AvatarPackageLayout.BundleEntry)
+                    ?? throw new InvalidDataException("avatar.bundle is missing.");
+                using (Stream source = entry.Open())
+                using (FileStream target = File.Create(_bundleFile))
+                {
+                    source.CopyTo(target);
+                }
+            }
+
+            // 同じ名前の AssetBundle は同時に読めないため、前のプレビューの分を外してから読む
+            foreach (AssetBundle loaded in AssetBundle.GetAllLoadedAssetBundles())
+            {
+                if (loaded.name == AvatarPackageLayout.BundleEntry)
+                {
+                    loaded.Unload(true);
+                }
+            }
+
+            _bundle = AssetBundle.LoadFromFile(_bundleFile);
+            if (_bundle == null)
+            {
+                throw new InvalidDataException(T("The avatar data could not be loaded in this Unity.",
+                    "この Unity ではアバターのデータを読み込めませんでした。", "이 Unity에서는 아바타 데이터를 불러올 수 없습니다.",
+                    "此 Unity 无法加载虚拟形象数据。", "此 Unity 無法載入虛擬形象資料。"));
+            }
+
+            var prefab = _bundle.LoadAsset<GameObject>(AvatarPackageLayout.PrefabAssetPath);
+            if (prefab == null)
+            {
+                GameObject[] all = _bundle.LoadAllAssets<GameObject>();
+                prefab = all.Length > 0 ? all[0] : null;
+            }
+
+            if (prefab == null)
+            {
+                throw new InvalidDataException("The avatar prefab is missing.");
+            }
+
+            _preview = new PreviewRenderUtility();
+            _preview.camera.fieldOfView = FieldOfView;
+            _preview.camera.nearClipPlane = 0.01f;
+            _preview.camera.farClipPlane = 100f;
+            _preview.camera.clearFlags = CameraClearFlags.SolidColor;
+            _preview.camera.backgroundColor = PreviewBackground;
+            _preview.lights[0].intensity = 1.1f;
+            _preview.lights[0].transform.rotation = Quaternion.Euler(30f, 150f, 0f);
+            _preview.lights[1].intensity = 0.6f;
+            _preview.ambientColor = new Color(0.45f, 0.45f, 0.45f);
+
+            _instance = Object.Instantiate(prefab);
+            _instance.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            _preview.AddSingleGO(_instance);
+
+            // 画面外判定で消えないよう、常に更新する
+            foreach (SkinnedMeshRenderer skinned in _instance.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                skinned.updateWhenOffscreen = true;
+            }
+
+            SetUpPose();
+            _bounds = CalculateBounds(_instance);
+            ResetView();
+        }
+
+        private void SetUpPose()
+        {
+            // Humanoid なら腕を動かせるようにする（アプリと同じく人型のマッスルで動かす）
+            var animator = _instance.GetComponent<Animator>();
+            if (animator == null || animator.avatar == null || !animator.avatar.isHuman)
+            {
+                return;
+            }
+
+            _poseHandler = new HumanPoseHandler(animator.avatar, _instance.transform);
+            _poseHandler.GetHumanPose(ref _pose);
+            _baseMuscles = (float[])_pose.muscles.Clone();
+            _armMuscles = new[]
+            {
+                Array.IndexOf(HumanTrait.MuscleName, "Left Arm Down-Up"),
+                Array.IndexOf(HumanTrait.MuscleName, "Right Arm Down-Up"),
+            };
+        }
+
+        private void ApplyArms(float[] muscles)
+        {
+            if (_poseHandler == null || muscles == null)
+            {
+                return;
+            }
+
+            // 体の位置・向きは最初のまま、マッスルだけを書き換える
+            Array.Copy(muscles, _pose.muscles, muscles.Length);
+            _poseHandler.SetHumanPose(ref _pose);
+        }
+
+        private void RenderPreview(Rect rect)
+        {
+            if (_swingArms && _poseHandler != null)
+            {
+                float t = (Mathf.Sin((float)EditorApplication.timeSinceStartup * SwingSpeed) + 1f) * 0.5f;
+                var muscles = (float[])_baseMuscles.Clone();
+                foreach (int index in _armMuscles)
+                {
+                    if (index >= 0)
+                    {
+                        muscles[index] = Mathf.Lerp(ArmDown, ArmUp, t);
+                    }
+                }
+
+                ApplyArms(muscles);
+            }
+
+            Quaternion rotation = Quaternion.Euler(_orbit.y, _orbit.x, 0f);
+            _preview.camera.transform.SetPositionAndRotation(
+                _bounds.center - rotation * Vector3.forward * _distance, rotation);
+
+            _preview.BeginPreview(rect, GUIStyle.none);
+            _preview.camera.Render();
+            Texture texture = _preview.EndPreview();
+            GUI.DrawTexture(rect, texture, ScaleMode.StretchToFill, false);
+        }
+
+        private void HandlePreviewInput(Rect rect)
+        {
+            Event current = Event.current;
+            if (!rect.Contains(current.mousePosition))
+            {
+                return;
+            }
+
+            if (current.type == EventType.MouseDrag)
+            {
+                _orbit.x += current.delta.x * OrbitSpeed;
+                _orbit.y = Mathf.Clamp(_orbit.y + current.delta.y * OrbitSpeed, -89f, 89f);
+                current.Use();
+                Repaint();
+            }
+            else if (current.type == EventType.ScrollWheel)
+            {
+                _distance = Mathf.Max(0.1f, _distance * (1f + current.delta.y * ZoomSpeed));
+                current.Use();
+                Repaint();
+            }
+        }
+
+        private void ResetView()
+        {
+            // 正面（アバターの顔側）から全身が収まる距離
+            _orbit = new Vector2(180f, 5f);
+            float radius = Mathf.Max(_bounds.extents.magnitude, 0.1f);
+            _distance = radius / Mathf.Sin(FieldOfView * 0.5f * Mathf.Deg2Rad);
+        }
+
+        private static Bounds CalculateBounds(GameObject root)
+        {
+            bool found = false;
+            var bounds = new Bounds(new Vector3(0f, 0.8f, 0f), Vector3.one);
+            foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>())
+            {
+                if (renderer is ParticleSystemRenderer || !renderer.enabled)
+                {
+                    continue;
+                }
+
+                if (!found)
+                {
+                    bounds = renderer.bounds;
+                    found = true;
+                }
+                else
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+            }
+
+            return bounds;
+        }
+
+        private void ReleasePreview(bool clearError = true)
+        {
+            _poseHandler?.Dispose();
+            _poseHandler = null;
+            _swingArms = false;
+
+            // プレビューのシーンに入れたアバターも一緒に破棄される
+            _preview?.Cleanup();
+            _preview = null;
+            if (_instance != null)
+            {
+                Object.DestroyImmediate(_instance);
+            }
+
+            _instance = null;
+            if (_bundle != null)
+            {
+                _bundle.Unload(true);
+                _bundle = null;
+            }
+
+            if (!string.IsNullOrEmpty(_bundleFile))
+            {
+                FileUtil.DeleteFileOrDirectory(_bundleFile);
+                _bundleFile = null;
+            }
+
+            if (clearError)
+            {
+                _previewError = null;
+            }
+        }
+    }
+}

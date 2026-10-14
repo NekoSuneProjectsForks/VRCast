@@ -42,7 +42,7 @@ OBS (Window Capture / Game Capture / Spout2) / 仮想カメラ (Discord / Zoom �
 
 ## 現在の状態
 
-**バージョン 2.2.0（製品版）**。変更点は [CHANGELOG.txt](CHANGELOG.txt)（日本語 / 英語、配布 zip にも同梱）。
+**バージョン 2.3.0（製品版）**。変更点は [CHANGELOG.txt](CHANGELOG.txt)（日本語 / 英語、配布 zip にも同梱）。
 
 **Milestone 1（Basic Avatar Runtime）**・**Milestone 2（Transparent Rendering）**・**Milestone 3（Expressions）**・**Milestone 4（Runtime Physics）**・**Milestone 5（Tracking）** 完了。
 VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポーズ・表情切り替えをしつつ背景透過で OBS に取り込める。
@@ -130,7 +130,12 @@ VRM（VRoid Studio などで作った `.vrm`）は書き出し不要で、その
 - 【ベータ版・暫定対応】VRCFury や Modular Avatar など非破壊改変ツールが入っている場合、除去の前に複製へ改変を適用する（VRChat へのアップロード時と同じ処理）。
   アバターに Avatar Descriptor があり VRChat SDK が入っていれば、SDK のアップロード前処理（`VRCBuildPipelineCallbacks.OnPreprocessAvatar`）をまとめて呼び、
   VRCFury・NDMF（MA・AAO 等）ほか前処理に登録されたツールをすべて適用する。呼べないときは NDMF だけを適用する。
-  前処理が失敗した場合はアップロードと同じく書き出しを中断する（原因は Console に出る）。
+  前処理が失敗した場合はアップロードと同じく書き出しを中断する（原因は結果ウィンドウの記録と Console に出る）。
+- 書き出し後（失敗時も）は結果ウィンドウを開き、書き出したファイルのアバターのプレビュー（腕を上下させて衣装の追従を確認できる）と、
+  書き出しの記録（日本語・英語。ほかのツールの警告・エラーも含む）を表示する。記録は書き出したファイルの横に `<名前>.log.txt` で保存する。
+  衣装の腕・脚の向きがアバターと 15° 以上違う（T / A ポーズの違い）・体のボーンを使わないメッシュがあれば記録で警告する。
+  「アバターと合わない衣装の姿勢を直す」（既定 OFF）を ON にすると、その衣装の腕・脚のボーンを付け根を軸にアバターの関節の方向へ回し
+  （手・足から先は同じだけ動かす）、複製の上でだけ姿勢を合わせる（メッシュはボーンの動きで変形するため袖なども一緒に曲がる）。
   衣装の統合（Merge Armature / Armature Link）や追加した FX レイヤー（Merge Animator / Full Controller）も反映される。NDMF が書き出し中に生成したアセットは終了後に削除する。
   NDMF の実行前に MA Merge Armature / Bone Proxy の設定を控え、NDMF で統合されなかった衣装・小物（NDMF 未導入や MA 内部の失敗）は、
   VRCast がボーン名の対応でアバターのボーンの子へ付け替えて追従させる（付け替えで変わったパスは FX の焼き込み時に読み替える）。

@@ -25,25 +25,41 @@ namespace VRCast.Animations
             AvatarDescriptorData.VisemeO,
         };
 
-        // 書き込み先の BlendShape（同名は 1 つにまとめる）と、そのフレームの値（0〜1）
+        // 1 つの口の形で動かす BlendShape（_shapes の添字）と、出し切ったときの重み（0〜1）
+        private readonly struct Target : System.IEquatable<Target>
+        {
+            public readonly int Shape;
+            public readonly float Weight;
+
+            public Target(int shape, float weight)
+            {
+                Shape = shape;
+                Weight = weight;
+            }
+
+            public bool Equals(Target other) => Shape == other.Shape && Weight == other.Weight;
+        }
+
+        // 書き込み先の BlendShape（同じメッシュの同名は 1 つにまとめる）と、そのフレームの値（0〜1）
         private readonly List<BlendShapeOverlay> _shapes = new List<BlendShapeOverlay>();
-        private readonly List<string> _shapeNames = new List<string>();
+        private readonly List<(string path, string name)> _shapeKeys = new List<(string, string)>();
         private float[] _values;
 
-        // 母音ごとの書き込み先（_shapes の添字）と、口を開く形（外部入力用）
-        private readonly int[] _vowelShape = new int[VowelAnalyzer.VowelCount];
-        private int _openShape = -1;
+        // 母音ごとの口の形と、口を開く形（外部入力用）
+        private readonly List<Target>[] _vowelTargets = new List<Target>[VowelAnalyzer.VowelCount];
+        private List<Target> _openTargets = new List<Target>();
+        private bool _hasVowels;
 
         private MicrophoneInput _microphone;
         private AppSettings _settings;
         private ExpressionController _expressions;
 
-        public bool IsAvailable => _openShape >= 0;
+        public bool IsAvailable => _openTargets.Count > 0;
 
         /// <summary>
-        /// Viseme 方式で母音ごとの口の形を使える（あいうえおの BlendShape が 2 種類以上ある）なら true。
+        /// 母音ごとの口の形を使える（あいうえおの口の形が 2 種類以上ある）なら true。
         /// </summary>
-        public bool HasVowels => _shapes.Count >= 2;
+        public bool HasVowels => _hasVowels;
 
         /// <summary>
         /// 外部（フェイストラッキング）からの口の開き（0〜1）。マイクの音量と大きい方を口の開き具合に使う。
@@ -65,31 +81,64 @@ namespace VRCast.Animations
             _settings = settings;
             _expressions = expressions;
 
-            // モードに応じて母音ごとの BlendShape を選ぶ（JawFlap は全母音で同じ口開閉）
-            bool visemes = data.mode == LipSyncData.ModeVisemeBlendShape
-                && data.visemes.Length == AvatarDescriptorData.VisemeCount;
+            // モードに応じて母音ごとの口の形を選ぶ（JawFlap は全母音で同じ口開閉）
             for (int v = 0; v < VowelAnalyzer.VowelCount; v++)
             {
-                string name = visemes
-                    ? data.visemes[VowelVisemes[v]]
-                    : data.mode == LipSyncData.ModeJawFlapBlendShape ? data.mouthOpenBlendShape : null;
-                _vowelShape[v] = AddShape(root, data.meshPath, name);
+                _vowelTargets[v] = CollectTargets(root, data, VowelVisemes[v]);
             }
 
             // 口を開く形は aa、無ければ見つかった最初の母音
-            _openShape = _vowelShape[VowelAnalyzer.A];
-            for (int v = 0; v < VowelAnalyzer.VowelCount && _openShape < 0; v++)
+            _openTargets = _vowelTargets[VowelAnalyzer.A];
+            for (int v = 0; v < VowelAnalyzer.VowelCount && _openTargets.Count == 0; v++)
             {
-                _openShape = _vowelShape[v];
+                _openTargets = _vowelTargets[v];
             }
 
-            // BlendShape が無い母音は口を開く形で代用
+            // 口の形が無い母音は口を開く形で代用し、開く形と違う母音があれば母音を使える
             for (int v = 0; v < VowelAnalyzer.VowelCount; v++)
             {
-                _vowelShape[v] = _vowelShape[v] >= 0 ? _vowelShape[v] : _openShape;
+                if (_vowelTargets[v].Count == 0)
+                {
+                    _vowelTargets[v] = _openTargets;
+                }
+
+                _hasVowels |= !System.Linq.Enumerable.SequenceEqual(_vowelTargets[v], _openTargets);
             }
 
             _values = new float[_shapes.Count];
+        }
+
+        private List<Target> CollectTargets(Transform root, LipSyncData data, int viseme)
+        {
+            var targets = new List<Target>();
+            switch (data.mode)
+            {
+                case LipSyncData.ModeVisemeBlendShape when data.visemes.Length == AvatarDescriptorData.VisemeCount:
+                    AddTarget(targets, root, data.meshPath, data.visemes[viseme], 1f);
+                    break;
+                case LipSyncData.ModeJawFlapBlendShape:
+                    AddTarget(targets, root, data.meshPath, data.mouthOpenBlendShape, 1f);
+                    break;
+                case LipSyncData.ModeVisemeAnimation when data.visemePoses.Length == AvatarDescriptorData.VisemeCount:
+                    // FX のアニメーションから読んだ口の形（複数メッシュ・途中の重みもそのまま使う）
+                    foreach (BlendShapeValue value in data.visemePoses[viseme].values)
+                    {
+                        AddTarget(targets, root, value.path, value.blendShape, value.weight / 100f);
+                    }
+
+                    break;
+            }
+
+            return targets;
+        }
+
+        private void AddTarget(List<Target> targets, Transform root, string meshPath, string name, float weight)
+        {
+            int shape = AddShape(root, meshPath, name);
+            if (shape >= 0 && weight > 0f)
+            {
+                targets.Add(new Target(shape, weight));
+            }
         }
 
         private int AddShape(Transform root, string meshPath, string name)
@@ -100,8 +149,8 @@ namespace VRCast.Animations
                 return -1;
             }
 
-            // 同じ名前は共有（別の母音に同じ BlendShape が割り当てられているアバター向け）
-            int existing = _shapeNames.IndexOf(name);
+            // 同じメッシュの同じ名前は共有（別の母音に同じ BlendShape が割り当てられているアバター向け）
+            int existing = _shapeKeys.IndexOf((meshPath ?? string.Empty, name));
             if (existing >= 0)
             {
                 return existing;
@@ -115,14 +164,14 @@ namespace VRCast.Animations
             }
 
             _shapes.Add(overlay);
-            _shapeNames.Add(name);
+            _shapeKeys.Add((meshPath ?? string.Empty, name));
             return _shapes.Count - 1;
         }
 
         private void LateUpdate()
         {
             // 対象が無ければ何もしない
-            if (_openShape < 0)
+            if (_openTargets.Count == 0)
             {
                 return;
             }
@@ -150,13 +199,20 @@ namespace VRCast.Animations
             {
                 for (int v = 0; v < VowelAnalyzer.VowelCount; v++)
                 {
-                    _values[_vowelShape[v]] += amount * _microphone.GetVowel(v);
+                    float vowel = amount * _microphone.GetVowel(v);
+                    foreach (Target target in _vowelTargets[v])
+                    {
+                        _values[target.Shape] += vowel * target.Weight;
+                    }
                 }
             }
             else
             {
                 // 無音（カメラだけ）は口を開く形
-                _values[_openShape] = amount;
+                foreach (Target target in _openTargets)
+                {
+                    _values[target.Shape] += amount * target.Weight;
+                }
             }
 
             // 上乗せ（0 なら元の値に戻る）

@@ -4,6 +4,7 @@
     "references": [
         "VRCast.Runtime",
         "VRCast.AvatarFormat",
+        "VRCast.Converter.Editor",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
