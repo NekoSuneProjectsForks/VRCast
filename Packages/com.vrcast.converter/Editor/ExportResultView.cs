@@ -10,13 +10,12 @@ using Object = UnityEngine.Object;
 namespace VRCast.Converter.Editor
 {
     /// <summary>
-    /// 書き出しの結果ウィンドウ。書き出した .vrcaster の中のアバターをプレビューし（腕を動かして体への追従を確かめられる）、
-    /// 書き出しの記録（日本語・英語）と概要を表示する。失敗したときは記録だけを出す。
+    /// 書き出しの結果の表示（エクスポーターのウィンドウの下に描く）。書き出した .vrcaster の中のアバターをプレビューし
+    /// （腕を動かして体への追従を確かめられる）、書き出しの記録（日本語・英語）と概要を表示する。失敗したときは記録だけを出す。
     /// </summary>
-    public class ExportResultWindow : EditorWindow
+    [Serializable]
+    public sealed class ExportResultView
     {
-        private const string Title = "VRCast Export Result";
-
         // プレビューの高さと背景色
         private const float PreviewHeight = 420f;
         private static readonly Color PreviewBackground = new Color(0.32f, 0.33f, 0.36f);
@@ -31,9 +30,10 @@ namespace VRCast.Converter.Editor
         private const float ArmDown = -0.8f;
         private const float ArmUp = 0.6f;
 
-        // 書き出し一時ファイルを置くフォルダ（プロジェクトの Temp の下）
+        // 書き出したファイルから取り出した AssetBundle を置くフォルダ（プロジェクトの Temp の下）
         private const string PreviewFolder = "Temp/VRCastPreview";
 
+        [SerializeField] private bool _hasResult;
         [SerializeField] private string _outputPath;
         [SerializeField] private string _logPath;
         [SerializeField] private string _summary;
@@ -43,66 +43,63 @@ namespace VRCast.Converter.Editor
         [SerializeField] private bool _showSummary;
         [SerializeField] private bool _swingArms;
 
-        private Vector2 _scroll;
+        // プレビュー（スクリプトの再読み込みのたびに作り直す）
+        [NonSerialized] private PreviewRenderUtility _preview;
+        [NonSerialized] private AssetBundle _bundle;
+        [NonSerialized] private string _bundleFile;
+        [NonSerialized] private GameObject _instance;
+        [NonSerialized] private string _previewError;
+        [NonSerialized] private Bounds _bounds;
+        [NonSerialized] private Vector2 _orbit;
+        [NonSerialized] private float _distance;
+        [NonSerialized] private HumanPoseHandler _poseHandler;
+        [NonSerialized] private HumanPose _pose;
+        [NonSerialized] private float[] _baseMuscles;
+        [NonSerialized] private int[] _armMuscles;
 
-        // プレビュー（ウィンドウを開き直す・スクリプトの再読み込みのたびに作り直す）
-        private PreviewRenderUtility _preview;
-        private AssetBundle _bundle;
-        private string _bundleFile;
-        private GameObject _instance;
-        private string _previewError;
-        private Bounds _bounds;
-        private Vector2 _orbit;
-        private float _distance;
-        private HumanPoseHandler _poseHandler;
-        private HumanPose _pose;
-        private float[] _baseMuscles;
-        private int[] _armMuscles;
+        public bool HasResult => _hasResult;
 
         /// <summary>
-        /// 結果を表示する。failed なら outputPath は使わない（プレビューなし）。
+        /// 腕を動かしている間は true（ウィンドウは描き直し続ける）。
         /// </summary>
-        public static void Open(string outputPath, string summary, ExportLog log, string logPath, bool failed)
+        public bool IsAnimating => _swingArms && _poseHandler != null;
+
+        /// <summary>
+        /// 結果を設定する。failed なら outputPath は使わない（プレビューなし）。
+        /// </summary>
+        public void Set(string outputPath, string summary, ExportLog log, string logPath, bool failed)
         {
-            var window = GetWindow<ExportResultWindow>(Title);
-            window.ReleasePreview();
-            window._outputPath = outputPath;
-            window._summary = summary;
-            window._log = log ?? new ExportLog();
-            window._logPath = logPath;
-            window._failed = failed;
-            window._previewError = null;
-            window._scroll = Vector2.zero;
-            window.Show();
-            window.Focus();
+            Release();
+            _hasResult = true;
+            _outputPath = outputPath;
+            _summary = summary;
+            _log = log ?? new ExportLog();
+            _logPath = logPath;
+            _failed = failed;
         }
 
-        private void OnDisable()
+        public void Clear()
         {
-            ReleasePreview();
+            Release();
+            _hasResult = false;
+            _log = new ExportLog();
         }
 
-        private void Update()
+        public void Draw(Action repaint)
         {
-            // 腕を動かしている間だけ描き直し続ける
-            if (_swingArms && _poseHandler != null)
+            if (!_hasResult)
             {
-                Repaint();
+                return;
             }
-        }
 
-        private void OnGUI()
-        {
-            _scroll = EditorGUILayout.BeginScrollView(_scroll);
             DrawStatus();
             if (!_failed)
             {
-                DrawPreview();
+                DrawPreview(repaint);
             }
 
             DrawLog();
             DrawSummary();
-            EditorGUILayout.EndScrollView();
         }
 
         private void DrawStatus()
@@ -151,7 +148,7 @@ namespace VRCast.Converter.Editor
             }
         }
 
-        private void DrawPreview()
+        private void DrawPreview(Action repaint)
         {
             EditorGUILayout.Space();
             EditorGUILayout.LabelField(T("Preview (exported file)", "プレビュー（書き出したファイル）", "미리보기 (내보낸 파일)",
@@ -190,7 +187,7 @@ namespace VRCast.Converter.Editor
             }
 
             Rect rect = GUILayoutUtility.GetRect(0f, PreviewHeight, GUILayout.ExpandWidth(true));
-            HandlePreviewInput(rect);
+            HandlePreviewInput(rect, repaint);
             if (Event.current.type == EventType.Repaint)
             {
                 RenderPreview(rect);
@@ -248,8 +245,7 @@ namespace VRCast.Converter.Editor
             _showSummary = EditorGUILayout.Foldout(_showSummary, T("Details", "詳細", "상세", "详细信息", "詳細資訊"), true);
             if (_showSummary)
             {
-                EditorGUILayout.SelectableLabel(_summary, EditorStyles.wordWrappedLabel,
-                    GUILayout.Height(EditorStyles.wordWrappedLabel.CalcHeight(new GUIContent(_summary), position.width - 30f)));
+                EditorGUILayout.HelpBox(_summary, MessageType.None);
             }
         }
 
@@ -281,7 +277,7 @@ namespace VRCast.Converter.Editor
             catch (Exception e)
             {
                 _previewError = e.Message;
-                ReleasePreview(false);
+                Release(false);
             }
         }
 
@@ -396,7 +392,7 @@ namespace VRCast.Converter.Editor
 
         private void RenderPreview(Rect rect)
         {
-            if (_swingArms && _poseHandler != null)
+            if (IsAnimating)
             {
                 float t = (Mathf.Sin((float)EditorApplication.timeSinceStartup * SwingSpeed) + 1f) * 0.5f;
                 var muscles = (float[])_baseMuscles.Clone();
@@ -421,7 +417,7 @@ namespace VRCast.Converter.Editor
             GUI.DrawTexture(rect, texture, ScaleMode.StretchToFill, false);
         }
 
-        private void HandlePreviewInput(Rect rect)
+        private void HandlePreviewInput(Rect rect, Action repaint)
         {
             Event current = Event.current;
             if (!rect.Contains(current.mousePosition))
@@ -434,13 +430,13 @@ namespace VRCast.Converter.Editor
                 _orbit.x += current.delta.x * OrbitSpeed;
                 _orbit.y = Mathf.Clamp(_orbit.y + current.delta.y * OrbitSpeed, -89f, 89f);
                 current.Use();
-                Repaint();
+                repaint();
             }
             else if (current.type == EventType.ScrollWheel)
             {
                 _distance = Mathf.Max(0.1f, _distance * (1f + current.delta.y * ZoomSpeed));
                 current.Use();
-                Repaint();
+                repaint();
             }
         }
 
@@ -477,7 +473,10 @@ namespace VRCast.Converter.Editor
             return bounds;
         }
 
-        private void ReleasePreview(bool clearError = true)
+        /// <summary>
+        /// プレビューを破棄する（結果の記録は残す）。ウィンドウを閉じる・書き出し直す前に呼ぶ。
+        /// </summary>
+        public void Release(bool clearError = true)
         {
             _poseHandler?.Dispose();
             _poseHandler = null;

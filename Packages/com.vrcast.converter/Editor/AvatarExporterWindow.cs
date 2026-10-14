@@ -64,6 +64,17 @@ namespace VRCast.Converter.Editor
         private string _dropNotice;
         private MessageType _dropNoticeType;
 
+        // 書き出しの結果（プレビュー・記録）
+        [SerializeField]
+        private ExportResultView _result = new ExportResultView();
+
+        // 進めている書き出しと、その記録の保存先（書き出し中でなければ null）
+        private ExportJob _job;
+        private string _jobLogPath;
+
+        // 今の工程の名前を描き終えたか（描いてから次の工程へ進め、重い工程の間も何をしているかが見えるようにする）
+        private bool _stepPainted;
+
         [MenuItem("VRCast/Avatar Exporter")]
         private static void Open()
         {
@@ -77,6 +88,46 @@ namespace VRCast.Converter.Editor
             string iconPath = AssetDatabase.GUIDToAssetPath(IconGuid);
             _icon = string.IsNullOrEmpty(iconPath) ? null : AssetDatabase.LoadAssetAtPath<Texture2D>(iconPath);
             titleContent = new GUIContent(Title, _icon);
+            EditorApplication.update += OnEditorUpdate;
+        }
+
+        private void OnDisable()
+        {
+            EditorApplication.update -= OnEditorUpdate;
+
+            // 閉じたら書き出しを中断し（複製と一時ファイルは片付く）、プレビューを破棄する
+            if (_job != null)
+            {
+                _job.Dispose();
+                _job = null;
+            }
+
+            _result.Release();
+        }
+
+        private void OnEditorUpdate()
+        {
+            // 書き出し中は 1 回に 1 工程ずつ進め、合間に進み具合を描く
+            if (_job != null)
+            {
+                if (_stepPainted)
+                {
+                    _stepPainted = false;
+                    if (!_job.MoveNext())
+                    {
+                        FinishExport();
+                    }
+                }
+
+                Repaint();
+                return;
+            }
+
+            // プレビューで腕を動かしている間は描き直し続ける
+            if (_result.IsAnimating)
+            {
+                Repaint();
+            }
         }
 
         private void OnFocus()
@@ -103,6 +154,10 @@ namespace VRCast.Converter.Editor
         private void DrawContents()
         {
             DrawHeader();
+
+            // 書き出し中は設定を変えられないようにする（進み具合と中断のボタンだけ操作できる）
+            bool enabled = GUI.enabled;
+            GUI.enabled = enabled && _job == null;
 
             // 表示言語の切り替え（選んだ言語は EditorPrefs に保存し、次回以降も使う）
             Selected = (Language)EditorGUILayout.Popup(
@@ -175,6 +230,82 @@ namespace VRCast.Converter.Editor
                     // ダイアログ中にレイアウトが崩れるため、この回の描画は打ち切る（EndLayoutGroup のエラーを防ぐ）
                     GUIUtility.ExitGUI();
                 }
+            }
+
+            GUI.enabled = enabled;
+            DrawProgress();
+
+            // 書き出しの結果（プレビュー・記録）をこのウィンドウの下に出す
+            if (_job == null && _result.HasResult)
+            {
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField(T("Export result", "書き出しの結果", "내보내기 결과", "导出结果", "匯出結果"),
+                    EditorStyles.boldLabel);
+                _result.Draw(Repaint);
+            }
+        }
+
+        private void DrawProgress()
+        {
+            if (_job == null)
+            {
+                return;
+            }
+
+            EditorGUILayout.Space();
+            Rect bar = GUILayoutUtility.GetRect(0f, EditorGUIUtility.singleLineHeight + 4f, GUILayout.ExpandWidth(true));
+            EditorGUI.ProgressBar(bar, _job.Progress, DescribeStep(_job.Current));
+            if (Event.current.type == EventType.Repaint)
+            {
+                _stepPainted = true;
+            }
+            if (_job.Current == ExportJob.Step.BuildingBundle)
+            {
+                EditorGUILayout.HelpBox(T("Unity shows its own progress window while building the avatar data.",
+                    "アバターのデータを作る間は、Unity の進捗画面が出ます。",
+                    "아바타 데이터를 만드는 동안에는 Unity의 진행 화면이 나옵니다.",
+                    "生成虚拟形象数据期间会显示 Unity 的进度窗口。", "產生虛擬形象資料期間會顯示 Unity 的進度視窗。"),
+                    MessageType.None);
+            }
+
+            if (GUILayout.Button(T("Cancel", "中断", "중단", "中止", "中止")))
+            {
+                CancelExport();
+                GUIUtility.ExitGUI();
+            }
+        }
+
+        private static string DescribeStep(ExportJob.Step step)
+        {
+            switch (step)
+            {
+                case ExportJob.Step.Preparing:
+                    return T("Copying the avatar...", "アバターを複製しています...", "아바타를 복제하는 중...",
+                        "正在复制虚拟形象...", "正在複製虛擬形象...");
+                case ExportJob.Step.ApplyingTools:
+                    return T("Applying avatar tools (VRCFury / Modular Avatar)...",
+                        "改変ツール（VRCFury・Modular Avatar）を適用しています...",
+                        "개조 도구(VRCFury·Modular Avatar)를 적용하는 중...",
+                        "正在应用改造工具（VRCFury / Modular Avatar）...", "正在套用改造工具（VRCFury / Modular Avatar）...");
+                case ExportJob.Step.ReadingAvatar:
+                    return T("Reading outfits, lip sync and PhysBones...", "衣装・リップシンク・揺れものを読み込んでいます...",
+                        "의상·립싱크·흔들림을 읽는 중...", "正在读取服装、口型同步和摇晃物...", "正在讀取服裝、口型同步和搖晃物...");
+                case ExportJob.Step.ReadingExpressions:
+                    return T("Reading expressions...", "表情を読み込んでいます...", "표정을 읽는 중...", "正在读取表情...",
+                        "正在讀取表情...");
+                case ExportJob.Step.Cleaning:
+                    return T("Removing components that are not exported...", "書き出さないコンポーネントを取り除いています...",
+                        "내보내지 않는 컴포넌트를 제거하는 중...", "正在移除不导出的组件...", "正在移除不匯出的元件...");
+                case ExportJob.Step.SavingPrefab:
+                    return T("Preparing meshes and animations...", "メッシュとアニメーションを準備しています...",
+                        "메시와 애니메이션을 준비하는 중...", "正在准备网格和动画...", "正在準備網格和動畫...");
+                case ExportJob.Step.BuildingBundle:
+                    return T("Building the avatar data (this can take a while)...", "アバターのデータを作っています（時間がかかります）...",
+                        "아바타 데이터를 만드는 중 (시간이 걸립니다)...", "正在生成虚拟形象数据（需要一些时间）...",
+                        "正在產生虛擬形象資料（需要一些時間）...");
+                default:
+                    return T("Writing the file...", "ファイルに書き出しています...", "파일로 내보내는 중...", "正在写入文件...",
+                        "正在寫入檔案...");
             }
         }
 
@@ -600,46 +731,58 @@ namespace VRCast.Converter.Editor
             // 次回用に保存先フォルダを記憶
             EditorPrefs.SetString(LastDirectoryKey, Path.GetDirectoryName(path));
 
-            // 書き出しの記録（結果ウィンドウに出し、書き出したファイルの横にも保存する）
-            var log = new ExportLog();
+            // 書き出しの記録（このウィンドウの下に出し、書き出したファイルの横にも保存する）
             string outputPath = path.EndsWith(AvatarPackageLayout.Extension, StringComparison.OrdinalIgnoreCase)
                 ? path
                 : path + AvatarPackageLayout.Extension;
-            string logPath = Path.ChangeExtension(outputPath, ".log.txt");
-            try
-            {
-                // 書き出し中は進捗バーを表示
-                EditorUtility.DisplayProgressBar(
-                    Title,
-                    T("Building avatar package...", "アバターパッケージを作成中...", "아바타 패키지 생성 중...",
-                        "正在生成虚拟形象包...", "正在產生虛擬形象包..."),
-                    0.5f);
-                AvatarExporter.Report report = AvatarExporter.Export(
-                    _avatar, outputPath, EditorPrefs.GetBool(KeepSceneBlendShapesKey, true),
-                    ExtraExpressionClips.Collect(_extraEntries),
-                    EditorPrefs.GetBool(IncludeInactiveObjectsKey, true), log,
-                    EditorPrefs.GetBool(FixOutfitPosesKey, false));
+            _jobLogPath = Path.ChangeExtension(outputPath, ".log.txt");
 
-                // Console と記録のファイルの概要は問い合わせ時に読みやすいよう英語固定、結果ウィンドウは表示言語
+            // 前の結果のプレビューを片付けてから、1 工程ずつ進める書き出しを始める（進めるのは OnEditorUpdate）
+            _result.Clear();
+            _job = AvatarExporter.Start(
+                _avatar, outputPath, EditorPrefs.GetBool(KeepSceneBlendShapesKey, true),
+                ExtraExpressionClips.Collect(_extraEntries),
+                EditorPrefs.GetBool(IncludeInactiveObjectsKey, true), new ExportLog(),
+                EditorPrefs.GetBool(FixOutfitPosesKey, false));
+            _stepPainted = false;
+            Repaint();
+        }
+
+        private void FinishExport()
+        {
+            ExportJob job = _job;
+            _job = null;
+            ExportLog log = job.Log;
+            if (job.Error == null)
+            {
+                // Console と記録のファイルの概要は問い合わせ時に読みやすいよう英語固定、ウィンドウは表示言語
+                AvatarExporter.Report report = job.Report;
                 string englishSummary = BuildSummary(report, true);
                 Debug.Log("[VRCast][Exporter] " + englishSummary.Replace("\n", " / "));
-                EditorUtility.ClearProgressBar();
-                ExportResultWindow.Open(report.OutputPath, BuildSummary(report, false), log,
-                    log.Save(logPath, ExportLog.UseJapanese, LogHeader(englishSummary)), false);
+                _result.Set(report.OutputPath, BuildSummary(report, false), log,
+                    log.Save(_jobLogPath, ExportLog.UseJapanese, LogHeader(englishSummary)), false);
             }
-            catch (Exception e)
+            else
             {
                 // 失敗理由を記録して表示（スタックトレースは Console へ）
-                Debug.LogException(e);
-                log.Add(ExportLog.Level.Error, "Export failed: " + e.Message, "書き出しに失敗しました: " + e.Message);
-                EditorUtility.ClearProgressBar();
-                ExportResultWindow.Open(null, null, log,
-                    log.Save(logPath, ExportLog.UseJapanese, LogHeader(null)), true);
+                Debug.LogException(job.Error);
+                log.Add(ExportLog.Level.Error, "Export failed: " + job.Error.Message,
+                    "書き出しに失敗しました: " + job.Error.Message);
+                _result.Set(null, null, log, log.Save(_jobLogPath, ExportLog.UseJapanese, LogHeader(null)), true);
             }
-            finally
-            {
-                EditorUtility.ClearProgressBar();
-            }
+
+            job.Dispose();
+        }
+
+        private void CancelExport()
+        {
+            // 中断しても複製と一時ファイルは片付く。途中までの記録は残す
+            ExportJob job = _job;
+            _job = null;
+            job.Dispose();
+            job.Log.Add(ExportLog.Level.Warning, "The export was cancelled.", "書き出しを中断しました。");
+            _result.Set(null, null, job.Log, job.Log.Save(_jobLogPath, ExportLog.UseJapanese, LogHeader(null)), true);
+            Repaint();
         }
 
         private string LogHeader(string englishSummary)

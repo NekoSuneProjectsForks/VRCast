@@ -8,13 +8,13 @@ Newest first. Each version is written in Japanese, then English.
 
 [日本語]
 - リップシンクを FX のアニメーションで動かす作りのアバター（Lip Sync が Viseme Parameter Only など）でもリップシンクできるように変更（顔以外に歯や舌のメッシュを一緒に動かすアバターにも対応します。今までに書き出したアバターは、書き出し直すと使えます）
-- 書き出し後に結果のウィンドウを出すように変更（書き出したファイルのアバターをプレビューでき、腕を動かして衣装が体についてくるかを確かめられます。書き出しの記録を日本語・英語で表示し、書き出したファイルの横に「〜.log.txt」として保存します。ほかのツールが出したエラーも記録に入ります）
+- エクスポーターのウィンドウに、書き出しの進み具合と結果を表示するように変更（今どの工程かが分かり、途中で中断できます。書き出し後は同じウィンドウで、書き出したファイルのアバターをプレビューでき、腕を動かして衣装が体についてくるかを確かめられます。書き出しの記録を日本語・英語で表示し、書き出したファイルの横に「〜.log.txt」として保存します。ほかのツールが出したエラーも記録に入ります）
 - 書き出し時に、衣装の姿勢がアバターと合っていない（T ポーズの衣装を A ポーズのアバターに着せた等）・体に追従しないメッシュがあることを知らせる機能を追加
 - エクスポーターに「アバターと合わない衣装の姿勢を直す」を追加（袖や脚が体から浮いてしまう衣装の腕・脚のボーンを、書き出すアバターの上でだけアバターの向きに合わせます。既定 OFF）
 
 [English]
 - Lip sync now works on avatars that move the mouth with FX animations (such as Lip Sync set to Viseme Parameter Only), including avatars that also move teeth or tongue meshes (re-export previously exported avatars to use it)
-- The exporter now shows a result window after exporting (preview the exported avatar and move its arms to check that outfits follow the body; the export log is shown in Japanese or English and saved next to the exported file as "*.log.txt", including errors from other tools)
+- The exporter window now shows the export progress and result (see which step is running and cancel it; after exporting, preview the exported avatar in the same window and move its arms to check that outfits follow the body; the export log is shown in Japanese or English and saved next to the exported file as "*.log.txt", including errors from other tools)
 - Added warnings when exporting if an outfit's pose does not match the avatar (such as a T-pose outfit on an A-pose avatar) or if a mesh will not follow the body
 - Added "Fix outfit poses that do not match the avatar" to the exporter (turns the arm and leg bones of outfits whose sleeves or legs float away from the body to match the avatar, in the exported avatar only; off by default)
 

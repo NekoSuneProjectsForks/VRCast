@@ -125,15 +125,37 @@ namespace VRCast.Converter.Editor
             IReadOnlyList<AnimationClip> extraExpressionClips = null, bool includeInactiveObjects = true,
             ExportLog log = null, bool fixOutfitPoses = false)
         {
-            using ((log ?? new ExportLog()).Begin())
+            // 工程を続けて実行する（ウィンドウからは Start で 1 工程ずつ進める）
+            using (ExportJob job = Start(source, outputPath, keepSceneBlendShapes, extraExpressionClips,
+                       includeInactiveObjects, log, fixOutfitPoses))
             {
-                return ExportCore(source, outputPath, keepSceneBlendShapes, extraExpressionClips, includeInactiveObjects,
-                    fixOutfitPoses);
+                while (job.MoveNext())
+                {
+                }
+
+                job.ThrowIfFailed();
+                return job.Report;
             }
         }
 
-        private static Report ExportCore(GameObject source, string outputPath, bool keepSceneBlendShapes,
-            IReadOnlyList<AnimationClip> extraExpressionClips, bool includeInactiveObjects, bool fixOutfitPoses)
+        /// <summary>
+        /// 書き出しを始める。返した ExportJob の MoveNext を呼ぶたびに 1 工程ずつ進む（引数は Export と同じ）。
+        /// 途中で Dispose すると中断し、複製と一時ファイルを片付ける。
+        /// </summary>
+        public static ExportJob Start(GameObject source, string outputPath, bool keepSceneBlendShapes = true,
+            IReadOnlyList<AnimationClip> extraExpressionClips = null, bool includeInactiveObjects = true,
+            ExportLog log = null, bool fixOutfitPoses = false)
+        {
+            var result = new ExportJob.ResultBox();
+            return new ExportJob(
+                ExportSteps(source, outputPath, keepSceneBlendShapes, extraExpressionClips, includeInactiveObjects,
+                    fixOutfitPoses, result),
+                log ?? new ExportLog(), result);
+        }
+
+        private static IEnumerator<ExportJob.Step> ExportSteps(GameObject source, string outputPath, bool keepSceneBlendShapes,
+            IReadOnlyList<AnimationClip> extraExpressionClips, bool includeInactiveObjects, bool fixOutfitPoses,
+            ExportJob.ResultBox result)
         {
             // 事前検証に失敗したら例外で中断
             string error = Validate(source);
@@ -168,6 +190,8 @@ namespace VRCast.Converter.Editor
 
             try
             {
+                yield return ExportJob.Step.Preparing;
+
                 // 元オブジェクトを壊さないよう複製し、原点に配置
                 clone = Object.Instantiate(source);
                 clone.name = source.name;
@@ -190,6 +214,8 @@ namespace VRCast.Converter.Editor
                 // 表情の BlendShape が最適化で消えないよう、最適化ツールの BlendShape の削除を複製でだけ止める
                 report.OptimizerBlendShapeSettingsDisabled = OptimizerGuard.KeepBlendShapes(clone);
 
+                yield return ExportJob.Step.ApplyingTools;
+
                 // VRCFury・Modular Avatar 等の改変を VRChat のアップロード時と同じく複製へ適用（どれも無ければ何もしない）
                 report.Preprocess = AvatarPreprocessor.Process(clone);
                 LogPreprocess(report.Preprocess);
@@ -197,6 +223,8 @@ namespace VRCast.Converter.Editor
                 // NDMF で統合されなかった衣装・小物のボーンをアバターのボーンへ付け替え、追従させる
                 ModularAvatarFallback.Result maFallback = ModularAvatarFallback.Apply(maPlan);
                 report.ModularAvatarFallbackFixes = maFallback.FixedCount;
+
+                yield return ExportJob.Step.ReadingAvatar;
 
                 // 衣装の姿勢がアバターと合っていない（指定時は直す）・体に追従しないメッシュがあれば知らせる
                 OutfitPoseChecker.Result outfitCheck = OutfitPoseChecker.Check(clone, fixOutfitPoses);
@@ -252,6 +280,8 @@ namespace VRCast.Converter.Editor
                 // エディタで非アクティブにしたものは、FX の初期状態で表示されるものも OFF にそろえる（アプリで ON にできる）
                 report.InactiveObjects = ComponentStripper.Deactivate(sceneInactive);
 
+                yield return ExportJob.Step.ReadingExpressions;
+
                 // 改変適用後の Expression Menu の FaceEmo の下から、VRChat と同じ道筋で表情を読む（名前・パスとも VRChat と同じ）
                 List<ExpressionExtractor.NamedClip> menuClips =
                     ExpressionMenuReader.Read(descriptor, fx, faceEmoTrace);
@@ -278,6 +308,8 @@ namespace VRCast.Converter.Editor
                 {
                     LogFaceEmo(faceEmoTrace, extracted.NamedSkipped);
                 }
+
+                yield return ExportJob.Step.Cleaning;
 
                 // 許可リスト外のコンポーネント等を除去
                 report.Strip = ComponentStripper.Strip(clone);
@@ -315,6 +347,8 @@ namespace VRCast.Converter.Editor
                 BlendShapeSyncSet blendShapeSync = BlendShapeSyncExtractor.Build(syncPlan);
                 report.BlendShapeSyncCount = blendShapeSync.bindings.Length;
 
+                yield return ExportJob.Step.SavingPrefab;
+
                 // AssetBundle 化のため一時 Prefab として保存
                 AssetDatabase.CreateFolder(TempFolderParent, TempFolderName);
 
@@ -335,8 +369,12 @@ namespace VRCast.Converter.Editor
                     throw new InvalidOperationException("Failed to save temporary prefab.");
                 }
 
+                yield return ExportJob.Step.BuildingBundle;
+
                 // Prefab と依存アセット（Mesh / Material / Shader / Texture）を bundle 化
                 string bundlePath = BuildBundle(bundleDir);
+
+                yield return ExportJob.Step.Writing;
 
                 // manifest を生成して検証
                 report.Manifest = new AvatarManifest
@@ -405,7 +443,7 @@ namespace VRCast.Converter.Editor
                     $"Exported ({report.Manifest.bundleSize / (1024f * 1024f):F1} MB).",
                     $"書き出しました（{report.Manifest.bundleSize / (1024f * 1024f):F1} MB）。",
                     outputPath);
-                return report;
+                result.Report = report;
             }
             finally
             {
