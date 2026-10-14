@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using VRCast.AvatarFormat;
-using VRCast.Dynamics;
 
 namespace VRCast.Tests
 {
@@ -200,7 +199,7 @@ namespace VRCast.Tests
                 sources = new[] { Source("Source") },
             });
 
-            List<ConstraintEvaluator> sorted = ConstraintSolver.SortByDependency(new List<ConstraintEvaluator> { b, a });
+            List<ConstraintEvaluator> sorted = ConstraintEvaluator.SortByDependency(new List<ConstraintEvaluator> { b, a });
 
             Assert.That(sorted, Is.EqualTo(new[] { a, b }));
         }

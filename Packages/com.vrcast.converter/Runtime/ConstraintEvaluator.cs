@@ -1,8 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
-using VRCast.AvatarFormat;
 
-namespace VRCast.Dynamics
+namespace VRCast.AvatarFormat
 {
     /// <summary>
     /// 1 つの Constraint を解決済みの Transform で評価する。結果はターゲットのローカル値として書き込む。
@@ -64,6 +63,106 @@ namespace VRCast.Dynamics
             // 上方向の参照（空なら無し）
             Transform worldUp = string.IsNullOrEmpty(data.worldUpPath) ? null : Resolve(avatarRoot, data.worldUpPath);
             return new ConstraintEvaluator(data, target, sources.ToArray(), sourceData.ToArray(), worldUp);
+        }
+
+        /// <summary>
+        /// アバターの全 Constraint の評価器を、評価する順に並べて作る。解決できないもの、
+        /// 待機ポーズ・トラッキングが動かす骨格（Humanoid ボーンと腰からルートまでの親）を動かすものは除く。
+        /// </summary>
+        public static List<ConstraintEvaluator> CreateAll(
+            Transform avatarRoot, Animator animator, ConstraintSet set, out int skippedOnSkeleton)
+        {
+            HashSet<Transform> skeleton = CollectSkeleton(avatarRoot, animator);
+            var evaluators = new List<ConstraintEvaluator>();
+            skippedOnSkeleton = 0;
+            foreach (ConstraintData data in set.constraints)
+            {
+                ConstraintEvaluator evaluator = Create(avatarRoot, data);
+                if (evaluator == null)
+                {
+                    continue;
+                }
+
+                if (skeleton.Contains(evaluator.Target))
+                {
+                    skippedOnSkeleton++;
+                    continue;
+                }
+
+                evaluators.Add(evaluator);
+            }
+
+            return SortByDependency(evaluators);
+        }
+
+        private static HashSet<Transform> CollectSkeleton(Transform avatarRoot, Animator animator)
+        {
+            var skeleton = new HashSet<Transform>();
+
+            // 非 Humanoid なら空
+            if (animator == null || !animator.isHuman)
+            {
+                return skeleton;
+            }
+
+            // 割り当て済みの全 Humanoid ボーン
+            for (int i = 0; i < (int)HumanBodyBones.LastBone; i++)
+            {
+                Transform bone = animator.GetBoneTransform((HumanBodyBones)i);
+                if (bone != null)
+                {
+                    skeleton.Add(bone);
+                }
+            }
+
+            // 腰からルートまでの親（Armature 等。動かすと体全体がずれる）
+            Transform hips = animator.GetBoneTransform(HumanBodyBones.Hips);
+            for (Transform parent = hips != null ? hips.parent : null; parent != null && parent != avatarRoot; parent = parent.parent)
+            {
+                skeleton.Add(parent);
+            }
+
+            return skeleton;
+        }
+
+        /// <summary>
+        /// 参照先（ソース・上方向）を動かす Constraint を先に並べる。循環は元の順序のまま打ち切る。
+        /// </summary>
+        public static List<ConstraintEvaluator> SortByDependency(List<ConstraintEvaluator> evaluators)
+        {
+            var sorted = new List<ConstraintEvaluator>(evaluators.Count);
+            var visiting = new HashSet<ConstraintEvaluator>();
+            var done = new HashSet<ConstraintEvaluator>();
+            foreach (ConstraintEvaluator evaluator in evaluators)
+            {
+                Visit(evaluator, evaluators, visiting, done, sorted);
+            }
+
+            return sorted;
+        }
+
+        private static void Visit(
+            ConstraintEvaluator evaluator, List<ConstraintEvaluator> all, HashSet<ConstraintEvaluator> visiting,
+            HashSet<ConstraintEvaluator> done, List<ConstraintEvaluator> sorted)
+        {
+            // 処理済み・循環中は飛ばす
+            if (done.Contains(evaluator) || !visiting.Add(evaluator))
+            {
+                return;
+            }
+
+            // 依存先を先に追加
+            foreach (ConstraintEvaluator other in all)
+            {
+                if (other != evaluator && evaluator.DependsOn(other))
+                {
+                    Visit(other, all, visiting, done, sorted);
+                }
+            }
+
+            visiting.Remove(evaluator);
+            done.Add(evaluator);
+            sorted.Add(evaluator);
         }
 
         private static Transform Resolve(Transform avatarRoot, string path)

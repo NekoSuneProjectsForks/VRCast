@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using UnityEditor;
@@ -56,6 +57,8 @@ namespace VRCast.Converter.Editor
         [NonSerialized] private HumanPose _pose;
         [NonSerialized] private float[] _baseMuscles;
         [NonSerialized] private int[] _armMuscles;
+        [NonSerialized] private ConstraintSet _constraintSet;
+        [NonSerialized] private List<ConstraintEvaluator> _constraints;
 
         public bool HasResult => _hasResult;
 
@@ -302,6 +305,8 @@ namespace VRCast.Converter.Editor
                 {
                     source.CopyTo(target);
                 }
+
+                _constraintSet = ReadConstraints(zip);
             }
 
             // 同じ名前の AssetBundle は同時に読めないため、前のプレビューの分を外してから読む
@@ -354,9 +359,49 @@ namespace VRCast.Converter.Editor
                 skinned.updateWhenOffscreen = true;
             }
 
+            // 衣装の骨などを腕へ追従させる Constraint（アプリと同じく、骨格を動かすものは除いて評価する）
+            _constraints = ConstraintEvaluator.CreateAll(
+                _instance.transform, _instance.GetComponent<Animator>(), _constraintSet, out _);
             SetUpPose();
+            EvaluateConstraints();
             _bounds = CalculateBounds(_instance);
             ResetView();
+        }
+
+        private static ConstraintSet ReadConstraints(ZipArchive zip)
+        {
+            // 無い・読めない・内容が不正ならアプリと同じく空として扱う
+            ZipArchiveEntry entry = zip.GetEntry(AvatarPackageLayout.ConstraintsEntry);
+            if (entry == null)
+            {
+                return new ConstraintSet();
+            }
+
+            try
+            {
+                using (var reader = new StreamReader(entry.Open()))
+                {
+                    var set = JsonUtility.FromJson<ConstraintSet>(reader.ReadToEnd());
+                    return set != null && set.Validate() == null ? set : new ConstraintSet();
+                }
+            }
+            catch (Exception)
+            {
+                return new ConstraintSet();
+            }
+        }
+
+        private void EvaluateConstraints()
+        {
+            if (_constraints == null)
+            {
+                return;
+            }
+
+            foreach (ConstraintEvaluator evaluator in _constraints)
+            {
+                evaluator.Evaluate();
+            }
         }
 
         private void SetUpPose()
@@ -388,6 +433,7 @@ namespace VRCast.Converter.Editor
             // 体の位置・向きは最初のまま、マッスルだけを書き換える
             Array.Copy(muscles, _pose.muscles, muscles.Length);
             _poseHandler.SetHumanPose(ref _pose);
+            EvaluateConstraints();
         }
 
         private void RenderPreview(Rect rect)
@@ -481,6 +527,8 @@ namespace VRCast.Converter.Editor
             _poseHandler?.Dispose();
             _poseHandler = null;
             _swingArms = false;
+            _constraints = null;
+            _constraintSet = null;
 
             // プレビューのシーンに入れたアバターも一緒に破棄される
             _preview?.Cleanup();
