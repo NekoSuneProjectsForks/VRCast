@@ -4,7 +4,7 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
-■ 2.3.0 (2026-10-15)
+■ 2.2.1 (2026-10-15)
 
 [日本語]
 - リップシンクを FX のアニメーションで動かす作りのアバター（Lip Sync が Viseme Parameter Only など）でもリップシンクできるように変更（顔以外に歯や舌のメッシュを一緒に動かすアバターにも対応します。今までに書き出したアバターは、書き出し直すと使えます）

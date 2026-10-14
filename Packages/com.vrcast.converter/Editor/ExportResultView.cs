@@ -17,8 +17,7 @@ namespace VRCast.Converter.Editor
     [Serializable]
     public sealed class ExportResultView
     {
-        // プレビューの高さと背景色
-        private const float PreviewHeight = 420f;
+        // プレビューの背景色
         private static readonly Color PreviewBackground = new Color(0.32f, 0.33f, 0.36f);
 
         // プレビューのカメラの画角と、ドラッグ・ホイールの感度
@@ -92,25 +91,6 @@ namespace VRCast.Converter.Editor
         /// 書き出したファイルのプレビューを出せるか（失敗したときは出さない）。
         /// </summary>
         public bool HasPreview => _hasResult && !_failed;
-
-        /// <summary>
-        /// 結果・プレビュー・記録を縦に並べて描く（ウィンドウの幅が狭いとき）。
-        /// </summary>
-        public void Draw(Action repaint)
-        {
-            if (!_hasResult)
-            {
-                return;
-            }
-
-            DrawStatus();
-            if (HasPreview)
-            {
-                DrawPreview(repaint, PreviewHeight);
-            }
-
-            DrawDetails();
-        }
 
         /// <summary>
         /// 書き出しの記録と詳細を描く。

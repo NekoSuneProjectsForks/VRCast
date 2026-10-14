@@ -45,8 +45,7 @@ namespace VRCast.Converter.Editor
         // 一覧の行の削除ボタンの幅
         private const float RemoveButtonWidth = 24f;
 
-        // この幅以上なら左に設定・右に結果の 2 列にする。左の列の幅（ウィンドウの幅に対する割合と上下限）と列の間隔
-        private const float SplitMinWidth = 640f;
+        // 左の設定の列の幅（ウィンドウの幅に対する割合と上下限）と列の間隔
         private const float LeftPaneRatio = 0.42f;
         private const float LeftPaneMinWidth = 300f;
         private const float LeftPaneMaxWidth = 520f;
@@ -54,15 +53,18 @@ namespace VRCast.Converter.Editor
         private static readonly Color SeparatorColor = new Color(0f, 0f, 0f, 0.3f);
         private static readonly Color PlaceholderColor = new Color(0f, 0f, 0f, 0.12f);
 
-        // 2 列のときのプレビューの高さ（ウィンドウの高さに対する割合と下限）
-        private const float PreviewHeightRatio = 0.6f;
+        // プレビューの高さ（下の 2 列の高さに対する割合と下限）
+        private const float PreviewHeightRatio = 0.65f;
         private const float MinPreviewHeight = 260f;
 
-        // 書き出すボタンの高さ
-        private const float ExportButtonHeight = 30f;
+        // 上の段（アバターの指定・書き出すボタン・進み具合）の高さと、ボタンの幅、言語の選択欄の幅
+        private const float TopBarHeight = 24f;
+        private const float TopButtonWidth = 140f;
+        private const float LanguagePopupWidth = 110f;
 
-        // 2 列にしたときの既定のウィンドウの大きさ
+        // 新しく開くときのウィンドウの大きさと、最小の大きさ（左右 2 列が収まる幅）
         private static readonly Vector2 DefaultWindowSize = new Vector2(1000f, 720f);
+        private static readonly Vector2 MinWindowSize = new Vector2(640f, 480f);
 
         [SerializeField]
         private GameObject _avatar;
@@ -71,6 +73,7 @@ namespace VRCast.Converter.Editor
         private GUIStyle _titleStyle;
         private Vector2 _scroll;
         private Vector2 _resultScroll;
+        private float _columnsHeight = MinPreviewHeight / PreviewHeightRatio;
         private GUIStyle _placeholderStyle;
 
         // 「書き出される内容について」を開いているか
@@ -106,7 +109,7 @@ namespace VRCast.Converter.Editor
             // 既存ウィンドウがあれば再利用（大きさはそのまま）。新しく開くときは 2 列で収まる大きさにする
             bool opened = HasOpenInstances<AvatarExporterWindow>();
             var window = GetWindow<AvatarExporterWindow>(Title);
-            if (!opened && !window.docked && window.position.width < SplitMinWidth)
+            if (!opened && !window.docked && window.position.width < MinWindowSize.x)
             {
                 Rect rect = window.position;
                 window.position = new Rect(rect.x, rect.y, DefaultWindowSize.x, DefaultWindowSize.y);
@@ -119,6 +122,9 @@ namespace VRCast.Converter.Editor
             string iconPath = AssetDatabase.GUIDToAssetPath(IconGuid);
             _icon = string.IsNullOrEmpty(iconPath) ? null : AssetDatabase.LoadAssetAtPath<Texture2D>(iconPath);
             titleContent = new GUIContent(Title, _icon);
+
+            // 右にプレビューを並べるため、2 列で収まる幅より狭くさせない
+            minSize = MinWindowSize;
             EditorApplication.update += OnEditorUpdate;
         }
 
@@ -176,39 +182,22 @@ namespace VRCast.Converter.Editor
 
         private void OnGUI()
         {
-            // 狭いときは 1 列に並べ、全体をスクロールできるようにする
-            if (position.width < SplitMinWidth)
-            {
-                _scroll = EditorGUILayout.BeginScrollView(_scroll);
-                DrawHeader();
-                DrawWidenHint();
-                DrawSettings();
-                DrawExportButton();
-                DrawProgress();
-                if (_job == null && _result.HasResult)
-                {
-                    EditorGUILayout.Space();
-                    DrawResultTitle();
-                    _result.Draw(Repaint);
-                }
-
-                EditorGUILayout.EndScrollView();
-                return;
-            }
-
-            // 広いときは左に設定、右に書き出しの結果（プレビューを大きく出す）
+            // 上: 見出し・アバターの指定・書き出すボタン・進み具合（スクロールさせず常に見える）
             DrawHeader();
+            DrawTopBar();
+            EditorGUILayout.Space(2f);
+            EditorGUI.DrawRect(GUILayoutUtility.GetRect(1f, 1f, GUILayout.ExpandWidth(true)), SeparatorColor);
+            EditorGUILayout.Space(2f);
+
+            // 下: 左に設定、右に書き出しの結果。どちらも残りの高さに収め、はみ出す分は列ごとにスクロールする
             using (new EditorGUILayout.HorizontalScope(GUILayout.ExpandHeight(true)))
             {
                 float leftWidth = Mathf.Clamp(position.width * LeftPaneRatio, LeftPaneMinWidth, LeftPaneMaxWidth);
-                using (new EditorGUILayout.VerticalScope(GUILayout.Width(leftWidth)))
+                using (new EditorGUILayout.VerticalScope(GUILayout.Width(leftWidth), GUILayout.ExpandHeight(true)))
                 {
-                    // 書き出すボタンはスクロールさせず、左の列の下に固定する
-                    _scroll = EditorGUILayout.BeginScrollView(_scroll);
+                    _scroll = EditorGUILayout.BeginScrollView(_scroll, GUILayout.ExpandHeight(true));
                     DrawSettings();
                     EditorGUILayout.EndScrollView();
-                    DrawExportButton();
-                    EditorGUILayout.Space();
                 }
 
                 GUILayout.Space(PaneGap);
@@ -216,33 +205,67 @@ namespace VRCast.Converter.Editor
                 EditorGUI.DrawRect(separator, SeparatorColor);
                 GUILayout.Space(PaneGap);
 
-                using (new EditorGUILayout.VerticalScope())
+                using (new EditorGUILayout.VerticalScope(GUILayout.ExpandHeight(true)))
                 {
                     DrawResultPane();
                 }
             }
-        }
 
-        private void DrawWidenHint()
-        {
-            using (new EditorGUILayout.HorizontalScope())
+            // 下の 2 列に使える高さ（プレビューの大きさの目安）。変わったら描き直す
+            if (Event.current.type == EventType.Repaint)
             {
-                EditorGUILayout.LabelField(T(
-                        "Widen this window to show the settings and the preview side by side.",
-                        "ウィンドウを広げると、設定とプレビューが左右に並びます。",
-                        "창을 넓히면 설정과 미리보기가 좌우로 나란히 표시됩니다.",
-                        "加宽窗口后，设置和预览会左右并排显示。", "加寬視窗後，設定和預覽會左右並排顯示。"),
-                    EditorStyles.wordWrappedMiniLabel);
-
-                // ドッキング中は大きさを変えられないため、浮いているウィンドウだけ広げる
-                if (!docked && GUILayout.Button(T("Widen", "広げる", "넓히기", "加宽", "加寬"), GUILayout.Width(80f)))
+                float height = GUILayoutUtility.GetLastRect().height;
+                if (Mathf.Abs(height - _columnsHeight) > 1f)
                 {
-                    Rect rect = position;
-                    position = new Rect(rect.x, rect.y, Mathf.Max(rect.width, DefaultWindowSize.x),
-                        Mathf.Max(rect.height, DefaultWindowSize.y));
-                    GUIUtility.ExitGUI();
+                    _columnsHeight = height;
+                    Repaint();
                 }
             }
+        }
+
+        private void DrawTopBar()
+        {
+            // 書き出し中はアバターを変えられないようにする（進み具合と中断のボタンだけ操作できる）
+            using (new EditorGUI.DisabledScope(_job != null))
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                // シーン上のオブジェクトと Prefab の両方を受け付ける
+                _avatar = (GameObject)EditorGUILayout.ObjectField(
+                    T("Avatar Root", "アバターのルート", "아바타 루트", "虚拟形象根对象", "虛擬形象根物件"),
+                    _avatar, typeof(GameObject), true, GUILayout.Height(TopBarHeight));
+
+                using (new EditorGUI.DisabledScope(AvatarExporter.Validate(_avatar) != null))
+                {
+                    if (GUILayout.Button(T("Export...", "書き出す...", "내보내기...", "导出...", "匯出..."),
+                            GUILayout.Width(TopButtonWidth), GUILayout.Height(TopBarHeight)))
+                    {
+                        ExportWithDialog();
+                        // ダイアログ中にレイアウトが崩れるため、この回の描画は打ち切る（EndLayoutGroup のエラーを防ぐ）
+                        GUIUtility.ExitGUI();
+                    }
+                }
+            }
+
+            // 検証結果を表示し、問題があれば書き出しを無効化（書き出し中は一時フォルダがあるため出さない）
+            string error = _job == null ? AvatarExporter.Validate(_avatar) : null;
+            if (error != null)
+            {
+                EditorGUILayout.HelpBox(error, MessageType.Warning);
+            }
+
+            DrawProgress();
+        }
+
+        private void DrawPlaceholder(string message)
+        {
+            if (_placeholderStyle == null)
+            {
+                _placeholderStyle = new GUIStyle(EditorStyles.wordWrappedLabel) { alignment = TextAnchor.MiddleCenter };
+            }
+
+            Rect area = GUILayoutUtility.GetRect(0f, 0f, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+            EditorGUI.DrawRect(area, PlaceholderColor);
+            GUI.Label(area, message, _placeholderStyle);
         }
 
         private static void DrawResultTitle()
@@ -255,36 +278,30 @@ namespace VRCast.Converter.Editor
         {
             DrawResultTitle();
 
-            // 書き出し中は進み具合と中断のボタン
+            // 書き出し中は上の進み具合を見てもらう
             if (_job != null)
             {
-                DrawProgress();
-                GUILayout.FlexibleSpace();
+                DrawPlaceholder(T("Exporting... See the progress above.", "書き出しています... 進み具合は上に出ています。",
+                    "내보내는 중... 진행 상황은 위에 표시됩니다.", "正在导出... 进度显示在上方。", "正在匯出... 進度顯示在上方。"));
                 return;
             }
 
             // まだ書き出していなければ、ここに何が出るかを案内する
             if (!_result.HasResult)
             {
-                if (_placeholderStyle == null)
-                {
-                    _placeholderStyle = new GUIStyle(EditorStyles.wordWrappedLabel) { alignment = TextAnchor.MiddleCenter };
-                }
-
-                Rect area = GUILayoutUtility.GetRect(0f, 0f, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
-                EditorGUI.DrawRect(area, PlaceholderColor);
-                GUI.Label(area, T(
-                    "After exporting, the exported avatar is previewed here together with the export log.",
-                    "書き出すと、ここに書き出したアバターのプレビューと書き出しの記録が出ます。",
-                    "내보내면 여기에 내보낸 아바타의 미리보기와 내보내기 기록이 나옵니다.",
-                    "导出后，这里会显示导出的虚拟形象预览和导出记录。", "匯出後，這裡會顯示匯出的虛擬形象預覽和匯出記錄。"),
-                    _placeholderStyle);
+                DrawPlaceholder(T(
+                    "No avatar to preview.\nAfter exporting, the exported avatar is previewed here together with the export log.",
+                    "プレビュー対象のアバターがありません。\n書き出すと、ここに書き出したアバターのプレビューと書き出しの記録が出ます。",
+                    "미리볼 아바타가 없습니다.\n내보내면 여기에 내보낸 아바타의 미리보기와 내보내기 기록이 나옵니다.",
+                    "没有可预览的虚拟形象。\n导出后，这里会显示导出的虚拟形象预览和导出记录。",
+                    "沒有可預覽的虛擬形象。\n匯出後，這裡會顯示匯出的虛擬形象預覽和匯出記錄。"));
                 return;
             }
 
+            // 結果・プレビュー・記録をまとめてスクロールする（プレビューは見えている高さの大部分を使う）
+            _resultScroll = EditorGUILayout.BeginScrollView(_resultScroll, GUILayout.ExpandHeight(true));
             _result.DrawStatus();
-            _result.DrawPreview(Repaint, Mathf.Max(MinPreviewHeight, position.height * PreviewHeightRatio));
-            _resultScroll = EditorGUILayout.BeginScrollView(_resultScroll);
+            _result.DrawPreview(Repaint, Mathf.Max(MinPreviewHeight, _columnsHeight * PreviewHeightRatio));
             _result.DrawDetails();
             EditorGUILayout.EndScrollView();
         }
@@ -294,24 +311,6 @@ namespace VRCast.Converter.Editor
             // 書き出し中は設定を変えられないようにする（進み具合と中断のボタンだけ操作できる）
             bool enabled = GUI.enabled;
             GUI.enabled = enabled && _job == null;
-
-            // 表示言語の切り替え（選んだ言語は EditorPrefs に保存し、次回以降も使う）
-            Selected = (Language)EditorGUILayout.Popup(
-                T("Language", "言語", "언어", "语言", "語言"), (int)Selected, LanguageLabels());
-
-            EditorGUILayout.Space();
-
-            // シーン上のオブジェクトと Prefab の両方を受け付ける
-            _avatar = (GameObject)EditorGUILayout.ObjectField(
-                T("Avatar Root", "アバターのルート", "아바타 루트", "虚拟形象根对象", "虛擬形象根物件"),
-                _avatar, typeof(GameObject), true);
-
-            // 検証結果を表示し、問題があれば書き出しを無効化
-            string error = AvatarExporter.Validate(_avatar);
-            if (error != null)
-            {
-                EditorGUILayout.HelpBox(error, MessageType.Warning);
-            }
 
             // 長い説明は折りたたんでおく
             _showAbout = EditorGUILayout.Foldout(_showAbout, T("What is exported", "書き出される内容について",
@@ -330,21 +329,6 @@ namespace VRCast.Converter.Editor
             DrawExtraExpressions();
 
             GUI.enabled = enabled;
-        }
-
-        private void DrawExportButton()
-        {
-            EditorGUILayout.Space();
-            using (new EditorGUI.DisabledScope(_job != null || AvatarExporter.Validate(_avatar) != null))
-            {
-                if (GUILayout.Button(T("Export...", "書き出す...", "내보내기...", "导出...", "匯出..."),
-                        GUILayout.Height(ExportButtonHeight)))
-                {
-                    ExportWithDialog();
-                    // ダイアログ中にレイアウトが崩れるため、この回の描画は打ち切る（EndLayoutGroup のエラーを防ぐ）
-                    GUIUtility.ExitGUI();
-                }
-            }
         }
 
         private static void DrawAbout()
@@ -397,13 +381,23 @@ namespace VRCast.Converter.Editor
                 return;
             }
 
-            EditorGUILayout.Space();
-            Rect bar = GUILayoutUtility.GetRect(0f, EditorGUIUtility.singleLineHeight + 4f, GUILayout.ExpandWidth(true));
-            EditorGUI.ProgressBar(bar, _job.Progress, DescribeStep(_job.Current));
-            if (Event.current.type == EventType.Repaint)
+            using (new EditorGUILayout.HorizontalScope())
             {
-                _stepPainted = true;
+                Rect bar = GUILayoutUtility.GetRect(0f, TopBarHeight, GUILayout.ExpandWidth(true));
+                EditorGUI.ProgressBar(bar, _job.Progress, DescribeStep(_job.Current));
+                if (Event.current.type == EventType.Repaint)
+                {
+                    _stepPainted = true;
+                }
+
+                if (GUILayout.Button(T("Cancel", "中断", "중단", "中止", "中止"),
+                        GUILayout.Width(TopButtonWidth), GUILayout.Height(TopBarHeight)))
+                {
+                    CancelExport();
+                    GUIUtility.ExitGUI();
+                }
             }
+
             if (_job.Current == ExportJob.Step.BuildingBundle)
             {
                 EditorGUILayout.HelpBox(T("Unity shows its own progress window while building the avatar data.",
@@ -411,12 +405,6 @@ namespace VRCast.Converter.Editor
                     "아바타 데이터를 만드는 동안에는 Unity의 진행 화면이 나옵니다.",
                     "生成虚拟形象数据期间会显示 Unity 的进度窗口。", "產生虛擬形象資料期間會顯示 Unity 的進度視窗。"),
                     MessageType.None);
-            }
-
-            if (GUILayout.Button(T("Cancel", "中断", "중단", "中止", "中止")))
-            {
-                CancelExport();
-                GUIUtility.ExitGUI();
             }
         }
 
@@ -855,9 +843,24 @@ namespace VRCast.Converter.Editor
                         EditorStyles.boldLabel);
                     GUILayout.FlexibleSpace();
                 }
+
+                // 表示言語の切り替えは右上に置く（選んだ言語は EditorPrefs に保存し、次回以降も使う）
+                using (new EditorGUILayout.VerticalScope(GUILayout.Height(HeaderIconSize)))
+                {
+                    GUILayout.FlexibleSpace();
+                    using (new EditorGUI.DisabledScope(_job != null))
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        GUILayout.Label(T("Language", "言語", "언어", "语言", "語言"));
+                        Selected = (Language)EditorGUILayout.Popup((int)Selected, LanguageLabels(),
+                            GUILayout.Width(LanguagePopupWidth));
+                    }
+
+                    GUILayout.FlexibleSpace();
+                }
             }
 
-            EditorGUILayout.Space();
+            EditorGUILayout.Space(2f);
         }
 
         private void ExportWithDialog()
