@@ -233,11 +233,16 @@ namespace VRCast.Converter.Editor
                 RenderPreview(rect);
             }
 
-            EditorGUILayout.LabelField(T("Drag to rotate, scroll to zoom. Physics (PhysBones) are not simulated in the preview.",
-                "ドラッグで回転、ホイールで拡大縮小。揺れもの（PhysBone）はプレビューでは動きません。",
-                "드래그로 회전, 휠로 확대·축소. 흔들림(PhysBone)은 미리보기에서 움직이지 않습니다.",
-                "拖动旋转，滚轮缩放。摇晃物（PhysBone）在预览中不会动。", "拖曳旋轉，滾輪縮放。搖晃物（PhysBone）在預覽中不會動。"),
-                EditorStyles.miniLabel);
+            EditorGUILayout.LabelField(T("Drag to rotate, scroll to zoom.", "ドラッグで回転、ホイールで拡大縮小。",
+                "드래그로 회전, 휠로 확대·축소.", "拖动旋转，滚轮缩放。", "拖曳旋轉，滾輪縮放。"), EditorStyles.miniLabel);
+            EditorGUILayout.HelpBox(T(
+                "PhysBones (hair, skirts and other swaying parts) do not move in this preview; they stay in their resting shape. " +
+                "They move in the VRCast app.",
+                "揺れもの（PhysBone：髪・スカートなど）はこのプレビューでは動かず、止まったままの形で表示されます。VRCast のアプリでは動きます。",
+                "흔들림(PhysBone: 머리카락, 치마 등)은 이 미리보기에서 움직이지 않고 멈춘 모양으로 표시됩니다. VRCast 앱에서는 움직입니다.",
+                "摇晃物（PhysBone：头发、裙子等）在此预览中不会动，会以静止的形状显示。在 VRCast 应用中会动。",
+                "搖晃物（PhysBone：頭髮、裙子等）在此預覽中不會動，會以靜止的形狀顯示。在 VRCast 應用程式中會動。"),
+                MessageType.Info);
         }
 
         private void DrawLog()

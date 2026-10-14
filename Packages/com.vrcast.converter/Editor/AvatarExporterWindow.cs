@@ -46,9 +46,9 @@ namespace VRCast.Converter.Editor
         private const float RemoveButtonWidth = 24f;
 
         // この幅以上なら左に設定・右に結果の 2 列にする。左の列の幅（ウィンドウの幅に対する割合と上下限）と列の間隔
-        private const float SplitMinWidth = 760f;
+        private const float SplitMinWidth = 640f;
         private const float LeftPaneRatio = 0.42f;
-        private const float LeftPaneMinWidth = 340f;
+        private const float LeftPaneMinWidth = 300f;
         private const float LeftPaneMaxWidth = 520f;
         private const float PaneGap = 4f;
         private static readonly Color SeparatorColor = new Color(0f, 0f, 0f, 0.3f);
@@ -181,6 +181,7 @@ namespace VRCast.Converter.Editor
             {
                 _scroll = EditorGUILayout.BeginScrollView(_scroll);
                 DrawHeader();
+                DrawWidenHint();
                 DrawSettings();
                 DrawExportButton();
                 DrawProgress();
@@ -218,6 +219,28 @@ namespace VRCast.Converter.Editor
                 using (new EditorGUILayout.VerticalScope())
                 {
                     DrawResultPane();
+                }
+            }
+        }
+
+        private void DrawWidenHint()
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.LabelField(T(
+                        "Widen this window to show the settings and the preview side by side.",
+                        "ウィンドウを広げると、設定とプレビューが左右に並びます。",
+                        "창을 넓히면 설정과 미리보기가 좌우로 나란히 표시됩니다.",
+                        "加宽窗口后，设置和预览会左右并排显示。", "加寬視窗後，設定和預覽會左右並排顯示。"),
+                    EditorStyles.wordWrappedMiniLabel);
+
+                // ドッキング中は大きさを変えられないため、浮いているウィンドウだけ広げる
+                if (!docked && GUILayout.Button(T("Widen", "広げる", "넓히기", "加宽", "加寬"), GUILayout.Width(80f)))
+                {
+                    Rect rect = position;
+                    position = new Rect(rect.x, rect.y, Mathf.Max(rect.width, DefaultWindowSize.x),
+                        Mathf.Max(rect.height, DefaultWindowSize.y));
+                    GUIUtility.ExitGUI();
                 }
             }
         }
