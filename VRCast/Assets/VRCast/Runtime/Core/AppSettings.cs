@@ -94,6 +94,13 @@ namespace VRCast.Core
         public const float MaxCheekWidenPercent = 15f;
         public const float MinCheekWidenSpan = 0.5f;
 
+        // 待機ポーズの腕の向きの微調整（度）: 開き（真下から外側）の既定と範囲、前後（+ = 前）とひねり（+ = 内側）の範囲
+        public const float DefaultPoseArmSpread = 12f;
+        public const float MaxPoseArmSpread = 60f;
+        public const float MinPoseArmForward = -30f;
+        public const float MaxPoseArmForward = 60f;
+        public const float MaxPoseArmTwist = 90f;
+
         // 待機モーション（呼吸・体の揺れ・頭のゆらぎ）の強さの上限と、速さの倍率の範囲
         public const float MaxIdleMotionStrength = 2f;
         public const float MinIdleMotionSpeed = 0.5f;
@@ -208,6 +215,13 @@ namespace VRCast.Core
         // 待機ポーズ（0 = T ポーズのまま、1 = 腕を下ろし切る / 肘を曲げ切る）。既定は気を付け
         public float poseArmDown = 1f;
         public float poseElbowBend = 0f;
+
+        // 下ろした腕の向きの微調整（度）。開きは両腕共通、前後・ひねりは左右別（左右はアバターから見た向き）
+        public float poseArmSpread = DefaultPoseArmSpread;
+        public float poseArmForwardLeft;
+        public float poseArmForwardRight;
+        public float poseArmTwistLeft;
+        public float poseArmTwistRight;
 
         // アバターの向き（度、0 = カメラ正面）
         public float avatarYaw;
@@ -995,6 +1009,12 @@ namespace VRCast.Core
             poseArmDown = Mathf.Clamp01(poseArmDown);
             // 肘の曲げも同様
             poseElbowBend = Mathf.Clamp01(poseElbowBend);
+            // 腕の向きの微調整は範囲内に制限
+            poseArmSpread = Mathf.Clamp(poseArmSpread, 0f, MaxPoseArmSpread);
+            poseArmForwardLeft = Mathf.Clamp(poseArmForwardLeft, MinPoseArmForward, MaxPoseArmForward);
+            poseArmForwardRight = Mathf.Clamp(poseArmForwardRight, MinPoseArmForward, MaxPoseArmForward);
+            poseArmTwistLeft = Mathf.Clamp(poseArmTwistLeft, -MaxPoseArmTwist, MaxPoseArmTwist);
+            poseArmTwistRight = Mathf.Clamp(poseArmTwistRight, -MaxPoseArmTwist, MaxPoseArmTwist);
             // アバターの向きは -180〜180 に正規化
             avatarYaw = Mathf.Repeat(avatarYaw + 180f, 360f) - 180f;
             // 待機モーションの強さは 0〜上限に制限

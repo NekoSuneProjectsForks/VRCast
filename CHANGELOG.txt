@@ -4,6 +4,16 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 2.2.2 (2026-10-15)
+
+[日本語]
+- 待機ポーズに「腕の向きの微調整」を追加（アバターによって片腕・両腕が体やスカートの後ろに隠れてしまうときに、腕の開き・前後・ひねりを調整できます。前後とひねりは左右別で、アバターごとに記憶されます）
+- トラッキングの動きがカメラから遅れて見える問題を改善（すべてのトラッカーの動作で、頭・腕・手・表情が本人の動きに素早く追従するようにしました。「ぬるぬる」は腕も毎フレーム推定し、「エコ」は腕・手の更新回数を増やしました）
+
+[English]
+- Added "Arm direction" to the idle pose (adjust arm spread, forward/back and twist when one or both arms hide behind the body or skirt on some avatars; forward/back and twist are set per arm and remembered for each avatar)
+- Improved tracking lagging behind the camera (in every tracker mode, the head, arms, hands and expressions now follow your movements more quickly; "Fluid" now tracks the arms every frame, and "Eco" updates the arms and hands more often)
+
 ■ 2.2.1 (2026-10-15)
 
 [日本語]

@@ -39,8 +39,8 @@ namespace VRCast.Tracking
 
         // MediaPipe 版のトラッカーの動作ごとの引数（推定回数の上限・体と手の間引き・手が映っていない間に探す頻度）
         private const string SmoothMediaPipeArgument = " --pose-every 2 --hand-search-every 2";
-        private const string EcoMediaPipeArgument = " --max-fps 20 --pose-every 3 --hand-search-every 3";
-        private const string FluidMediaPipeArgument = " --pose-every 2 --hand-search-every 2 --hand-every-frame";
+        private const string EcoMediaPipeArgument = " --max-fps 20 --pose-every 2 --hand-search-every 3";
+        private const string FluidMediaPipeArgument = " --hand-search-every 2";
 
         // 軽量モードの引数（OpenSeeFace: 既定（3）より軽いモデル。MediaPipe 版はトラッカーの動作で決める）
         private const string LowLoadOpenSeeFaceArgument = " --model 2";

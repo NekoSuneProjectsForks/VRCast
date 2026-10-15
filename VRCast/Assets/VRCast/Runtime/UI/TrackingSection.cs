@@ -375,18 +375,18 @@ namespace VRCast.UI
             _settings.trackerMode = TrackerModeOrder[Mathf.Clamp(selected, 0, TrackerModeOrder.Length - 1)];
             GuiControls.Hint(_settings.trackerMode == TrackerMode.Fluid
                 ? Loc.T(
-                    "Fluid: like Smooth, but hands are tracked every frame while visible so fingers move smoothly. Uses more CPU.",
-                    "ぬるぬる: 「なめらか」に加え、手が映っている間は手を毎フレーム推定し、指の動きがなめらかになります。CPU 負荷は上がります。",
-                    "매끄럽게: 「부드럽게」에 더해, 손이 보이는 동안 손을 매 프레임 추정해 손가락이 매끄럽게 움직입니다. CPU 부하가 늘어납니다.",
-                    "丝滑：在“流畅”的基础上，手可见时每帧估计手部，手指动作更顺滑。CPU 负载会增加。",
-                    "絲滑：在「流暢」的基礎上，手可見時每格估計手部，手指動作更順滑。CPU 負載會增加。")
+                    "Fluid: face, arms and hands are all tracked every frame, so arms and fingers follow the camera with the least delay. Uses more CPU.",
+                    "ぬるぬる: 顔・腕・手をすべて毎フレーム推定し、腕や指がカメラに一番遅れずに追従します。CPU 負荷は上がります。",
+                    "매끄럽게: 얼굴·팔·손을 모두 매 프레임 추정해, 팔과 손가락이 카메라를 가장 늦지 않게 따라갑니다. CPU 부하가 늘어납니다.",
+                    "丝滑：每帧估计面部、手臂和手，手臂和手指以最小的延迟跟随摄像头。CPU 负载会增加。",
+                    "絲滑：每格估計臉部、手臂和手，手臂和手指以最小的延遲跟隨攝影機。CPU 負載會增加。")
                 : _settings.trackerMode == TrackerMode.Eco
                 ? Loc.T(
-                    "Eco: up to 20 fps, arms and hands are updated less often. About half the PC load of Smooth.",
-                    "エコ: 最大 20fps。腕・手の更新を減らし、PC 負荷は「なめらか」の半分ほどです。",
-                    "절약: 최대 20fps. 팔·손 갱신을 줄여 PC 부하가 「부드럽게」의 절반 정도입니다.",
-                    "节能：最高 20fps，减少手臂和手的更新，电脑负载约为“流畅”的一半。",
-                    "節能：最高 20fps，減少手臂和手的更新，電腦負載約為「流暢」的一半。")
+                    "Eco: up to 20 fps, arms and hands update every other frame. About 2/3 of the PC load of Smooth.",
+                    "エコ: 最大 20fps。腕・手は 2 フレームに 1 回の更新で、PC 負荷は「なめらか」の 3 分の 2 ほどです。",
+                    "절약: 최대 20fps. 팔·손은 2프레임에 1번 갱신하며, PC 부하는 「부드럽게」의 3분의 2 정도입니다.",
+                    "节能：最高 20fps，手臂和手每 2 帧更新 1 次，电脑负载约为“流畅”的三分之二。",
+                    "節能：最高 20fps，手臂和手每 2 格更新 1 次，電腦負載約為「流暢」的三分之二。")
                 : Loc.T(
                     "Smooth: face and expressions follow at the camera's frame rate (up to 30 fps). Arms and hands update every other frame.",
                     "なめらか: 顔・表情をカメラのフレームレート（最大 30fps）で追従します。腕・手は 2 フレームに 1 回の更新です。",

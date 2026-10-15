@@ -23,8 +23,12 @@ namespace VRCast.Tracking
         // 頭の回転の上限（度、誤検出で首が折れないように）
         private const float MaxHeadAngle = 70f;
 
-        // 頭の向きの追従速度（大きいほど速い、1 秒あたり）
+        // 頭の向き・位置の追従速度（大きいほど速い、1 秒あたり）。目標との差が小さい間は遅め（揺れを抑える）、
+        // 差が角度・位置の基準以上なら速め（振り向き・体の移動で遅れない）
         private const float HeadSmoothing = 20f;
+        private const float HeadFastSmoothing = 50f;
+        private const float HeadFastAngle = 10f;
+        private const float HeadFastOffset = 0.5f;
 
         // 目の開きの値をまばたきへ写す範囲（この値以下で完全に閉じ、以上で完全に開く）
         private const float EyeClosedValue = 0.2f;
@@ -56,6 +60,8 @@ namespace VRCast.Tracking
         // 肩が映った・消えたときに頭の位置による傾きとの間を切り替える秒数
         private const float MaxTorsoYaw = 35f;
         private const float TorsoSmoothing = 8f;
+        private const float TorsoFastSmoothing = 25f;
+        private const float TorsoFastAngle = 10f;
         private const float TorsoFadeSeconds = 0.3f;
 
         // 左右の閉じ具合の差がこれ未満なら平均する（検出のぶれで片目だけ閉じないように）
@@ -65,6 +71,8 @@ namespace VRCast.Tracking
         private const float MaxEyeYaw = 20f;
         private const float MaxEyePitch = 15f;
         private const float EyeSmoothing = 15f;
+        private const float EyeFastSmoothing = 40f;
+        private const float EyeFastAngle = 8f;
 
         // 両目の閉じ具合がこれ以上の間は視線を更新しない（瞳の検出が不安定なため）
         private const float GazeFreezeClosed = 0.5f;
@@ -737,9 +745,14 @@ namespace VRCast.Tracking
             bool usable = IsHeadUsable(received);
             Quaternion target = usable ? CalculateHeadDelta() : Quaternion.identity;
             Vector3 targetOffset = usable ? CalculateHeadOffset() : Vector3.zero;
-            float blend = 1f - Mathf.Exp(-HeadSmoothing * Time.deltaTime);
+            // 見失って正面へ戻るときは急に戻らないよう遅いまま
+            float fast = usable ? HeadFastSmoothing : HeadSmoothing;
+            float blend = TrackingMath.FollowBlend(Quaternion.Angle(_current, target), HeadFastAngle, HeadSmoothing,
+                fast, Time.deltaTime);
+            float offsetBlend = TrackingMath.FollowBlend(Vector3.Distance(_currentOffset, targetOffset), HeadFastOffset,
+                HeadSmoothing, fast, Time.deltaTime);
             _current = Quaternion.Slerp(_current, target, blend);
-            _currentOffset = Vector3.Lerp(_currentOffset, targetOffset, blend);
+            _currentOffset = Vector3.Lerp(_currentOffset, targetOffset, offsetBlend);
             UpdateTorso(usable);
 
             // 無効化・一時停止の後に正面へ戻り切ったらボーンを触らない（待機ポーズ等の変更を妨げない）
@@ -893,7 +906,8 @@ namespace VRCast.Tracking
                 var target = new Vector2(
                     Mathf.Clamp(twist, -MaxTorsoYaw, MaxTorsoYaw),
                     Mathf.Clamp(Mathf.DeltaAngle(_torsoNeutral.y, angles.y), -MaxLeanAngle, MaxLeanAngle));
-                float blend = 1f - Mathf.Exp(-TorsoSmoothing * Time.deltaTime);
+                float blend = TrackingMath.FollowBlend(Vector2.Distance(_torsoAngles, target), TorsoFastAngle,
+                    TorsoSmoothing, TorsoFastSmoothing, Time.deltaTime);
                 _torsoAngles = _torsoWeight > 0f ? Vector2.Lerp(_torsoAngles, target, blend) : target;
             }
 
@@ -945,7 +959,8 @@ namespace VRCast.Tracking
                 _gazeTarget = CalculateGaze();
             }
 
-            float blend = 1f - Mathf.Exp(-EyeSmoothing * Time.deltaTime);
+            float blend = TrackingMath.FollowBlend(Vector2.Distance(_currentGaze, _gazeTarget), EyeFastAngle,
+                EyeSmoothing, EyeFastSmoothing, Time.deltaTime);
             _currentGaze = Vector2.Lerp(_currentGaze, _gazeTarget, blend);
 
             // 無効化後に正面へ戻り切ったらボーンを触らない（カメラ目線の間は動かし続ける）

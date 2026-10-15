@@ -6,16 +6,14 @@ namespace VRCast.Animations
 {
     /// <summary>
     /// Humanoid の待機ポーズ。読込時の姿勢（通常 T ポーズ）を基準に、腕の上下と肘の曲げだけを変える。
-    /// 腕を下ろし切ると気を付けの姿勢（上腕が真下からわずかに外側）になる。
+    /// 腕を下ろし切ると気を付けの姿勢（上腕が真下から開きの角度だけ外側）になる。
+    /// 骨格や衣装によって腕が体・スカートの後ろへ隠れるアバター向けに、下ろした腕の前後・ひねりを左右別に調整できる。
     /// Animator Controller を持たないため、一度設定した姿勢は次の変更まで保持される。
     /// </summary>
     public class PoseController : MonoBehaviour
     {
         // 「肘を曲げ切る」ときの筋肉値（-1〜1）
         private const float ElbowBentMuscle = 0.3f;
-
-        // 腕を下ろし切ったときの真下から外側への角度（腰・太ももへのめり込み防止）
-        private const float ArmSideAngle = 12f;
 
         // 変更対象の筋肉名（HumanTrait.MuscleName と一致させる）
         private static readonly string[] ElbowMuscleNames = { "Left Forearm Stretch", "Right Forearm Stretch" };
@@ -43,6 +41,62 @@ namespace VRCast.Animations
         {
             get => _settings.poseElbowBend;
             set => SetValue(ref _settings.poseElbowBend, value);
+        }
+
+        /// <summary>
+        /// 下ろした腕の開き（真下から外側への角度、度。両腕共通）。
+        /// </summary>
+        public float ArmSpread
+        {
+            get => _settings.poseArmSpread;
+            set => SetValue(ref _settings.poseArmSpread, value, 0f, AppSettings.MaxPoseArmSpread);
+        }
+
+        /// <summary>
+        /// 下ろした左腕・右腕の前後（度、+ = 前。左右はアバターから見た向き）。
+        /// </summary>
+        public float ArmForwardLeft
+        {
+            get => _settings.poseArmForwardLeft;
+            set => SetValue(ref _settings.poseArmForwardLeft, value, AppSettings.MinPoseArmForward,
+                AppSettings.MaxPoseArmForward);
+        }
+
+        public float ArmForwardRight
+        {
+            get => _settings.poseArmForwardRight;
+            set => SetValue(ref _settings.poseArmForwardRight, value, AppSettings.MinPoseArmForward,
+                AppSettings.MaxPoseArmForward);
+        }
+
+        /// <summary>
+        /// 下ろした左腕・右腕のひねり（上腕の軸まわり、度、+ = 内側。曲げた肘から先の向きが変わる）。
+        /// </summary>
+        public float ArmTwistLeft
+        {
+            get => _settings.poseArmTwistLeft;
+            set => SetValue(ref _settings.poseArmTwistLeft, value, -AppSettings.MaxPoseArmTwist,
+                AppSettings.MaxPoseArmTwist);
+        }
+
+        public float ArmTwistRight
+        {
+            get => _settings.poseArmTwistRight;
+            set => SetValue(ref _settings.poseArmTwistRight, value, -AppSettings.MaxPoseArmTwist,
+                AppSettings.MaxPoseArmTwist);
+        }
+
+        /// <summary>
+        /// 腕の向きの微調整を既定（開き 12 度・前後とひねり 0）へ戻す。
+        /// </summary>
+        public void ResetArmAdjust()
+        {
+            _settings.poseArmSpread = AppSettings.DefaultPoseArmSpread;
+            _settings.poseArmForwardLeft = 0f;
+            _settings.poseArmForwardRight = 0f;
+            _settings.poseArmTwistLeft = 0f;
+            _settings.poseArmTwistRight = 0f;
+            Apply();
         }
 
         /// <summary>
@@ -137,10 +191,10 @@ namespace VRCast.Animations
             return indices;
         }
 
-        private void SetValue(ref float field, float value)
+        private void SetValue(ref float field, float value, float min = 0f, float max = 1f)
         {
             // 範囲補正して変化があった場合のみ再適用
-            value = Mathf.Clamp01(value);
+            value = Mathf.Clamp(value, min, max);
             if (Mathf.Approximately(field, value))
             {
                 return;
@@ -178,11 +232,26 @@ namespace VRCast.Animations
             RestoreBone(HumanBodyBones.Hips);
 
             // 腕は筋肉の可動域に縛られないよう上腕ボーンを直接下ろす
-            LowerArm(HumanBodyBones.LeftUpperArm, HumanBodyBones.LeftLowerArm, _settings.poseArmDown);
-            LowerArm(HumanBodyBones.RightUpperArm, HumanBodyBones.RightLowerArm, _settings.poseArmDown);
+            LowerArm(HumanBodyBones.LeftUpperArm, HumanBodyBones.LeftLowerArm, _settings.poseArmDown,
+                _settings.poseArmForwardLeft, -_settings.poseArmTwistLeft);
+            LowerArm(HumanBodyBones.RightUpperArm, HumanBodyBones.RightLowerArm, _settings.poseArmDown,
+                _settings.poseArmForwardRight, _settings.poseArmTwistRight);
         }
 
-        private void LowerArm(HumanBodyBones upperBone, HumanBodyBones lowerBone, float amount)
+        /// <summary>
+        /// 下ろし切った上腕の向き（ワールド）。真下から外側へ spread 度開き、前へ forward 度振る。
+        /// </summary>
+        public static Vector3 LoweredArmDirection(Vector3 up, Vector3 forward, Vector3 outward, float spread,
+            float forwardAngle)
+        {
+            float side = spread * Mathf.Deg2Rad;
+            float front = forwardAngle * Mathf.Deg2Rad;
+            Vector3 sagittal = -up * Mathf.Cos(front) + forward * Mathf.Sin(front);
+            return sagittal * Mathf.Cos(side) + outward * Mathf.Sin(side);
+        }
+
+        private void LowerArm(HumanBodyBones upperBone, HumanBodyBones lowerBone, float amount, float forwardAngle,
+            float twist)
         {
             // ボーン未割り当て・度合い 0 は何もしない
             Transform upper = _bones[(int)upperBone];
@@ -202,11 +271,17 @@ namespace VRCast.Animations
             // 外側はアバターの左右軸のうち上腕が伸びている側
             Vector3 outward = Vector3.Dot(current, transform.right) >= 0f ? transform.right : -transform.right;
 
-            // 真下から外側へ少し開いた向きへ、度合いぶん回す
-            float side = ArmSideAngle * Mathf.Deg2Rad;
-            Vector3 down = -transform.up * Mathf.Cos(side) + outward * Mathf.Sin(side);
+            // 真下から開き・前後の角度だけ傾けた向きへ、度合いぶん回す
+            Vector3 down = LoweredArmDirection(transform.up, transform.forward, outward, _settings.poseArmSpread,
+                forwardAngle);
             Vector3 target = Vector3.Slerp(current.normalized, down, amount);
             upper.rotation = Quaternion.FromToRotation(current, target) * upper.rotation;
+
+            // 上腕の軸まわりにひねる（twist は下向きの軸まわりの角度。右腕は + で、左腕は - で内側へ回る）
+            if (!Mathf.Approximately(twist, 0f))
+            {
+                upper.rotation = Quaternion.AngleAxis(twist * amount, target) * upper.rotation;
+            }
         }
 
         private void LerpMuscles(float[] muscles, int[] indices, float target, float t)

@@ -161,11 +161,12 @@ SAVE_FRAME_QUALITY = 80
 DIGITS = 5
 
 # One Euro フィルターの設定（最小カットオフ Hz、速度への追従係数、速度のカットオフ Hz）。
-# 最小カットオフが低いほど静止時の揺れが消え、追従係数が大きいほど速い動きで遅れにくい
-HEAD_ROTATION_FILTER = (1.5, 0.5, 1.0)  # 行列の回転成分（単位なし）
-HEAD_POSITION_FILTER = (1.0, 0.05, 1.0)  # 行列の平行移動（cm）
-ARM_FILTER = (0.8, 2.0, 1.0)  # 肩・肘・手首（m）
-HAND_FILTER = (1.5, 5.0, 1.0)  # 手の 21 点（手の中心基準の m）
+# 最小カットオフが低いほど静止時の揺れが消え、追従係数が大きいほど速い動きで遅れにくい。
+# VRCast 側でも描画のフレームごとになめらかに寄せるため、ここは静止時の揺れを消す程度にとどめ、動き出しの遅れを優先して抑える
+HEAD_ROTATION_FILTER = (2.0, 2.0, 1.0)  # 行列の回転成分（単位なし）
+HEAD_POSITION_FILTER = (1.5, 0.2, 1.0)  # 行列の平行移動（cm）
+ARM_FILTER = (1.2, 6.0, 1.0)  # 肩・肘・手首（m）
+HAND_FILTER = (2.0, 10.0, 1.0)  # 手の 21 点（手の中心基準の m）
 VISIBILITY_FILTER = (1.0, 0.0, 1.0)  # 可視度（0.5 付近のちらつきを抑える）
 
 # 4x4 行列（行優先）の平行移動成分の位置
@@ -489,17 +490,27 @@ class Smoother:
             "leftHand": OneEuroFilter(HAND_FILTER),
             "rightHand": OneEuroFilter(HAND_FILTER),
         }
+        # 体・手を推定しなかったフレームで送り直す、前回の平滑化済みの値（無ければ None）
+        self._last_arms = None
+        self._last_hands = {"leftHand": None, "rightHand": None}
 
-    def apply(self, packet, now):
-        """送信フィールド（dict）を平滑化して書き換える。"""
+    def apply(self, packet, now, pose_fresh=True, hands_fresh=True):
+        """送信フィールド（dict）を平滑化して書き換える。
+
+        pose_fresh / hands_fresh が False のフィールドは前回の推定結果のままなので、フィルターに通さず
+        前回の平滑化済みの値を送る（同じ値を新しい時刻で入れ直すと速度が 0 に見え、動き出しが遅れる）。
+        """
         self._smooth_head(packet, now)
-        self._smooth_arms(packet, now)
+        self._smooth_arms(packet, now, pose_fresh)
         for key, smoother in self._hands.items():
             # 映っていない手はフィルターを初期化する
             if not packet[key]:
                 smoother.reset()
+                self._last_hands[key] = None
                 continue
-            packet[key] = rounded(smoother.apply(packet[key], now))
+            if hands_fresh or self._last_hands[key] is None:
+                self._last_hands[key] = rounded(smoother.apply(packet[key], now))
+            packet[key] = self._last_hands[key]
 
     def _smooth_head(self, packet, now):
         """頭の行列を回転成分と平行移動成分に分けて平滑化する。"""
@@ -523,23 +534,27 @@ class Smoother:
             matrix[index] = value
         packet["matrix"] = rounded(matrix)
 
-    def _smooth_arms(self, packet, now):
-        """腕の座標と可視度を平滑化する。"""
+    def _smooth_arms(self, packet, now, fresh):
+        """腕の座標と可視度を平滑化する（fresh が False なら前回の値を送る）。"""
         # 体を見失ったら初期化する
         if not packet["pose"]:
             self._arms.reset()
             self._visibility.reset()
             self._head_points.reset()
             self._head_visibility.reset()
+            self._last_arms = None
             return
-        packet["arms"] = rounded(self._arms.apply(packet["arms"], now))
-        packet["visibility"] = rounded(
-            self._visibility.apply(packet["visibility"], now))
-        # 顔の点も同じく平滑化する
-        packet["head"] = rounded(
-            self._head_points.apply(packet["head"], now))
-        packet["headVisibility"] = rounded(
-            self._head_visibility.apply(packet["headVisibility"], now))
+        if fresh or self._last_arms is None:
+            # 顔の点も腕と同じく平滑化する
+            self._last_arms = {
+                "arms": rounded(self._arms.apply(packet["arms"], now)),
+                "visibility": rounded(
+                    self._visibility.apply(packet["visibility"], now)),
+                "head": rounded(self._head_points.apply(packet["head"], now)),
+                "headVisibility": rounded(self._head_visibility.apply(
+                    packet["headVisibility"], now)),
+            }
+        packet.update(self._last_arms)
 
 
 def landmark_box(landmarks):
@@ -1055,10 +1070,15 @@ class Inference:
         self._pose_runs = 0
         self._pose_result = None
         self._hand_result = None
+        # 直前の detect で体・手を推定し直したか（False なら前回の結果を返している）
+        self.pose_fresh = False
+        self.hands_fresh = False
 
     def detect(self, image, timestamp):
         """1 フレームを推定して (顔, 体, 手) の結果を返す（最初のフレームは必ず全部推定する）。"""
         stats = self._stats
+        self.pose_fresh = False
+        self.hands_fresh = False
         started = time.perf_counter()
         face_result = self._face.detect_for_video(image, timestamp)
         stats.face_ms += (time.perf_counter() - started) * 1000.0
@@ -1086,6 +1106,7 @@ class Inference:
         self._pose_result = self._pose.detect_for_video(image, timestamp)
         stats.pose_ms += (time.perf_counter() - started) * 1000.0
         stats.pose_runs += 1
+        self.pose_fresh = True
 
         # 手は映っていれば毎回、映っていなければ N 回に 1 回だけ探す
         if self._hands is not None:
@@ -1101,13 +1122,14 @@ class Inference:
         self._hand_result = self._hands.detect_for_video(image, timestamp)
         stats.hand_ms += (time.perf_counter() - started) * 1000.0
         stats.hand_runs += 1
+        self.hands_fresh = True
 
 
-def build_packet(results, filters, aspect, stats, now):
+def build_packet(results, filters, aspect, stats, now, fresh=(True, True)):
     """推定結果を平滑化して、送信する JSON のバイト列を作る。
 
     results は (顔, 体, 手)、    filters は (FaceGuard, Smoother, CheekWidthMeter, MouthShiftMeter)、
-    aspect は映像の高さ / 幅。
+    aspect は映像の高さ / 幅、fresh は (体を推定し直したか, 手を推定し直したか)。
     """
     face_result, pose_result, hand_result = results
     guard, smoother, cheek, mouth = filters
@@ -1124,8 +1146,9 @@ def build_packet(results, filters, aspect, stats, now):
     packet["mouthShift"] = mouth.measure(
         face_result, guard.covered, aspect, now)
     stats.mouth_shift = max(stats.mouth_shift, abs(packet["mouthShift"]))
-    # 頭・腕・手・可視度の揺れを抑える
-    smoother.apply(packet, now)
+    # 頭・腕・手・可視度の揺れを抑える（手の左右の割り当ては体の結果でも変わるため、体を推定し直したら手も通す）
+    pose_fresh, hands_fresh = fresh
+    smoother.apply(packet, now, pose_fresh, hands_fresh or pose_fresh)
     # 区切りの空白を省いて小さくする
     return json.dumps(packet, separators=(",", ":")).encode("utf-8")
 
@@ -1293,7 +1316,8 @@ def run(arguments):
                 sender.sendto(
                     build_packet((face_result, pose_result, hand_result),
                                  (guard, smoother, cheek, mouth), aspect, stats,
-                                 timestamp / 1000.0),
+                                 timestamp / 1000.0,
+                                 (inference.pose_fresh, inference.hands_fresh)),
                     target)
             except OSError as error:
                 # 受信側が未起動などの送信エラーは続行し、間隔を空けて警告する

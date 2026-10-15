@@ -431,6 +431,33 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void AvatarLook_ArmAdjust_OldRecordUsesDefaultsAndNewIsClamped()
+        {
+            var settings = new AppSettings { poseArmSpread = 30f, poseArmForwardLeft = 20f, poseArmTwistRight = -10f };
+
+            // 腕の向きの記録が無い以前の版の記録は既定（開き 12 度・前後とひねり 0）になること
+            new AvatarLook { avatarBrightness = 1f }.ApplyTo(settings);
+            Assert.That(settings.poseArmSpread, Is.EqualTo(AppSettings.DefaultPoseArmSpread));
+            Assert.That(settings.poseArmForwardLeft, Is.EqualTo(0f));
+            Assert.That(settings.poseArmTwistRight, Is.EqualTo(0f));
+
+            // 記録のある値は左右別に書き戻され、範囲外は補正されること
+            new AvatarLook
+            {
+                avatarBrightness = 1f, hasArmAdjust = true, poseArmSpread = 99f, poseArmForwardLeft = 25f,
+                poseArmForwardRight = -99f, poseArmTwistLeft = 30f, poseArmTwistRight = 999f,
+            }.ApplyTo(settings);
+            Assert.That(settings.poseArmSpread, Is.EqualTo(AppSettings.MaxPoseArmSpread));
+            Assert.That(settings.poseArmForwardLeft, Is.EqualTo(25f));
+            Assert.That(settings.poseArmForwardRight, Is.EqualTo(AppSettings.MinPoseArmForward));
+            Assert.That(settings.poseArmTwistLeft, Is.EqualTo(30f));
+            Assert.That(settings.poseArmTwistRight, Is.EqualTo(AppSettings.MaxPoseArmTwist));
+
+            // 現在の設定から取り出した見た目は腕の向きの記録ありになること
+            Assert.That(AvatarLook.From(settings).hasArmAdjust, Is.True);
+        }
+
+        [Test]
         public void RecentAvatars_ReturnsNewestFirstUpToLimit()
         {
             var settings = new AppSettings();

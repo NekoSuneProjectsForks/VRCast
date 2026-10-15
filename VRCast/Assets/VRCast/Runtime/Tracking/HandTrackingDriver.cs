@@ -15,9 +15,14 @@ namespace VRCast.Tracking
     [DefaultExecutionOrder(-90)]
     public class HandTrackingDriver : MonoBehaviour
     {
-        // 届いた値へ寄る目安の秒数（腕は Pose が 2 フレームに 1 回の更新なので手より長め）
-        private const float ArmSmoothTime = 0.07f;
-        private const float HandSmoothTime = 0.05f;
+        // 届いた値へ寄る目安の秒数。値が変わる間隔 × 割合を下限〜上限に収める
+        // （トラッカーの動作で腕・手の更新間隔が変わるため。毎フレーム届くなら短く、間引いて届くなら段差が見えないよう長く）
+        private const float ArmMinSmoothTime = 0.03f;
+        private const float ArmMaxSmoothTime = 0.1f;
+        private const float HandMinSmoothTime = 0.025f;
+        private const float HandMaxSmoothTime = 0.08f;
+        private const float ArmIntervalShare = 0.8f;
+        private const float HandIntervalShare = 0.7f;
 
         // 映った・消えたときに待機ポーズとの間を切り替える秒数
         private const float FadeSeconds = 0.3f;
@@ -104,8 +109,10 @@ namespace VRCast.Tracking
             public float TrackedLength;
 
             // 届いた値（肩→肘・肩→手首・顔→手首、手の 21 点）へ描画の毎フレームなめらかに寄せる
-            public readonly PointSmoother ArmPath = new PointSmoother(ArmSampleCount, ArmSmoothTime);
-            public readonly PointSmoother HandPath = new PointSmoother(MediaPipePacket.HandPointCount, HandSmoothTime);
+            public readonly PointSmoother ArmPath = new PointSmoother(ArmSampleCount, ArmMinSmoothTime, ArmMaxSmoothTime,
+                ArmIntervalShare);
+            public readonly PointSmoother HandPath = new PointSmoother(MediaPipePacket.HandPointCount, HandMinSmoothTime,
+                HandMaxSmoothTime, HandIntervalShare);
 
             // 届いた値をアバタールート基準へ直す作業領域（毎回の確保を避ける。顔→手首は顔が映らない間は前の値のまま）
             public readonly Vector3[] ArmSample = new Vector3[ArmSampleCount];

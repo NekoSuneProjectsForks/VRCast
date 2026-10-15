@@ -111,7 +111,46 @@ namespace VRCast.UI
             // 腕と肘の度合い
             _pose.ArmDown = GuiControls.Slider(Loc.T("Arms down", "腕を下ろす", "팔 내리기", "放下手臂", "放下手臂"), _pose.ArmDown, 0f, 1f);
             _pose.ElbowBend = GuiControls.Slider(Loc.T("Elbow bend", "肘の曲げ", "팔꿈치 굽힘", "肘部弯曲", "肘部彎曲"), _pose.ElbowBend, 0f, 1f);
+            DrawArmAdjust();
             GuiControls.EndCard();
+        }
+
+        private void DrawArmAdjust()
+        {
+            GuiControls.SubHeading(Loc.T("Arm direction", "腕の向きの微調整", "팔 방향 미세 조정", "手臂方向微调", "手臂方向微調"));
+            GuiControls.Hint(Loc.T(
+                "If an arm hides behind the body or skirt, move it forward. Left and right are as seen from the avatar " +
+                "(the left arm is on the right side of the screen when facing the camera). Twist changes where the bent " +
+                "forearm points (+ = inward).",
+                "腕が体やスカートの後ろに隠れるときは、前後を + にして前へ出してください。左右はアバターから見た向きです" +
+                "（正面から見ると左腕は画面の右側）。ひねりは曲げた肘から先の向きが変わります（+ = 内側）。",
+                "팔이 몸이나 치마 뒤에 숨으면 앞뒤를 + 로 해서 앞으로 내미세요. 좌우는 아바타 기준입니다" +
+                "(정면에서 보면 왼팔은 화면 오른쪽). 비틀기는 굽힌 팔꿈치 아래의 방향이 바뀝니다(+ = 안쪽).",
+                "手臂藏到身体或裙子后面时，请把前后调为 + 往前移。左右以虚拟形象自身为准" +
+                "（从正面看左臂在画面右侧）。扭转会改变弯曲后前臂的朝向（+ = 向内）。",
+                "手臂藏到身體或裙子後面時，請把前後調為 + 往前移。左右以虛擬形象自身為準" +
+                "（從正面看左臂在畫面右側）。扭轉會改變彎曲後前臂的朝向（+ = 向內）。"));
+
+            _pose.ArmSpread = GuiControls.Slider(Loc.T("Arm spread", "腕の開き", "팔 벌리기", "手臂张开", "手臂張開"),
+                _pose.ArmSpread, 0f, AppSettings.MaxPoseArmSpread, "F0");
+            _pose.ArmForwardLeft = GuiControls.Slider(
+                Loc.T("Left arm forward", "左腕の前後", "왼팔 앞뒤", "左臂前后", "左臂前後"),
+                _pose.ArmForwardLeft, AppSettings.MinPoseArmForward, AppSettings.MaxPoseArmForward, "F0");
+            _pose.ArmForwardRight = GuiControls.Slider(
+                Loc.T("Right arm forward", "右腕の前後", "오른팔 앞뒤", "右臂前后", "右臂前後"),
+                _pose.ArmForwardRight, AppSettings.MinPoseArmForward, AppSettings.MaxPoseArmForward, "F0");
+            _pose.ArmTwistLeft = GuiControls.Slider(
+                Loc.T("Left arm twist", "左腕のひねり", "왼팔 비틀기", "左臂扭转", "左臂扭轉"),
+                _pose.ArmTwistLeft, -AppSettings.MaxPoseArmTwist, AppSettings.MaxPoseArmTwist, "F0");
+            _pose.ArmTwistRight = GuiControls.Slider(
+                Loc.T("Right arm twist", "右腕のひねり", "오른팔 비틀기", "右臂扭转", "右臂扭轉"),
+                _pose.ArmTwistRight, -AppSettings.MaxPoseArmTwist, AppSettings.MaxPoseArmTwist, "F0");
+
+            if (GUILayout.Button(Loc.T("Reset arm direction", "腕の向きを元に戻す", "팔 방향 초기화", "重置手臂方向",
+                    "重設手臂方向"), GuiControls.Shrinkable))
+            {
+                _pose.ResetArmAdjust();
+            }
         }
 
         private void DrawIdleMotion()

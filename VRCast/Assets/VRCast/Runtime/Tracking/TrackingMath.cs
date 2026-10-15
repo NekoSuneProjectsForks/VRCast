@@ -25,6 +25,17 @@ namespace VRCast.Tracking
         }
 
         /// <summary>
+        /// 目標へ寄せる 1 フレームの割合（0〜1）。目標との差 error が小さい間は slowRate（1 秒あたり）で細かい揺れを抑え、
+        /// fullError 以上なら fastRate で追う（速く動いたときに遅れない）。
+        /// </summary>
+        public static float FollowBlend(float error, float fullError, float slowRate, float fastRate, float deltaTime)
+        {
+            float t = fullError > 0f ? Mathf.Clamp01(error / fullError) : 1f;
+            float rate = Mathf.Lerp(slowRate, fastRate, t);
+            return 1f - Mathf.Exp(-rate * Mathf.Max(0f, deltaTime));
+        }
+
+        /// <summary>
         /// カメラ基準のベクトルをアバタールート基準へ変換する。
         /// 通常はカメラの方を向いたアバター（180° 回転）、鏡像は左右反転のみ。
         /// </summary>

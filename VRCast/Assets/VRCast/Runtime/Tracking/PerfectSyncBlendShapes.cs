@@ -20,8 +20,11 @@ namespace VRCast.Tracking
         /// </summary>
         public const int MinMatchedShapes = 20;
 
-        // 値の追従速度（大きいほど速い、1 秒あたり。検出の細かな揺れで顔が震えないように）
+        // 値の追従速度（大きいほど速い、1 秒あたり。検出の細かな揺れで顔が震えないように）。
+        // 目標との差が FastDifference 以上なら速め（口を開ける・まばたきなどの大きな動きで遅れない）
         private const float Smoothing = 30f;
+        private const float FastSmoothing = 60f;
+        private const float FastDifference = 0.3f;
 
         // ARKit 名（正規化済み）→ BlendShapeNames 内の位置
         private static readonly Dictionary<string, int> NameToIndex = BuildNameTable();
@@ -259,7 +262,6 @@ namespace VRCast.Tracking
             }
 
             _active = true;
-            float blend = 1f - Mathf.Exp(-Smoothing * deltaTime);
 
             // まばたきは閉じ切るよう範囲を広げた閉じ具合にしてから、左右を一緒に補正する
             float blinkLeft = range.BlinkToClosed(Mathf.Clamp01(scores[SourceIndex(EyeBlinkLeft, mirror)]));
@@ -288,6 +290,8 @@ namespace VRCast.Tracking
                     : i == JawOpen ? jaw.Apply(Mathf.Clamp01(scores[SourceIndex(i, mirror)]))
                     : boost.Apply(i, Mathf.Clamp01(scores[SourceIndex(i, mirror)]));
 
+                float blend = TrackingMath.FollowBlend(Mathf.Abs(target - _current[i]), FastDifference, Smoothing,
+                    FastSmoothing, deltaTime);
                 _current[i] = Mathf.Lerp(_current[i], target, blend);
                 Collect(i, _current[i] * 100f);
             }

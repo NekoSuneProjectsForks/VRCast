@@ -22,8 +22,11 @@ namespace VRCast.Tracking
         // 受信の開始・途絶で、他の処理が作った姿勢との間を切り替える秒数
         private const float FadeSeconds = 0.3f;
 
-        // 届いた姿勢へ寄る速さ（1 秒あたり。送信と描画のフレームレートの違いによるカクつきを抑える程度）
+        // 届いた姿勢へ寄る速さ（1 秒あたり。送信と描画のフレームレートの違いによるカクつきを抑える程度）。
+        // ボーンの向きは目標との差が FastAngle 以上なら速め（速い動きで遅れない）
         private const float Smoothing = 30f;
+        private const float FastSmoothing = 60f;
+        private const float FastAngle = 10f;
 
         // 送信側とアバターの脚の長さの比（体全体の移動量の倍率）の範囲と、比を求めるのに使う送信側の脚の長さの下限（m）
         private const float MinMoveScale = 0.25f;
@@ -433,10 +436,20 @@ namespace VRCast.Tracking
             float blend = _hasSmoothed ? 1f - Mathf.Exp(-Smoothing * Time.deltaTime) : 1f;
             foreach (int bone in _order)
             {
-                if (_drive[bone])
+                if (!_drive[bone])
                 {
-                    _smoothed[bone] = _hasSmoothed ? Quaternion.Slerp(_smoothed[bone], _target[bone], blend) : _target[bone];
+                    continue;
                 }
+
+                if (!_hasSmoothed)
+                {
+                    _smoothed[bone] = _target[bone];
+                    continue;
+                }
+
+                float boneBlend = TrackingMath.FollowBlend(Quaternion.Angle(_smoothed[bone], _target[bone]), FastAngle,
+                    Smoothing, FastSmoothing, Time.deltaTime);
+                _smoothed[bone] = Quaternion.Slerp(_smoothed[bone], _target[bone], boneBlend);
             }
 
             _smoothedHips = Vector3.Lerp(_smoothedHips, _targetHips, blend);

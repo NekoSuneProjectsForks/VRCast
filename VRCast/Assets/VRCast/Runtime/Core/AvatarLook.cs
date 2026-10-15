@@ -23,6 +23,14 @@ namespace VRCast.Core
         public bool hasOutlineWidth;
         public float outlineWidth;
 
+        // 腕の向きの微調整。以前の版の記録には無いため、hasArmAdjust が false なら既定（開き 12 度・前後とひねり 0）として扱う
+        public bool hasArmAdjust;
+        public float poseArmSpread;
+        public float poseArmForwardLeft;
+        public float poseArmForwardRight;
+        public float poseArmTwistLeft;
+        public float poseArmTwistRight;
+
         /// <summary>
         /// 現在の設定から取り出す。
         /// </summary>
@@ -41,6 +49,12 @@ namespace VRCast.Core
                 avatarYaw = settings.avatarYaw,
                 hasOutlineWidth = true,
                 outlineWidth = settings.outlineWidth,
+                hasArmAdjust = true,
+                poseArmSpread = settings.poseArmSpread,
+                poseArmForwardLeft = settings.poseArmForwardLeft,
+                poseArmForwardRight = settings.poseArmForwardRight,
+                poseArmTwistLeft = settings.poseArmTwistLeft,
+                poseArmTwistRight = settings.poseArmTwistRight,
             };
         }
 
@@ -60,6 +74,12 @@ namespace VRCast.Core
             settings.avatarYaw = avatarYaw;
             // 記録の無い以前の版の見た目はマテリアルのままの太さにする
             settings.outlineWidth = hasOutlineWidth ? outlineWidth : 1f;
+            // 記録の無い以前の版の腕の向きは既定にする
+            settings.poseArmSpread = hasArmAdjust ? poseArmSpread : AppSettings.DefaultPoseArmSpread;
+            settings.poseArmForwardLeft = hasArmAdjust ? poseArmForwardLeft : 0f;
+            settings.poseArmForwardRight = hasArmAdjust ? poseArmForwardRight : 0f;
+            settings.poseArmTwistLeft = hasArmAdjust ? poseArmTwistLeft : 0f;
+            settings.poseArmTwistRight = hasArmAdjust ? poseArmTwistRight : 0f;
             settings.Sanitize();
         }
 
@@ -69,7 +89,8 @@ namespace VRCast.Core
         public bool IsFinite => IsFiniteValue(lightIntensity) && IsFiniteValue(lightYaw) && IsFiniteValue(lightPitch)
             && IsFiniteValue(lightTemperature) && IsFiniteValue(ambientIntensity) && IsFiniteValue(avatarBrightness)
             && IsFiniteValue(poseArmDown) && IsFiniteValue(poseElbowBend) && IsFiniteValue(avatarYaw)
-            && IsFiniteValue(outlineWidth);
+            && IsFiniteValue(outlineWidth) && IsFiniteValue(poseArmSpread) && IsFiniteValue(poseArmForwardLeft)
+            && IsFiniteValue(poseArmForwardRight) && IsFiniteValue(poseArmTwistLeft) && IsFiniteValue(poseArmTwistRight);
 
         /// <summary>
         /// 全要素が同じなら true（変化したときだけ記録するための比較）。
@@ -81,7 +102,10 @@ namespace VRCast.Core
                 && ambientIntensity == other.ambientIntensity && avatarBrightness == other.avatarBrightness
                 && poseArmDown == other.poseArmDown && poseElbowBend == other.poseElbowBend
                 && avatarYaw == other.avatarYaw && hasOutlineWidth == other.hasOutlineWidth
-                && outlineWidth == other.outlineWidth;
+                && outlineWidth == other.outlineWidth && hasArmAdjust == other.hasArmAdjust
+                && poseArmSpread == other.poseArmSpread && poseArmForwardLeft == other.poseArmForwardLeft
+                && poseArmForwardRight == other.poseArmForwardRight && poseArmTwistLeft == other.poseArmTwistLeft
+                && poseArmTwistRight == other.poseArmTwistRight;
         }
 
         private static bool IsFiniteValue(float value)
