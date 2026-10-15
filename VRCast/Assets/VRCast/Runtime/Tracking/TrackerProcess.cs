@@ -34,6 +34,9 @@ namespace VRCast.Tracking
         // MediaPipe 版で手の推定を止める引数（腕・手を使わないときの CPU 負荷軽減）
         private const string NoHandsArgument = " --no-hands";
 
+        // MediaPipe 版へ動きのなめらかさ（MotionSmoothing の番号）を渡す引数。最低なら渡さない
+        private const string SmoothingArgument = " --smoothing ";
+
         // MediaPipe 版に親プロセス（VRCast）の PID を渡す引数（親の終了を検出して自分も終了する）
         private const string ParentPidArgument = " --parent-pid ";
 
@@ -99,6 +102,7 @@ namespace VRCast.Tracking
         private bool _startedHands;
         private bool _startedLowLoad;
         private TrackerMode _startedMode;
+        private MotionSmoothing _startedSmoothing;
         private ProcessPriority _appliedPriority;
         private ulong _appliedCoreMask;
         private float _nextStartTime;
@@ -387,11 +391,13 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 受信ポート・カメラ・入力元・（MediaPipe の）手の有無・動作・（OpenSeeFace の）軽量モードが変わったら起動し直す
+            // 受信ポート・カメラ・入力元・（MediaPipe の）手の有無・動作・なめらかさ・（OpenSeeFace の）軽量モードが変わったら起動し直す
             bool mediaPipe = _startedSource == TrackingSource.MediaPipe;
             bool changed = _startedPort != _settings.trackingPort || _startedCamera != _settings.trackerCamera
                 || _startedSource != BundledSource || _startedHands != UsesHands()
-                || (mediaPipe ? _startedMode != _settings.trackerMode : _startedLowLoad != _settings.lowLoadMode);
+                || (mediaPipe
+                    ? _startedMode != _settings.trackerMode || _startedSmoothing != _settings.trackingSmoothing
+                    : _startedLowLoad != _settings.lowLoadMode);
             if (changed)
             {
                 VRCastLog.Info(LogCategory, "Tracking settings changed; restarting tracker");
@@ -445,6 +451,14 @@ namespace VRCast.Tracking
                 default:
                     return SmoothMediaPipeArgument;
             }
+        }
+
+        /// <summary>
+        /// MediaPipe 版へ渡す、動きのなめらかさの引数（最低なら空。トラッカー側の既定と同じため）。
+        /// </summary>
+        public static string MediaPipeSmoothingArgument(MotionSmoothing smoothing)
+        {
+            return smoothing == MotionSmoothing.Lowest ? string.Empty : SmoothingArgument + (int)smoothing;
         }
 
         /// <summary>
@@ -546,6 +560,7 @@ namespace VRCast.Tracking
                 _startedHands = UsesHands();
                 _startedLowLoad = _settings.lowLoadMode;
                 _startedMode = _settings.trackerMode;
+                _startedSmoothing = _settings.trackingSmoothing;
                 bool mediaPipe = _startedSource == TrackingSource.MediaPipe;
                 string arguments = $"-c {camera} -i 127.0.0.1 -p {_startedPort}";
                 if (mediaPipe && !_startedHands)
@@ -557,6 +572,7 @@ namespace VRCast.Tracking
                 if (mediaPipe)
                 {
                     arguments += MediaPipeModeArgument(_startedMode);
+                    arguments += MediaPipeSmoothingArgument(_startedSmoothing);
                 }
                 else if (_startedLowLoad)
                 {

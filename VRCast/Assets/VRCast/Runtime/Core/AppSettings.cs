@@ -300,6 +300,9 @@ namespace VRCast.Core
         // まばたきの左右をそろえる（ウインクにしない。横を向いたときだけも選べる）
         public BlinkSyncMode trackingBlinkSync = BlinkSyncMode.None;
 
+        // 動きのなめらかさ（高いほど頭・腕・手・表情の揺れや段差を強く抑え、カメラより遅れる。既定は最低 = カメラへの追従を優先）
+        public MotionSmoothing trackingSmoothing = MotionSmoothing.Lowest;
+
         // 腕・手（指）のトラッキング（MediaPipe のみ）
         public bool trackingHands = true;
 
@@ -979,6 +982,12 @@ namespace VRCast.Core
             if (!Enum.IsDefined(typeof(TrackerMode), trackerMode))
             {
                 trackerMode = TrackerMode.Fluid;
+            }
+
+            // 未知のなめらかさは既定（最低）へ
+            if (!Enum.IsDefined(typeof(MotionSmoothing), trackingSmoothing))
+            {
+                trackingSmoothing = MotionSmoothing.Lowest;
             }
 
             // 未知の GPU の優先設定は Windows に任せる

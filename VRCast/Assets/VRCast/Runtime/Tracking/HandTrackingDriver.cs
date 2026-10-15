@@ -355,6 +355,9 @@ namespace VRCast.Tracking
             }
 
             float fade = Time.deltaTime / FadeSeconds;
+            // 動きのなめらかさが高いほど寄る秒数を長くする（揺れ・段差を抑える代わりに遅れる）
+            rig.ArmPath.SmoothTimeFloor = MotionSmoothingLevels.ArmSmoothTimeFloor(_settings.trackingSmoothing);
+            rig.HandPath.SmoothTimeFloor = MotionSmoothingLevels.HandSmoothTimeFloor(_settings.trackingSmoothing);
 
             // 腕: 新しい値が届いたら目標にし、毎フレームなめらかに寄せた位置を使う（映り始めは寄せずに合わせる）
             bool hasArm = received && data.HasArm;

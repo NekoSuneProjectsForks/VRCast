@@ -334,6 +334,8 @@ namespace VRCast.UI
                     "臉部來自 iPhone，手臂和手來自網路攝影機（MediaPipe）。iPhone 沒有資料時改用網路攝影機的臉部。"));
             }
 
+            DrawSmoothing();
+
             // トラッカーの動作は同梱の MediaPipe 版（併用を含む）のみ
             if (TrackingSourceInfo.BundledTrackerOf(_settings.trackingSource) == TrackingSource.MediaPipe)
             {
@@ -358,6 +360,36 @@ namespace VRCast.UI
                 DrawPerfectSync();
                 DrawExpressions();
             }
+        }
+
+        private void DrawSmoothing()
+        {
+            // 低い順（MotionSmoothing の数値の順）。変更すると MediaPipe 版はトラッカーを起動し直す（揺れを抑えるフィルターの強さが変わる）
+            string[] labels =
+            {
+                Loc.T("Lowest", "最低", "최저", "最低", "最低"),
+                Loc.T("Low", "低", "낮음", "低", "低"),
+                Loc.T("Medium", "中", "보통", "中", "中"),
+                Loc.T("High", "高", "높음", "高", "高"),
+                Loc.T("Highest", "最高", "최고", "最高", "最高"),
+            };
+            int selected = GuiControls.EnumSelector(
+                Loc.T("Motion smoothing", "動きのなめらかさ", "움직임 부드러움", "动作顺滑度", "動作順滑度"),
+                labels, (int)_settings.trackingSmoothing);
+            _settings.trackingSmoothing = (MotionSmoothing)Mathf.Clamp(selected, 0, labels.Length - 1);
+            GuiControls.Hint(_settings.trackingSmoothing == MotionSmoothing.Lowest
+                ? Loc.T(
+                    "Lowest: the avatar follows the camera with the least delay. Raise it if the motion looks shaky.",
+                    "最低: カメラに一番遅れずに追従します。動きが震えて見えるときは上げてください。",
+                    "최저: 카메라를 가장 늦지 않게 따라갑니다. 움직임이 떨려 보이면 올리세요.",
+                    "最低：以最小的延迟跟随摄像头。动作看起来抖动时请调高。",
+                    "最低：以最小的延遲跟隨攝影機。動作看起來抖動時請調高。")
+                : Loc.T(
+                    "Higher settings smooth out shaking and steps in the head, arms, hands and expressions for more fluid motion, but movements lag further behind the camera.",
+                    "高いほど頭・腕・手・表情の揺れや段差を抑えてぬるぬる動きますが、そのぶん動きがカメラより遅れます。",
+                    "높을수록 머리·팔·손·표정의 흔들림과 끊김을 억제해 부드럽게 움직이지만, 그만큼 카메라보다 늦어집니다.",
+                    "越高越能抑制头部、手臂、手和表情的抖动与卡顿，动作更顺滑，但会比摄像头延迟更多。",
+                    "越高越能抑制頭部、手臂、手和表情的抖動與卡頓，動作更順滑，但會比攝影機延遲更多。"));
         }
 
         private void DrawTrackerMode()

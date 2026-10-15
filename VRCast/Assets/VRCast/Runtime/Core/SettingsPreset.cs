@@ -172,6 +172,7 @@ namespace VRCast.Core
                 nameof(AppSettings.trackingSwapFaceSides), nameof(AppSettings.trackingBodyLean),
                 nameof(AppSettings.trackingBodyMotion), nameof(AppSettings.trackingGaze), nameof(AppSettings.trackingBlink),
                 nameof(AppSettings.trackingEyeOpenOffset), nameof(AppSettings.trackingBlinkSync),
+                nameof(AppSettings.trackingSmoothing),
                 nameof(AppSettings.trackingHands), nameof(AppSettings.trackingArmMatchAvatar), nameof(AppSettings.trackingTorso),
                 nameof(AppSettings.trackingTorsoLockTwist), nameof(AppSettings.trackingLookAtCamera),
                 nameof(AppSettings.trackingVmcBody), nameof(AppSettings.trackingVmcGroundFeet),

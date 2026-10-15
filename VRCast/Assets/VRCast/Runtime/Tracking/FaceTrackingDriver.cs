@@ -696,6 +696,7 @@ namespace VRCast.Tracking
             // 動作中は毎フレーム書き、使わない間は元の値へ戻す（一度だけ）
             if (IsPerfectSyncActive)
             {
+                _perfectSync.Smoothing = _settings.trackingSmoothing;
                 _perfectSync.Apply(_lastFrame.BlendShapes, _lastFrame.BlendShapeRange, _settings.FaceMirror,
                     Time.deltaTime, _settings.trackingBlink, CurrentEyeAdjustment(), CurrentBoost(),
                     CurrentJawOpenAdjustment);
@@ -745,12 +746,14 @@ namespace VRCast.Tracking
             bool usable = IsHeadUsable(received);
             Quaternion target = usable ? CalculateHeadDelta() : Quaternion.identity;
             Vector3 targetOffset = usable ? CalculateHeadOffset() : Vector3.zero;
-            // 見失って正面へ戻るときは急に戻らないよう遅いまま
-            float fast = usable ? HeadFastSmoothing : HeadSmoothing;
-            float blend = TrackingMath.FollowBlend(Quaternion.Angle(_current, target), HeadFastAngle, HeadSmoothing,
-                fast, Time.deltaTime);
+            // 速さは動きのなめらかさに合わせる。見失って正面へ戻るときは急に戻らないよう遅いまま
+            MotionSmoothingLevels.Rates(_settings.trackingSmoothing, HeadSmoothing, HeadFastSmoothing,
+                out float slow, out float fast);
+            fast = usable ? fast : slow;
+            float blend = TrackingMath.FollowBlend(Quaternion.Angle(_current, target), HeadFastAngle, slow, fast,
+                Time.deltaTime);
             float offsetBlend = TrackingMath.FollowBlend(Vector3.Distance(_currentOffset, targetOffset), HeadFastOffset,
-                HeadSmoothing, fast, Time.deltaTime);
+                slow, fast, Time.deltaTime);
             _current = Quaternion.Slerp(_current, target, blend);
             _currentOffset = Vector3.Lerp(_currentOffset, targetOffset, offsetBlend);
             UpdateTorso(usable);
@@ -906,8 +909,9 @@ namespace VRCast.Tracking
                 var target = new Vector2(
                     Mathf.Clamp(twist, -MaxTorsoYaw, MaxTorsoYaw),
                     Mathf.Clamp(Mathf.DeltaAngle(_torsoNeutral.y, angles.y), -MaxLeanAngle, MaxLeanAngle));
-                float blend = TrackingMath.FollowBlend(Vector2.Distance(_torsoAngles, target), TorsoFastAngle,
-                    TorsoSmoothing, TorsoFastSmoothing, Time.deltaTime);
+                float blend = MotionSmoothingLevels.FollowBlend(_settings.trackingSmoothing,
+                    Vector2.Distance(_torsoAngles, target), TorsoFastAngle, TorsoSmoothing, TorsoFastSmoothing,
+                    Time.deltaTime);
                 _torsoAngles = _torsoWeight > 0f ? Vector2.Lerp(_torsoAngles, target, blend) : target;
             }
 
@@ -959,8 +963,8 @@ namespace VRCast.Tracking
                 _gazeTarget = CalculateGaze();
             }
 
-            float blend = TrackingMath.FollowBlend(Vector2.Distance(_currentGaze, _gazeTarget), EyeFastAngle,
-                EyeSmoothing, EyeFastSmoothing, Time.deltaTime);
+            float blend = MotionSmoothingLevels.FollowBlend(_settings.trackingSmoothing,
+                Vector2.Distance(_currentGaze, _gazeTarget), EyeFastAngle, EyeSmoothing, EyeFastSmoothing, Time.deltaTime);
             _currentGaze = Vector2.Lerp(_currentGaze, _gazeTarget, blend);
 
             // 無効化後に正面へ戻り切ったらボーンを触らない（カメラ目線の間は動かし続ける）

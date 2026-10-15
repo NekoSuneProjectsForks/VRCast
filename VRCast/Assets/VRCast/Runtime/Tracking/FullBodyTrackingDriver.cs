@@ -433,7 +433,8 @@ namespace VRCast.Tracking
         private void Smooth()
         {
             // 受信し始めは寄せずに合わせ、以降は毎フレームなめらかに寄せる
-            float blend = _hasSmoothed ? 1f - Mathf.Exp(-Smoothing * Time.deltaTime) : 1f;
+            MotionSmoothingLevels.Rates(_settings.trackingSmoothing, Smoothing, Smoothing, out float slow, out _);
+            float blend = _hasSmoothed ? 1f - Mathf.Exp(-slow * Time.deltaTime) : 1f;
             foreach (int bone in _order)
             {
                 if (!_drive[bone])
@@ -447,8 +448,8 @@ namespace VRCast.Tracking
                     continue;
                 }
 
-                float boneBlend = TrackingMath.FollowBlend(Quaternion.Angle(_smoothed[bone], _target[bone]), FastAngle,
-                    Smoothing, FastSmoothing, Time.deltaTime);
+                float boneBlend = MotionSmoothingLevels.FollowBlend(_settings.trackingSmoothing,
+                    Quaternion.Angle(_smoothed[bone], _target[bone]), FastAngle, Smoothing, FastSmoothing, Time.deltaTime);
                 _smoothed[bone] = Quaternion.Slerp(_smoothed[bone], _target[bone], boneBlend);
             }
 

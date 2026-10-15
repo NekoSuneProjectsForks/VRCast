@@ -61,11 +61,16 @@ namespace VRCast.Tracking
         public bool HasValue { get; private set; }
 
         /// <summary>
+        /// 寄る秒数をこれより短くしない（動きのなめらかさの設定。0 なら制限しない）。
+        /// </summary>
+        public float SmoothTimeFloor { get; set; }
+
+        /// <summary>
         /// 今の寄る秒数。
         /// </summary>
-        public float SmoothTime => _intervalShare > 0f && _interval > 0f
+        public float SmoothTime => Mathf.Max(SmoothTimeFloor, _intervalShare > 0f && _interval > 0f
             ? Mathf.Clamp(_interval * _intervalShare, _minSmoothTime, _maxSmoothTime)
-            : _maxSmoothTime;
+            : _maxSmoothTime);
 
         /// <summary>
         /// 新しく届いた値を目標にする（最初の値はそのまま表示位置にする）。now は秒。

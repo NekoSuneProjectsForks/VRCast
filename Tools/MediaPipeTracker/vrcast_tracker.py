@@ -30,6 +30,7 @@ VRCast から同じ手順で起動・カメラ一覧取得ができる。
 
 頭の行列・腕・手・可視度は One Euro フィルターで平滑化してから送る
 （止まっているときの細かい揺れを消し、速い動きでは遅れを抑える。CPU 負荷はほぼ無い）。
+--smoothing 1〜4 で揺れを抑える強さを上げられる（高いほど動きは遅れる。既定 0 は遅れを最小にする）。
 
 負荷を抑える仕組み（VRCast のトラッカーの動作「ぬるぬる」「なめらか」「エコ」で値を変える）:
     --max-fps            推定の回数を毎秒その回数までに間引く
@@ -163,10 +164,16 @@ DIGITS = 5
 # One Euro フィルターの設定（最小カットオフ Hz、速度への追従係数、速度のカットオフ Hz）。
 # 最小カットオフが低いほど静止時の揺れが消え、追従係数が大きいほど速い動きで遅れにくい。
 # VRCast 側でも描画のフレームごとになめらかに寄せるため、ここは静止時の揺れを消す程度にとどめ、動き出しの遅れを優先して抑える
-HEAD_ROTATION_FILTER = (2.0, 2.0, 1.0)  # 行列の回転成分（単位なし）
-HEAD_POSITION_FILTER = (1.5, 0.2, 1.0)  # 行列の平行移動（cm）
-ARM_FILTER = (1.2, 6.0, 1.0)  # 肩・肘・手首（m）
-HAND_FILTER = (2.0, 10.0, 1.0)  # 手の 21 点（手の中心基準の m）
+# --smoothing（VRCast の「動きのなめらかさ」。0 = 最低 〜 4 = 最高、VRCast 側 MotionSmoothing の番号）ごとに
+# (行列の回転成分（単位なし）, 行列の平行移動（cm）, 肩・肘・手首（m）, 手の 21 点（手の中心基準の m）) を並べる。
+# 高いほど揺れを強く抑える代わりに動きが遅れる（2 = 中は VRCast 2.2.1 までと同じ）
+SMOOTHING_FILTERS = (
+    ((2.0, 2.0, 1.0), (1.5, 0.2, 1.0), (1.2, 6.0, 1.0), (2.0, 10.0, 1.0)),
+    ((1.75, 1.0, 1.0), (1.25, 0.1, 1.0), (1.0, 4.0, 1.0), (1.75, 7.0, 1.0)),
+    ((1.5, 0.5, 1.0), (1.0, 0.05, 1.0), (0.8, 2.0, 1.0), (1.5, 5.0, 1.0)),
+    ((1.0, 0.3, 1.0), (0.7, 0.03, 1.0), (0.5, 1.2, 1.0), (1.0, 3.0, 1.0)),
+    ((0.6, 0.15, 1.0), (0.4, 0.02, 1.0), (0.3, 0.6, 1.0), (0.6, 1.5, 1.0)),
+)
 VISIBILITY_FILTER = (1.0, 0.0, 1.0)  # 可視度（0.5 付近のちらつきを抑える）
 
 # 4x4 行列（行優先）の平行移動成分の位置
@@ -223,6 +230,8 @@ def parse_arguments():
     parser.add_argument("--hand-search-every", type=int, default=1)
     # 手が映っている間は体の間引きに関係なく毎フレーム手を推定する
     parser.add_argument("--hand-every-frame", action="store_true")
+    # 頭・腕・手の揺れを抑える強さ（0 = 最低 〜 4 = 最高。VRCast の「動きのなめらかさ」。高いほど動きは遅れる）
+    parser.add_argument("--smoothing", type=int, default=0)
     # 親プロセス（VRCast）の PID。終了したらトラッカーも終了する
     parser.add_argument("--parent-pid", type=int, default=0)
     # 統計の状態ログを出す間隔（秒、0 以下で出さない）
@@ -477,18 +486,23 @@ class OneEuroFilter:
 class Smoother:
     """送信フィールドごとの One Euro フィルターをまとめて持つ。"""
 
-    def __init__(self):
-        """頭（回転・平行移動）・腕・可視度・左右の手のフィルターを作る。"""
-        self._head_rotation = OneEuroFilter(HEAD_ROTATION_FILTER)
-        self._head_position = OneEuroFilter(HEAD_POSITION_FILTER)
-        self._arms = OneEuroFilter(ARM_FILTER)
+    def __init__(self, smoothing=0):
+        """頭（回転・平行移動）・腕・可視度・左右の手のフィルターを作る。
+
+        smoothing は SMOOTHING_FILTERS の段階（範囲外は端へ丸める。高いほど揺れを抑え、動きは遅れる）。
+        """
+        level = min(max(smoothing, 0), len(SMOOTHING_FILTERS) - 1)
+        head_rotation, head_position, arm, hand = SMOOTHING_FILTERS[level]
+        self._head_rotation = OneEuroFilter(head_rotation)
+        self._head_position = OneEuroFilter(head_position)
+        self._arms = OneEuroFilter(arm)
         self._visibility = OneEuroFilter(VISIBILITY_FILTER)
         # 体の推定の顔の点（鼻・両目）は腕と同じ強さで平滑化する
-        self._head_points = OneEuroFilter(ARM_FILTER)
+        self._head_points = OneEuroFilter(arm)
         self._head_visibility = OneEuroFilter(VISIBILITY_FILTER)
         self._hands = {
-            "leftHand": OneEuroFilter(HAND_FILTER),
-            "rightHand": OneEuroFilter(HAND_FILTER),
+            "leftHand": OneEuroFilter(hand),
+            "rightHand": OneEuroFilter(hand),
         }
         # 体・手を推定しなかったフレームで送り直す、前回の平滑化済みの値（無ければ None）
         self._last_arms = None
@@ -1195,7 +1209,7 @@ def run(arguments):
                 f"{arguments.ip}:{arguments.port}")
 
     last_timestamp = -1
-    smoother = Smoother()
+    smoother = Smoother(arguments.smoothing)
     guard = FaceGuard()
     cheek = CheekWidthMeter()
     mouth = MouthShiftMeter()

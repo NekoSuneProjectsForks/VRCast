@@ -118,5 +118,14 @@ namespace VRCast.Tests
             Assert.That(TrackerProcess.IsOutdatedTracker("ERROR: camera 0 could not be opened"), Is.False);
             Assert.That(TrackerProcess.IsOutdatedTracker(null), Is.False);
         }
+
+        [Test]
+        public void MediaPipeSmoothingArgument_PassesLevelExceptLowest()
+        {
+            // 最低はトラッカーの既定と同じなので渡さず、それ以外は段階の番号を渡す
+            Assert.That(TrackerProcess.MediaPipeSmoothingArgument(MotionSmoothing.Lowest), Is.Empty);
+            Assert.That(TrackerProcess.MediaPipeSmoothingArgument(MotionSmoothing.Medium), Is.EqualTo(" --smoothing 2"));
+            Assert.That(TrackerProcess.MediaPipeSmoothingArgument(MotionSmoothing.Highest), Is.EqualTo(" --smoothing 4"));
+        }
     }
 }

@@ -105,6 +105,23 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void SmoothTimeFloor_OnlyLengthens()
+        {
+            var smoother = new PointSmoother(1, 0.02f, 0.1f, 0.8f);
+            smoother.Push(new[] { Vector3.zero }, 0f);
+            for (int i = 1; i <= 30; i++)
+            {
+                smoother.Push(new[] { Vector3.right * i }, i / 30f);
+            }
+
+            // 下限が間隔に合わせた秒数より長ければ下限、短ければ間隔に合わせた秒数のまま
+            smoother.SmoothTimeFloor = 0.07f;
+            Assert.That(smoother.SmoothTime, Is.EqualTo(0.07f));
+            smoother.SmoothTimeFloor = 0.01f;
+            Assert.That(smoother.SmoothTime, Is.EqualTo(0.8f / 30f).Within(1e-4f));
+        }
+
+        [Test]
         public void IntervalShare_ClampsToRange()
         {
             var smoother = new PointSmoother(1, 0.03f, 0.1f, 1f);
