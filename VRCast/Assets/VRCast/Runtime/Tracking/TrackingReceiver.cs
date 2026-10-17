@@ -24,6 +24,7 @@ namespace VRCast.Tracking
         private string _oscOutputAddress;
         private int _oscOutputPort = -1;
         private float _nextOscOutputTime;
+        private float _nextOscOutputRetryTime;
 
         // 併用中なら true（Update で設定から決める）
         private bool _hybrid;
@@ -132,17 +133,17 @@ namespace VRCast.Tracking
                 return;
             }
 
-            if (_oscOutputAddress == _settings.oscParameterOutputAddress
-                && _oscOutputPort == _settings.oscParameterOutputPort
-                && _oscOutput.IsEnabled)
+            bool sameEndpoint = _oscOutputAddress == _settings.oscParameterOutputAddress
+                && _oscOutputPort == _settings.oscParameterOutputPort;
+            if (sameEndpoint && (_oscOutput.IsEnabled || Time.unscaledTime < _nextOscOutputRetryTime))
             {
                 return;
             }
 
-            bool started = _oscOutput.Start(
-                _settings.oscParameterOutputAddress, _settings.oscParameterOutputPort);
-            _oscOutputAddress = started ? _settings.oscParameterOutputAddress : null;
-            _oscOutputPort = started ? _settings.oscParameterOutputPort : -1;
+            _oscOutput.Start(_settings.oscParameterOutputAddress, _settings.oscParameterOutputPort);
+            _oscOutputAddress = _settings.oscParameterOutputAddress;
+            _oscOutputPort = _settings.oscParameterOutputPort;
+            _nextOscOutputRetryTime = Time.unscaledTime + 3f;
         }
 
         private void UpdateOscFaceParameters()
