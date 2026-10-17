@@ -197,16 +197,15 @@ namespace VRCast.Tracking
                     continue;
                 }
 
-                int index = -1;
-                for (int i = 0; i < ArKitFace.BlendShapeNames.Length; i++)
+                // Cache the fixed ARKit channel index per mapping. The mapping UI can change
+                // names at runtime, so refresh only when its source name changes.
+                if (!string.Equals(mapping.cachedBlendShapeName, mapping.blendShapeName, System.StringComparison.Ordinal))
                 {
-                    if (string.Equals(ArKitFace.BlendShapeNames[i], mapping.blendShapeName, System.StringComparison.Ordinal))
-                    {
-                        index = i;
-                        break;
-                    }
+                    mapping.cachedBlendShapeName = mapping.blendShapeName;
+                    mapping.cachedBlendShapeIndex = System.Array.IndexOf(ArKitFace.BlendShapeNames, mapping.blendShapeName);
                 }
-                SendBlendShape(mapping.parameterName, blendShapes, index);
+
+                SendBlendShape(mapping.parameterName, blendShapes, mapping.cachedBlendShapeIndex);
             }
         }
 
