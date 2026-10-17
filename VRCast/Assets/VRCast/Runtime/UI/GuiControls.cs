@@ -155,7 +155,9 @@ namespace VRCast.UI
             ResolvePendingHint();
 
             UiTheme theme = UiTheme.Current;
-            GUILayout.Label(text, theme != null ? theme.Hint : GUI.skin.label);
+            // 長い説明がスクロール内容の幅を押し広げて右が見切れないよう、親の幅に合わせて折り返す
+            GUILayout.Label(text, theme != null ? theme.Hint : GUI.skin.label,
+                GUILayout.MinWidth(0f), GUILayout.ExpandWidth(true));
             if (!_inCard)
             {
                 return;
@@ -249,7 +251,7 @@ namespace VRCast.UI
         public static int LabeledChoice(string label, IReadOnlyList<string> texts, int selected)
         {
             GUILayout.BeginHorizontal();
-            GUILayout.Label(label, GUILayout.Width(LabelWidth));
+            GUILayout.Label(label, GUILayout.Width(LabelWidth), GUILayout.MinWidth(0f));
             for (int i = 0; i < texts.Count; i++)
             {
                 // 選択中でないボタンを押したらその番号にする
@@ -315,8 +317,9 @@ namespace VRCast.UI
         {
             UiTheme theme = UiTheme.Current;
             GUILayout.BeginHorizontal();
-            GUILayout.Label(label, GUILayout.Width(LabelWidth));
-            float result = GUILayout.HorizontalSlider(value, min, max);
+            // 長いラベルでも行の最小幅を押し広げない（あふれた分は Overflow で描く）
+            GUILayout.Label(label, GUILayout.Width(LabelWidth), GUILayout.MinWidth(0f));
+            float result = GUILayout.HorizontalSlider(value, min, max, Shrinkable);
             GUILayout.Label(result.ToString(format), theme != null ? theme.Value : GUI.skin.label, GUILayout.Width(ValueWidth));
             GUILayout.EndHorizontal();
             return result;

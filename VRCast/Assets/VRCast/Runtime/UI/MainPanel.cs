@@ -405,13 +405,19 @@ namespace VRCast.UI
             GUILayout.BeginHorizontal();
             DrawSidebar();
 
-            // 選択中のタブの内容（横スクロールバーは出さない。幅はタブ列の残りに収め、英語の長いボタンが右へはみ出さない）
+            // 選択中のタブの内容（横スクロールバーは出さない。幅はタブ列の残りに固定し、長い説明文で右が見切れないようにする）
             float column = ContentColumnWidth();
-            _scroll[(int)_tab] = GUILayout.BeginScrollView(
-                _scroll[(int)_tab], false, false, GUIStyle.none, GUI.skin.verticalScrollbar,
-                GUILayout.MaxWidth(column));
+            Vector2 scroll = _scroll[(int)_tab];
+            // 横方向のずれが残ると右が見切れるので捨てる
+            scroll.x = 0f;
+            scroll = GUILayout.BeginScrollView(
+                scroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar,
+                GUILayout.Width(column), GUILayout.ExpandWidth(false));
+            scroll.x = 0f;
+            _scroll[(int)_tab] = scroll;
 
-            GUILayout.BeginVertical(GUILayout.MaxWidth(column), GUILayout.ExpandWidth(true));
+            GUILayout.BeginVertical(GUILayout.Width(column - 1f), GUILayout.MaxWidth(column - 1f),
+                GUILayout.ExpandWidth(false));
             DrawContent();
             GUILayout.EndVertical();
             GUILayout.EndScrollView();
@@ -539,12 +545,14 @@ namespace VRCast.UI
         private void DrawLanguageBar()
         {
             // どのタブからでも切り替えられる表示言語（横並び。選択中はアクセント色、押すとその言語にする）
+            // 幅が足りないときは縮めて、右の「繁體中文」などが見切れないようにする
             string[] labels = Loc.LanguageLabels(Loc.T("Auto", "自動", "자동", "自动", "自動"));
             GUILayout.BeginHorizontal();
             for (int i = 0; i < labels.Length; i++)
             {
                 bool selected = (int)_settings.uiLanguage == i;
-                if (GUILayout.Toggle(selected, labels[i], _theme.OverflowButton) && !selected)
+                if (GUILayout.Toggle(selected, labels[i], _theme.OverflowButton, GuiControls.Shrinkable)
+                    && !selected)
                 {
                     _settings.uiLanguage = (UiLanguage)i;
                 }
@@ -601,6 +609,8 @@ namespace VRCast.UI
                 if (GUILayout.Toggle(_tab == tab, TabLabel(tab), style) && _tab != tab)
                 {
                     _tab = tab;
+                    // 前のタブの横幅計算の名残で右が見切れないよう、移動先の横スクロールを戻す
+                    _scroll[(int)_tab].x = 0f;
                 }
             }
 

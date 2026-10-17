@@ -237,7 +237,8 @@ namespace VRCast.UI
                 int end = Mathf.Min(start + columns, labels.Count);
                 for (int i = start; i < end; i++)
                 {
-                    if (GUILayout.Toggle(selected == i, labels[i], GUI.skin.button, GUILayout.ExpandWidth(true))
+                    if (GUILayout.Toggle(selected == i, labels[i], GUI.skin.button,
+                            GUILayout.ExpandWidth(true), GuiControls.Shrinkable)
                         && selected != i)
                     {
                         selected = i;
