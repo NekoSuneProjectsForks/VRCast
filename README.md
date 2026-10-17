@@ -3,7 +3,7 @@
 <p align="center"><img src="docs/images/vrcast-icon.png" alt="VRCast" width="160"></p>
 
 <p align="center">
-  <a href="https://deepwiki.com/coffin299/VRCast"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+  <a href="https://deepwiki.com/coffin299/VRCast"><img src="https://img.shields.io/badge/Ask_DeepWiki-111827?style=flat" alt="Ask DeepWiki"></a>
   <a href="https://github.com/coffin299/VRCast/releases/latest"><img src="https://img.shields.io/github/v/release/coffin299/VRCast?label=release" alt="Latest release"></a>
   <a href="https://github.com/coffin299/VRCast/releases"><img src="https://img.shields.io/github/downloads/coffin299/VRCast/total?label=downloads" alt="Downloads"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/coffin299/VRCast" alt="License"></a>
