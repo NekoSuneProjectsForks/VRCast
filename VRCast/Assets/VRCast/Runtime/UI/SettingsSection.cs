@@ -27,6 +27,7 @@ namespace VRCast.UI
         private float _nextOscUiRetryTime;
         private string _oscAddressText;
         private string _oscPortText;
+        private string _oscDestinationError;
 
         // リセットの確認中か、直前にリセットしたか
         private bool _confirmingReset;
@@ -76,12 +77,27 @@ namespace VRCast.UI
             _oscPortText = GUILayout.TextField(_oscPortText ?? string.Empty);
             if (GUILayout.Button("Apply destination"))
             {
-                if (int.TryParse(_oscPortText, out int port) && port >= 1 && port <= 65535
-                    && !string.IsNullOrWhiteSpace(_oscAddressText))
+                if (!int.TryParse(_oscPortText, out int port) || port < 1 || port > 65535)
                 {
-                    _settings.oscParameterOutputAddress = _oscAddressText.Trim();
-                    _settings.oscParameterOutputPort = port;
+                    _oscDestinationError = "UDP port must be between 1 and 65535.";
                 }
+                else if (!System.Net.IPAddress.TryParse((_oscAddressText ?? string.Empty).Trim(), out var ip)
+                    || ip.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork)
+                {
+                    _oscDestinationError = "Enter a valid IPv4 address.";
+                }
+                else
+                {
+                    _settings.oscParameterOutputAddress = ip.ToString();
+                    _settings.oscParameterOutputPort = port;
+                    _oscAddressText = ip.ToString();
+                    _oscDestinationError = null;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(_oscDestinationError))
+            {
+                GuiControls.Hint(_oscDestinationError);
             }
 
             if (!_settings.oscParameterOutputEnabled)
