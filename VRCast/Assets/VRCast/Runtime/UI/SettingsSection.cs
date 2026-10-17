@@ -23,6 +23,7 @@ namespace VRCast.UI
         private readonly OscParameterSender _oscParameterSender = new OscParameterSender();
         private string _oscOutputAddress;
         private int _oscOutputPort = -1;
+        private float _nextOscUiRetryTime;
         private string _oscAddressText;
         private string _oscPortText;
 
@@ -90,12 +91,13 @@ namespace VRCast.UI
             }
             else if (_oscOutputAddress != _settings.oscParameterOutputAddress
                 || _oscOutputPort != _settings.oscParameterOutputPort
-                || !_oscParameterSender.IsEnabled)
+                || (!_oscParameterSender.IsEnabled && Time.unscaledTime >= _nextOscUiRetryTime))
             {
-                bool started = _oscParameterSender.Start(
+                _oscParameterSender.Start(
                     _settings.oscParameterOutputAddress, _settings.oscParameterOutputPort);
-                _oscOutputAddress = started ? _settings.oscParameterOutputAddress : null;
-                _oscOutputPort = started ? _settings.oscParameterOutputPort : -1;
+                _oscOutputAddress = _settings.oscParameterOutputAddress;
+                _oscOutputPort = _settings.oscParameterOutputPort;
+                _nextOscUiRetryTime = Time.unscaledTime + 3f;
             }
 
             GUILayout.Label("Live face parameter mappings (blank disables a mapping)");
