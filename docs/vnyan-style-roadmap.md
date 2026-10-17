@@ -100,7 +100,7 @@ The first milestone should play VMD motion on an avatar already loaded by VRCast
 - [✓] Added settings sanitisation coverage for duplicate blendshape entries, duplicate destinations across named/custom mappings, whitespace, invalid OSC path segments, and null entries.
 - [✓] Clarified UDP status as “Ready to send” rather than implying remote receipt, and throttled retries for unavailable endpoints.
 - [✓] Hardened OSC endpoint validation to reject IPv6 addresses explicitly (the sender uses an IPv4 UDP socket), trim endpoint/parameter whitespace, and reject empty/path-containing parameter names before sending.
-- [✓] Added EditMode regression coverage for IPv6 endpoint rejection and invalid/non-finite float parameter sends; tests have been authored but not executed in Unity.
+- [✓] Added EditMode regression coverage for IPv6 endpoint rejection, invalid/non-finite float parameter sends, independent big-endian float payload bytes, and OSC boolean type tags; tests have been authored but not executed in Unity.
 - [✗] Unity EditMode tests/build and live VRChat testing have not been run. UDP send success only confirms the local socket accepted the datagram, not that VRChat received or applied it.
 - [✗] Head/body/hand provider mapping, per-avatar profiles, source conflict resolution, inbound OSC/VRCFT discovery, and skeletal tracking forwarding are not implemented. This is not a complete VRCFT or full-body tracking integration.
 - [✗] Audio capture/analysis, AudioLink-inspired mappings, VMD playback, trigger/action workflows, session server, and the wider tracking/provider integrations remain to be implemented and validated.
