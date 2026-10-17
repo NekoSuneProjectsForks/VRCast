@@ -477,6 +477,8 @@ namespace VRCast.Core
         public bool oscParameterOutputEnabled;
         public string oscParameterOutputAddress = "127.0.0.1";
         public int oscParameterOutputPort = 9000;
+        // Independent face OSC send rate; keep this lower than high-FPS rendering to avoid UDP flooding.
+        public int oscParameterOutputRate = 30;
         // Optional face-frame-to-avatar-parameter mappings. Empty names disable individual mappings.
         public string oscParameterEyeOpenLeft = string.Empty;
         public string oscParameterEyeOpenRight = string.Empty;
@@ -1358,6 +1360,7 @@ namespace VRCast.Core
                 oscParameterOutputAddress = oscAddress.ToString();
             }
             oscParameterOutputPort = Mathf.Clamp(oscParameterOutputPort, 1, 65535);
+            oscParameterOutputRate = Mathf.Clamp(oscParameterOutputRate <= 0 ? 30 : oscParameterOutputRate, 1, 60);
             var usedOscParameterNames = new HashSet<string>(StringComparer.Ordinal);
             oscParameterEyeOpenLeft = NormalizeUniqueOscParameterName(oscParameterEyeOpenLeft, usedOscParameterNames);
             oscParameterEyeOpenRight = NormalizeUniqueOscParameterName(oscParameterEyeOpenRight, usedOscParameterNames);
