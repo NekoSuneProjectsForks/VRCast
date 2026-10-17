@@ -61,7 +61,8 @@ The first milestone should play VMD motion on an avatar already loaded by VRCast
 
 ## Tracking and VRChat OSC integration
 
-- [✗] VRChat OSC avatar-parameter sender foundation wired into app settings/UI and user mappings.
+- [✓] VRChat OSC avatar-parameter sender exposed in Settings with endpoint configuration and float/bool test sends.
+- [✗] Live tracking-provider values mapped to OSC avatar parameters; user-defined mappings and conflict-safe parameter ownership.
 - [✗] Incoming OSC/VRCFT provider discovery, parameter mapping, per-provider status, and conflict resolution.
 - [✗] Unified face/head/body/hand provider controls and safe start/stop/reconnect lifecycle.
 - [✗] Extend and test VMC receiver selection and calibration workflows; current code already has VMC pose reception and MediaPipe hand/body input, but the requested unified management is not complete.
@@ -83,8 +84,10 @@ The first milestone should play VMD motion on an avatar already loaded by VRCast
 ## Current implementation status
 
 - [✓] Configurable FPS cap and settings sanitisation are present on `feature/vnyan-audio-mmd-performance`.
-- [✓] Initial reusable VRChat OSC avatar-parameter packet encoder and UDP sender class added (`Remote/OscParameterSender.cs`). It can send float and bool values to an explicitly configured IPv4/IPv6 literal endpoint, defaulting to 127.0.0.1:9000.
-- [✗] The OSC sender is not yet wired to settings/UI or tracking providers; it is not a complete VRCFT integration and does not send skeletal tracking.
+- [✓] Reusable VRChat OSC avatar-parameter packet encoder and UDP sender (`Remote/OscParameterSender.cs`) supports float and bool values, defaulting to 127.0.0.1:9000.
+- [✓] Added persistent OSC output endpoint settings, Settings UI enable/disable and destination editing, plus test float/bool messages and settings validation tests.
+- [✗] Unity EditMode tests/build and live VRChat testing have not been run. UDP send success only confirms the local socket accepted the datagram, not that VRChat received or applied it.
+- [✗] The OSC sender is not yet connected to live tracking values, VRCFT provider discovery, user-defined mappings, or skeletal tracking. It is not a complete VRCFT or full-body tracking integration.
 - [✗] Audio capture/analysis, AudioLink-inspired mappings, VMD playback, trigger/action workflows, session server, and the wider tracking/provider integrations remain to be implemented and validated.
 
 Status legend: `[✓]` = implementation exists in source; `[✗]` = outstanding or not yet validated end-to-end. Do not describe a feature as complete based only on a roadmap or an isolated helper class.
