@@ -74,11 +74,11 @@ namespace VRCast.UI
             _settings.showPerformanceStats = GUILayout.Toggle(_settings.showPerformanceStats, Loc.T(
                 "Show performance stats", "動作状況を表示", "동작 상태 표시", "显示运行状态", "顯示執行狀態"));
             GuiControls.Hint(Loc.T(
-                "Shows FPS, CPU, GPU time and tracking rate at the bottom of the panel (in English).",
-                "パネルの一番下に FPS・CPU・GPU の処理時間・トラッキングの受信レートを表示します（英語表記）。",
-                "패널 맨 아래에 FPS·CPU·GPU 처리 시간·트래킹 수신 속도를 표시합니다(영어 표기).",
-                "在面板底部显示 FPS、CPU、GPU 处理时间和追踪接收速率（英文显示）。",
-                "在面板底部顯示 FPS、CPU、GPU 處理時間和追蹤接收速率（英文顯示）。"));
+                "Shows FPS, CPU, GPU % (share of the frame time used by VRCast's drawing), avatar render size and tracking rate at the bottom of the panel (in English).",
+                "パネルの一番下に FPS・CPU・GPU%（1 フレームのうち VRCast の描画が使った割合）・アバターの描画解像度・トラッキングの受信レートを表示します（英語表記）。",
+                "패널 맨 아래에 FPS·CPU·GPU%(VRCast 그리기가 쓴 프레임 비율)·아바타 렌더 해상도·트래킹 수신 속도를 표시합니다(영어 표기).",
+                "在面板底部显示 FPS、CPU、GPU%（VRCast 绘制所占帧时间比例）、虚拟形象绘制分辨率和追踪接收速率（英文显示）。",
+                "在面板底部顯示 FPS、CPU、GPU%（VRCast 繪製所佔幀時間比例）、虛擬形象繪製解析度和追蹤接收速率（英文顯示）。"));
 
             DrawPriority();
             GuiControls.EndCard();

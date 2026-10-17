@@ -448,14 +448,54 @@ namespace VRCast.Tests
             Assert.That(settings.iblIntensity, Is.EqualTo(AppSettings.MaxIblIntensity));
             Assert.That(new AppSettings().lightingSystem, Is.EqualTo(LightingSystem.Legacy));
             Assert.That(new AppSettings().antiAliasing, Is.EqualTo(AntiAliasingQuality.x4));
+            Assert.That(new AppSettings().antiAliasingMode, Is.EqualTo(AntiAliasingMode.Msaa));
         }
 
         [Test]
-        public void AntiAliasing_Sanitize_UnknownFallsBackToX4()
+        public void ResetGraphicsToDefaults_RestoresGraphicsAndKeepsPose()
         {
-            var settings = new AppSettings { antiAliasing = (AntiAliasingQuality)99 };
-            settings.Sanitize();
-            Assert.That(settings.antiAliasing, Is.EqualTo(AntiAliasingQuality.x4));
+            var settings = new AppSettings
+            {
+                darkMode = true,
+                lightIntensity = 3f,
+                bloomIntensity = 2f,
+                antiAliasingMode = AntiAliasingMode.Fxaa,
+                poseArmDown = 0.2f,
+                transparentBackground = true,
+            };
+            settings.ResetGraphicsToDefaults();
+            var defaults = new AppSettings();
+            Assert.That(settings.lightIntensity, Is.EqualTo(defaults.lightIntensity));
+            Assert.That(settings.bloomIntensity, Is.EqualTo(defaults.bloomIntensity));
+            Assert.That(settings.antiAliasingMode, Is.EqualTo(defaults.antiAliasingMode));
+            Assert.That(settings.transparentBackground, Is.EqualTo(defaults.transparentBackground));
+            Assert.That(settings.backgroundColor, Is.EqualTo(AppSettings.DarkBackgroundColor));
+            Assert.That(settings.poseArmDown, Is.EqualTo(0.2f));
+            Assert.That(settings.darkMode, Is.True);
+        }
+
+        [Test]
+        public void AntiAliasing_Sanitize_UnknownAndUnspecified()
+        {
+            var unknown = new AppSettings { antiAliasing = (AntiAliasingQuality)99 };
+            unknown.Sanitize();
+            Assert.That(unknown.antiAliasing, Is.EqualTo(AntiAliasingQuality.x4));
+
+            // 方式が無い古い設定は、品質 Off ならオフ、それ以外は MSAA
+            var legacyOff = new AppSettings
+            {
+                antiAliasingMode = AntiAliasingMode.Unspecified, antiAliasing = AntiAliasingQuality.Off,
+            };
+            legacyOff.Sanitize();
+            Assert.That(legacyOff.antiAliasingMode, Is.EqualTo(AntiAliasingMode.Off));
+
+            var legacyMsaa = new AppSettings
+            {
+                antiAliasingMode = AntiAliasingMode.Unspecified, antiAliasing = AntiAliasingQuality.x8,
+            };
+            legacyMsaa.Sanitize();
+            Assert.That(legacyMsaa.antiAliasingMode, Is.EqualTo(AntiAliasingMode.Msaa));
+            Assert.That(legacyMsaa.antiAliasing, Is.EqualTo(AntiAliasingQuality.x8));
         }
 
         [Test]

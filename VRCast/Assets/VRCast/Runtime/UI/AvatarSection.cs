@@ -251,6 +251,9 @@ namespace VRCast.UI
                     "无法设置图片", "無法設定圖片") + $" ({_thumbnailError})");
             }
 
+            // タイル内は狭いので、表示中アバターの顔写真の撮り直しは一覧の下に置く
+            DrawRetakeCurrentFace();
+
             GuiControls.Hint(Loc.T(
                 "× then \"Remove\" removes the avatar from this list and forgets its camera, light, pose and image.",
                 "× を押してから「外す」で一覧から外します（記憶したカメラ・ライト・待機ポーズ・画像も消えます）。",
@@ -258,6 +261,30 @@ namespace VRCast.UI
                 "点击 × 后再点“移除”即可从列表中移除（记住的相机、灯光、待机姿势和图片也会清除）。",
                 "點擊 × 後再點「移除」即可從清單中移除（記住的相機、燈光、待機姿勢和圖片也會清除）。"));
             GuiControls.EndCard();
+        }
+
+        private void DrawRetakeCurrentFace()
+        {
+            LoadedAvatar current = _session.Current;
+            if (current == null)
+            {
+                return;
+            }
+
+            GUI.enabled = !_session.IsLoading;
+            if (GUILayout.Button(Loc.T("Retake photo of the avatar being shown", "表示中のアバターの写真を撮り直す",
+                    "표시 중인 아바타 사진 다시 찍기", "重拍正在显示的虚拟形象照片", "重拍正在顯示的虛擬形象照片")))
+            {
+                _session.StartCoroutine(CaptureFace(current, false));
+            }
+
+            GUI.enabled = true;
+            GuiControls.Hint(Loc.T(
+                "Captures the current face (expression and direction) as the list image.",
+                "今の顔（表情・向き）を撮って、一覧の画像にします。",
+                "지금 얼굴(표정·방향)을 찍어 목록 이미지로 씁니다.",
+                "拍摄当前脸部（表情和朝向）作为列表图片。",
+                "拍攝目前臉部（表情和朝向）作為清單圖片。"));
         }
 
         private void DrawTiles(List<string> recent)
@@ -383,17 +410,7 @@ namespace VRCast.UI
 
         private void DrawTileButtons(string path, bool isCurrent)
         {
-            // 表示中は今の顔を撮り直せる（表情・向きを変えたあと一覧の写真を更新する）
-            if (isCurrent)
-            {
-                GUI.enabled = !_session.IsLoading && _session.Current != null;
-                if (GUILayout.Button(Loc.T("Retake", "撮り直す", "다시 찍기", "重拍", "重拍"), GuiControls.Shrinkable))
-                {
-                    _session.StartCoroutine(CaptureFace(_session.Current, false));
-                }
-            }
-
-            // 一覧の画像を選ぶ
+            // 一覧の画像を選ぶ（顔写真の撮り直しは一覧の下のボタンへ。タイル幅では文字が欠ける）
             GUI.enabled = FileDialog.IsSupported;
             if (GUILayout.Button(Loc.T("Image", "画像", "이미지", "图片", "圖片"), GuiControls.Shrinkable))
             {

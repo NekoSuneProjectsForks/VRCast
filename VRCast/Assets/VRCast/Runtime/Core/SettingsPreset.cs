@@ -120,16 +120,21 @@ namespace VRCast.Core
         private static readonly Dictionary<string, string> CategoryComments = new Dictionary<string, string>
         {
             ["performance"] = "動作最適化（軽量モード・優先度・CPU・GPU・トラッカーの動作） / Performance (low load, priority, CPU, GPU, tracker mode)",
-            ["display"] = "背景・カメラの固定 / Background and camera lock",
+            ["display"] = "カメラの固定 / Camera lock",
+            ["graphics"] = "グラフィック（背景・アンチエイリアス・ライティング・輪郭線） / Graphics (background, anti-aliasing, lighting, outline)",
             ["motion"] = "待機モーション・揺れもの・小物のアニメーション / Idle motion, physics and prop animations",
             ["face"] = "まばたき・口パク / Blinking and lip sync",
             ["tracking"] = "トラッキング / Tracking",
             ["output"] = "出力（仮想カメラ・Spout2） / Output (virtual camera, Spout2)",
             ["shortcuts"] = "ショートカットキー・OSC / HTTP / Shortcut keys and OSC / HTTP",
             ["interface"] = "パネル（言語・大きさ・不透明度・テーマ・アップデート・ログ） / Panel (language, size, opacity, theme, updates, logs)",
-            ["avatarLook"] = "アバター関連: ライティング・明るさ・輪郭線・ポーズ・向き / Avatar-related: lighting, brightness, outline, pose and direction",
+            ["avatarLook"] = "アバター関連: ポーズ・向き / Avatar-related: pose and direction",
             ["expressionMapping"] = "アバター関連: 表情反映の割り当て・しきい値 / Avatar-related: expression mapping and thresholds",
         };
+
+        // グラフィックタブのプリセットで読み込むカテゴリ（書き出しでは他カテゴリも選べる）
+        public const string GraphicsCategoryId = "graphics";
+        public const string GraphicsFileStem = "VRCast-graphics";
 
         // 形式名・形式のバージョン（キー名の変更など互換性のない変更をしたら上げ、読み込み時に読み替える）
         public const string FormatName = "VRCastPreset";
@@ -153,8 +158,22 @@ namespace VRCast.Core
                 nameof(AppSettings.processPriority), nameof(AppSettings.avoidCacheCcd), nameof(AppSettings.hybridCores),
                 nameof(AppSettings.gpuPreference)),
             new PresetCategory("display", false,
-                nameof(AppSettings.transparentBackground), nameof(AppSettings.backgroundColor),
                 nameof(AppSettings.cameraLocked), nameof(AppSettings.cameraZoomInsteadOfEntering)),
+            new PresetCategory("graphics", false,
+                nameof(AppSettings.transparentBackground), nameof(AppSettings.backgroundColor),
+                nameof(AppSettings.lightingSystem), nameof(AppSettings.antiAliasingMode),
+                nameof(AppSettings.antiAliasing),
+                nameof(AppSettings.lightIntensity), nameof(AppSettings.lightYaw), nameof(AppSettings.lightPitch),
+                nameof(AppSettings.lightTemperature), nameof(AppSettings.ambientIntensity),
+                nameof(AppSettings.fillIntensity), nameof(AppSettings.fillYaw), nameof(AppSettings.fillPitch),
+                nameof(AppSettings.fillTemperature),
+                nameof(AppSettings.rimIntensity), nameof(AppSettings.rimYaw), nameof(AppSettings.rimPitch),
+                nameof(AppSettings.rimTemperature),
+                nameof(AppSettings.iblIntensity), nameof(AppSettings.iblPreset),
+                nameof(AppSettings.softShadows), nameof(AppSettings.shadowStrength), nameof(AppSettings.shadowSoftness),
+                nameof(AppSettings.bloomEnabled), nameof(AppSettings.bloomIntensity), nameof(AppSettings.bloomThreshold),
+                nameof(AppSettings.tonemapEnabled), nameof(AppSettings.tonemapStrength),
+                nameof(AppSettings.avatarBrightness), nameof(AppSettings.outlineWidth)),
             new PresetCategory("motion", false,
                 nameof(AppSettings.idleMotionEnabled), nameof(AppSettings.idleBreathing), nameof(AppSettings.idleSway),
                 nameof(AppSettings.idleHeadMotion), nameof(AppSettings.idleMotionSpeed), nameof(AppSettings.physicsEnabled),
@@ -199,18 +218,7 @@ namespace VRCast.Core
                 nameof(AppSettings.darkMode),
                 nameof(AppSettings.checkForUpdates), nameof(AppSettings.detailedLogging)),
             new PresetCategory("avatarLook", true,
-                nameof(AppSettings.lightingSystem), nameof(AppSettings.antiAliasing),
-                nameof(AppSettings.lightIntensity), nameof(AppSettings.lightYaw), nameof(AppSettings.lightPitch),
-                nameof(AppSettings.lightTemperature), nameof(AppSettings.ambientIntensity),
-                nameof(AppSettings.fillIntensity), nameof(AppSettings.fillYaw), nameof(AppSettings.fillPitch),
-                nameof(AppSettings.fillTemperature),
-                nameof(AppSettings.rimIntensity), nameof(AppSettings.rimYaw), nameof(AppSettings.rimPitch),
-                nameof(AppSettings.rimTemperature),
-                nameof(AppSettings.iblIntensity), nameof(AppSettings.iblPreset),
-                nameof(AppSettings.softShadows), nameof(AppSettings.shadowStrength), nameof(AppSettings.shadowSoftness),
-                nameof(AppSettings.bloomEnabled), nameof(AppSettings.bloomIntensity), nameof(AppSettings.bloomThreshold),
-                nameof(AppSettings.tonemapEnabled), nameof(AppSettings.tonemapStrength),
-                nameof(AppSettings.avatarBrightness), nameof(AppSettings.outlineWidth), nameof(AppSettings.poseArmDown),
+                nameof(AppSettings.poseArmDown),
                 nameof(AppSettings.poseElbowBend), nameof(AppSettings.poseArmSpread),
                 nameof(AppSettings.poseArmForwardLeft), nameof(AppSettings.poseArmForwardRight),
                 nameof(AppSettings.poseArmTwistLeft), nameof(AppSettings.poseArmTwistRight), nameof(AppSettings.avatarYaw)),
@@ -276,6 +284,22 @@ namespace VRCast.Core
             foreach (PresetCategory category in Categories)
             {
                 if (category.Id == id)
+                {
+                    return category;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// フィールド名を所有するカテゴリ（除外・未知は null）。
+        /// </summary>
+        public static PresetCategory CategoryOfField(string fieldName)
+        {
+            foreach (PresetCategory category in Categories)
+            {
+                if (Contains(category.Fields, fieldName))
                 {
                     return category;
                 }
@@ -450,13 +474,12 @@ namespace VRCast.Core
                 return false;
             }
 
-            // 知っているカテゴリのブロックから、そのカテゴリのキーだけを拾う（別カテゴリ・除外のキーを書き足しても通さない）
+            // 各キーを「いま所有しているカテゴリ」へ振り分ける（以前 display / avatarLook にあったグラフィック項目も graphics へ移す）
             var blocks = new Dictionary<string, List<KeyValuePair<string, string>>>();
             foreach (KeyValuePair<string, string> block in blockTexts)
             {
-                // 知らないカテゴリと、中身を全部消したカテゴリ（YAML では値が null になる）は飛ばす
-                PresetCategory category = Find(block.Key);
-                if (category == null || block.Value.Trim() == "null")
+                // 中身を全部消したカテゴリ（YAML では値が null になる）は飛ばす
+                if (block.Value.Trim() == "null")
                 {
                     continue;
                 }
@@ -468,10 +491,30 @@ namespace VRCast.Core
                     return false;
                 }
 
-                var accepted = members.FindAll(member => Contains(category.Fields, member.Key));
-                if (accepted.Count > 0)
+                foreach (KeyValuePair<string, string> member in members)
                 {
-                    blocks[category.Id] = accepted;
+                    PresetCategory owner = CategoryOfField(member.Key);
+                    if (owner == null)
+                    {
+                        continue;
+                    }
+
+                    if (!blocks.TryGetValue(owner.Id, out List<KeyValuePair<string, string>> accepted))
+                    {
+                        accepted = new List<KeyValuePair<string, string>>();
+                        blocks[owner.Id] = accepted;
+                    }
+
+                    // 同じキーが複数ブロックにあれば後勝ち（新旧の混在ファイル向け）
+                    int existing = accepted.FindIndex(item => item.Key == member.Key);
+                    if (existing >= 0)
+                    {
+                        accepted[existing] = member;
+                    }
+                    else
+                    {
+                        accepted.Add(member);
+                    }
                 }
             }
 

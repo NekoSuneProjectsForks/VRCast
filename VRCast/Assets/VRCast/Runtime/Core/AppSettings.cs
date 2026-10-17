@@ -208,7 +208,8 @@ namespace VRCast.Core
         // ライティング系統（既定はレガシー＝2.x 相当。最新は三点・影・IBL・ポスト）
         public LightingSystem lightingSystem = LightingSystem.Legacy;
 
-        // アンチエイリアス（既定 4x。MSAA + 必要なら FXAA）
+        // アンチエイリアス（方式と強さ。既定は MSAA 4x。ぼやけやすい FXAA は選んだときだけ）
+        public AntiAliasingMode antiAliasingMode = AntiAliasingMode.Msaa;
         public AntiAliasingQuality antiAliasing = AntiAliasingQuality.x4;
 
         // 太陽光 / Key（ディレクショナルライト）。向きはカメラ正面からの角度（0 = 正面から当たる）
@@ -940,6 +941,45 @@ namespace VRCast.Core
         }
 
         /// <summary>
+        /// グラフィックタブの項目だけを既定値に戻す（背景色は今のテーマの既定。ポーズ等は触らない）。
+        /// </summary>
+        public void ResetGraphicsToDefaults()
+        {
+            var defaults = new AppSettings();
+            transparentBackground = defaults.transparentBackground;
+            backgroundColor = DefaultBackgroundOf(darkMode);
+            lightingSystem = defaults.lightingSystem;
+            antiAliasingMode = defaults.antiAliasingMode;
+            antiAliasing = defaults.antiAliasing;
+            lightIntensity = defaults.lightIntensity;
+            lightYaw = defaults.lightYaw;
+            lightPitch = defaults.lightPitch;
+            lightTemperature = defaults.lightTemperature;
+            ambientIntensity = defaults.ambientIntensity;
+            fillIntensity = defaults.fillIntensity;
+            fillYaw = defaults.fillYaw;
+            fillPitch = defaults.fillPitch;
+            fillTemperature = defaults.fillTemperature;
+            rimIntensity = defaults.rimIntensity;
+            rimYaw = defaults.rimYaw;
+            rimPitch = defaults.rimPitch;
+            rimTemperature = defaults.rimTemperature;
+            iblIntensity = defaults.iblIntensity;
+            iblPreset = defaults.iblPreset;
+            softShadows = defaults.softShadows;
+            shadowStrength = defaults.shadowStrength;
+            shadowSoftness = defaults.shadowSoftness;
+            bloomEnabled = defaults.bloomEnabled;
+            bloomIntensity = defaults.bloomIntensity;
+            bloomThreshold = defaults.bloomThreshold;
+            tonemapEnabled = defaults.tonemapEnabled;
+            tonemapStrength = defaults.tonemapStrength;
+            avatarBrightness = defaults.avatarBrightness;
+            outlineWidth = defaults.outlineWidth;
+            Sanitize();
+        }
+
+        /// <summary>
         /// 読み込んだ値を安全な範囲に補正する。
         /// </summary>
         public void Sanitize()
@@ -1044,8 +1084,21 @@ namespace VRCast.Core
                 lightingSystem = LightingSystem.Legacy;
             }
 
-            // 未知のアンチエイリアスは 4x へ
+            // 未知／未設定のアンチエイリアス方式は MSAA へ（古い設定は品質だけあり方式が 0）
+            if (!Enum.IsDefined(typeof(AntiAliasingMode), antiAliasingMode)
+                || antiAliasingMode == AntiAliasingMode.Unspecified)
+            {
+                antiAliasingMode = antiAliasing == AntiAliasingQuality.Off
+                    ? AntiAliasingMode.Off
+                    : AntiAliasingMode.Msaa;
+            }
+
+            // 未知の強さは 4x へ（オフ方式以外で Off になっていたら 4x）
             if (!Enum.IsDefined(typeof(AntiAliasingQuality), antiAliasing))
+            {
+                antiAliasing = AntiAliasingQuality.x4;
+            }
+            else if (antiAliasingMode != AntiAliasingMode.Off && antiAliasing == AntiAliasingQuality.Off)
             {
                 antiAliasing = AntiAliasingQuality.x4;
             }

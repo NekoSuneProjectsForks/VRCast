@@ -3,12 +3,14 @@ using System.Text;
 using UnityEngine;
 using VRCast.Core;
 using VRCast.Platform;
+using VRCast.Rendering;
 using VRCast.Tracking;
 
 namespace VRCast.UI
 {
     /// <summary>
-    /// パネルの一番下に常に表示する動作状況（描画の fps・VRCast の CPU・GPU の処理時間・トラッカーの CPU・トラッキングの受信レート）。
+    /// パネルの一番下に常に表示する動作状況（描画の fps・VRCast の CPU・GPU の使用率と処理時間・
+    /// アバターの描画解像度・トラッカーの CPU・トラッキングの受信レート）。
     /// 表示は英語の 1 行のみ。1 秒ごとにまとめて計測し直し、設定の showPerformanceStats で ON/OFF する。
     /// </summary>
     public class PerformanceBar
@@ -142,11 +144,29 @@ namespace VRCast.UI
             // VRCast 本体の CPU 使用率
             _builder.Append(Separator).Append("CPU ").Append(Percent(_appCpu.SampleCurrent()));
 
-            // GPU は 1 フレームの処理時間の平均（使用率は Windows から取れないため）
+            // GPU はフレーム時間に占める処理時間の割合（このアプリの描画負荷の目安。カード全体の使用率ではない）
             _builder.Append(Separator).Append("GPU ");
-            _builder.Append(_gpuSamples > 0
-                ? (_gpuTotal / _gpuSamples).ToString("F1", Invariant) + " ms"
-                : "-");
+            if (_gpuSamples > 0)
+            {
+                float gpuMs = (float)(_gpuTotal / _gpuSamples);
+                float gpuPct = frameMs > 0.01f ? Mathf.Min(100f, gpuMs / frameMs * 100f) : 0f;
+                _builder.Append(gpuPct.ToString("F0", Invariant)).Append("% (")
+                    .Append(gpuMs.ToString("F1", Invariant)).Append(" ms)");
+            }
+            else
+            {
+                _builder.Append("-");
+            }
+
+            // アバターの描画解像度（高解像度描画時はウィンドウより大きい）
+            CameraAntiAliasing.RenderSizeOf(_settings, out int renderWidth, out int renderHeight);
+            float scale = CameraAntiAliasing.RenderScaleOf(_settings);
+            _builder.Append(Separator).Append("Avatar ").Append(renderWidth.ToString(Invariant))
+                .Append("x").Append(renderHeight.ToString(Invariant));
+            if (scale > 1.001f)
+            {
+                _builder.Append(" (").Append((scale * 100f).ToString("F0", Invariant)).Append("%)");
+            }
 
             // 同梱トラッカーを起動中ならその CPU 使用率
             if (_trackerProcess.IsRunning)

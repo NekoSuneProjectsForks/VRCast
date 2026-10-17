@@ -1,7 +1,7 @@
 namespace VRCast.Core
 {
     /// <summary>
-    /// 画面のアンチエイリアス（MSAA のサンプル数。仮想カメラ等で MSAA が効かないときは FXAA も併用する）。
+    /// アンチエイリアスの強さ。MSAA ではサンプル数、高解像度描画では内部解像度の倍率に使う。
     /// </summary>
     public enum AntiAliasingQuality
     {

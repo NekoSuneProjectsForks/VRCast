@@ -455,8 +455,12 @@ namespace VRCast.UI
                         "동작 최적화 (저부하·우선순위·CPU·GPU·트래커 동작)", "运行优化（低负载·优先级·CPU·GPU·追踪器模式）",
                         "執行最佳化（低負載·優先順序·CPU·GPU·追蹤器模式）");
                 case "display":
-                    return Loc.T("Background and camera lock", "背景・カメラの固定", "배경·카메라 고정", "背景·相机锁定",
-                        "背景·相機鎖定");
+                    return Loc.T("Camera lock", "カメラの固定", "카메라 고정", "相机锁定", "相機鎖定");
+                case SettingsPreset.GraphicsCategoryId:
+                    return Loc.T("Graphics (background, anti-aliasing, lighting, outline)",
+                        "グラフィック（背景・アンチエイリアス・ライティング・輪郭線）",
+                        "그래픽 (배경·안티앨리어싱·라이팅·윤곽선)", "图形（背景·抗锯齿·光照·轮廓线）",
+                        "圖形（背景·抗鋸齒·光照·輪廓線）");
                 case "motion":
                     return Loc.T("Idle motion, physics and prop animations", "待機モーション・揺れもの・小物のアニメーション",
                         "대기 모션·흔들림·소품 애니메이션", "待机动作·物理摆动·小物件动画", "待機動作·物理擺動·小物件動畫");
@@ -476,8 +480,7 @@ namespace VRCast.UI
                         "패널 (언어·크기·불투명도·테마·업데이트·로그)", "面板（语言·大小·不透明度·主题·更新·日志）",
                         "面板（語言·大小·不透明度·主題·更新·日誌）");
                 case "avatarLook":
-                    return Loc.T("Light, brightness, outline, pose and direction", "ライト・明るさ・輪郭線・ポーズ・向き",
-                        "조명·밝기·윤곽선·포즈·방향", "灯光·亮度·轮廓线·姿势·朝向", "燈光·亮度·輪廓線·姿勢·朝向");
+                    return Loc.T("Pose and direction", "ポーズ・向き", "포즈·방향", "姿势·朝向", "姿勢·朝向");
                 case "expressionMapping":
                     return Loc.T("Expression mapping and thresholds", "表情反映の割り当て・しきい値", "표정 반영 할당·임계값",
                         "表情映射·阈值", "表情對應·閾值");

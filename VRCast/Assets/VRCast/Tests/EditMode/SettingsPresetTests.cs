@@ -242,6 +242,7 @@ namespace VRCast.Tests
         [Test]
         public void Apply_OutOfRangeValues_AreClamped()
         {
+            // lightIntensity は旧 avatarLook ブロックにあっても graphics へ振り分けられる
             const string text = "{\"format\": \"VRCastPreset\", \"formatVersion\": 1, \"categories\": " +
                 "{\"interface\": {\"uiScale\": 100}, \"avatarLook\": {\"lightIntensity\": -5}}}";
             var target = new AppSettings();
@@ -250,6 +251,20 @@ namespace VRCast.Tests
             Assert.That(SettingsPreset.Apply(Parse(text), AllIds, target), Is.True);
             Assert.That(target.uiScale, Is.EqualTo(AppSettings.MaxUiScale));
             Assert.That(target.lightIntensity, Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void Apply_GraphicsOnly_IgnoresOtherCategoriesInFile()
+        {
+            string text = Export(Changed());
+            var target = new AppSettings { lightIntensity = 1f, uiScale = 1f, poseArmDown = 1f };
+
+            // グラフィックだけ反映し、パネル拡大率やポーズはそのまま
+            Assert.That(SettingsPreset.Apply(Parse(text), new[] { SettingsPreset.GraphicsCategoryId }, target), Is.True);
+            Assert.That(target.lightIntensity, Is.EqualTo(2f));
+            Assert.That(target.backgroundColor, Is.EqualTo(Color.green));
+            Assert.That(target.uiScale, Is.EqualTo(1f));
+            Assert.That(target.poseArmDown, Is.EqualTo(1f));
         }
 
         [Test]
@@ -332,8 +347,9 @@ namespace VRCast.Tests
                 "    expressionSad: 'it''s # sad'\r\n" +
                 "    thresholdSmile: .5\r\n";
             PresetFile preset = Parse(text);
+            // 背景は graphics、カメラ固定は display へ振り分けられること（以前はどちらも display）
             Assert.That(preset.Categories.Select(category => category.Id),
-                Is.EqualTo(new[] { "display", "interface", "expressionMapping" }));
+                Is.EqualTo(new[] { "display", "graphics", "interface", "expressionMapping" }));
 
             var target = new AppSettings();
             Assert.That(SettingsPreset.Apply(preset, AllIds, target), Is.True);

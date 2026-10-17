@@ -122,6 +122,16 @@ namespace VRCast.Rendering
 
         public bool IsModern => _settings.lightingSystem == LightingSystem.Modern;
 
+        public AntiAliasingMode AntiAliasingMode
+        {
+            get => _settings.antiAliasingMode;
+            set
+            {
+                _settings.antiAliasingMode = value;
+                _antiAliasing?.Apply();
+            }
+        }
+
         public AntiAliasingQuality AntiAliasing
         {
             get => _settings.antiAliasing;

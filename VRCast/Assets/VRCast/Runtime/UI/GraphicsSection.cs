@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using VRCast.Core;
 using VRCast.Rendering;
@@ -13,10 +14,19 @@ namespace VRCast.UI
         private const float MaxSunlight = 4f;
 
         private readonly RenderingController _rendering;
+        private readonly AppSettings _settings;
+        private readonly Action _reapply;
+        private readonly GraphicsPresetSection _presets;
 
-        public GraphicsSection(RenderingController rendering)
+        // 既定に戻すの二段階確認
+        private bool _confirmingReset;
+
+        public GraphicsSection(RenderingController rendering, AppSettings settings, Action reapply)
         {
             _rendering = rendering;
+            _settings = settings;
+            _reapply = reapply;
+            _presets = new GraphicsPresetSection(settings, reapply);
         }
 
         public void Draw()
@@ -36,6 +46,8 @@ namespace VRCast.UI
             }
 
             DrawOutline();
+            DrawResetDefaults();
+            _presets.Draw();
         }
 
         private void DrawBackground()
@@ -83,38 +95,83 @@ namespace VRCast.UI
         {
             GuiControls.BeginCard(Loc.T("Anti-aliasing", "アンチエイリアス", "안티앨리어싱", "抗锯齿", "抗鋸齒"));
             GuiControls.Hint(Loc.T(
-                "Smooths jagged edges. Higher settings use more GPU. Default is 4x.",
-                "ギザギザした輪郭をなめらかにします。高いほど GPU 負荷が増えます。既定は 4x です。",
-                "톱니 모양의 윤곽을 부드럽게 합니다. 높을수록 GPU 부하가 늘니다. 기본은 4x입니다.",
-                "平滑锯齿边缘。越高越耗 GPU。默认为 4x。",
-                "平滑鋸齒邊緣。越高越耗 GPU。預設為 4x。"));
+                "MSAA keeps edges sharp. FXAA is lighter but can blur. Supersampling renders the avatar at a higher resolution (uses more GPU).",
+                "MSAA は輪郭をシャープに保ちます。FXAA は軽いですがぼやけやすいです。高解像度描画は内部解像度を上げて描き（GPU 負荷増）、ジャギーを抑えます。",
+                "MSAA는 윤곽을 선명하게 유지합니다. FXAA는 가볍지만 흐려질 수 있습니다. 고해상도 렌더링은 내부 해상도를 올려 그립니다(GPU 부하 증가).",
+                "MSAA 保持边缘清晰。FXAA 更轻但可能发糊。高分辨率绘制以内部分辨率提高绘制（更耗 GPU）。",
+                "MSAA 保持邊緣清晰。FXAA 較輕但可能發糊。高解析度繪製以內部分辨率提高繪製（更耗 GPU）。"));
 
-            AntiAliasingQuality[] options =
+            AntiAliasingMode[] modes =
             {
-                AntiAliasingQuality.Off, AntiAliasingQuality.x2, AntiAliasingQuality.x4, AntiAliasingQuality.x8,
+                AntiAliasingMode.Off, AntiAliasingMode.Msaa, AntiAliasingMode.Fxaa, AntiAliasingMode.Supersample,
             };
-            string[] labels =
+            string[] modeLabels =
             {
                 Loc.T("Off", "オフ", "끄기", "关", "關"),
-                "2x", "4x", "8x",
+                "MSAA",
+                "FXAA",
+                Loc.T("Supersample", "高解像度描画", "고해상도 렌더", "高分辨率", "高解析度"),
             };
-            int index = 0;
-            for (int i = 0; i < options.Length; i++)
+            int modeIndex = IndexOf(modes, _rendering.AntiAliasingMode == AntiAliasingMode.Unspecified
+                ? AntiAliasingMode.Msaa
+                : _rendering.AntiAliasingMode);
+            int modeSelected = GuiControls.LabeledChoice(Loc.T("Method", "方式", "방식", "方式", "方式"), modeLabels,
+                modeIndex);
+            if (modeSelected != modeIndex)
             {
-                if (options[i] == _rendering.AntiAliasing)
+                _rendering.AntiAliasingMode = modes[modeSelected];
+                if (_rendering.AntiAliasingMode != AntiAliasingMode.Off
+                    && _rendering.AntiAliasing == AntiAliasingQuality.Off)
                 {
-                    index = i;
-                    break;
+                    _rendering.AntiAliasing = AntiAliasingQuality.x4;
                 }
             }
 
-            int selected = GuiControls.LabeledChoice(Loc.T("Quality", "品質", "품질", "质量", "品質"), labels, index);
-            if (selected != index)
+            AntiAliasingMode mode = _rendering.AntiAliasingMode;
+            if (mode == AntiAliasingMode.Msaa || mode == AntiAliasingMode.Supersample)
             {
-                _rendering.AntiAliasing = options[selected];
+                AntiAliasingQuality[] qualities =
+                {
+                    AntiAliasingQuality.x2, AntiAliasingQuality.x4, AntiAliasingQuality.x8,
+                };
+                string[] qualityLabels = mode == AntiAliasingMode.Supersample
+                    ? new[] { "125%", "150%", "200%" }
+                    : new[] { "2x", "4x", "8x" };
+                AntiAliasingQuality current = _rendering.AntiAliasing == AntiAliasingQuality.Off
+                    ? AntiAliasingQuality.x4
+                    : _rendering.AntiAliasing;
+                int qualityIndex = IndexOf(qualities, current);
+                int qualitySelected = GuiControls.LabeledChoice(
+                    Loc.T("Quality", "品質", "품질", "质量", "品質"), qualityLabels, qualityIndex);
+                if (qualitySelected != qualityIndex)
+                {
+                    _rendering.AntiAliasing = qualities[qualitySelected];
+                }
+            }
+            else if (mode == AntiAliasingMode.Fxaa)
+            {
+                GuiControls.Hint(Loc.T(
+                    "FXAA smooths the whole image and may soften fine outlines.",
+                    "FXAA は画面全体をならすため、細い輪郭がぼやけることがあります。",
+                    "FXAA는 화면 전체를 부드럽게 해서 가는 윤곽이 흐려질 수 있습니다.",
+                    "FXAA 会平滑整幅画面，细轮廓可能发糊。",
+                    "FXAA 會平滑整幅畫面，細輪廓可能發糊。"));
             }
 
             GuiControls.EndCard();
+        }
+
+        private static int IndexOf<T>(T[] values, T current)
+        {
+            for (int i = 0; i < values.Length; i++)
+            {
+                if (Equals(values[i], current))
+                {
+                    return i;
+                }
+            }
+
+            return 0;
         }
 
         private void DrawLightingSystem()
@@ -502,6 +559,50 @@ namespace VRCast.UI
                     "이 아바타에는 여기서 굵기를 바꿀 수 있는 윤곽선이 없습니다.",
                     "此虚拟形象没有可在此调整粗细的轮廓线。",
                     "此虛擬形象沒有可在此調整粗細的輪廓線。"));
+            }
+
+            GuiControls.EndCard();
+        }
+
+        private void DrawResetDefaults()
+        {
+            GuiControls.BeginCard(Loc.T("Reset", "リセット", "초기화", "重置", "重設"));
+            GuiControls.Hint(Loc.T(
+                "Restores graphics settings only (background, anti-aliasing, lighting, outline). Pose and other tabs are kept.",
+                "グラフィックの設定だけを既定に戻します（背景・アンチエイリアス・ライト・輪郭線）。ポーズなど他のタブはそのままです。",
+                "그래픽 설정만 기본값으로 돌립니다(배경·안티앨리어싱·조명·윤곽선). 포즈 등 다른 탭은 그대로입니다.",
+                "仅将图形设置恢复为默认（背景、抗锯齿、光照、轮廓线）。姿势等其他页保持不变。",
+                "僅將圖形設定恢復為預設（背景、抗鋸齒、光照、輪廓線）。姿勢等其他分頁保持不變。"));
+
+            if (_confirmingReset)
+            {
+                GuiControls.Warning(Loc.T(
+                    "Reset all graphics settings to defaults?",
+                    "グラフィックの設定をすべて既定に戻しますか？",
+                    "그래픽 설정을 모두 기본값으로 되돌릴까요?",
+                    "要将所有图形设置恢复为默认吗？",
+                    "要將所有圖形設定恢復為預設嗎？"));
+                GUILayout.BeginHorizontal();
+                if (GuiControls.DangerButton(Loc.T("Reset to defaults", "既定に戻す", "기본값으로", "恢复默认", "恢復預設"),
+                        GuiControls.Shrinkable))
+                {
+                    _settings.ResetGraphicsToDefaults();
+                    _rendering.ApplyAll();
+                    _reapply();
+                    _confirmingReset = false;
+                }
+
+                if (GUILayout.Button(Loc.T("Cancel", "やめる", "취소", "取消", "取消"), GuiControls.Shrinkable))
+                {
+                    _confirmingReset = false;
+                }
+
+                GUILayout.EndHorizontal();
+            }
+            else if (GUILayout.Button(Loc.T("Reset graphics to defaults...", "グラフィックを既定に戻す...",
+                         "그래픽 기본값으로...", "将图形恢复为默认...", "將圖形恢復為預設...")))
+            {
+                _confirmingReset = true;
             }
 
             GuiControls.EndCard();

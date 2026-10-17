@@ -147,7 +147,7 @@ namespace VRCast.UI
             _perfectSyncSection = new PerfectSyncSection(session, _perfectSyncEditor);
             _trackingSection = new TrackingSection(session, tracker, trackerProcess, skeleton, settings);
             _displaySection = new DisplaySection(orbit, rendering, settings);
-            _graphicsSection = new GraphicsSection(rendering);
+            _graphicsSection = new GraphicsSection(rendering, settings, ReapplySettings);
 
             // 背景透過のスクリーンショットは画面と同じカメラの視点で撮る（出力タブ・パネル下部のボタン・ショートカットキーで共用）
             var screenshot = new AvatarScreenshot(orbit.GetComponent<UnityEngine.Camera>(), settings);
