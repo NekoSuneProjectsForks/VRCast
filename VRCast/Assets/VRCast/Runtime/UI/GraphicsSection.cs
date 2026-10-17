@@ -37,6 +37,7 @@ namespace VRCast.UI
             DrawLightingSystem();
             if (_rendering.IsModern)
             {
+                DrawModernLightingPresets();
                 DrawModernLight();
                 DrawShadows();
                 DrawSsao();
@@ -295,6 +296,38 @@ namespace VRCast.UI
             GuiControls.EndCard();
         }
 
+        private void DrawModernLightingPresets()
+        {
+            GuiControls.BeginCard(Loc.T("Lighting presets", "ライティングプリセット", "라이팅 프리셋",
+                "光照预设", "光照預設"));
+            GuiControls.Hint(Loc.T(
+                "Quick looks for Modern lighting. Legacy-like ≈ 2.x, Default = soft illustrated, MMD = cool stage light.",
+                "最新ライティング用の見た目です。レガシー寄り ≈ 2.x、既定＝淡いイラスト調、MMD 風＝寒色のステージ光。",
+                "최신 라이팅용 모습입니다. 레거시 비슷 ≈ 2.x, 기본＝연한 일러스트 톤, MMD풍＝차가운 스테이지 광.",
+                "最新光照的快捷外观。旧版风 ≈ 2.x，默认＝淡插画风，MMD 风＝冷色舞台光。",
+                "最新光照的快捷外觀。舊版風 ≈ 2.x，預設＝淡插畫風，MMD 風＝冷色舞台光。"));
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button(Loc.T("Legacy-like", "レガシー寄り", "레거시 비슷", "旧版风", "舊版風"),
+                    GuiControls.Shrinkable))
+            {
+                _rendering.ApplyPreset(LightingPreset.LegacyLike);
+            }
+
+            if (GUILayout.Button(Loc.T("Default", "既定", "기본", "默认", "預設"), GuiControls.Shrinkable))
+            {
+                _rendering.ApplyPreset(LightingPreset.Default);
+            }
+
+            if (GUILayout.Button(Loc.T("MMD-style", "MMD 風", "MMD풍", "MMD 风", "MMD 風"), GuiControls.Shrinkable))
+            {
+                _rendering.ApplyPreset(LightingPreset.Mmd);
+            }
+
+            GUILayout.EndHorizontal();
+            GuiControls.EndCard();
+        }
+
         private void DrawModernLight()
         {
             GuiControls.BeginCard(Loc.T("Lights", "ライト", "조명", "灯光", "燈光"));
@@ -305,7 +338,6 @@ namespace VRCast.UI
                 "主光、辅光柔化阴影、轮廓光勾边。按虚拟形象分别记住。",
                 "主光、輔光柔化陰影、輪廓光勾邊。依虛擬形象分別記住。"));
             DrawBrightnessHint();
-            DrawModernPresets();
             DrawAvatarBrightness();
             DrawAmbientSlider();
 
@@ -573,32 +605,6 @@ namespace VRCast.UI
         private void DrawLegacyPresets()
         {
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(Loc.T("Sunny", "晴れ", "맑음", "晴天", "晴天"), GuiControls.Shrinkable))
-            {
-                _rendering.ApplyPreset(LightingPreset.Sunny);
-            }
-
-            if (GUILayout.Button(Loc.T("Soft", "やわらか", "부드럽게", "柔和", "柔和"), GuiControls.Shrinkable))
-            {
-                _rendering.ApplyPreset(LightingPreset.Soft);
-            }
-
-            if (GUILayout.Button(Loc.T("Default", "既定", "기본", "默认", "預設"), GuiControls.Shrinkable))
-            {
-                _rendering.ApplyPreset(LightingPreset.Default);
-            }
-
-            GUILayout.EndHorizontal();
-        }
-
-        private void DrawModernPresets()
-        {
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button(Loc.T("Studio", "スタジオ", "스튜디오", "工作室", "工作室"), GuiControls.Shrinkable))
-            {
-                _rendering.ApplyPreset(LightingPreset.Studio);
-            }
-
             if (GUILayout.Button(Loc.T("Sunny", "晴れ", "맑음", "晴天", "晴天"), GuiControls.Shrinkable))
             {
                 _rendering.ApplyPreset(LightingPreset.Sunny);

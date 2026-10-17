@@ -5,14 +5,18 @@ using VRCast.Core;
 namespace VRCast.Rendering
 {
     /// <summary>
-    /// ライティングのプリセット（太陽光の強さ・色温度・向きと環境光の組。最新では三点・IBL・映えも含む）。
+    /// ライティングのプリセット。
+    /// レガシー UI は Default / Sunny / Soft。最新 UI は Default / LegacyLike / Mmd。
     /// </summary>
     public enum LightingPreset
     {
-        Default,
-        Sunny,
-        Soft,
-        Studio,
+        Default = 0,
+        Sunny = 1,
+        Soft = 2,
+        /// <summary>最新向け。2.x 以前に近い見た目（旧 Studio 枠）。</summary>
+        LegacyLike = 3,
+        /// <summary>最新向け。MMD 風の寒色寄り。</summary>
+        Mmd = 4,
     }
 
     /// <summary>
@@ -624,45 +628,39 @@ namespace VRCast.Rendering
 
             switch (preset)
             {
-                case LightingPreset.Sunny:
+                case LightingPreset.LegacyLike:
+                    // 2.x 以前に近い太陽光・環境光。Fill / Rim / IBL は最小限
                     SetModernLighting(
-                        keyIntensity: 1.45f, keyTemp: 5200f, keyYaw: -48f, keyPitch: 26f,
-                        ambient: 0.12f, fillIntensity: 0.2f, fillTemp: 7200f, fillYaw: 140f, fillPitch: 10f,
-                        rimIntensity: 0.55f, rimTemp: 5800f, rimYaw: 155f, rimPitch: -8f,
-                        ibl: 0.45f, IblPreset.Warm, softShadows: true, shadowStrength: 0.75f, shadowSoftness: 0.4f,
-                        bloom: true, bloomIntensity: 0.05f, bloomThreshold: 1.65f, tonemap: true, tonemapStrength: 0.8f,
-                        reflection: 0.4f);
-                    SetModernScreenFx(ssao: 0.32f, ssaoRadius: 0.5f, screenRim: 0.18f, rimPower: 3f, rimHue: 0.12f,
-                        exposure: 0.05f, contrast: 1.08f, saturation: 1.1f, temperature: 0.2f, tint: 0f);
+                        keyIntensity: defaults.lightIntensity, keyTemp: defaults.lightTemperature,
+                        keyYaw: defaults.lightYaw, keyPitch: defaults.lightPitch,
+                        ambient: defaults.ambientIntensity,
+                        fillIntensity: 0.1f, fillTemp: 6500f, fillYaw: 140f, fillPitch: 15f,
+                        rimIntensity: 0.15f, rimTemp: 6500f, rimYaw: 160f, rimPitch: -5f,
+                        ibl: 0.15f, IblPreset.Studio, softShadows: true, shadowStrength: 0.55f, shadowSoftness: 0.45f,
+                        bloom: true, bloomIntensity: 0.02f, bloomThreshold: 1.85f, tonemap: true, tonemapStrength: 0.65f,
+                        reflection: 0.12f);
+                    _settings.avatarBrightness = 1f;
+                    SetModernScreenFx(ssao: 0.22f, ssaoRadius: 0.4f, screenRim: 0.05f, rimPower: 3.5f, rimHue: 0.55f,
+                        exposure: 0f, contrast: 1f, saturation: 1f, temperature: 0f, tint: 0f);
                     break;
-                case LightingPreset.Soft:
-                    // やわらかは塗りを優先するが、完全に正面にはせず鼻の陰は残す
+                case LightingPreset.Mmd:
+                    // MMD 風：上前方からの光＋寒色の包み込み（青み）
                     SetModernLighting(
-                        keyIntensity: 1.05f, keyTemp: 6200f, keyYaw: -35f, keyPitch: 24f,
-                        ambient: 0.25f, fillIntensity: 0.35f, fillTemp: 7600f, fillYaw: 150f, fillPitch: 12f,
-                        rimIntensity: 0.4f, rimTemp: 7000f, rimYaw: 170f, rimPitch: -2f,
-                        ibl: 0.7f, IblPreset.Studio, softShadows: true, shadowStrength: 0.5f, shadowSoftness: 0.75f,
-                        bloom: true, bloomIntensity: 0.03f, bloomThreshold: 1.75f, tonemap: true, tonemapStrength: 0.75f,
-                        reflection: 0.5f);
-                    SetModernScreenFx(ssao: 0.18f, ssaoRadius: 0.55f, screenRim: 0.12f, rimPower: 4f, rimHue: 0.55f,
-                        exposure: 0f, contrast: 1.0f, saturation: 1.02f, temperature: -0.05f, tint: 0f);
-                    break;
-                case LightingPreset.Studio:
-                    SetModernLighting(
-                        keyIntensity: 1.2f, keyTemp: 5400f, keyYaw: -58f, keyPitch: 24f,
-                        ambient: 0.1f, fillIntensity: 0.25f, fillTemp: 8000f, fillYaw: 152f, fillPitch: 6f,
-                        rimIntensity: 0.9f, rimTemp: 6200f, rimYaw: 170f, rimPitch: -14f,
-                        ibl: 0.55f, IblPreset.Studio, softShadows: true, shadowStrength: 0.65f, shadowSoftness: 0.5f,
-                        bloom: true, bloomIntensity: 0.04f, bloomThreshold: 1.7f, tonemap: true, tonemapStrength: 0.85f,
-                        reflection: 0.55f);
-                    SetModernScreenFx(ssao: 0.3f, ssaoRadius: 0.4f, screenRim: 0.28f, rimPower: 3.2f, rimHue: 0.58f,
-                        exposure: 0f, contrast: 1.06f, saturation: 1.05f, temperature: -0.1f, tint: 0.02f);
+                        keyIntensity: 1.25f, keyTemp: 7800f, keyYaw: -22f, keyPitch: 48f,
+                        ambient: 0.35f, fillIntensity: 0.35f, fillTemp: 8500f, fillYaw: 130f, fillPitch: 20f,
+                        rimIntensity: 0.45f, rimTemp: 9000f, rimYaw: 170f, rimPitch: -10f,
+                        ibl: 0.7f, IblPreset.Cool, softShadows: true, shadowStrength: 0.7f, shadowSoftness: 0.4f,
+                        bloom: true, bloomIntensity: 0.04f, bloomThreshold: 1.7f, tonemap: true, tonemapStrength: 0.75f,
+                        reflection: 0.35f);
+                    _settings.avatarBrightness = 1f;
+                    SetModernScreenFx(ssao: 0.4f, ssaoRadius: 0.42f, screenRim: 0.2f, rimPower: 3f, rimHue: 0.58f,
+                        exposure: 0f, contrast: 1.02f, saturation: 0.95f, temperature: -0.28f, tint: -0.02f);
                     break;
                 default:
-                    // 最新の「既定」＝淡いイラスト調（顔は明るくフラット、あご〜首と前髪の影ははっきり、彩度控えめ）
+                    // 既定＝淡いイラスト調（白飛びしないよう環境光・露出は控えめ）
                     SetModernLighting(
-                        keyIntensity: 1.1f, keyTemp: 6200f, keyYaw: -15f, keyPitch: 32f,
-                        ambient: 0.95f,
+                        keyIntensity: 1.05f, keyTemp: 6000f, keyYaw: -18f, keyPitch: 30f,
+                        ambient: 0.5f,
                         fillIntensity: defaults.fillIntensity, fillTemp: defaults.fillTemperature,
                         fillYaw: defaults.fillYaw, fillPitch: defaults.fillPitch,
                         rimIntensity: defaults.rimIntensity, rimTemp: defaults.rimTemperature,
@@ -671,7 +669,7 @@ namespace VRCast.Rendering
                         defaults.shadowStrength, defaults.shadowSoftness, defaults.bloomEnabled, defaults.bloomIntensity,
                         defaults.bloomThreshold, defaults.tonemapEnabled, defaults.tonemapStrength,
                         defaults.reflectionStrength);
-                    _settings.avatarBrightness = 1.05f;
+                    _settings.avatarBrightness = 1f;
                     SetModernScreenFx(
                         defaults.ssaoIntensity, defaults.ssaoRadius, defaults.screenRimIntensity,
                         defaults.screenRimPower, defaults.screenRimHue, defaults.exposure, defaults.contrast,

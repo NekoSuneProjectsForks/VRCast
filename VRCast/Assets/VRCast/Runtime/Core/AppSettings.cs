@@ -238,44 +238,44 @@ namespace VRCast.Core
         public float lightTemperature = 6000f;
         public float ambientIntensity = 1.2f;
 
-        // 最新ライティングの Fill（影なし）。顔をやわらかくしつつあご〜首の影は残す
-        public float fillIntensity = 0.4f;
+        // 最新ライティングの Fill（影なし）。白飛びしないよう控えめ
+        public float fillIntensity = 0.28f;
         public float fillYaw = 145f;
         public float fillPitch = 12f;
-        public float fillTemperature = 7600f;
+        public float fillTemperature = 7400f;
 
-        // 最新ライティングの Rim（影なし）。マット寄りの既定（スタジオ等で強くする）
-        public float rimIntensity = 0.18f;
+        // 最新ライティングの Rim（影なし）。マット寄りの既定
+        public float rimIntensity = 0.15f;
         public float rimYaw = 165f;
         public float rimPitch = -8f;
         public float rimTemperature = 6500f;
 
-        // スタジオ環境光（空は描かない）。やわらかい包み込み程度
-        public float iblIntensity = 0.4f;
+        // スタジオ環境光（空は描かない）
+        public float iblIntensity = 0.3f;
         public IblPreset iblPreset = IblPreset.Studio;
         // 反射は弱め（イラスト調のマット感）
         public float reflectionStrength = 0.15f;
         public bool softShadows = true;
         // あご〜首・前髪の影がはっきり見える濃さ。やわらかさはセル寄りに控えめ
-        public float shadowStrength = 0.72f;
-        public float shadowSoftness = 0.38f;
+        public float shadowStrength = 0.7f;
+        public float shadowSoftness = 0.4f;
         public bool bloomEnabled = true;
         public float bloomIntensity = 0.02f;
         public float bloomThreshold = 1.85f;
         public bool tonemapEnabled = true;
-        public float tonemapStrength = 0.55f;
+        public float tonemapStrength = 0.6f;
 
-        // 色調補正（最新のみ）。明るめ・低コントラスト・やや低彩度＝淡いイラスト調
+        // 色調補正（最新のみ）。露出は上げすぎない（白み防止）・やや低彩度
         public bool colorGradeEnabled = true;
-        public float exposure = 0.08f;
-        public float contrast = 0.94f;
-        public float saturation = 0.88f;
-        public float colorTemperature = -0.04f; // -1 暖色〜 +1 寒色（やや寒色）
-        public float colorTint = 0.03f; // -1 緑〜 +1 マゼンタ
+        public float exposure;
+        public float contrast = 0.96f;
+        public float saturation = 0.9f;
+        public float colorTemperature = -0.02f; // -1 暖色〜 +1 寒色
+        public float colorTint = 0.02f; // -1 緑〜 +1 マゼンタ
 
         // SSAO＝くぼみの影。首元・あご下が分かる強さ
         public bool ssaoEnabled = true;
-        public float ssaoIntensity = 0.48f;
+        public float ssaoIntensity = 0.45f;
         public float ssaoRadius = 0.38f;
 
         // 画面空間リム。マット寄りの既定ではほぼ足さない
