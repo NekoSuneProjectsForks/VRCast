@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     Build the setup EXE (VRCastSetup.exe) for BOOTH / Jinxxy.
-    Tools/Package/package.ps1 copies it to dist/VRCast-<version>-win64-setup.exe.
+    Tools/Package/package.ps1 copies it to dist/VRCast-setup.exe.
     With no zip appended, the EXE downloads the latest release from GitHub when run.
     Needs Visual Studio 2022 (its C# compiler) and .NET Framework 4.8 (included in Windows 10 / 11).
 .PARAMETER Version

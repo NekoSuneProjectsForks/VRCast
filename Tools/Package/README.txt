@@ -7,7 +7,7 @@ VRChat のアバターを単体で表示し、OBS などの配信ソフトや Di
 
 ■ はじめかた
 1. このフォルダの VRCast.exe を起動します（フォルダごと好きな場所に置けます）。
-   セットアップ版（VRCast-(バージョン)-win64-setup.exe）を入手した場合は、それを起動して展開先を選ぶと、
+   セットアップ版（VRCast-setup.exe）を入手した場合は、それを起動して展開先を選ぶと、
    GitHub から最新版を取得して、zip を展開したときと同じ VRCast フォルダと VRCast-Converter フォルダができます。
 2. 左のパネルの「はじめに」タブが、アバターの読み込みから OBS に映すまでを案内します。
 3. アバターは Unity で .vrcaster ファイルに書き出してから、VRCast のウィンドウにドラッグ＆ドロップします。
@@ -63,7 +63,7 @@ VRCast shows a VRChat avatar on its own and sends it to streaming software such 
 
 - Getting started
 1. Run VRCast.exe in this folder (you can put the folder anywhere).
-   If you got the setup version (VRCast-(version)-win64-setup.exe), run it and choose where to put VRCast;
+   If you got the setup version (VRCast-setup.exe), run it and choose where to put VRCast;
    it downloads the latest build from GitHub and creates the same VRCast and VRCast-Converter folders as the zip.
 2. The "Start" tab in the left panel guides you from loading your avatar to showing it in OBS.
 3. Export your avatar to a .vrcaster file in Unity, then drag and drop it onto the VRCast window.

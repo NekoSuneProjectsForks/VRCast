@@ -9,8 +9,8 @@
       6. Copy the updater into the existing Windows build
       7. Pack the exporter into dist/VRCast-Converter-<version>.unitypackage
       8. Package dist/VRCast-<version>-win64.zip (GitHub), dist/version.json (auto-update),
-         dist/VRCast-<version>-win64-setup.exe (Jinxxy; downloads from GitHub), and
-         dist/VRCast-<version>-booth.zip (BOOTH; README + bat + setup EXE)
+         dist/VRCast-setup.exe (Jinxxy; downloads from GitHub), and
+         dist/VRCast-booth.zip (BOOTH; README + bat + setup EXE)
     Build the app in Unity first (VRCast > Build > Windows x64).
 .PARAMETER PythonVersion
     Python version used to build the tracker (MediaPipe supports 3.9 - 3.12).

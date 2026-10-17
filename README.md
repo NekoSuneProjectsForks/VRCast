@@ -884,12 +884,12 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.
 - 中身: `VRCast\` フォルダにビルド一式 + `LICENSE.txt` / `NOTICE.txt` / `CHANGELOG.txt` / `README.txt`（利用者向けの日英の説明、`Tools/Package/README.txt`）。
   本体と取り違えないよう、別の `VRCast-Converter\` フォルダに書き出しツール `VRCast-Converter-<package.json の version>.unitypackage` と、
   「アバターのプロジェクトにインポートする」ことをファイル名で伝える説明（`Tools/Package/Converter/` の中身をそのまま複製）を入れる。
-- セットアップ EXE: `dist\VRCast-<バージョン>-win64-setup.exe`（中身は入れない軽い EXE。実行時に GitHub から最新の本体 zip を取得して展開）。
+- セットアップ EXE: `dist\VRCast-setup.exe`（版なしの固定名。中身は入れない軽い EXE。実行時に GitHub から最新の本体 zip を取得して展開）。
   Jinxxy にはこの EXE だけを置く。`Tools/Setup`（C# / .NET Framework 4.8。Visual Studio 2022 付属の C# コンパイラーでビルド。無ければ警告を出して EXE だけ作らない）。
   取得先はアプリの自動更新と同じ `version.json`（無ければ GitHub Releases の latest）。選んだフォルダ（既定は EXE と同じ場所に作る `VRCast-<バージョン>-win64`）へ
   `VRCast\` と `VRCast-Converter\` を展開する。既に VRCast が入っていればアップデーターに差し替えを任せる（起動はしない）。
   画面は VRCast 本体と同じ 5 言語。管理者権限は求めない。
-- BOOTH 用 zip: `dist\VRCast-<バージョン>-booth.zip`（`README.txt`・`Download-VRCast.bat`・上記セットアップ EXE）。本体 zip は入れない。
+- BOOTH 用 zip: `dist\VRCast-booth.zip`（版なしの固定名。`README.txt`・`Download-VRCast.bat`・`VRCast-setup.exe`）。本体 zip は入れない。
   バッチは GitHub から最新の `VRCast-*-win64.zip` を同じフォルダへ保存するだけ（展開は利用者が行う）。
 - 書き出しツールの unitypackage だけを作る場合は `Tools\Package\unitypackage.bat`（Unity 不要、出力 `dist\VRCast-Converter-<バージョン>.unitypackage`）。
   `Packages/com.vrcast.converter` を `Assets/VRCast/Converter/` に入るよう詰める。GUID はリポジトリの `.meta` を使うため版をまたいで同じ

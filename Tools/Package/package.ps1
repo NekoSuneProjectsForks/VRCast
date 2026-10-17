@@ -5,10 +5,11 @@
     The zip contains VRCast/ (the app) and VRCast-Converter/ (the exporter for the avatar project).
     Also writes dist/version.json (with the zip's SHA-256 and size for auto-update).
     Upload the zip to the GitHub release v<version> with the same file name BEFORE publishing version.json.
-    Also writes:
-      - dist/VRCast-<version>-win64-setup.exe (small installer that downloads the latest zip from GitHub; for Jinxxy)
-      - dist/VRCast-<version>-booth.zip (README + Download-VRCast.bat + the setup EXE; for BOOTH)
+    Also writes (fixed names, no version — overwrite on each release):
+      - dist/VRCast-setup.exe (small installer that downloads the latest zip from GitHub; for Jinxxy)
+      - dist/VRCast-booth.zip (README + Download-VRCast.bat + the setup EXE; for BOOTH)
     Skipped with a warning when Visual Studio is missing (setup / booth zip).
+    The GitHub app zip keeps the version in its name (auto-update URL).
 .PARAMETER Version
     Version in the zip name. Defaults to bundleVersion in ProjectSettings (Player > Version).
 .PARAMETER BuildPath
@@ -143,9 +144,10 @@ try {
     Write-Host "SHA-256: $sha256"
     Write-Host "Wrote $json (publish it to the webpage branch only after uploading $name.zip to the release v$Version)"
 
-    # Jinxxy / BOOTH 向けのセットアップ EXE（中身は入れず、実行時に GitHub から最新 zip を取る。軽い）
-    $setup = Join-Path $dist "$name-setup.exe"
+    # Jinxxy / BOOTH 向け（ファイル名に版を入れない。毎回同じ名前で差し替える）
+    $setup = Join-Path $dist "VRCast-setup.exe"
     if (Test-Path $setup) { Remove-Item $setup -Force }
+    Get-ChildItem $dist -Filter "VRCast-*-win64-setup.exe" -ErrorAction SilentlyContinue | Remove-Item -Force
     $stub = Join-Path $work "VRCastSetup.exe"
     try {
         & (Join-Path $repository "Tools\Setup\build.ps1") -Version $Version -OutputPath $stub
@@ -155,21 +157,21 @@ try {
     }
     catch {
         # 展開用の EXE が作れなくても GitHub 用 zip の配布はできるので続行する（Visual Studio が無い等）
-        Write-Warning "Skipped $name-setup.exe: $($_.Exception.Message)"
+        Write-Warning "Skipped VRCast-setup.exe: $($_.Exception.Message)"
         $setup = $null
     }
 
     # BOOTH 向けの軽い zip（README + 最新版を取るバッチ + セットアップ EXE）。本体 zip は GitHub のみ
     if ($setup) {
-        $boothName = "VRCast-$Version-booth"
-        $boothZip = Join-Path $dist "$boothName.zip"
+        $boothZip = Join-Path $dist "VRCast-booth.zip"
         $boothDir = Join-Path $work "booth"
         if (Test-Path $boothDir) { Remove-Item $boothDir -Recurse -Force }
         New-Item -ItemType Directory -Force $boothDir | Out-Null
         Copy-Item (Join-Path $PSScriptRoot "Booth\README.txt") (Join-Path $boothDir "README.txt")
         Copy-Item (Join-Path $PSScriptRoot "Booth\Download-VRCast.bat") (Join-Path $boothDir "Download-VRCast.bat")
-        Copy-Item $setup (Join-Path $boothDir "$name-setup.exe")
+        Copy-Item $setup (Join-Path $boothDir "VRCast-setup.exe")
         if (Test-Path $boothZip) { Remove-Item $boothZip -Force }
+        Get-ChildItem $dist -Filter "VRCast-*-booth.zip" -ErrorAction SilentlyContinue | Remove-Item -Force
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         [System.IO.Compression.ZipFile]::CreateFromDirectory($boothDir, $boothZip,
             [System.IO.Compression.CompressionLevel]::Optimal, $false)

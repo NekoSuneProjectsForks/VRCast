@@ -7,7 +7,7 @@ VRCast（BOOTH）
 セットアップ時に GitHub から最新版をダウンロードします（インターネット接続が必要です）。
 
 ■ 使いかた（おすすめ）
-1. VRCast-*-win64-setup.exe を起動する
+1. VRCast-setup.exe を起動する
 2. 展開先のフォルダーを選んで「展開する」を押す
 3. 終わったら VRCast フォルダーの VRCast.exe で起動する
    アバターの書き出しツールは VRCast-Converter フォルダーにあります
@@ -27,7 +27,7 @@ This zip does not include the full app.
 The latest build is downloaded from GitHub when you set up (internet required).
 
 - Recommended
-1. Run VRCast-*-win64-setup.exe
+1. Run VRCast-setup.exe
 2. Choose a folder and click Extract
 3. Start with VRCast\VRCast.exe
    The avatar exporter is in the VRCast-Converter folder
@@ -47,7 +47,7 @@ You do not need a new BOOTH zip every release.
 설치 시 GitHub에서 최신판을 다운로드합니다(인터넷 연결 필요).
 
 ■ 사용 방법(권장)
-1. VRCast-*-win64-setup.exe를 실행합니다
+1. VRCast-setup.exe를 실행합니다
 2. 압축을 풀 폴더를 선택한 뒤 「압축 해제」를 누릅니다
 3. 끝나면 VRCast 폴더의 VRCast.exe로 시작합니다
    아바타 내보내기 도구는 VRCast-Converter 폴더에 있습니다
@@ -67,7 +67,7 @@ BOOTH zip을 매번 다시 받을 필요는 없습니다.
 设置时会从 GitHub 下载最新版（需要互联网连接）。
 
 ■ 推荐用法
-1. 运行 VRCast-*-win64-setup.exe
+1. 运行 VRCast-setup.exe
 2. 选择解压文件夹并点击「解压」
 3. 完成后通过 VRCast 文件夹中的 VRCast.exe 启动
    虚拟形象导出工具在 VRCast-Converter 文件夹中
@@ -87,7 +87,7 @@ BOOTH zip을 매번 다시 받을 필요는 없습니다.
 設定時會從 GitHub 下載最新版（需要網際網路連線）。
 
 ■ 建議用法
-1. 執行 VRCast-*-win64-setup.exe
+1. 執行 VRCast-setup.exe
 2. 選擇解壓資料夾並按「解壓」
 3. 完成後透過 VRCast 資料夾中的 VRCast.exe 啟動
    虛擬形象匯出工具在 VRCast-Converter 資料夾中
