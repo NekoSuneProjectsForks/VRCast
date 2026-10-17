@@ -849,16 +849,18 @@ namespace VRCast.Tests
                     new OscBlendShapeParameterMapping { blendShapeName = " jawOpen ", parameterName = " JawOpen " },
                     new OscBlendShapeParameterMapping { blendShapeName = "jawOpen", parameterName = "Duplicate" },
                     new OscBlendShapeParameterMapping { blendShapeName = "eyeBlinkLeft", parameterName = "Bad/Path" },
+                    new OscBlendShapeParameterMapping { blendShapeName = "eyeBlinkRight", parameterName = "JawOpen" },
                     null,
                 },
             };
 
             settings.Sanitize();
 
-            Assert.That(settings.oscBlendShapeMappings.Count, Is.EqualTo(2));
+            Assert.That(settings.oscBlendShapeMappings.Count, Is.EqualTo(3));
             Assert.That(settings.oscBlendShapeMappings[0].blendShapeName, Is.EqualTo("jawOpen"));
             Assert.That(settings.oscBlendShapeMappings[0].parameterName, Is.EqualTo("JawOpen"));
             Assert.That(settings.oscBlendShapeMappings[1].parameterName, Is.Empty);
+            Assert.That(settings.oscBlendShapeMappings[2].parameterName, Is.Empty, "duplicate destination should be disabled");
         }
     }
 }
