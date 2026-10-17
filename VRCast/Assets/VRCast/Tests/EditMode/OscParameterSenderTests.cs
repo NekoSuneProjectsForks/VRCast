@@ -50,6 +50,30 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void CreateFloat_UsesOscBigEndianFloatPayload()
+        {
+            byte[] packet = OscParameterPacket.CreateFloat("/x", 1.0f);
+
+            Assert.That(packet.Length % 4, Is.EqualTo(0));
+            Assert.That(packet[packet.Length - 4], Is.EqualTo(0x3f));
+            Assert.That(packet[packet.Length - 3], Is.EqualTo(0x80));
+            Assert.That(packet[packet.Length - 2], Is.EqualTo(0x00));
+            Assert.That(packet[packet.Length - 1], Is.EqualTo(0x00));
+        }
+
+        [Test]
+        public void CreateBool_UsesOscTrueFalseTypeTagsWithoutPayload()
+        {
+            byte[] truePacket = OscParameterPacket.CreateBool("/x", true);
+            byte[] falsePacket = OscParameterPacket.CreateBool("/x", false);
+
+            Assert.That(System.Text.Encoding.UTF8.GetString(truePacket), Does.Contain(",T"));
+            Assert.That(System.Text.Encoding.UTF8.GetString(falsePacket), Does.Contain(",F"));
+            Assert.That(truePacket.Length, Is.EqualTo(falsePacket.Length));
+            Assert.That(truePacket.Length % 4, Is.EqualTo(0));
+        }
+
+        [Test]
         public void CreateFloat_EncodesVRChatAvatarParameterMessage()
         {
             byte[] packet = OscParameterPacket.CreateFloat("/avatar/parameters/Blink", 0.75f);
