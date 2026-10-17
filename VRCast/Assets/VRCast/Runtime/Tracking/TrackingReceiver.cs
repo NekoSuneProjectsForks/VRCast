@@ -163,6 +163,26 @@ namespace VRCast.Tracking
             {
                 SendMappedFloat(_settings.oscParameterSmile, frame.Expression.Smile);
             }
+
+            // ARKit-compatible providers expose the original blendshape vector; map selected channels directly.
+            float[] blendShapes = frame.BlendShapes;
+            if (blendShapes != null)
+            {
+                SendBlendShape(_settings.oscParameterEyeBlinkLeft, blendShapes, ArKitFace.EyeBlinkLeft);
+                SendBlendShape(_settings.oscParameterEyeBlinkRight, blendShapes, ArKitFace.EyeBlinkRight);
+                SendBlendShape(_settings.oscParameterJawOpen, blendShapes, ArKitFace.JawOpen);
+                SendBlendShape(_settings.oscParameterMouthSmileLeft, blendShapes, ArKitFace.MouthSmileLeft);
+                SendBlendShape(_settings.oscParameterMouthSmileRight, blendShapes, ArKitFace.MouthSmileRight);
+                SendBlendShape(_settings.oscParameterBrowInnerUp, blendShapes, ArKitFace.BrowInnerUp);
+            }
+        }
+
+        private void SendBlendShape(string parameterName, float[] blendShapes, int index)
+        {
+            if (index >= 0 && index < blendShapes.Length)
+            {
+                SendMappedFloat(parameterName, blendShapes[index]);
+            }
         }
 
         private void SendMappedFloat(string parameterName, float value)
