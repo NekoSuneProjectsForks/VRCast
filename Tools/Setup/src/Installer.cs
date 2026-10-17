@@ -76,13 +76,9 @@ namespace VRCast.Setup
         }
 
         /// <summary>
-        /// 既定の展開先のフォルダ名。配布 zip（Tools/Package/package.ps1 の VRCast-x.y.z-win64.zip）を
-        /// エクスプローラーで展開したときにできるフォルダと同じ名前にする。
+        /// 既定の展開先のフォルダ名（版はアプリ内で分かるので付けない）。
         /// </summary>
-        public static string DefaultFolderName(string version)
-        {
-            return $"VRCast-{version}-win64";
-        }
+        public const string DefaultFolderName = "VRCast";
 
         public static string AppFolder(string parent)
         {

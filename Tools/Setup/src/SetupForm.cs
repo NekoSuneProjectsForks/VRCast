@@ -64,10 +64,10 @@ namespace VRCast.Setup
                 MaximumSize = new Size(width, 0),
             });
 
-            // 展開先（既定は EXE の場所に作る VRCast-x.y.z-win64 フォルダ）と参照ボタン
+            // 展開先（既定は EXE の場所に作る VRCast フォルダ。版はアプリ内で確認する）
             _folder = new TextBox
             {
-                Text = Path.Combine(DefaultFolder(), Installer.DefaultFolderName(version)),
+                Text = Path.Combine(DefaultFolder(), Installer.DefaultFolderName),
                 Anchor = AnchorStyles.Left | AnchorStyles.Right,
             };
             _browse = new Button { Text = Texts.Browse, AutoSize = true };
@@ -148,7 +148,7 @@ namespace VRCast.Setup
 
         private void OnBrowse(object sender, EventArgs e)
         {
-            // まだ無いフォルダ（既定の VRCast-x.y.z-win64）は選択できないので、1 つ上を開く
+            // まだ無いフォルダ（既定の VRCast）は選択できないので、1 つ上を開く
             string current = _folder.Text.Trim();
             string start = Directory.Exists(current) ? current : Path.GetDirectoryName(current) ?? string.Empty;
             using (var dialog = new FolderBrowserDialog
