@@ -227,6 +227,11 @@ namespace VRCast.Tracking
             string name = parameterName.Trim();
             // Multiple channels targeting the same VRChat parameter would overwrite each other in one update.
             // Keep the first configured source for this update instead of sending conflicting values.
+            if (float.IsNaN(value) || float.IsInfinity(value) || name.IndexOf('/') >= 0)
+            {
+                return;
+            }
+
             if (_oscParametersSentThisFrame.Add(name))
             {
                 _oscOutput.SendFloat(name, Mathf.Clamp01(value));
