@@ -870,7 +870,20 @@ namespace VRCast.Core
         {
             string name = (parameterName ?? string.Empty).Trim();
             // OSC parameter names are one path segment; invalid names disable this optional mapping.
-            return string.IsNullOrEmpty(name) || name.IndexOf('/') >= 0 ? string.Empty : name;
+            if (string.IsNullOrEmpty(name))
+            {
+                return string.Empty;
+            }
+
+            foreach (char c in name)
+            {
+                if (c == '/' || char.IsControl(c))
+                {
+                    return string.Empty;
+                }
+            }
+
+            return name;
         }
 
         private static string NormalizeUniqueOscParameterName(string parameterName, HashSet<string> usedParameterNames)
