@@ -212,38 +212,42 @@ namespace VRCast.Core
         public AntiAliasingMode antiAliasingMode = AntiAliasingMode.Msaa;
         public AntiAliasingQuality antiAliasing = AntiAliasingQuality.x4;
 
+        // 高解像度描画（Off = ウィンドウと同じ。AA と併用可。x2=125% / x4=150% / x8=200%）
+        public AntiAliasingQuality supersample = AntiAliasingQuality.Off;
+
         // 太陽光 / Key（ディレクショナルライト）。向きはカメラ正面からの角度（0 = 正面から当たる）
-        public float lightIntensity = 1.2f;
-        public float lightYaw = -30f;
-        public float lightPitch = 40f;
+        // 最新の既定はキーを少し強め・横寄りにして立体感を出し、平坦な環境光は弱めて IBL／Fill に任せる
+        public float lightIntensity = 1.45f;
+        public float lightYaw = -35f;
+        public float lightPitch = 45f;
 
         // 太陽光の色温度（6500K でほぼ白、低いほど暖色）と環境光の明るさ
-        public float lightTemperature = 6000f;
-        public float ambientIntensity = 1.2f;
+        public float lightTemperature = 5600f;
+        public float ambientIntensity = 0.4f;
 
-        // 最新ライティングの Fill（影なし）
-        public float fillIntensity = 0.45f;
-        public float fillYaw = 140f;
-        public float fillPitch = 20f;
-        public float fillTemperature = 7500f;
+        // 最新ライティングの Fill（影なし）。影側の白が灰色にくすまないよう少し強め
+        public float fillIntensity = 0.65f;
+        public float fillYaw = 145f;
+        public float fillPitch = 18f;
+        public float fillTemperature = 7800f;
 
-        // 最新ライティングの Rim（影なし）
-        public float rimIntensity = 0.65f;
-        public float rimYaw = 160f;
-        public float rimPitch = -5f;
-        public float rimTemperature = 6500f;
+        // 最新ライティングの Rim（影なし）。透過背景でも輪郭が沈まないよう少し強め
+        public float rimIntensity = 0.8f;
+        public float rimYaw = 165f;
+        public float rimPitch = -10f;
+        public float rimTemperature = 6200f;
 
         // スタジオ環境光（空は描かない）と柔らかい影・映え
-        public float iblIntensity = 0.85f;
+        public float iblIntensity = 1.05f;
         public IblPreset iblPreset = IblPreset.Studio;
         public bool softShadows = true;
-        public float shadowStrength = 0.75f;
-        public float shadowSoftness = 0.55f;
+        public float shadowStrength = 0.55f;
+        public float shadowSoftness = 0.7f;
         public bool bloomEnabled = true;
-        public float bloomIntensity = 0.12f;
-        public float bloomThreshold = 1.25f;
+        public float bloomIntensity = 0.1f;
+        public float bloomThreshold = 1.35f;
         public bool tonemapEnabled = true;
-        public float tonemapStrength = 0.85f;
+        public float tonemapStrength = 0.75f;
 
         // アバターの明るさ（1 = マテリアルのまま。シェーダーの明るさ上限を超えて明るくする）
         public float avatarBrightness = 1f;
@@ -951,6 +955,7 @@ namespace VRCast.Core
             lightingSystem = defaults.lightingSystem;
             antiAliasingMode = defaults.antiAliasingMode;
             antiAliasing = defaults.antiAliasing;
+            supersample = defaults.supersample;
             lightIntensity = defaults.lightIntensity;
             lightYaw = defaults.lightYaw;
             lightPitch = defaults.lightPitch;
@@ -1084,6 +1089,14 @@ namespace VRCast.Core
                 lightingSystem = LightingSystem.Legacy;
             }
 
+            // 旧「方式 = 高解像度描画」は MSAA + 高解像度へ移す
+            if (antiAliasingMode == AntiAliasingMode.Supersample)
+            {
+                supersample = antiAliasing == AntiAliasingQuality.Off ? AntiAliasingQuality.x4 : antiAliasing;
+                antiAliasingMode = AntiAliasingMode.Msaa;
+                antiAliasing = AntiAliasingQuality.x4;
+            }
+
             // 未知／未設定のアンチエイリアス方式は MSAA へ（古い設定は品質だけあり方式が 0）
             if (!Enum.IsDefined(typeof(AntiAliasingMode), antiAliasingMode)
                 || antiAliasingMode == AntiAliasingMode.Unspecified)
@@ -1093,14 +1106,20 @@ namespace VRCast.Core
                     : AntiAliasingMode.Msaa;
             }
 
-            // 未知の強さは 4x へ（オフ方式以外で Off になっていたら 4x）
+            // 未知の強さは 4x へ（MSAA で Off になっていたら 4x）
             if (!Enum.IsDefined(typeof(AntiAliasingQuality), antiAliasing))
             {
                 antiAliasing = AntiAliasingQuality.x4;
             }
-            else if (antiAliasingMode != AntiAliasingMode.Off && antiAliasing == AntiAliasingQuality.Off)
+            else if (antiAliasingMode == AntiAliasingMode.Msaa && antiAliasing == AntiAliasingQuality.Off)
             {
                 antiAliasing = AntiAliasingQuality.x4;
+            }
+
+            // 高解像度描画の未知値はオフへ
+            if (!Enum.IsDefined(typeof(AntiAliasingQuality), supersample))
+            {
+                supersample = AntiAliasingQuality.Off;
             }
 
             // 未知の IBL プリセットはスタジオへ

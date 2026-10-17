@@ -370,16 +370,17 @@ namespace VRCast.UI
 
         private void BuildButton()
         {
-            // 角丸ボタン（選択中 = アクセント色、トグルボタンとしても使う）
+            // 角丸ボタン（選択中 = アクセント色、トグルボタンとしても使う）。
+            // 日本語・英語の下側の字形が行の高さよりはみ出すため、上下余白を広めにして切らない
             Skin.button = new GUIStyle
             {
                 font = null,
                 fontSize = 13,
                 alignment = TextAnchor.MiddleCenter,
                 border = Offset(ControlRadius + 1),
-                padding = new RectOffset(10, 10, 6, 6),
+                padding = new RectOffset(10, 10, 8, 8),
                 margin = new RectOffset(4, 4, 3, 3),
-                clipping = TextClipping.Clip,
+                clipping = TextClipping.Overflow,
             };
             SetStates(Skin.button, Rounded(Control, ControlRadius), Rounded(ControlHover, ControlRadius),
                 Rounded(ControlActive, ControlRadius), TextColor);
@@ -406,8 +407,12 @@ namespace VRCast.UI
             FoldSpacer = new GUIStyle(FoldButton);
             SetStates(FoldSpacer, null, null, null, TextColor);
 
-            // 赤いボタン（全設定のリセット等）
-            Danger = new GUIStyle(Skin.button) { fontStyle = FontStyle.Bold };
+            // 赤いボタン（全設定のリセット等）。太字の日本語はさらに背が高くなるので下余白を足す
+            Danger = new GUIStyle(Skin.button)
+            {
+                fontStyle = FontStyle.Bold,
+                padding = new RectOffset(10, 10, 8, 9),
+            };
             SetStates(Danger, Rounded(DangerColor, ControlRadius), Rounded(DangerHover, ControlRadius),
                 Rounded(DangerActive, ControlRadius), OnAccent);
         }

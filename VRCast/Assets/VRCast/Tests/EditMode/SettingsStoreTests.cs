@@ -449,6 +449,20 @@ namespace VRCast.Tests
             Assert.That(new AppSettings().lightingSystem, Is.EqualTo(LightingSystem.Legacy));
             Assert.That(new AppSettings().antiAliasing, Is.EqualTo(AntiAliasingQuality.x4));
             Assert.That(new AppSettings().antiAliasingMode, Is.EqualTo(AntiAliasingMode.Msaa));
+            Assert.That(new AppSettings().supersample, Is.EqualTo(AntiAliasingQuality.Off));
+        }
+
+        [Test]
+        public void AntiAliasing_Sanitize_OldSupersampleMode_MigratesToMsaaPlusScale()
+        {
+            var settings = new AppSettings
+            {
+                antiAliasingMode = AntiAliasingMode.Supersample, antiAliasing = AntiAliasingQuality.x8,
+            };
+            settings.Sanitize();
+            Assert.That(settings.antiAliasingMode, Is.EqualTo(AntiAliasingMode.Msaa));
+            Assert.That(settings.antiAliasing, Is.EqualTo(AntiAliasingQuality.x4));
+            Assert.That(settings.supersample, Is.EqualTo(AntiAliasingQuality.x8));
         }
 
         [Test]

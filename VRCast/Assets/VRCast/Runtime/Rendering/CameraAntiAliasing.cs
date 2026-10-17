@@ -4,7 +4,7 @@ using VRCast.Core;
 namespace VRCast.Rendering
 {
     /// <summary>
-    /// アンチエイリアス（MSAA / FXAA / 高解像度描画）。方式ごとに処理を分け、MSAA 時に FXAA でぼかさない。
+    /// アンチエイリアス（MSAA / FXAA）と高解像度描画。両者は独立して併用できる。
     /// 仮想カメラ等の OnRenderImage でも効くよう、必要なら一時 RT へ描いてから渡す。
     /// </summary>
     [DefaultExecutionOrder(-150)]
@@ -33,10 +33,11 @@ namespace VRCast.Rendering
             }
 
             AntiAliasingMode mode = EffectiveMode();
-            bool active = mode != AntiAliasingMode.Off && mode != AntiAliasingMode.Unspecified;
-            enabled = active;
+            float scale = RenderScaleOf(_settings);
+            bool needsRt = mode == AntiAliasingMode.Msaa || scale > 1.001f;
+            bool needsFxaa = mode == AntiAliasingMode.Fxaa;
+            enabled = needsRt || needsFxaa;
 
-            // バックバッファ側の MSAA（一時 RT を使うときは RT 側で掛ける）
             if (mode == AntiAliasingMode.Msaa)
             {
                 QualitySettings.antiAliasing = MsaaSamples();
@@ -51,11 +52,11 @@ namespace VRCast.Rendering
                 _camera.allowMSAA = mode == AntiAliasingMode.Msaa;
             }
 
-            if (!active)
+            if (!enabled)
             {
                 ReleaseSceneRt();
             }
-            else if (mode == AntiAliasingMode.Fxaa)
+            else if (needsFxaa)
             {
                 EnsureMaterial();
             }
@@ -90,13 +91,14 @@ namespace VRCast.Rendering
             }
 
             AntiAliasingMode mode = EffectiveMode();
-            if (mode != AntiAliasingMode.Msaa && mode != AntiAliasingMode.Supersample)
+            float scale = RenderScaleOf(_settings);
+            bool needsRt = mode == AntiAliasingMode.Msaa || scale > 1.001f;
+            if (!needsRt)
             {
                 _camera.targetTexture = null;
                 return;
             }
 
-            float scale = mode == AntiAliasingMode.Supersample ? SupersampleScale() : 1f;
             int samples = mode == AntiAliasingMode.Msaa ? MsaaSamples() : 1;
             int width = Mathf.Max(1, Mathf.RoundToInt(Screen.width * scale));
             int height = Mathf.Max(1, Mathf.RoundToInt(Screen.height * scale));
@@ -114,32 +116,32 @@ namespace VRCast.Rendering
 
         private void OnRenderImage(RenderTexture source, RenderTexture destination)
         {
-            AntiAliasingMode mode = EffectiveMode();
-            if (mode == AntiAliasingMode.Fxaa && EnsureMaterial())
+            // MSAA resolve・高解像度の縮小のあと、必要なら FXAA（α 保持）
+            if (EffectiveMode() == AntiAliasingMode.Fxaa && EnsureMaterial())
             {
                 Graphics.Blit(source, destination, _fxaaMaterial, 0);
                 return;
             }
 
-            // MSAA の resolve・高解像度からの縮小は Blit で行う（ぼかす FXAA は掛けない）
             Graphics.Blit(source, destination);
         }
 
         /// <summary>
-        /// アバター描画の内部解像度倍率（高解像度描画以外は 1）。
+        /// アバター描画の内部解像度倍率（高解像度描画オフなら 1）。
         /// </summary>
         public static float RenderScaleOf(AppSettings settings)
         {
-            if (settings == null || EffectiveModeOf(settings) != AntiAliasingMode.Supersample)
+            if (settings == null)
             {
                 return 1f;
             }
 
-            switch (settings.antiAliasing)
+            switch (settings.supersample)
             {
                 case AntiAliasingQuality.x2: return 1.25f;
+                case AntiAliasingQuality.x4: return 1.5f;
                 case AntiAliasingQuality.x8: return 2f;
-                default: return 1.5f;
+                default: return 1f;
             }
         }
 
@@ -155,9 +157,13 @@ namespace VRCast.Rendering
 
         private static AntiAliasingMode EffectiveModeOf(AppSettings settings)
         {
-            return settings.antiAliasingMode == AntiAliasingMode.Unspecified
-                ? AntiAliasingMode.Msaa
-                : settings.antiAliasingMode;
+            AntiAliasingMode mode = settings.antiAliasingMode;
+            if (mode == AntiAliasingMode.Unspecified || mode == AntiAliasingMode.Supersample)
+            {
+                return AntiAliasingMode.Msaa;
+            }
+
+            return mode;
         }
 
         private AntiAliasingMode EffectiveMode()
@@ -169,11 +175,6 @@ namespace VRCast.Rendering
         {
             int samples = (int)_settings.antiAliasing;
             return samples == 2 || samples == 4 || samples == 8 ? samples : 4;
-        }
-
-        private float SupersampleScale()
-        {
-            return RenderScaleOf(_settings);
         }
 
         private void EnsureSceneRt(int width, int height, int samples)

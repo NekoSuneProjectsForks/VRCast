@@ -142,6 +142,16 @@ namespace VRCast.Rendering
             }
         }
 
+        public AntiAliasingQuality Supersample
+        {
+            get => _settings.supersample;
+            set
+            {
+                _settings.supersample = value;
+                _antiAliasing?.Apply();
+            }
+        }
+
         public float LightIntensity
         {
             get => _settings.lightIntensity;
@@ -494,27 +504,27 @@ namespace VRCast.Rendering
             {
                 case LightingPreset.Sunny:
                     SetModernLighting(
-                        keyIntensity: 1.7f, keyTemp: 5400f, keyYaw: -25f, keyPitch: 38f,
-                        ambient: 0.9f, fillIntensity: 0.35f, fillTemp: 7000f, fillYaw: 130f, fillPitch: 18f,
-                        rimIntensity: 0.55f, rimTemp: 6000f, rimYaw: 155f, rimPitch: -8f,
-                        ibl: 0.7f, IblPreset.Warm, softShadows: true, shadowStrength: 0.8f, shadowSoftness: 0.4f,
-                        bloom: true, bloomIntensity: 0.1f, bloomThreshold: 1.3f, tonemap: true, tonemapStrength: 0.8f);
+                        keyIntensity: 1.85f, keyTemp: 5200f, keyYaw: -28f, keyPitch: 40f,
+                        ambient: 0.3f, fillIntensity: 0.4f, fillTemp: 7200f, fillYaw: 135f, fillPitch: 16f,
+                        rimIntensity: 0.6f, rimTemp: 5800f, rimYaw: 155f, rimPitch: -8f,
+                        ibl: 0.85f, IblPreset.Warm, softShadows: true, shadowStrength: 0.6f, shadowSoftness: 0.55f,
+                        bloom: true, bloomIntensity: 0.12f, bloomThreshold: 1.3f, tonemap: true, tonemapStrength: 0.7f);
                     break;
                 case LightingPreset.Soft:
                     SetModernLighting(
-                        keyIntensity: 0.95f, keyTemp: 6800f, keyYaw: 0f, keyPitch: 32f,
-                        ambient: 1.4f, fillIntensity: 0.7f, fillTemp: 7500f, fillYaw: 150f, fillPitch: 25f,
-                        rimIntensity: 0.35f, rimTemp: 7000f, rimYaw: 170f, rimPitch: 0f,
-                        ibl: 1.1f, IblPreset.Studio, softShadows: true, shadowStrength: 0.45f, shadowSoftness: 0.85f,
-                        bloom: true, bloomIntensity: 0.08f, bloomThreshold: 1.35f, tonemap: true, tonemapStrength: 0.7f);
+                        keyIntensity: 1.1f, keyTemp: 6500f, keyYaw: -10f, keyPitch: 35f,
+                        ambient: 0.55f, fillIntensity: 0.85f, fillTemp: 7600f, fillYaw: 150f, fillPitch: 22f,
+                        rimIntensity: 0.45f, rimTemp: 7000f, rimYaw: 170f, rimPitch: -2f,
+                        ibl: 1.25f, IblPreset.Studio, softShadows: true, shadowStrength: 0.4f, shadowSoftness: 0.9f,
+                        bloom: true, bloomIntensity: 0.08f, bloomThreshold: 1.4f, tonemap: true, tonemapStrength: 0.65f);
                     break;
                 case LightingPreset.Studio:
                     SetModernLighting(
-                        keyIntensity: 1.35f, keyTemp: 5600f, keyYaw: -40f, keyPitch: 42f,
-                        ambient: 0.55f, fillIntensity: 0.5f, fillTemp: 7800f, fillYaw: 145f, fillPitch: 15f,
-                        rimIntensity: 0.85f, rimTemp: 6500f, rimYaw: 165f, rimPitch: -12f,
-                        ibl: 1f, IblPreset.Studio, softShadows: true, shadowStrength: 0.7f, shadowSoftness: 0.6f,
-                        bloom: true, bloomIntensity: 0.15f, bloomThreshold: 1.2f, tonemap: true, tonemapStrength: 0.9f);
+                        keyIntensity: 1.55f, keyTemp: 5400f, keyYaw: -42f, keyPitch: 48f,
+                        ambient: 0.25f, fillIntensity: 0.7f, fillTemp: 8000f, fillYaw: 148f, fillPitch: 12f,
+                        rimIntensity: 0.95f, rimTemp: 6200f, rimYaw: 168f, rimPitch: -14f,
+                        ibl: 1.1f, IblPreset.Studio, softShadows: true, shadowStrength: 0.5f, shadowSoftness: 0.75f,
+                        bloom: true, bloomIntensity: 0.12f, bloomThreshold: 1.3f, tonemap: true, tonemapStrength: 0.8f);
                     break;
                 default:
                     SetModernLighting(

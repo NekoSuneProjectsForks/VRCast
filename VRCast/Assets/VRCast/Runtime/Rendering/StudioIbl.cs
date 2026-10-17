@@ -58,14 +58,16 @@ namespace VRCast.Rendering
             switch (preset)
             {
                 case IblPreset.Warm:
-                    return _warm ??= BuildCubemap(new Color(1f, 0.72f, 0.45f), new Color(0.55f, 0.4f, 0.3f),
-                        new Color(0.95f, 0.85f, 0.7f));
+                    // 天・地の差を抑え、影側が茶色く沈みすぎないようにする
+                    return _warm ??= BuildCubemap(new Color(1f, 0.78f, 0.55f), new Color(0.7f, 0.55f, 0.42f),
+                        new Color(1f, 0.9f, 0.78f));
                 case IblPreset.Cool:
-                    return _cool ??= BuildCubemap(new Color(0.55f, 0.7f, 1f), new Color(0.25f, 0.3f, 0.4f),
-                        new Color(0.75f, 0.85f, 1f));
+                    return _cool ??= BuildCubemap(new Color(0.65f, 0.78f, 1f), new Color(0.4f, 0.45f, 0.55f),
+                        new Color(0.82f, 0.9f, 1f));
                 default:
-                    return _studio ??= BuildCubemap(new Color(0.92f, 0.94f, 1f), new Color(0.35f, 0.35f, 0.38f),
-                        new Color(1f, 1f, 1f));
+                    // 床方向を明るめにして白い服のしわが灰色にくすまないようにする
+                    return _studio ??= BuildCubemap(new Color(0.95f, 0.96f, 1f), new Color(0.58f, 0.57f, 0.6f),
+                        new Color(1f, 0.99f, 0.98f));
             }
         }
 
@@ -103,9 +105,9 @@ namespace VRCast.Rendering
                         Color color = t > 0.5f
                             ? Color.Lerp(horizon, zenith, (t - 0.5f) * 2f)
                             : Color.Lerp(nadir, horizon, t * 2f);
-                        // 正面寄りのソフトキーを足してスタジオっぽくする
-                        float front = Mathf.Max(0f, Vector3.Dot(dir.normalized, new Vector3(0f, 0.2f, -1f)));
-                        color += horizon * (front * front * 0.35f);
+                        // 正面寄りのソフトキーを足してスタジオっぽくする（やや強めにラップ）
+                        float front = Mathf.Max(0f, Vector3.Dot(dir.normalized, new Vector3(0f, 0.25f, -1f)));
+                        color += horizon * (front * front * 0.45f);
                         colors[y * FaceSize + x] = color;
                     }
                 }

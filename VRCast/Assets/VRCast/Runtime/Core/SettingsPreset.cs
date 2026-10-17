@@ -162,7 +162,7 @@ namespace VRCast.Core
             new PresetCategory("graphics", false,
                 nameof(AppSettings.transparentBackground), nameof(AppSettings.backgroundColor),
                 nameof(AppSettings.lightingSystem), nameof(AppSettings.antiAliasingMode),
-                nameof(AppSettings.antiAliasing),
+                nameof(AppSettings.antiAliasing), nameof(AppSettings.supersample),
                 nameof(AppSettings.lightIntensity), nameof(AppSettings.lightYaw), nameof(AppSettings.lightPitch),
                 nameof(AppSettings.lightTemperature), nameof(AppSettings.ambientIntensity),
                 nameof(AppSettings.fillIntensity), nameof(AppSettings.fillYaw), nameof(AppSettings.fillPitch),

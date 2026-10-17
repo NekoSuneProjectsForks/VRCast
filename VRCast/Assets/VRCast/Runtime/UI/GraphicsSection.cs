@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using VRCast.Core;
 using VRCast.Rendering;
@@ -95,60 +96,59 @@ namespace VRCast.UI
         {
             GuiControls.BeginCard(Loc.T("Anti-aliasing", "アンチエイリアス", "안티앨리어싱", "抗锯齿", "抗鋸齒"));
             GuiControls.Hint(Loc.T(
-                "MSAA keeps edges sharp. FXAA is lighter but can blur. Supersampling renders the avatar at a higher resolution (uses more GPU).",
-                "MSAA は輪郭をシャープに保ちます。FXAA は軽いですがぼやけやすいです。高解像度描画は内部解像度を上げて描き（GPU 負荷増）、ジャギーを抑えます。",
-                "MSAA는 윤곽을 선명하게 유지합니다. FXAA는 가볍지만 흐려질 수 있습니다. 고해상도 렌더링은 내부 해상도를 올려 그립니다(GPU 부하 증가).",
-                "MSAA 保持边缘清晰。FXAA 更轻但可能发糊。高分辨率绘制以内部分辨率提高绘制（更耗 GPU）。",
-                "MSAA 保持邊緣清晰。FXAA 較輕但可能發糊。高解析度繪製以內部分辨率提高繪製（更耗 GPU）。"));
+                "MSAA keeps edges sharp. FXAA is lighter but can blur. Can be combined with supersampling below.",
+                "MSAA は輪郭をシャープに保ちます。FXAA は軽いですがぼやけやすいです。下の高解像度描画と併用できます。",
+                "MSAA는 윤곽을 선명하게 유지합니다. FXAA는 가볍지만 흐려질 수 있습니다. 아래 고해상도와 함께 쓸 수 있습니다.",
+                "MSAA 保持边缘清晰。FXAA 更轻但可能发糊。可与下方的高分辨率绘制并用。",
+                "MSAA 保持邊緣清晰。FXAA 較輕但可能發糊。可與下方的高解析度繪製並用。"));
 
             AntiAliasingMode[] modes =
             {
-                AntiAliasingMode.Off, AntiAliasingMode.Msaa, AntiAliasingMode.Fxaa, AntiAliasingMode.Supersample,
+                AntiAliasingMode.Off, AntiAliasingMode.Msaa, AntiAliasingMode.Fxaa,
             };
             string[] modeLabels =
             {
                 Loc.T("Off", "オフ", "끄기", "关", "關"),
                 "MSAA",
                 "FXAA",
-                Loc.T("Supersample", "高解像度描画", "고해상도 렌더", "高分辨率", "高解析度"),
             };
-            int modeIndex = IndexOf(modes, _rendering.AntiAliasingMode == AntiAliasingMode.Unspecified
-                ? AntiAliasingMode.Msaa
-                : _rendering.AntiAliasingMode);
-            int modeSelected = GuiControls.LabeledChoice(Loc.T("Method", "方式", "방식", "方式", "方式"), modeLabels,
-                modeIndex);
+            AntiAliasingMode currentMode = _rendering.AntiAliasingMode;
+            if (currentMode == AntiAliasingMode.Unspecified || currentMode == AntiAliasingMode.Supersample)
+            {
+                currentMode = AntiAliasingMode.Msaa;
+            }
+
+            int modeIndex = IndexOf(modes, currentMode);
+            GUILayout.Label(Loc.T("Method", "方式", "방식", "方式", "方式"));
+            int modeSelected = DrawChoiceGrid(modeLabels, modeIndex, 3);
             if (modeSelected != modeIndex)
             {
                 _rendering.AntiAliasingMode = modes[modeSelected];
-                if (_rendering.AntiAliasingMode != AntiAliasingMode.Off
+                if (_rendering.AntiAliasingMode == AntiAliasingMode.Msaa
                     && _rendering.AntiAliasing == AntiAliasingQuality.Off)
                 {
                     _rendering.AntiAliasing = AntiAliasingQuality.x4;
                 }
             }
 
-            AntiAliasingMode mode = _rendering.AntiAliasingMode;
-            if (mode == AntiAliasingMode.Msaa || mode == AntiAliasingMode.Supersample)
+            if (_rendering.AntiAliasingMode == AntiAliasingMode.Msaa)
             {
                 AntiAliasingQuality[] qualities =
                 {
                     AntiAliasingQuality.x2, AntiAliasingQuality.x4, AntiAliasingQuality.x8,
                 };
-                string[] qualityLabels = mode == AntiAliasingMode.Supersample
-                    ? new[] { "125%", "150%", "200%" }
-                    : new[] { "2x", "4x", "8x" };
                 AntiAliasingQuality current = _rendering.AntiAliasing == AntiAliasingQuality.Off
                     ? AntiAliasingQuality.x4
                     : _rendering.AntiAliasing;
                 int qualityIndex = IndexOf(qualities, current);
-                int qualitySelected = GuiControls.LabeledChoice(
-                    Loc.T("Quality", "品質", "품질", "质量", "品質"), qualityLabels, qualityIndex);
+                GUILayout.Label(Loc.T("MSAA quality", "MSAA の品質", "MSAA 품질", "MSAA 质量", "MSAA 品質"));
+                int qualitySelected = DrawChoiceGrid(new[] { "2x", "4x", "8x" }, qualityIndex, 3);
                 if (qualitySelected != qualityIndex)
                 {
                     _rendering.AntiAliasing = qualities[qualitySelected];
                 }
             }
-            else if (mode == AntiAliasingMode.Fxaa)
+            else if (_rendering.AntiAliasingMode == AntiAliasingMode.Fxaa)
             {
                 GuiControls.Hint(Loc.T(
                     "FXAA smooths the whole image and may soften fine outlines.",
@@ -156,6 +156,32 @@ namespace VRCast.UI
                     "FXAA는 화면 전체를 부드럽게 해서 가는 윤곽이 흐려질 수 있습니다.",
                     "FXAA 会平滑整幅画面，细轮廓可能发糊。",
                     "FXAA 會平滑整幅畫面，細輪廓可能發糊。"));
+            }
+
+            GuiControls.EndCard();
+
+            GuiControls.BeginCard(Loc.T("Supersampling", "高解像度描画", "고해상도 렌더", "高分辨率绘制", "高解析度繪製"));
+            GuiControls.Hint(Loc.T(
+                "Renders the avatar larger than the window, then scales down. Reduces jaggies; uses more GPU. Works with MSAA or FXAA.",
+                "ウィンドウより高い解像度で描いてから縮小します。ジャギーを抑え、GPU 負荷は増えます。MSAA / FXAA と併用できます。",
+                "창보다 높은 해상도로 그린 뒤 줄입니다. 톱니를 줄이고 GPU 부하는 늘습니다. MSAA/FXAA와 함께 쓸 수 있습니다.",
+                "以高于窗口的分辨率绘制后再缩小。减轻锯齿，更耗 GPU。可与 MSAA / FXAA 并用。",
+                "以高於視窗的解析度繪製後再縮小。減輕鋸齒，更耗 GPU。可與 MSAA / FXAA 並用。"));
+
+            AntiAliasingQuality[] scales =
+            {
+                AntiAliasingQuality.Off, AntiAliasingQuality.x2, AntiAliasingQuality.x4, AntiAliasingQuality.x8,
+            };
+            string[] scaleLabels =
+            {
+                Loc.T("Off", "オフ", "끄기", "关", "關"),
+                "125%", "150%", "200%",
+            };
+            int scaleIndex = IndexOf(scales, _rendering.Supersample);
+            int scaleSelected = DrawChoiceGrid(scaleLabels, scaleIndex, 4);
+            if (scaleSelected != scaleIndex)
+            {
+                _rendering.Supersample = scales[scaleSelected];
             }
 
             GuiControls.EndCard();
@@ -172,6 +198,31 @@ namespace VRCast.UI
             }
 
             return 0;
+        }
+
+        /// <summary>
+        /// 選択ボタンを columns 列の格子で並べる（長いラベルでも幅を分け合って文字が潰れないようにする）。
+        /// </summary>
+        private static int DrawChoiceGrid(IReadOnlyList<string> labels, int selected, int columns)
+        {
+            columns = Mathf.Max(1, columns);
+            for (int start = 0; start < labels.Count; start += columns)
+            {
+                GUILayout.BeginHorizontal();
+                int end = Mathf.Min(start + columns, labels.Count);
+                for (int i = start; i < end; i++)
+                {
+                    if (GUILayout.Toggle(selected == i, labels[i], GUI.skin.button, GUILayout.ExpandWidth(true))
+                        && selected != i)
+                    {
+                        selected = i;
+                    }
+                }
+
+                GUILayout.EndHorizontal();
+            }
+
+            return selected;
         }
 
         private void DrawLightingSystem()
@@ -599,10 +650,15 @@ namespace VRCast.UI
 
                 GUILayout.EndHorizontal();
             }
-            else if (GUILayout.Button(Loc.T("Reset graphics to defaults...", "グラフィックを既定に戻す...",
-                         "그래픽 기본값으로...", "将图形恢复为默认...", "將圖形恢復為預設...")))
+            else
             {
-                _confirmingReset = true;
+                UiTheme theme = UiTheme.Current;
+                if (GUILayout.Button(Loc.T("Reset graphics to defaults...", "グラフィックを既定に戻す...",
+                        "그래픽 기본값으로...", "将图形恢复为默认...", "將圖形恢復為預設..."),
+                        theme != null ? theme.OverflowButton : GUI.skin.button))
+                {
+                    _confirmingReset = true;
+                }
             }
 
             GuiControls.EndCard();
