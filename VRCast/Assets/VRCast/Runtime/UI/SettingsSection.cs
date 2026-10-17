@@ -122,7 +122,7 @@ namespace VRCast.UI
             GUILayout.Label("ARKit brow inner up");
             _settings.oscParameterBrowInnerUp = GUILayout.TextField(_settings.oscParameterBrowInnerUp ?? string.Empty);
             GuiControls.Hint(
-                "Mapped values are sent at up to 30 updates per second while fresh face tracking is available. Use parameter names that exist in the avatar's Expressions/FX setup. This does not forward skeletal head, body, or hand motion.");
+                "Mapped values are sent at up to 30 updates per second while fresh face tracking is available. Use parameter names that exist in the avatar's Expressions/FX setup. ARKit mappings require a provider that supplies ARKit-compatible blendshapes. This does not forward skeletal head, body, or hand motion.");
 
             GUILayout.Label("Status: " + _oscParameterSender.Status);
             GUILayout.BeginHorizontal();
