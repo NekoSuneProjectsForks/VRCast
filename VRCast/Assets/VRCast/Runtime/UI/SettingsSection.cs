@@ -50,6 +50,11 @@ namespace VRCast.UI
             DrawReset();
         }
 
+        public void Dispose()
+        {
+            _oscParameterSender.Dispose();
+        }
+
         private void DrawOscParameterOutput()
         {
             GuiControls.BeginCard("VRChat OSC output");
