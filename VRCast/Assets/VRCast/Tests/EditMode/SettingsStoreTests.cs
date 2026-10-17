@@ -864,6 +864,26 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void OscBlendShapeMapping_RuntimeCache_IsNotSerialized()
+        {
+            var mapping = new OscBlendShapeParameterMapping
+            {
+                blendShapeName = "jawOpen",
+                parameterName = "JawOpen",
+                cachedBlendShapeName = "jawOpen",
+                cachedBlendShapeIndex = 24,
+            };
+
+            string json = JsonUtility.ToJson(mapping);
+
+            // Runtime-only lookup state must not leak into settings.json.
+            Assert.That(json, Does.Contain("\"blendShapeName\""));
+            Assert.That(json, Does.Contain("\"parameterName\""));
+            Assert.That(json, Does.Not.Contain("cachedBlendShapeName"));
+            Assert.That(json, Does.Not.Contain("cachedBlendShapeIndex"));
+        }
+
+        [Test]
         public void OscBlendShapeMappings_SanitizeDestinationsAgainstNamedMappings()
         {
             var settings = new AppSettings
