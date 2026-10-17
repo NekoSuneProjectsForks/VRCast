@@ -57,6 +57,12 @@ namespace VRCast.Tests
             Assert.That(settings.oscParameterEyeOpenRight, Is.Empty);
             Assert.That(settings.oscParameterMouthOpen, Is.Empty);
             Assert.That(settings.oscParameterSmile, Is.Empty);
+            Assert.That(settings.oscParameterEyeBlinkLeft, Is.Empty);
+            Assert.That(settings.oscParameterEyeBlinkRight, Is.Empty);
+            Assert.That(settings.oscParameterJawOpen, Is.Empty);
+            Assert.That(settings.oscParameterMouthSmileLeft, Is.Empty);
+            Assert.That(settings.oscParameterMouthSmileRight, Is.Empty);
+            Assert.That(settings.oscParameterBrowInnerUp, Is.Empty);
         }
 
         [Test]
@@ -67,7 +73,13 @@ namespace VRCast.Tests
                 oscParameterEyeOpenLeft = " EyeLeft ",
                 oscParameterEyeOpenRight = "Invalid/Path",
                 oscParameterMouthOpen = null,
-                oscParameterSmile = "Smile"
+                oscParameterSmile = "Smile",
+                oscParameterEyeBlinkLeft = "BlinkLeft",
+                oscParameterEyeBlinkRight = "Bad/Name",
+                oscParameterJawOpen = " JawOpen ",
+                oscParameterMouthSmileLeft = "SmileLeft",
+                oscParameterMouthSmileRight = null,
+                oscParameterBrowInnerUp = "BrowUp"
             });
 
             AppSettings settings = _store.Load();
@@ -75,6 +87,12 @@ namespace VRCast.Tests
             Assert.That(settings.oscParameterEyeOpenRight, Is.Empty);
             Assert.That(settings.oscParameterMouthOpen, Is.Empty);
             Assert.That(settings.oscParameterSmile, Is.EqualTo("Smile"));
+            Assert.That(settings.oscParameterEyeBlinkLeft, Is.EqualTo("BlinkLeft"));
+            Assert.That(settings.oscParameterEyeBlinkRight, Is.Empty);
+            Assert.That(settings.oscParameterJawOpen, Is.EqualTo("JawOpen"));
+            Assert.That(settings.oscParameterMouthSmileLeft, Is.EqualTo("SmileLeft"));
+            Assert.That(settings.oscParameterMouthSmileRight, Is.Empty);
+            Assert.That(settings.oscParameterBrowInnerUp, Is.EqualTo("BrowUp"));
         }
 
         [Test]
