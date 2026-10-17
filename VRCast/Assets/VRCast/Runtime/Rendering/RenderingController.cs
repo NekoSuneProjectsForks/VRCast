@@ -659,11 +659,10 @@ namespace VRCast.Rendering
                         exposure: 0f, contrast: 1.06f, saturation: 1.05f, temperature: -0.1f, tint: 0.02f);
                     break;
                 default:
-                    // 最新の「既定」はレガシー（2.x）の太陽光・環境光に寄せ、Fill / Rim / IBL は足しすぎない
+                    // 最新の「既定」＝淡いイラスト調（顔は明るくフラット、あご〜首と前髪の影ははっきり、彩度控えめ）
                     SetModernLighting(
-                        keyIntensity: defaults.lightIntensity, keyTemp: defaults.lightTemperature,
-                        keyYaw: defaults.lightYaw, keyPitch: defaults.lightPitch,
-                        ambient: defaults.ambientIntensity,
+                        keyIntensity: 1.1f, keyTemp: 6200f, keyYaw: -15f, keyPitch: 32f,
+                        ambient: 0.95f,
                         fillIntensity: defaults.fillIntensity, fillTemp: defaults.fillTemperature,
                         fillYaw: defaults.fillYaw, fillPitch: defaults.fillPitch,
                         rimIntensity: defaults.rimIntensity, rimTemp: defaults.rimTemperature,
@@ -672,6 +671,7 @@ namespace VRCast.Rendering
                         defaults.shadowStrength, defaults.shadowSoftness, defaults.bloomEnabled, defaults.bloomIntensity,
                         defaults.bloomThreshold, defaults.tonemapEnabled, defaults.tonemapStrength,
                         defaults.reflectionStrength);
+                    _settings.avatarBrightness = 1.05f;
                     SetModernScreenFx(
                         defaults.ssaoIntensity, defaults.ssaoRadius, defaults.screenRimIntensity,
                         defaults.screenRimPower, defaults.screenRimHue, defaults.exposure, defaults.contrast,
