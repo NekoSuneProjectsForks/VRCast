@@ -139,9 +139,14 @@ namespace VRCast.UI
                 _oscParameterSender.SendBool("VRCastTestToggle", true);
             }
 
+            if (GUILayout.Button("Send test int"))
+            {
+                _oscParameterSender.SendInt("VRCastTestGesture", 1);
+            }
+
             GUILayout.EndHorizontal();
             GuiControls.Hint(
-                "Test messages use /avatar/parameters/VRCastTest (0.5) and /avatar/parameters/VRCastTestToggle (true). Create matching parameters in the avatar's FX/Expressions setup to observe them.");
+                "Test messages use /avatar/parameters/VRCastTest (float 0.5), /avatar/parameters/VRCastTestToggle (bool true), and /avatar/parameters/VRCastTestGesture (int 1). Create matching parameters in the avatar's FX/Expressions setup to observe them.");
             GuiControls.EndCard();
         }
 
