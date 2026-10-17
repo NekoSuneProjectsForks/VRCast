@@ -30,9 +30,10 @@ namespace VRCast.Remote
                 return false;
             }
 
-            if (!IPAddress.TryParse(address, out IPAddress ip))
+            if (!IPAddress.TryParse(address.Trim(), out IPAddress ip)
+                || ip.AddressFamily != AddressFamily.InterNetwork)
             {
-                Status = "Address must be an IP address";
+                Status = "Address must be an IPv4 address";
                 return false;
             }
 
@@ -51,6 +52,12 @@ namespace VRCast.Remote
                 Status = "OSC connection failed: " + ex.Message;
                 return false;
             }
+            catch (ArgumentException ex)
+            {
+                Stop();
+                Status = "Invalid OSC endpoint: " + ex.Message;
+                return false;
+            }
         }
 
         public bool SendFloat(string parameterName, float value)
@@ -61,7 +68,8 @@ namespace VRCast.Remote
                 return false;
             }
 
-            if (string.IsNullOrWhiteSpace(parameterName) || parameterName.IndexOf('/') >= 0)
+            parameterName = parameterName?.Trim();
+            if (string.IsNullOrEmpty(parameterName) || parameterName.IndexOf('/') >= 0)
             {
                 Status = "Invalid parameter name";
                 return false;
@@ -84,7 +92,8 @@ namespace VRCast.Remote
                 return false;
             }
 
-            if (string.IsNullOrWhiteSpace(parameterName) || parameterName.IndexOf('/') >= 0)
+            parameterName = parameterName?.Trim();
+            if (string.IsNullOrEmpty(parameterName) || parameterName.IndexOf('/') >= 0)
             {
                 Status = "Invalid parameter name";
                 return false;
