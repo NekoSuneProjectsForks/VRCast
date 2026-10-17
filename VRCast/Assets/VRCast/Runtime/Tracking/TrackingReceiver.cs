@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using VRCast.Core;
 using VRCast.Remote;
@@ -21,6 +22,7 @@ namespace VRCast.Tracking
 
         private AppSettings _settings;
         private readonly OscParameterSender _oscOutput = new OscParameterSender();
+        private readonly HashSet<string> _oscParametersSentThisFrame = new HashSet<string>();
         private string _oscOutputAddress;
         private int _oscOutputPort = -1;
         private float _nextOscOutputTime;
@@ -156,6 +158,7 @@ namespace VRCast.Tracking
 
             // Bound the network update rate so tracking/render FPS changes do not flood the OSC receiver.
             _nextOscOutputTime = Time.unscaledTime + (1f / 30f);
+            _oscParametersSentThisFrame.Clear();
             SendMappedFloat(_settings.oscParameterEyeOpenLeft, frame.EyeOpenLeft);
             SendMappedFloat(_settings.oscParameterEyeOpenRight, frame.EyeOpenRight);
             SendMappedFloat(_settings.oscParameterMouthOpen, frame.MouthOpen);
@@ -217,9 +220,17 @@ namespace VRCast.Tracking
 
         private void SendMappedFloat(string parameterName, float value)
         {
-            if (!string.IsNullOrWhiteSpace(parameterName))
+            if (string.IsNullOrWhiteSpace(parameterName))
             {
-                _oscOutput.SendFloat(parameterName.Trim(), Mathf.Clamp01(value));
+                return;
+            }
+
+            string name = parameterName.Trim();
+            // Multiple channels targeting the same VRChat parameter would overwrite each other in one update.
+            // Keep the first configured source for this update instead of sending conflicting values.
+            if (_oscParametersSentThisFrame.Add(name))
+            {
+                _oscOutput.SendFloat(name, Mathf.Clamp01(value));
             }
         }
 
