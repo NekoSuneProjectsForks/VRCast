@@ -75,7 +75,7 @@ namespace VRCast.Remote
             }
 
             parameterName = parameterName?.Trim();
-            if (string.IsNullOrEmpty(parameterName) || parameterName.IndexOf('/') >= 0)
+            if (!IsValidParameterName(parameterName))
             {
                 Status = "Invalid parameter name";
                 return false;
@@ -124,6 +124,22 @@ namespace VRCast.Remote
             }
 
             return Send(OscParameterPacket.CreateBool("/avatar/parameters/" + parameterName, value));
+        }
+
+        private static bool IsValidParameterName(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+                return false;
+
+            for (int i = 0; i < name.Length; i++)
+            {
+                char c = name[i];
+                // OSC paths cannot contain nested path separators, NUL, or control characters.
+                if (c == '/' || char.IsControl(c))
+                    return false;
+            }
+
+            return true;
         }
 
         private bool Send(byte[] packet)
