@@ -31,6 +31,32 @@ namespace VRCast.Tests
             }
         }
 
+        [TestCase("Bad/Name")]
+        [TestCase("Bad\\0Name")]
+        [TestCase("Bad\\nName")]
+        [TestCase("Bad\\tName")]
+        [TestCase("Bad\\rName")]
+        public void OscMappingSanitize_RejectsInvalidParameterCharacters(string invalidName)
+        {
+            var settings = new AppSettings
+            {
+                oscParameterEyeOpenLeft = invalidName,
+                oscBlendShapeMappings = new System.Collections.Generic.List<OscBlendShapeParameterMapping>
+                {
+                    new OscBlendShapeParameterMapping
+                    {
+                        blendShapeName = "jawOpen",
+                        parameterName = invalidName
+                    }
+                }
+            };
+            settings.Sanitize();
+
+            Assert.That(settings.oscParameterEyeOpenLeft, Is.Empty);
+            Assert.That(settings.oscBlendShapeMappings.Count, Is.EqualTo(1));
+            Assert.That(settings.oscBlendShapeMappings[0].parameterName, Is.Empty);
+        }
+
         [Test]
         public void Defaults_OscParameterOutputIsDisabledAndUsesLocalhost()
         {
