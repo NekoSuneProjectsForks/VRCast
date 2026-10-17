@@ -109,6 +109,18 @@ namespace VRCast.UI
             _settings.oscParameterMouthOpen = GUILayout.TextField(_settings.oscParameterMouthOpen ?? string.Empty);
             GUILayout.Label("Smile (providers with expression scores)");
             _settings.oscParameterSmile = GUILayout.TextField(_settings.oscParameterSmile ?? string.Empty);
+            GUILayout.Label("ARKit eye blink left");
+            _settings.oscParameterEyeBlinkLeft = GUILayout.TextField(_settings.oscParameterEyeBlinkLeft ?? string.Empty);
+            GUILayout.Label("ARKit eye blink right");
+            _settings.oscParameterEyeBlinkRight = GUILayout.TextField(_settings.oscParameterEyeBlinkRight ?? string.Empty);
+            GUILayout.Label("ARKit jaw open");
+            _settings.oscParameterJawOpen = GUILayout.TextField(_settings.oscParameterJawOpen ?? string.Empty);
+            GUILayout.Label("ARKit mouth smile left");
+            _settings.oscParameterMouthSmileLeft = GUILayout.TextField(_settings.oscParameterMouthSmileLeft ?? string.Empty);
+            GUILayout.Label("ARKit mouth smile right");
+            _settings.oscParameterMouthSmileRight = GUILayout.TextField(_settings.oscParameterMouthSmileRight ?? string.Empty);
+            GUILayout.Label("ARKit brow inner up");
+            _settings.oscParameterBrowInnerUp = GUILayout.TextField(_settings.oscParameterBrowInnerUp ?? string.Empty);
             GuiControls.Hint(
                 "Mapped values are sent at up to 30 updates per second while fresh face tracking is available. Use parameter names that exist in the avatar's Expressions/FX setup. This does not forward skeletal head, body, or hand motion.");
 
