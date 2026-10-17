@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6?logo=windows" alt="Platform">
+  <img src="https://img.shields.io/badge/platform-Windows%2011-0078D6?logo=windows" alt="Platform">
   <img src="https://img.shields.io/badge/Unity-2022.3-000000?logo=unity" alt="Unity 2022.3">
   <a href="https://coffin299.github.io/VRCast/"><img src="https://img.shields.io/badge/website-coffin299.github.io-2ea44f" alt="Website"></a>
   <a href="https://coffin299.booth.pm/items/8933317"><img src="https://img.shields.io/badge/BOOTH-download-fc4d50" alt="BOOTH"></a>
@@ -92,7 +92,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 
 ## 動作環境
 
-- Windows 10 / 11 (x64)
+- Windows 11 (x64)
 - アバターの書き出し: Unity **2022.3.22f1**（VRChat SDK と同一バージョン）
 - VRCast 本体の開発: Unity **2022.3 LTS の最新版**（2022.3.62f3 以降。AssetBundle を読めるよう 2022.3 系列にとどめる。Unity 6 は不可）
   - ビルドは IL2CPP。Unity Hub で「Windows Build Support (IL2CPP)」モジュールと、Visual Studio の「C++ によるデスクトップ開発」ワークロードを入れておく

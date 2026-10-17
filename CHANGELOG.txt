@@ -9,10 +9,12 @@ Newest first. Each version is written in Japanese, then English.
 [日本語]
 - 視線を「上を見る」「下を見る」「右を見る」「左を見る」などの BlendShape でも動かせるように変更（アッシュなど、目の向きを形状で動かすアバター向け。目のボーンが無いアバターでも使えます）
 - BOOTH / Jinxxy 向けの配布を軽く変更（セットアップとバッチが GitHub から最新版を取得します。大きな本体 zip は GitHub の Release にだけ置きます）
+- 動作環境を Windows 11 のみに変更（Windows 10 は対象外です）
 
 [English]
 - Gaze can now also be driven by blend shapes such as "Look up / down / left / right" in Japanese or English names (for avatars like Ash that move the eyes with shapes; works even without eye bones)
 - Made the BOOTH / Jinxxy packages lighter (the setup and batch file download the latest build from GitHub; the full app zip is only on the GitHub Release)
+- Changed the supported OS to Windows 11 only (Windows 10 is no longer supported)
 
 ■ 2.2.2 (2026-10-15)
 
