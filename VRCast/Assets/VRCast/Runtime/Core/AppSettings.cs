@@ -9,6 +9,13 @@ namespace VRCast.Core
     /// フィールド追加は後方互換（欠けている項目は既定値）なので version は上げない。
     /// </summary>
     [Serializable]
+    public class OscBlendShapeParameterMapping
+    {
+        public string blendShapeName = string.Empty;
+        public string parameterName = string.Empty;
+    }
+
+    [Serializable]
     public class AppSettings
     {
         // 設定フォーマットのバージョン、互換性のない変更時に増やす
@@ -477,6 +484,8 @@ namespace VRCast.Core
         public string oscParameterMouthSmileLeft = string.Empty;
         public string oscParameterMouthSmileRight = string.Empty;
         public string oscParameterBrowInnerUp = string.Empty;
+        // Additional optional ARKit-compatible channels; existing named mappings above remain supported.
+        public List<OscBlendShapeParameterMapping> oscBlendShapeMappings = new List<OscBlendShapeParameterMapping>();
 
         // 表情ごとのしきい値（UseCommonThreshold = 未設定で trackingExpressionThreshold を使う。旧版の共通値を引き継ぐため）
         public float thresholdSmile = UseCommonThreshold;
@@ -1326,6 +1335,29 @@ namespace VRCast.Core
             oscParameterMouthSmileLeft = NormalizeOscParameterName(oscParameterMouthSmileLeft);
             oscParameterMouthSmileRight = NormalizeOscParameterName(oscParameterMouthSmileRight);
             oscParameterBrowInnerUp = NormalizeOscParameterName(oscParameterBrowInnerUp);
+            if (oscBlendShapeMappings == null)
+            {
+                oscBlendShapeMappings = new List<OscBlendShapeParameterMapping>();
+            }
+            var normalizedBlendShapeMappings = new List<OscBlendShapeParameterMapping>();
+            var usedBlendShapes = new HashSet<string>(StringComparer.Ordinal);
+            foreach (OscBlendShapeParameterMapping mapping in oscBlendShapeMappings)
+            {
+                if (mapping == null || string.IsNullOrWhiteSpace(mapping.blendShapeName))
+                {
+                    continue;
+                }
+                string blendShapeName = mapping.blendShapeName.Trim();
+                if (usedBlendShapes.Add(blendShapeName))
+                {
+                    normalizedBlendShapeMappings.Add(new OscBlendShapeParameterMapping
+                    {
+                        blendShapeName = blendShapeName,
+                        parameterName = NormalizeOscParameterName(mapping.parameterName),
+                    });
+                }
+            }
+            oscBlendShapeMappings = normalizedBlendShapeMappings;
             // 上半身の傾きの強さは 0〜上限に制限
             trackingBodyLean = Mathf.Clamp(trackingBodyLean, 0f, MaxTrackingBodyLean);
             // 未知の体の動かし方は既定の傾きへ
