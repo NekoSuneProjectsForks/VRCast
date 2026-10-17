@@ -52,7 +52,8 @@ namespace VRCast.Editor.Build
         private static readonly string[] AlwaysIncludedShaderNames =
         {
             "VRM10/MToon10", "UniGLTF/UniUnlit", "Standard",
-            "Hidden/VRCast/BloomTonemap", "Hidden/VRCast/ContactShadow", "Hidden/VRCast/FXAA", "Skybox/Cubemap",
+            "Hidden/VRCast/BloomTonemap", "Hidden/VRCast/ContactShadow", "Hidden/VRCast/ScreenFx",
+            "Hidden/VRCast/FXAA", "Skybox/Cubemap",
         };
 
         [MenuItem("VRCast/Build/Windows x64")]

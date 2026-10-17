@@ -39,7 +39,11 @@ namespace VRCast.UI
             {
                 DrawModernLight();
                 DrawShadows();
+                DrawSsao();
+                DrawScreenRim();
                 DrawLook();
+                DrawColorGrade();
+                DrawDetailFx();
             }
             else
             {
@@ -54,6 +58,27 @@ namespace VRCast.UI
         private void DrawBackground()
         {
             GuiControls.BeginCard(Loc.T("Background", "背景", "배경", "背景", "背景"));
+
+            // パネルのライト／ダーク（設定タブと同じ。既定の背景色のときはテーマに合わせて色も変わる）
+            string[] themeLabels =
+            {
+                Loc.T("Light", "ライト", "라이트", "浅色", "淺色"),
+                Loc.T("Dark", "ダーク", "다크", "深色", "深色"),
+            };
+            int theme = _rendering.DarkMode ? 1 : 0;
+            int selectedTheme = GuiControls.LabeledChoice(
+                Loc.T("Theme", "テーマ", "테마", "主题", "主題"), themeLabels, theme);
+            if (selectedTheme != theme)
+            {
+                _rendering.DarkMode = selectedTheme == 1;
+            }
+
+            GuiControls.Hint(Loc.T(
+                "Panel colors. If the background is still the default, it follows the theme.",
+                "操作パネルの配色です。背景色が既定のままなら、テーマに合わせて切り替わります。",
+                "조작 패널 배색입니다. 배경색이 기본값이면 테마에 맞춰 바뀝니다.",
+                "操作面板配色。若背景色仍为默认，会随主题切换。",
+                "操作面板配色。若背景色仍為預設，會隨主題切換。"));
 
             // 透過切替（OBS はゲームキャプチャ +「透過を許可」で取り込む）
             _rendering.TransparentBackground = GUILayout.Toggle(
@@ -333,6 +358,75 @@ namespace VRCast.UI
             GuiControls.EndCard();
         }
 
+        private void DrawSsao()
+        {
+            GuiControls.BeginCard(Loc.T("SSAO", "SSAO（環境遮蔽）", "SSAO", "SSAO（环境光遮蔽）", "SSAO（環境光遮蔽）"));
+            GuiControls.Hint(Loc.T(
+                "Darkens creases and contact areas. Alpha is preserved.",
+                "しわや接地面を少し暗くします。透明度は保ちます。",
+                "주름이나 맞닿는 부분을 조금 어둡게 합니다. 알파는 유지합니다.",
+                "让褶皱和接触处略暗。保留透明度。",
+                "讓褶皺和接觸處略暗。保留透明度。"));
+            _rendering.SsaoEnabled = GUILayout.Toggle(_rendering.SsaoEnabled,
+                Loc.T("Enable SSAO", "SSAO を使う", "SSAO 사용", "启用 SSAO", "啟用 SSAO"));
+            if (_rendering.SsaoEnabled)
+            {
+                float intensity = GuiControls.Slider(Loc.T("Strength", "強さ", "세기", "强度", "強度"),
+                    _rendering.SsaoIntensity, 0f, AppSettings.MaxSsaoIntensity);
+                if (!Mathf.Approximately(intensity, _rendering.SsaoIntensity))
+                {
+                    _rendering.SsaoIntensity = intensity;
+                }
+
+                float radius = GuiControls.Slider(Loc.T("Radius", "半径", "반경", "半径", "半徑"),
+                    _rendering.SsaoRadius, 0f, AppSettings.MaxSsaoRadius);
+                if (!Mathf.Approximately(radius, _rendering.SsaoRadius))
+                {
+                    _rendering.SsaoRadius = radius;
+                }
+            }
+
+            GuiControls.EndCard();
+        }
+
+        private void DrawScreenRim()
+        {
+            GuiControls.BeginCard(Loc.T("Screen rim", "画面リム", "화면 림", "屏幕轮廓光", "螢幕輪廓光"));
+            GuiControls.Hint(Loc.T(
+                "Edge highlight from the camera view (works with the Rim light above). Alpha is preserved.",
+                "カメラから見た輪郭を光らせます（上のリムライトと併用可）。透明度は保ちます。",
+                "카메라에서 본 윤곽을 빛나게 합니다(위 림 라이트와 함께 사용 가능). 알파는 유지합니다.",
+                "从相机视角照亮轮廓（可与上方轮廓光并用）。保留透明度。",
+                "從相機視角照亮輪廓（可與上方輪廓光並用）。保留透明度。"));
+            _rendering.ScreenRimEnabled = GUILayout.Toggle(_rendering.ScreenRimEnabled,
+                Loc.T("Enable screen rim", "画面リムを使う", "화면 림 사용", "启用屏幕轮廓光", "啟用螢幕輪廓光"));
+            if (_rendering.ScreenRimEnabled)
+            {
+                float intensity = GuiControls.Slider(Loc.T("Strength", "強さ", "세기", "强度", "強度"),
+                    _rendering.ScreenRimIntensity, 0f, AppSettings.MaxScreenRimIntensity);
+                if (!Mathf.Approximately(intensity, _rendering.ScreenRimIntensity))
+                {
+                    _rendering.ScreenRimIntensity = intensity;
+                }
+
+                float power = GuiControls.Slider(Loc.T("Falloff", "切れ方", "감쇠", "衰减", "衰減"),
+                    _rendering.ScreenRimPower, 0.5f, AppSettings.MaxScreenRimPower);
+                if (!Mathf.Approximately(power, _rendering.ScreenRimPower))
+                {
+                    _rendering.ScreenRimPower = power;
+                }
+
+                float hue = GuiControls.Slider(Loc.T("Hue", "色相", "색상", "色相", "色相"),
+                    _rendering.ScreenRimHue, 0f, 1f);
+                if (!Mathf.Approximately(hue, _rendering.ScreenRimHue))
+                {
+                    _rendering.ScreenRimHue = hue;
+                }
+            }
+
+            GuiControls.EndCard();
+        }
+
         private void DrawLook()
         {
             GuiControls.BeginCard(Loc.T("Look", "映え", "연출", "观感", "觀感"));
@@ -373,6 +467,99 @@ namespace VRCast.UI
                 if (!Mathf.Approximately(tonemap, _rendering.TonemapStrength))
                 {
                     _rendering.TonemapStrength = tonemap;
+                }
+            }
+
+            GuiControls.EndCard();
+        }
+
+        private void DrawColorGrade()
+        {
+            GuiControls.BeginCard(Loc.T("Color grading", "色調補正", "색보정", "调色", "調色"));
+            GuiControls.Hint(Loc.T(
+                "Exposure, contrast, saturation, and white balance. Alpha is preserved.",
+                "露出・コントラスト・彩度・ホワイトバランスです。透明度は保ちます。",
+                "노출·대비·채도·화이트밸런스입니다. 알파는 유지합니다.",
+                "曝光、对比度、饱和度与白平衡。保留透明度。",
+                "曝光、對比度、飽和度與白平衡。保留透明度。"));
+            _rendering.ColorGradeEnabled = GUILayout.Toggle(_rendering.ColorGradeEnabled,
+                Loc.T("Enable color grading", "色調補正を使う", "색보정 사용", "启用调色", "啟用調色"));
+            if (_rendering.ColorGradeEnabled)
+            {
+                float exposure = GuiControls.Slider(Loc.T("Exposure", "露出", "노출", "曝光", "曝光"),
+                    _rendering.Exposure, AppSettings.MinExposure, AppSettings.MaxExposure);
+                if (!Mathf.Approximately(exposure, _rendering.Exposure))
+                {
+                    _rendering.Exposure = exposure;
+                }
+
+                float contrast = GuiControls.Slider(Loc.T("Contrast", "コントラスト", "대비", "对比度", "對比度"),
+                    _rendering.Contrast, AppSettings.MinContrast, AppSettings.MaxContrast);
+                if (!Mathf.Approximately(contrast, _rendering.Contrast))
+                {
+                    _rendering.Contrast = contrast;
+                }
+
+                float saturation = GuiControls.Slider(Loc.T("Saturation", "彩度", "채도", "饱和度", "飽和度"),
+                    _rendering.Saturation, 0f, AppSettings.MaxSaturation);
+                if (!Mathf.Approximately(saturation, _rendering.Saturation))
+                {
+                    _rendering.Saturation = saturation;
+                }
+
+                float temperature = GuiControls.Slider(
+                    Loc.T("Temperature (cool ← → warm)", "色温度（寒 ← → 暖）", "색온도 (냉 ← → 온)",
+                        "色温（冷 ← → 暖）", "色溫（冷 ← → 暖）"),
+                    _rendering.ColorTemperatureBalance, -AppSettings.MaxColorBalance, AppSettings.MaxColorBalance);
+                if (!Mathf.Approximately(temperature, _rendering.ColorTemperatureBalance))
+                {
+                    _rendering.ColorTemperatureBalance = temperature;
+                }
+
+                float tint = GuiControls.Slider(
+                    Loc.T("Tint (green ← → magenta)", "ティント（緑 ← → マゼンタ）", "틴트 (녹 ← → 마젠타)",
+                        "色调（绿 ← → 品红）", "色調（綠 ← → 洋紅）"),
+                    _rendering.ColorTint, -AppSettings.MaxColorBalance, AppSettings.MaxColorBalance);
+                if (!Mathf.Approximately(tint, _rendering.ColorTint))
+                {
+                    _rendering.ColorTint = tint;
+                }
+            }
+
+            GuiControls.EndCard();
+        }
+
+        private void DrawDetailFx()
+        {
+            GuiControls.BeginCard(Loc.T("Detail", "ディテール", "디테일", "细节", "細節"));
+            GuiControls.Hint(Loc.T(
+                "Sharpen and vignette. Keep sharpen subtle on toon faces. Alpha is preserved.",
+                "シャープとビネットです。トゥーン顔ではシャープを強くしすぎないでください。透明度は保ちます。",
+                "샤픈과 비네트입니다. 툰 얼굴에는 샤픈을 너무 세게 하지 마세요. 알파는 유지합니다.",
+                "锐化与暗角。二次元脸请勿锐化过强。保留透明度。",
+                "銳化與暗角。二次元臉請勿銳化過強。保留透明度。"));
+
+            _rendering.SharpenEnabled = GUILayout.Toggle(_rendering.SharpenEnabled,
+                Loc.T("Sharpen", "シャープ", "샤픈", "锐化", "銳化"));
+            if (_rendering.SharpenEnabled)
+            {
+                float sharpen = GuiControls.Slider(Loc.T("Amount", "強さ", "세기", "强度", "強度"),
+                    _rendering.SharpenAmount, 0f, AppSettings.MaxSharpen);
+                if (!Mathf.Approximately(sharpen, _rendering.SharpenAmount))
+                {
+                    _rendering.SharpenAmount = sharpen;
+                }
+            }
+
+            _rendering.VignetteEnabled = GUILayout.Toggle(_rendering.VignetteEnabled,
+                Loc.T("Vignette", "ビネット", "비네트", "暗角", "暗角"));
+            if (_rendering.VignetteEnabled)
+            {
+                float vignette = GuiControls.Slider(Loc.T("Strength", "強さ", "세기", "强度", "強度"),
+                    _rendering.VignetteIntensity, 0f, AppSettings.MaxVignette);
+                if (!Mathf.Approximately(vignette, _rendering.VignetteIntensity))
+                {
+                    _rendering.VignetteIntensity = vignette;
                 }
             }
 
@@ -575,6 +762,14 @@ namespace VRCast.UI
             if (!Mathf.Approximately(ibl, _rendering.IblIntensity))
             {
                 _rendering.IblIntensity = ibl;
+            }
+
+            float reflection = GuiControls.Slider(
+                Loc.T("Reflection", "反射", "반사", "反射", "反射"),
+                _rendering.ReflectionStrength, 0f, AppSettings.MaxReflectionStrength);
+            if (!Mathf.Approximately(reflection, _rendering.ReflectionStrength))
+            {
+                _rendering.ReflectionStrength = reflection;
             }
         }
 

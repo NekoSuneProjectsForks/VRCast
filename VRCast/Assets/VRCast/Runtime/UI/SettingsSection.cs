@@ -93,11 +93,11 @@ namespace VRCast.UI
             }
 
             GuiControls.Hint(Loc.T(
-                "The background color follows the theme unless you changed it in the Graphics tab",
-                "背景色は、グラフィックタブで変更していなければテーマに合わせて切り替わります",
-                "배경색은 그래픽 탭에서 바꾸지 않았다면 테마에 맞춰 바뀝니다",
-                "如果未在图形标签页中更改背景色，背景色会随主题切换",
-                "若未在圖形分頁中變更背景色，背景色會隨主題切換"));
+                "The background color follows the theme unless you changed it. Same switch is on the Graphics tab (Background).",
+                "背景色は変更していなければテーマに合わせて切り替わります。同じ切替はグラフィックタブの背景にもあります。",
+                "배경색을 바꾸지 않았다면 테마에 맞춰 바뀝니다. 같은 전환은 그래픽 탭의 배경에도 있습니다.",
+                "若未更改背景色，会随主题切换。图形标签页的背景处也有相同切换。",
+                "若未變更背景色，會隨主題切換。圖形分頁的背景處也有相同切換。"));
         }
 
         private void DrawReset()

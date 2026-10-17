@@ -374,6 +374,128 @@ namespace VRCast.Rendering
             set => _settings.tonemapStrength = Mathf.Clamp(value, 0f, AppSettings.MaxTonemapStrength);
         }
 
+        public float ReflectionStrength
+        {
+            get => _settings.reflectionStrength;
+            set
+            {
+                _settings.reflectionStrength = Mathf.Clamp(value, 0f, AppSettings.MaxReflectionStrength);
+                ApplyAmbient();
+            }
+        }
+
+        public bool ColorGradeEnabled
+        {
+            get => _settings.colorGradeEnabled;
+            set => _settings.colorGradeEnabled = value;
+        }
+
+        public float Exposure
+        {
+            get => _settings.exposure;
+            set => _settings.exposure = Mathf.Clamp(value, AppSettings.MinExposure, AppSettings.MaxExposure);
+        }
+
+        public float Contrast
+        {
+            get => _settings.contrast;
+            set => _settings.contrast = Mathf.Clamp(value, AppSettings.MinContrast, AppSettings.MaxContrast);
+        }
+
+        public float Saturation
+        {
+            get => _settings.saturation;
+            set => _settings.saturation = Mathf.Clamp(value, 0f, AppSettings.MaxSaturation);
+        }
+
+        public float ColorTemperatureBalance
+        {
+            get => _settings.colorTemperature;
+            set => _settings.colorTemperature = Mathf.Clamp(
+                value, -AppSettings.MaxColorBalance, AppSettings.MaxColorBalance);
+        }
+
+        public float ColorTint
+        {
+            get => _settings.colorTint;
+            set => _settings.colorTint = Mathf.Clamp(
+                value, -AppSettings.MaxColorBalance, AppSettings.MaxColorBalance);
+        }
+
+        public bool SsaoEnabled
+        {
+            get => _settings.ssaoEnabled;
+            set
+            {
+                _settings.ssaoEnabled = value;
+                _postProcess?.SetActive(IsModern);
+            }
+        }
+
+        public float SsaoIntensity
+        {
+            get => _settings.ssaoIntensity;
+            set => _settings.ssaoIntensity = Mathf.Clamp(value, 0f, AppSettings.MaxSsaoIntensity);
+        }
+
+        public float SsaoRadius
+        {
+            get => _settings.ssaoRadius;
+            set => _settings.ssaoRadius = Mathf.Clamp(value, 0f, AppSettings.MaxSsaoRadius);
+        }
+
+        public bool ScreenRimEnabled
+        {
+            get => _settings.screenRimEnabled;
+            set
+            {
+                _settings.screenRimEnabled = value;
+                _postProcess?.SetActive(IsModern);
+            }
+        }
+
+        public float ScreenRimIntensity
+        {
+            get => _settings.screenRimIntensity;
+            set => _settings.screenRimIntensity = Mathf.Clamp(value, 0f, AppSettings.MaxScreenRimIntensity);
+        }
+
+        public float ScreenRimPower
+        {
+            get => _settings.screenRimPower;
+            set => _settings.screenRimPower = Mathf.Clamp(value, 0.5f, AppSettings.MaxScreenRimPower);
+        }
+
+        public float ScreenRimHue
+        {
+            get => _settings.screenRimHue;
+            set => _settings.screenRimHue = Mathf.Repeat(value, 1f);
+        }
+
+        public bool SharpenEnabled
+        {
+            get => _settings.sharpenEnabled;
+            set => _settings.sharpenEnabled = value;
+        }
+
+        public float SharpenAmount
+        {
+            get => _settings.sharpenAmount;
+            set => _settings.sharpenAmount = Mathf.Clamp(value, 0f, AppSettings.MaxSharpen);
+        }
+
+        public bool VignetteEnabled
+        {
+            get => _settings.vignetteEnabled;
+            set => _settings.vignetteEnabled = value;
+        }
+
+        public float VignetteIntensity
+        {
+            get => _settings.vignetteIntensity;
+            set => _settings.vignetteIntensity = Mathf.Clamp(value, 0f, AppSettings.MaxVignette);
+        }
+
         public float AvatarBrightness
         {
             get => _settings.avatarBrightness;
@@ -508,7 +630,10 @@ namespace VRCast.Rendering
                         ambient: 0.12f, fillIntensity: 0.2f, fillTemp: 7200f, fillYaw: 140f, fillPitch: 10f,
                         rimIntensity: 0.55f, rimTemp: 5800f, rimYaw: 155f, rimPitch: -8f,
                         ibl: 0.45f, IblPreset.Warm, softShadows: true, shadowStrength: 0.75f, shadowSoftness: 0.4f,
-                        bloom: true, bloomIntensity: 0.05f, bloomThreshold: 1.65f, tonemap: true, tonemapStrength: 0.8f);
+                        bloom: true, bloomIntensity: 0.05f, bloomThreshold: 1.65f, tonemap: true, tonemapStrength: 0.8f,
+                        reflection: 0.4f);
+                    SetModernScreenFx(ssao: 0.32f, ssaoRadius: 0.5f, screenRim: 0.18f, rimPower: 3f, rimHue: 0.12f,
+                        exposure: 0.05f, contrast: 1.08f, saturation: 1.1f, temperature: 0.2f, tint: 0f);
                     break;
                 case LightingPreset.Soft:
                     // やわらかは塗りを優先するが、完全に正面にはせず鼻の陰は残す
@@ -517,7 +642,10 @@ namespace VRCast.Rendering
                         ambient: 0.25f, fillIntensity: 0.35f, fillTemp: 7600f, fillYaw: 150f, fillPitch: 12f,
                         rimIntensity: 0.4f, rimTemp: 7000f, rimYaw: 170f, rimPitch: -2f,
                         ibl: 0.7f, IblPreset.Studio, softShadows: true, shadowStrength: 0.5f, shadowSoftness: 0.75f,
-                        bloom: true, bloomIntensity: 0.03f, bloomThreshold: 1.75f, tonemap: true, tonemapStrength: 0.75f);
+                        bloom: true, bloomIntensity: 0.03f, bloomThreshold: 1.75f, tonemap: true, tonemapStrength: 0.75f,
+                        reflection: 0.5f);
+                    SetModernScreenFx(ssao: 0.18f, ssaoRadius: 0.55f, screenRim: 0.12f, rimPower: 4f, rimHue: 0.55f,
+                        exposure: 0f, contrast: 1.0f, saturation: 1.02f, temperature: -0.05f, tint: 0f);
                     break;
                 case LightingPreset.Studio:
                     SetModernLighting(
@@ -525,16 +653,27 @@ namespace VRCast.Rendering
                         ambient: 0.1f, fillIntensity: 0.25f, fillTemp: 8000f, fillYaw: 152f, fillPitch: 6f,
                         rimIntensity: 0.9f, rimTemp: 6200f, rimYaw: 170f, rimPitch: -14f,
                         ibl: 0.55f, IblPreset.Studio, softShadows: true, shadowStrength: 0.65f, shadowSoftness: 0.5f,
-                        bloom: true, bloomIntensity: 0.04f, bloomThreshold: 1.7f, tonemap: true, tonemapStrength: 0.85f);
+                        bloom: true, bloomIntensity: 0.04f, bloomThreshold: 1.7f, tonemap: true, tonemapStrength: 0.85f,
+                        reflection: 0.55f);
+                    SetModernScreenFx(ssao: 0.3f, ssaoRadius: 0.4f, screenRim: 0.28f, rimPower: 3.2f, rimHue: 0.58f,
+                        exposure: 0f, contrast: 1.06f, saturation: 1.05f, temperature: -0.1f, tint: 0.02f);
                     break;
                 default:
+                    // 最新の「既定」はレガシー用の太陽光・環境光の数値とは別（鼻の陰が残りやすい横光）
                     SetModernLighting(
-                        defaults.lightIntensity, defaults.lightTemperature, defaults.lightYaw, defaults.lightPitch,
-                        defaults.ambientIntensity, defaults.fillIntensity, defaults.fillTemperature, defaults.fillYaw,
-                        defaults.fillPitch, defaults.rimIntensity, defaults.rimTemperature, defaults.rimYaw,
-                        defaults.rimPitch, defaults.iblIntensity, defaults.iblPreset, defaults.softShadows,
+                        keyIntensity: 1.15f, keyTemp: 5600f, keyYaw: -55f, keyPitch: 22f,
+                        ambient: 0.15f, fillIntensity: defaults.fillIntensity, fillTemp: defaults.fillTemperature,
+                        fillYaw: defaults.fillYaw, fillPitch: defaults.fillPitch,
+                        rimIntensity: defaults.rimIntensity, rimTemp: defaults.rimTemperature,
+                        rimYaw: defaults.rimYaw, rimPitch: defaults.rimPitch,
+                        ibl: defaults.iblIntensity, defaults.iblPreset, defaults.softShadows,
                         defaults.shadowStrength, defaults.shadowSoftness, defaults.bloomEnabled, defaults.bloomIntensity,
-                        defaults.bloomThreshold, defaults.tonemapEnabled, defaults.tonemapStrength);
+                        defaults.bloomThreshold, defaults.tonemapEnabled, defaults.tonemapStrength,
+                        defaults.reflectionStrength);
+                    SetModernScreenFx(
+                        defaults.ssaoIntensity, defaults.ssaoRadius, defaults.screenRimIntensity,
+                        defaults.screenRimPower, defaults.screenRimHue, defaults.exposure, defaults.contrast,
+                        defaults.saturation, defaults.colorTemperature, defaults.colorTint);
                     break;
             }
         }
@@ -572,7 +711,8 @@ namespace VRCast.Rendering
             float fillIntensity, float fillTemp, float fillYaw, float fillPitch,
             float rimIntensity, float rimTemp, float rimYaw, float rimPitch,
             float ibl, IblPreset iblPreset, bool softShadows, float shadowStrength, float shadowSoftness,
-            bool bloom, float bloomIntensity, float bloomThreshold, bool tonemap, float tonemapStrength)
+            bool bloom, float bloomIntensity, float bloomThreshold, bool tonemap, float tonemapStrength,
+            float reflection)
         {
             _settings.lightIntensity = Mathf.Clamp(keyIntensity, 0f, AppSettings.MaxLightIntensity);
             _settings.lightTemperature = Mathf.Clamp(keyTemp, AppSettings.MinLightTemperature, AppSettings.MaxLightTemperature);
@@ -589,6 +729,7 @@ namespace VRCast.Rendering
             _settings.rimPitch = Mathf.Clamp(rimPitch, -90f, 90f);
             _settings.iblIntensity = Mathf.Clamp(ibl, 0f, AppSettings.MaxIblIntensity);
             _settings.iblPreset = iblPreset;
+            _settings.reflectionStrength = Mathf.Clamp(reflection, 0f, AppSettings.MaxReflectionStrength);
             _settings.softShadows = softShadows;
             _settings.shadowStrength = Mathf.Clamp(shadowStrength, 0f, AppSettings.MaxShadowStrength);
             _settings.shadowSoftness = Mathf.Clamp(shadowSoftness, 0f, AppSettings.MaxShadowSoftness);
@@ -599,6 +740,26 @@ namespace VRCast.Rendering
             _settings.tonemapStrength = Mathf.Clamp(tonemapStrength, 0f, AppSettings.MaxTonemapStrength);
             ApplyLights();
             ApplyAmbient();
+            _postProcess?.SetActive(true);
+        }
+
+        private void SetModernScreenFx(
+            float ssao, float ssaoRadius, float screenRim, float rimPower, float rimHue,
+            float exposure, float contrast, float saturation, float temperature, float tint)
+        {
+            _settings.ssaoEnabled = true;
+            _settings.ssaoIntensity = Mathf.Clamp(ssao, 0f, AppSettings.MaxSsaoIntensity);
+            _settings.ssaoRadius = Mathf.Clamp(ssaoRadius, 0f, AppSettings.MaxSsaoRadius);
+            _settings.screenRimEnabled = true;
+            _settings.screenRimIntensity = Mathf.Clamp(screenRim, 0f, AppSettings.MaxScreenRimIntensity);
+            _settings.screenRimPower = Mathf.Clamp(rimPower, 0.5f, AppSettings.MaxScreenRimPower);
+            _settings.screenRimHue = Mathf.Repeat(rimHue, 1f);
+            _settings.colorGradeEnabled = true;
+            _settings.exposure = Mathf.Clamp(exposure, AppSettings.MinExposure, AppSettings.MaxExposure);
+            _settings.contrast = Mathf.Clamp(contrast, AppSettings.MinContrast, AppSettings.MaxContrast);
+            _settings.saturation = Mathf.Clamp(saturation, 0f, AppSettings.MaxSaturation);
+            _settings.colorTemperature = Mathf.Clamp(temperature, -AppSettings.MaxColorBalance, AppSettings.MaxColorBalance);
+            _settings.colorTint = Mathf.Clamp(tint, -AppSettings.MaxColorBalance, AppSettings.MaxColorBalance);
             _postProcess?.SetActive(true);
         }
 
@@ -669,7 +830,7 @@ namespace VRCast.Rendering
             {
                 _fillLight.enabled = false;
                 _rimLight.enabled = false;
-                // レガシーは影を品質設定に任せ、カスタム解像度を外す（2.x と同じ）
+                // レガシーは影を触らない（2.x と同じ）。最新から戻したあとに残るカスタム影設定だけ外す
                 _keyLight.shadowCustomResolution = -1;
                 QualitySettings.shadowDistance = _savedShadowDistance;
             }
@@ -679,7 +840,8 @@ namespace VRCast.Rendering
         {
             if (IsModern)
             {
-                StudioIbl.Apply(_settings.iblPreset, _settings.iblIntensity, _settings.ambientIntensity);
+                StudioIbl.Apply(_settings.iblPreset, _settings.iblIntensity, _settings.ambientIntensity,
+                    _settings.reflectionStrength);
             }
             else
             {

@@ -32,13 +32,26 @@ namespace VRCast.Core
         // アバターの輪郭線の太さ（マテリアルの太さの倍率）の上限
         public const float MaxOutlineWidth = 3f;
 
-        // 最新ライティング（IBL・影・ブルーム・トーンマップ）の上限
+        // 最新ライティング（IBL・影・ブルーム・トーンマップ・画面効果）の上限
         public const float MaxIblIntensity = 3f;
+        public const float MaxReflectionStrength = 1f;
         public const float MaxShadowStrength = 1f;
         public const float MaxShadowSoftness = 1f;
         public const float MaxBloomIntensity = 3f;
         public const float MaxBloomThreshold = 3f;
         public const float MaxTonemapStrength = 1f;
+        public const float MinExposure = -1.5f;
+        public const float MaxExposure = 1.5f;
+        public const float MinContrast = 0.5f;
+        public const float MaxContrast = 1.5f;
+        public const float MaxSaturation = 2f;
+        public const float MaxColorBalance = 1f;
+        public const float MaxSsaoIntensity = 1f;
+        public const float MaxSsaoRadius = 1f;
+        public const float MaxScreenRimIntensity = 2f;
+        public const float MaxScreenRimPower = 8f;
+        public const float MaxSharpen = 1f;
+        public const float MaxVignette = 1f;
 
         // マイク感度・しきい値の範囲
         public const float MinMicGain = 0.1f;
@@ -216,14 +229,14 @@ namespace VRCast.Core
         public AntiAliasingQuality supersample = AntiAliasingQuality.Off;
 
         // 太陽光 / Key（ディレクショナルライト）。向きはカメラ正面からの角度（0 = 正面から当たる）
-        // トゥーン顔は正面／弱い横光だと鼻の陰が消えるので、既定ははっきり横から当てる
-        public float lightIntensity = 1.15f;
-        public float lightYaw = -55f;
-        public float lightPitch = 22f;
+        // レガシー（2.x）と同じ既定。最新ライティングの「既定」プリセットは RenderingController 側の値を使う
+        public float lightIntensity = 1.2f;
+        public float lightYaw = -30f;
+        public float lightPitch = 40f;
 
-        // 太陽光の色温度（6500K でほぼ白、低いほど暖色）と環境光の明るさ
-        public float lightTemperature = 5600f;
-        public float ambientIntensity = 0.15f;
+        // 太陽光の色温度（6500K でほぼ白、低いほど暖色）と環境光の明るさ（レガシー = 2.x と同じ既定）
+        public float lightTemperature = 6000f;
+        public float ambientIntensity = 1.2f;
 
         // 最新ライティングの Fill（影なし）。強すぎると鼻の陰が埋まるのでキーの 1/5 程度
         public float fillIntensity = 0.22f;
@@ -240,6 +253,8 @@ namespace VRCast.Core
         // スタジオ環境光（空は描かない）と柔らかい影・映え。IBL は弱め（強いと顔が平らになる）
         public float iblIntensity = 0.5f;
         public IblPreset iblPreset = IblPreset.Studio;
+        // 反射の強さ（スタジオ Cubemap。0 = 反射なし、1 = 強め）
+        public float reflectionStrength = 0.45f;
         public bool softShadows = true;
         public float shadowStrength = 0.7f;
         public float shadowSoftness = 0.45f;
@@ -248,6 +263,31 @@ namespace VRCast.Core
         public float bloomThreshold = 1.7f;
         public bool tonemapEnabled = true;
         public float tonemapStrength = 0.85f;
+
+        // 色調補正（最新のみ。透過の alpha は変えない）
+        public bool colorGradeEnabled = true;
+        public float exposure;
+        public float contrast = 1.05f;
+        public float saturation = 1.05f;
+        public float colorTemperature; // -1 暖色〜 +1 寒色
+        public float colorTint; // -1 緑〜 +1 マゼンタ
+
+        // SSAO（最新のみ）
+        public bool ssaoEnabled = true;
+        public float ssaoIntensity = 0.28f;
+        public float ssaoRadius = 0.45f;
+
+        // 画面空間リム（最新のみ。ライトのリムと併用）
+        public bool screenRimEnabled = true;
+        public float screenRimIntensity = 0.22f;
+        public float screenRimPower = 3.5f;
+        public float screenRimHue = 0.55f; // 0〜1。0.55 付近は薄い水色寄り
+
+        // シャープ・ビネット（最新のみ。既定は控えめ／オフ）
+        public bool sharpenEnabled;
+        public float sharpenAmount = 0.2f;
+        public bool vignetteEnabled;
+        public float vignetteIntensity = 0.22f;
 
         // アバターの明るさ（1 = マテリアルのまま。シェーダーの明るさ上限を超えて明るくする）
         public float avatarBrightness = 1f;
@@ -979,6 +1019,24 @@ namespace VRCast.Core
             bloomThreshold = defaults.bloomThreshold;
             tonemapEnabled = defaults.tonemapEnabled;
             tonemapStrength = defaults.tonemapStrength;
+            reflectionStrength = defaults.reflectionStrength;
+            colorGradeEnabled = defaults.colorGradeEnabled;
+            exposure = defaults.exposure;
+            contrast = defaults.contrast;
+            saturation = defaults.saturation;
+            colorTemperature = defaults.colorTemperature;
+            colorTint = defaults.colorTint;
+            ssaoEnabled = defaults.ssaoEnabled;
+            ssaoIntensity = defaults.ssaoIntensity;
+            ssaoRadius = defaults.ssaoRadius;
+            screenRimEnabled = defaults.screenRimEnabled;
+            screenRimIntensity = defaults.screenRimIntensity;
+            screenRimPower = defaults.screenRimPower;
+            screenRimHue = defaults.screenRimHue;
+            sharpenEnabled = defaults.sharpenEnabled;
+            sharpenAmount = defaults.sharpenAmount;
+            vignetteEnabled = defaults.vignetteEnabled;
+            vignetteIntensity = defaults.vignetteIntensity;
             avatarBrightness = defaults.avatarBrightness;
             outlineWidth = defaults.outlineWidth;
             Sanitize();
@@ -1149,11 +1207,24 @@ namespace VRCast.Core
             rimTemperature = Mathf.Clamp(rimTemperature, MinLightTemperature, MaxLightTemperature);
             // IBL・影・ポスト
             iblIntensity = Mathf.Clamp(iblIntensity, 0f, MaxIblIntensity);
+            reflectionStrength = Mathf.Clamp(reflectionStrength, 0f, MaxReflectionStrength);
             shadowStrength = Mathf.Clamp(shadowStrength, 0f, MaxShadowStrength);
             shadowSoftness = Mathf.Clamp(shadowSoftness, 0f, MaxShadowSoftness);
             bloomIntensity = Mathf.Clamp(bloomIntensity, 0f, MaxBloomIntensity);
             bloomThreshold = Mathf.Clamp(bloomThreshold, 0f, MaxBloomThreshold);
             tonemapStrength = Mathf.Clamp(tonemapStrength, 0f, MaxTonemapStrength);
+            exposure = Mathf.Clamp(exposure, MinExposure, MaxExposure);
+            contrast = Mathf.Clamp(contrast, MinContrast, MaxContrast);
+            saturation = Mathf.Clamp(saturation, 0f, MaxSaturation);
+            colorTemperature = Mathf.Clamp(colorTemperature, -MaxColorBalance, MaxColorBalance);
+            colorTint = Mathf.Clamp(colorTint, -MaxColorBalance, MaxColorBalance);
+            ssaoIntensity = Mathf.Clamp(ssaoIntensity, 0f, MaxSsaoIntensity);
+            ssaoRadius = Mathf.Clamp(ssaoRadius, 0f, MaxSsaoRadius);
+            screenRimIntensity = Mathf.Clamp(screenRimIntensity, 0f, MaxScreenRimIntensity);
+            screenRimPower = Mathf.Clamp(screenRimPower, 0.5f, MaxScreenRimPower);
+            screenRimHue = Mathf.Repeat(screenRimHue, 1f);
+            sharpenAmount = Mathf.Clamp(sharpenAmount, 0f, MaxSharpen);
+            vignetteIntensity = Mathf.Clamp(vignetteIntensity, 0f, MaxVignette);
             // アバターの明るさは範囲内に制限
             avatarBrightness = Mathf.Clamp(avatarBrightness, MinAvatarBrightness, MaxAvatarBrightness);
             // 輪郭線の太さは 0〜上限に制限

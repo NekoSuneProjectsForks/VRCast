@@ -18,8 +18,9 @@ namespace VRCast.Rendering
 
         /// <summary>
         /// 最新ライティング用の環境光を適用する。カメラのクリアは呼び出し側が SolidColor のままにする。
+        /// reflectionStrength は 0〜1（反射の見え方。環境光の強さとは別）。
         /// </summary>
-        public static void Apply(IblPreset preset, float intensity, float ambientFlat)
+        public static void Apply(IblPreset preset, float intensity, float ambientFlat, float reflectionStrength = 0.45f)
         {
             Cubemap cubemap = CubemapOf(preset);
             EnsureSkybox(cubemap);
@@ -29,8 +30,7 @@ namespace VRCast.Rendering
             RenderSettings.ambientIntensity = Mathf.Max(0f, intensity);
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
             RenderSettings.customReflectionTexture = cubemap;
-            // 反射は弱め（強いと顔の陰影が薄まる）
-            RenderSettings.reflectionIntensity = Mathf.Clamp01(intensity * 0.35f);
+            RenderSettings.reflectionIntensity = Mathf.Clamp01(reflectionStrength);
 
             // Flat の環境光スライダー分を SH に足して、トゥーンでも最低限の明るさを残す
             DynamicGI.UpdateEnvironment();
