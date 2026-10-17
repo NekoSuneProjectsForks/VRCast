@@ -495,12 +495,13 @@ namespace VRCast.UI
 
         private void BuildPanels()
         {
-            // セクションのカード
+            // セクションのカード（右余白はスクロールバーぶんだけ。幅は BeginCard で列いっぱいに伸ばす）
             Card = new GUIStyle
             {
                 border = Offset(CardRadius + 1),
                 padding = new RectOffset(12, 12, 10, 12),
-                margin = new RectOffset(0, 4, 0, 10),
+                margin = new RectOffset(0, 2, 0, 10),
+                stretchWidth = true,
             };
             Card.normal.background = Rounded(CardColor, CardRadius);
 

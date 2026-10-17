@@ -56,7 +56,8 @@ namespace VRCast.UI
         public static void BeginCard(string title)
         {
             UiTheme theme = UiTheme.Current;
-            GUILayout.BeginVertical(theme != null ? theme.Card : GUI.skin.box);
+            // カードは内容列の幅いっぱいにそろえる（短いカードだけ狭くならないように）
+            GUILayout.BeginVertical(theme != null ? theme.Card : GUI.skin.box, GUILayout.ExpandWidth(true));
             GUILayout.Label(title, theme != null ? theme.SectionTitle : GUI.skin.label);
             EnterCard(title);
         }
@@ -117,7 +118,7 @@ namespace VRCast.UI
         public static void BeginStep(int number, string title, bool? done)
         {
             UiTheme theme = UiTheme.Current;
-            GUILayout.BeginVertical(theme != null ? theme.Card : GUI.skin.box);
+            GUILayout.BeginVertical(theme != null ? theme.Card : GUI.skin.box, GUILayout.ExpandWidth(true));
             EnterCard(title);
             GUILayout.BeginHorizontal();
             GUILayout.Label($"{number}. {title}", theme != null ? theme.SectionTitle : GUI.skin.label);

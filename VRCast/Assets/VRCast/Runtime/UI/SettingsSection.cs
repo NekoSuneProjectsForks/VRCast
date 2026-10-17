@@ -52,11 +52,11 @@ namespace VRCast.UI
                 Loc.T("Display language", "表示言語", "표시 언어", "显示语言", "顯示語言"),
                 languages, (int)_settings.uiLanguage);
 
-            // UI の大きさ（選択中のプリセットはアクセント色。どれにも当たらなければ未選択）
+            // UI の大きさ（選択中のプリセットはアクセント色。どれにも当たらなければ未選択。2 行にして幅不足でも見切れにくくする）
             int scale = Array.FindIndex(ScalePresets, preset => Mathf.Approximately(_settings.uiScale, preset));
-            int selectedScale = GuiControls.LabeledChoice(
-                Loc.T("UI size", "UI の大きさ", "UI 크기", "界面大小", "介面大小"), ScaleLabels, scale);
-            if (selectedScale != scale)
+            GUILayout.Label(Loc.T("UI size", "UI の大きさ", "UI 크기", "界面大小", "介面大小"));
+            int selectedScale = DrawScaleGrid(scale);
+            if (selectedScale != scale && selectedScale >= 0)
             {
                 _settings.uiScale = ScalePresets[selectedScale];
             }
@@ -166,6 +166,32 @@ namespace VRCast.UI
             }
 
             return labels;
+        }
+
+        /// <summary>
+        /// UI 大きさのボタンを 3+2 の格子で並べ、幅が足りても見切れないようにする。
+        /// </summary>
+        private static int DrawScaleGrid(int selected)
+        {
+            const int columns = 3;
+            for (int start = 0; start < ScaleLabels.Length; start += columns)
+            {
+                GUILayout.BeginHorizontal();
+                int end = Mathf.Min(start + columns, ScaleLabels.Length);
+                for (int i = start; i < end; i++)
+                {
+                    if (GUILayout.Toggle(selected == i, ScaleLabels[i], GUI.skin.button,
+                            GUILayout.ExpandWidth(true), GuiControls.Shrinkable)
+                        && selected != i)
+                    {
+                        selected = i;
+                    }
+                }
+
+                GUILayout.EndHorizontal();
+            }
+
+            return selected;
         }
     }
 }

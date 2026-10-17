@@ -29,7 +29,8 @@ namespace VRCast.UI
 
         // IMGUI ウィンドウ ID・大きさ・画面端からの余白
         private const int WindowId = 0x5643;
-        private const float WindowWidth = 600f;
+        // 言語バー・UI 大きさのボタン列が収まる幅（狭いと右が見切れる）
+        private const float WindowWidth = 680f;
         private const float MaxWindowHeight = 760f;
         private const float MinWindowHeight = 240f;
         private const float ScreenMargin = 10f;
