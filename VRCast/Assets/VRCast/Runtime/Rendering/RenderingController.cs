@@ -659,10 +659,12 @@ namespace VRCast.Rendering
                         exposure: 0f, contrast: 1.06f, saturation: 1.05f, temperature: -0.1f, tint: 0.02f);
                     break;
                 default:
-                    // 最新の「既定」はレガシー用の太陽光・環境光の数値とは別（鼻の陰が残りやすい横光）
+                    // 最新の「既定」はレガシー（2.x）の太陽光・環境光に寄せ、Fill / Rim / IBL は足しすぎない
                     SetModernLighting(
-                        keyIntensity: 1.15f, keyTemp: 5600f, keyYaw: -55f, keyPitch: 22f,
-                        ambient: 0.15f, fillIntensity: defaults.fillIntensity, fillTemp: defaults.fillTemperature,
+                        keyIntensity: defaults.lightIntensity, keyTemp: defaults.lightTemperature,
+                        keyYaw: defaults.lightYaw, keyPitch: defaults.lightPitch,
+                        ambient: defaults.ambientIntensity,
+                        fillIntensity: defaults.fillIntensity, fillTemp: defaults.fillTemperature,
                         fillYaw: defaults.fillYaw, fillPitch: defaults.fillPitch,
                         rimIntensity: defaults.rimIntensity, rimTemp: defaults.rimTemperature,
                         rimYaw: defaults.rimYaw, rimPitch: defaults.rimPitch,

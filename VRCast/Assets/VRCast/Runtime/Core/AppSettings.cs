@@ -238,48 +238,48 @@ namespace VRCast.Core
         public float lightTemperature = 6000f;
         public float ambientIntensity = 1.2f;
 
-        // 最新ライティングの Fill（影なし）。強すぎると鼻の陰が埋まるのでキーの 1/5 程度
-        public float fillIntensity = 0.22f;
-        public float fillYaw = 150f;
-        public float fillPitch = 8f;
-        public float fillTemperature = 7800f;
+        // 最新ライティングの Fill（影なし）。既定はレガシーに近づけるため弱め
+        public float fillIntensity = 0.12f;
+        public float fillYaw = 140f;
+        public float fillPitch = 15f;
+        public float fillTemperature = 7000f;
 
-        // 最新ライティングの Rim（影なし）。透過背景でも輪郭が沈まないよう少し強め
-        public float rimIntensity = 0.75f;
-        public float rimYaw = 168f;
-        public float rimPitch = -12f;
-        public float rimTemperature = 6200f;
+        // 最新ライティングの Rim（影なし）。既定は控えめ（スタジオ等のプリセットで強くする）
+        public float rimIntensity = 0.3f;
+        public float rimYaw = 160f;
+        public float rimPitch = -5f;
+        public float rimTemperature = 6500f;
 
-        // スタジオ環境光（空は描かない）と柔らかい影・映え。IBL は弱め（強いと顔が平らになる）
-        public float iblIntensity = 0.5f;
+        // スタジオ環境光（空は描かない）。既定の IBL は弱め＝レガシーの平坦な環境光に寄せる
+        public float iblIntensity = 0.2f;
         public IblPreset iblPreset = IblPreset.Studio;
         // 反射の強さ（スタジオ Cubemap。0 = 反射なし、1 = 強め）
-        public float reflectionStrength = 0.45f;
+        public float reflectionStrength = 0.25f;
         public bool softShadows = true;
-        public float shadowStrength = 0.7f;
-        public float shadowSoftness = 0.45f;
+        public float shadowStrength = 0.55f;
+        public float shadowSoftness = 0.5f;
         public bool bloomEnabled = true;
-        public float bloomIntensity = 0.04f;
-        public float bloomThreshold = 1.7f;
+        public float bloomIntensity = 0.03f;
+        public float bloomThreshold = 1.75f;
         public bool tonemapEnabled = true;
-        public float tonemapStrength = 0.85f;
+        public float tonemapStrength = 0.7f;
 
-        // 色調補正（最新のみ。透過の alpha は変えない）
+        // 色調補正（最新のみ。透過の alpha は変えない）。既定はほぼニュートラル（レガシー寄り）
         public bool colorGradeEnabled = true;
         public float exposure;
-        public float contrast = 1.05f;
-        public float saturation = 1.05f;
+        public float contrast = 1f;
+        public float saturation = 1f;
         public float colorTemperature; // -1 暖色〜 +1 寒色
         public float colorTint; // -1 緑〜 +1 マゼンタ
 
-        // SSAO（最新のみ）
+        // SSAO（最新のみ）。既定は控えめ
         public bool ssaoEnabled = true;
-        public float ssaoIntensity = 0.28f;
-        public float ssaoRadius = 0.45f;
+        public float ssaoIntensity = 0.15f;
+        public float ssaoRadius = 0.4f;
 
-        // 画面空間リム（最新のみ。ライトのリムと併用）
+        // 画面空間リム（最新のみ。ライトのリムと併用）。既定は控えめ
         public bool screenRimEnabled = true;
-        public float screenRimIntensity = 0.22f;
+        public float screenRimIntensity = 0.1f;
         public float screenRimPower = 3.5f;
         public float screenRimHue = 0.55f; // 0〜1。0.55 付近は薄い水色寄り
 
