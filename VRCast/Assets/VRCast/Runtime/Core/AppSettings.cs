@@ -216,38 +216,38 @@ namespace VRCast.Core
         public AntiAliasingQuality supersample = AntiAliasingQuality.Off;
 
         // 太陽光 / Key（ディレクショナルライト）。向きはカメラ正面からの角度（0 = 正面から当たる）
-        // 最新の既定はキーを少し強め・横寄りにして立体感を出し、平坦な環境光は弱めて IBL／Fill に任せる
-        public float lightIntensity = 1.45f;
-        public float lightYaw = -35f;
-        public float lightPitch = 45f;
+        // 最新の既定は横から当てて鼻・頬の陰影を残し、フィル／IBL で塗りつぶしすぎない
+        public float lightIntensity = 1.2f;
+        public float lightYaw = -42f;
+        public float lightPitch = 30f;
 
         // 太陽光の色温度（6500K でほぼ白、低いほど暖色）と環境光の明るさ
         public float lightTemperature = 5600f;
-        public float ambientIntensity = 0.4f;
+        public float ambientIntensity = 0.3f;
 
-        // 最新ライティングの Fill（影なし）。影側の白が灰色にくすまないよう少し強め
-        public float fillIntensity = 0.65f;
+        // 最新ライティングの Fill（影なし）。影側の白は残しつつ、顔の陰影は消さない強さ
+        public float fillIntensity = 0.42f;
         public float fillYaw = 145f;
-        public float fillPitch = 18f;
+        public float fillPitch = 12f;
         public float fillTemperature = 7800f;
 
         // 最新ライティングの Rim（影なし）。透過背景でも輪郭が沈まないよう少し強め
-        public float rimIntensity = 0.8f;
+        public float rimIntensity = 0.7f;
         public float rimYaw = 165f;
         public float rimPitch = -10f;
         public float rimTemperature = 6200f;
 
-        // スタジオ環境光（空は描かない）と柔らかい影・映え
-        public float iblIntensity = 1.05f;
+        // スタジオ環境光（空は描かない）と柔らかい影・映え。ブルームは発光パーツ向けに弱め
+        public float iblIntensity = 0.8f;
         public IblPreset iblPreset = IblPreset.Studio;
         public bool softShadows = true;
-        public float shadowStrength = 0.55f;
-        public float shadowSoftness = 0.7f;
+        public float shadowStrength = 0.6f;
+        public float shadowSoftness = 0.65f;
         public bool bloomEnabled = true;
-        public float bloomIntensity = 0.1f;
-        public float bloomThreshold = 1.35f;
+        public float bloomIntensity = 0.04f;
+        public float bloomThreshold = 1.7f;
         public bool tonemapEnabled = true;
-        public float tonemapStrength = 0.75f;
+        public float tonemapStrength = 0.85f;
 
         // アバターの明るさ（1 = マテリアルのまま。シェーダーの明るさ上限を超えて明るくする）
         public float avatarBrightness = 1f;

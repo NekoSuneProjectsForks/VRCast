@@ -39,9 +39,11 @@ Shader "Hidden/VRCast/BloomTonemap"
             {
                 fixed4 c = tex2D(_MainTex, i.uv);
                 float lum = dot(c.rgb, float3(0.2126, 0.7152, 0.0722));
-                float knee = max(lum - _Threshold, 0.0);
-                float soft = knee * knee / max(_Threshold * 0.25 + 1e-4, 1e-4);
-                float contrib = max(soft, lum - _Threshold) / max(lum, 1e-4);
+                // しきい値付近はなだらかに、しきい値を大きく超えた発光だけ強く出す（肌・白い服がブルームで溶けないように）
+                float softStart = _Threshold * 0.92;
+                float softRange = max(_Threshold * 0.35, 0.08);
+                float soft = saturate((lum - softStart) / softRange);
+                float contrib = soft * soft;
                 // 透過画素はブルームに入れない
                 return fixed4(c.rgb * contrib * c.a, c.a);
             }

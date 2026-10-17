@@ -105,9 +105,9 @@ namespace VRCast.Rendering
                         Color color = t > 0.5f
                             ? Color.Lerp(horizon, zenith, (t - 0.5f) * 2f)
                             : Color.Lerp(nadir, horizon, t * 2f);
-                        // 正面寄りのソフトキーを足してスタジオっぽくする（やや強めにラップ）
-                        float front = Mathf.Max(0f, Vector3.Dot(dir.normalized, new Vector3(0f, 0.25f, -1f)));
-                        color += horizon * (front * front * 0.45f);
+                        // 正面寄りのソフトキーを足してスタジオっぽくする（強すぎると鼻の陰影が消える）
+                        float front = Mathf.Max(0f, Vector3.Dot(dir.normalized, new Vector3(0f, 0.2f, -1f)));
+                        color += horizon * (front * front * 0.28f);
                         colors[y * FaceSize + x] = color;
                     }
                 }
