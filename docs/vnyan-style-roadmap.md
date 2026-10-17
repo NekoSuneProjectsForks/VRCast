@@ -12,6 +12,10 @@ This roadmap describes a VRCast expansion inspired by the *types* of workflows a
 
 ## Phase 2 — Audio capture and reactive avatar controls
 
+- [✗] Separate music/audio-reactive capture from the existing microphone lip-sync path.
+- [✗] Windows WASAPI loopback capture and device/latency diagnostics.
+- [✗] RMS, frequency bands, transient/beat detection, mappings, and audio-analysis tests.
+
 ### Audio sources
 
 - Preserve the existing microphone input used for lip sync.
@@ -35,6 +39,8 @@ If a later bridge is added, it should be optional and documented separately. Do 
 
 ## Phase 3 — MMD motion playback
 
+- [✗] VMD parsing, supported bone/morph tracks, retargeting, motion controls, and parser tests.
+
 - Add a VMD motion importer for supported MMD bone and facial-morph tracks.
 - Retarget motion to compatible Humanoid avatars and allow users to map MMD morph names to avatar BlendShapes.
 - Add a motion library with play, pause, loop, seek, speed, and blend controls.
@@ -46,10 +52,24 @@ The first milestone should play VMD motion on an avatar already loaded by VRCast
 
 ## Phase 4 — VNyan-style interactions
 
+- [✗] Versioned trigger/action model, safe persistence, built-in actions, and UI.
+
 - Add a small trigger/action system for hotkeys, audio thresholds, timers, tracking state, and avatar events.
 - Start with built-in actions: select expression, play/stop motion, toggle an object, and set a mapped BlendShape.
 - Store user mappings as versioned data, not executable scripts.
 - Consider a plugin/API surface only after the trigger model is stable.
+
+## Tracking and VRChat OSC integration
+
+- [✗] VRChat OSC avatar-parameter sender foundation wired into app settings/UI and user mappings.
+- [✗] Incoming OSC/VRCFT provider discovery, parameter mapping, per-provider status, and conflict resolution.
+- [✗] Unified face/head/body/hand provider controls and safe start/stop/reconnect lifecycle.
+- [✗] Extend and test VMC receiver selection and calibration workflows; current code already has VMC pose reception and MediaPipe hand/body input, but the requested unified management is not complete.
+- [✗] Webcam AI full-body pose inference, calibration, retargeting, recording/replay, and performance controls.
+- [✗] Additional VMC receivers, SteamVR/tracked props, ARKit/iFacialMocap/MeowFace/VTube Studio and Leap Motion integrations.
+- [✗] Shared-session server, secure rooms, synchronized state, Docker Compose, Windows/Linux hosting and health endpoint.
+- [✗] Broader avatar controls, expression calibration/reset, image attachments, transparent screenshots, and HTTP command API.
+- [✗] VRM 0.x/1.0/VSFAvatar compatibility audit, custom-content SDK, AudioLink material bridge, and plugin API.
 
 ## Performance and compatibility rules
 
@@ -62,4 +82,9 @@ The first milestone should play VMD motion on an avatar already loaded by VRCast
 
 ## Current implementation status
 
-The configurable FPS cap is implemented on the `feature/vnyan-audio-mmd-performance` branch. Audio capture/analysis, AudioLink-inspired mappings, VMD playback, and trigger/action workflows remain planned work and must be implemented and tested before being described as available features.
+- [✓] Configurable FPS cap and settings sanitisation are present on `feature/vnyan-audio-mmd-performance`.
+- [✓] Initial reusable VRChat OSC avatar-parameter packet encoder and UDP sender class added (`Remote/OscParameterSender.cs`). It can send float and bool values to an explicitly configured IPv4/IPv6 literal endpoint, defaulting to 127.0.0.1:9000.
+- [✗] The OSC sender is not yet wired to settings/UI or tracking providers; it is not a complete VRCFT integration and does not send skeletal tracking.
+- [✗] Audio capture/analysis, AudioLink-inspired mappings, VMD playback, trigger/action workflows, session server, and the wider tracking/provider integrations remain to be implemented and validated.
+
+Status legend: `[✓]` = implementation exists in source; `[✗]` = outstanding or not yet validated end-to-end. Do not describe a feature as complete based only on a roadmap or an isolated helper class.
