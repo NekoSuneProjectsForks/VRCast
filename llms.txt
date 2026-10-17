@@ -8,7 +8,7 @@ VRM avatars (`.vrm`, VRM 0.x / 1.0, e.g. made with VRoid Studio) load directly w
 
 Key facts:
 
-- Platform: Windows 10 / 11 (x64). Price: free.
+- Platform: Windows 11 (x64). Price: free.
 - Output: transparent background for OBS Game Capture ("Allow Transparency"), and the "VRCast Camera" virtual camera for Discord, Zoom and similar apps.
 - Tracking: bundled MediaPipe tracker for head, blink, mouth, gaze, arms, hands and fingers, plus facial expressions (smile, surprise, anger, sadness); OpenSeeFace is also supported. A webcam is optional.
 - Idle motion: breathing, body sway and slight head motion in the Body & pose tab while a webcam is not driving the avatar (on by default for Humanoid avatars; head motion pauses during face tracking).
