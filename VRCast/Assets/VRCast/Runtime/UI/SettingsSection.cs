@@ -23,6 +23,8 @@ namespace VRCast.UI
         private readonly OscParameterSender _oscParameterSender = new OscParameterSender();
         private string _oscOutputAddress;
         private int _oscOutputPort = -1;
+        private string _oscAddressText;
+        private string _oscPortText;
 
         // リセットの確認中か、直前にリセットしたか
         private bool _confirmingReset;
@@ -36,6 +38,8 @@ namespace VRCast.UI
             _rendering = rendering;
             _resetAll = resetAll;
             _presets = presets;
+            _oscAddressText = settings.oscParameterOutputAddress ?? "127.0.0.1";
+            _oscPortText = settings.oscParameterOutputPort.ToString();
         }
 
         public void Draw()
@@ -59,18 +63,18 @@ namespace VRCast.UI
             }
 
             GUILayout.Label("Destination IP address");
-            string address = GUILayout.TextField(_settings.oscParameterOutputAddress ?? "127.0.0.1");
-            if (address != _settings.oscParameterOutputAddress)
-            {
-                _settings.oscParameterOutputAddress = address;
-            }
+            _oscAddressText = GUILayout.TextField(_oscAddressText ?? string.Empty);
 
             GUILayout.Label("Destination UDP port");
-            string portText = GUILayout.TextField(_settings.oscParameterOutputPort.ToString());
-            if (int.TryParse(portText, out int port) && port >= 1 && port <= 65535
-                && port != _settings.oscParameterOutputPort)
+            _oscPortText = GUILayout.TextField(_oscPortText ?? string.Empty);
+            if (GUILayout.Button("Apply destination"))
             {
-                _settings.oscParameterOutputPort = port;
+                if (int.TryParse(_oscPortText, out int port) && port >= 1 && port <= 65535
+                    && !string.IsNullOrWhiteSpace(_oscAddressText))
+                {
+                    _settings.oscParameterOutputAddress = _oscAddressText.Trim();
+                    _settings.oscParameterOutputPort = port;
+                }
             }
 
             if (!_settings.oscParameterOutputEnabled)
