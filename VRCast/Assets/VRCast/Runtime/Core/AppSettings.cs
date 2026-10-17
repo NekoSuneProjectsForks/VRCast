@@ -869,6 +869,17 @@ namespace VRCast.Core
             return string.IsNullOrEmpty(name) || name.IndexOf('/') >= 0 ? string.Empty : name;
         }
 
+        private static string NormalizeUniqueOscParameterName(string parameterName, HashSet<string> usedParameterNames)
+        {
+            string name = NormalizeOscParameterName(parameterName);
+            if (string.IsNullOrEmpty(name) || !usedParameterNames.Add(name))
+            {
+                return string.Empty;
+            }
+
+            return name;
+        }
+
         private void NormalizeResetHotkeys()
         {
             // 壊れた値・未知の種類・重複を捨て、使えないキーは未割り当てにする
@@ -1325,23 +1336,23 @@ namespace VRCast.Core
                 oscParameterOutputAddress = "127.0.0.1";
             }
             oscParameterOutputPort = Mathf.Clamp(oscParameterOutputPort, 1, 65535);
-            oscParameterEyeOpenLeft = NormalizeOscParameterName(oscParameterEyeOpenLeft);
-            oscParameterEyeOpenRight = NormalizeOscParameterName(oscParameterEyeOpenRight);
-            oscParameterMouthOpen = NormalizeOscParameterName(oscParameterMouthOpen);
-            oscParameterSmile = NormalizeOscParameterName(oscParameterSmile);
-            oscParameterEyeBlinkLeft = NormalizeOscParameterName(oscParameterEyeBlinkLeft);
-            oscParameterEyeBlinkRight = NormalizeOscParameterName(oscParameterEyeBlinkRight);
-            oscParameterJawOpen = NormalizeOscParameterName(oscParameterJawOpen);
-            oscParameterMouthSmileLeft = NormalizeOscParameterName(oscParameterMouthSmileLeft);
-            oscParameterMouthSmileRight = NormalizeOscParameterName(oscParameterMouthSmileRight);
-            oscParameterBrowInnerUp = NormalizeOscParameterName(oscParameterBrowInnerUp);
+            var usedOscParameterNames = new HashSet<string>(StringComparer.Ordinal);
+            oscParameterEyeOpenLeft = NormalizeUniqueOscParameterName(oscParameterEyeOpenLeft, usedOscParameterNames);
+            oscParameterEyeOpenRight = NormalizeUniqueOscParameterName(oscParameterEyeOpenRight, usedOscParameterNames);
+            oscParameterMouthOpen = NormalizeUniqueOscParameterName(oscParameterMouthOpen, usedOscParameterNames);
+            oscParameterSmile = NormalizeUniqueOscParameterName(oscParameterSmile, usedOscParameterNames);
+            oscParameterEyeBlinkLeft = NormalizeUniqueOscParameterName(oscParameterEyeBlinkLeft, usedOscParameterNames);
+            oscParameterEyeBlinkRight = NormalizeUniqueOscParameterName(oscParameterEyeBlinkRight, usedOscParameterNames);
+            oscParameterJawOpen = NormalizeUniqueOscParameterName(oscParameterJawOpen, usedOscParameterNames);
+            oscParameterMouthSmileLeft = NormalizeUniqueOscParameterName(oscParameterMouthSmileLeft, usedOscParameterNames);
+            oscParameterMouthSmileRight = NormalizeUniqueOscParameterName(oscParameterMouthSmileRight, usedOscParameterNames);
+            oscParameterBrowInnerUp = NormalizeUniqueOscParameterName(oscParameterBrowInnerUp, usedOscParameterNames);
             if (oscBlendShapeMappings == null)
             {
                 oscBlendShapeMappings = new List<OscBlendShapeParameterMapping>();
             }
             var normalizedBlendShapeMappings = new List<OscBlendShapeParameterMapping>();
             var usedBlendShapes = new HashSet<string>(StringComparer.Ordinal);
-            var usedParameterNames = new HashSet<string>(StringComparer.Ordinal);
             foreach (OscBlendShapeParameterMapping mapping in oscBlendShapeMappings)
             {
                 if (mapping == null || string.IsNullOrWhiteSpace(mapping.blendShapeName))
@@ -1350,18 +1361,14 @@ namespace VRCast.Core
                 }
 
                 string blendShapeName = mapping.blendShapeName.Trim();
-                string parameterName = NormalizeOscParameterName(mapping.parameterName);
                 if (!usedBlendShapes.Add(blendShapeName))
                 {
                     continue;
                 }
 
-                // A VRChat avatar parameter can only represent one source value. Keep the first
-                // non-empty mapping when the same destination was assigned to multiple channels.
-                if (!string.IsNullOrEmpty(parameterName) && !usedParameterNames.Add(parameterName))
-                {
-                    parameterName = string.Empty;
-                }
+                // Standard mappings reserve their destinations first; custom mappings then reserve
+                // any remaining names. This prevents separate controls from competing for one parameter.
+                string parameterName = NormalizeUniqueOscParameterName(mapping.parameterName, usedOscParameterNames);
 
                 normalizedBlendShapeMappings.Add(new OscBlendShapeParameterMapping
                 {
