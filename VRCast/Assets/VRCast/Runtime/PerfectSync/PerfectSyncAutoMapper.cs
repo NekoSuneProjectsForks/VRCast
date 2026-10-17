@@ -6,7 +6,7 @@ using VRCast.Tracking;
 namespace VRCast.PerfectSync
 {
     /// <summary>
-    /// アバターに元からある BlendShape（Viseme・まばたき・笑顔・眉など）の名前から、ARKit 名へ割り当てる候補を推定する。
+    /// アバターに元からある BlendShape（Viseme・まばたき・笑顔・眉・視線の「上を見る」など）の名前から、ARKit 名へ割り当てる候補を推定する。
     /// 作者が作った形状は生成より品質が良いことが多いため、見つかった種類は既定で「既存」を使う。
     /// ARKit 名そのものの BlendShape は PerfectSyncBlendShapes が名前で見つけるので、ここでは扱わない。
     /// </summary>
@@ -34,6 +34,15 @@ namespace VRCast.PerfectSync
                 "blink", "eyeclose", "eyesclosed", "まばたき", "目閉じ", "vrcblink" }, 1f),
             ("eyeBlinkRight", new[] { "blinkr", "blinkright", "eyeblinkr", "winkr", "winkright", "まばたき右", "ウィンク右",
                 "blink", "eyeclose", "eyesclosed", "まばたき", "目閉じ", "vrcblink" }, 1f),
+            // 両目まとめて動かす視線（アッシュ等）。本人の右向き = 左目の内寄せ + 右目の外寄せ
+            ("eyeLookUpLeft", new[] { "上を見る", "lookup", "eyeslookup", "eyelookup" }, 1f),
+            ("eyeLookUpRight", new[] { "上を見る", "lookup", "eyeslookup", "eyelookup" }, 1f),
+            ("eyeLookDownLeft", new[] { "下を見る", "lookdown", "eyeslookdown", "eyelookdown" }, 1f),
+            ("eyeLookDownRight", new[] { "下を見る", "lookdown", "eyeslookdown", "eyelookdown" }, 1f),
+            ("eyeLookInLeft", new[] { "右を見る", "lookright", "eyeslookright", "eyelookright" }, 1f),
+            ("eyeLookOutRight", new[] { "右を見る", "lookright", "eyeslookright", "eyelookright" }, 1f),
+            ("eyeLookOutLeft", new[] { "左を見る", "lookleft", "eyeslookleft", "eyelookleft" }, 1f),
+            ("eyeLookInRight", new[] { "左を見る", "lookleft", "eyeslookleft", "eyelookleft" }, 1f),
             ("jawOpen", new[] { "vrcvaa", "vaa", "あ", "mtha", "moutha", "aa" }, 1f),
             ("mouthFunnel", new[] { "vrcvoh", "voh", "お", "mtho", "moutho", "oh" }, 1f),
             ("mouthPucker", new[] { "vrcvou", "vou", "う", "mthu", "mouthu", "ou" }, 1f),

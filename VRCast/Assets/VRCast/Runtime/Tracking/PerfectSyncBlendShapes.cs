@@ -139,6 +139,26 @@ namespace VRCast.Tracking
         public bool DrivesJaw => _targets[JawOpen] != null;
 
         /// <summary>
+        /// 目の動き（eyeLook*）のいずれかを動かせるなら true（その間は視線用 BlendShape を二重に動かさない）。
+        /// </summary>
+        public bool DrivesEyeLook
+        {
+            get
+            {
+                string[] names = ArKitFace.BlendShapeNames;
+                for (int i = 0; i < _targets.Length; i++)
+                {
+                    if (_targets[i] != null && names[i].StartsWith("eyeLook", System.StringComparison.Ordinal))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        /// <summary>
         /// root 以下の全 SkinnedMeshRenderer から ARKit 名の BlendShape を探す。
         /// bindings（パーフェクトシンク化で既存の BlendShape を ARKit 名に割り当てたもの）があれば、その ARKit 名は割り当てを使い、
         /// 残りの ARKit 名を名前の照合で探す。

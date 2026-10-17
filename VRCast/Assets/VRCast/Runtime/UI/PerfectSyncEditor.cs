@@ -688,9 +688,9 @@ namespace VRCast.UI
         }
 
         /// <summary>
-        /// 視線で動かす目のボーンがあれば true（無ければ目の動きも形状で作る）。
+        /// 視線で動かす目のボーンがあれば true（無ければ目の動きも形状で作る。視線用 BlendShape だけのときは形状側で動かす）。
         /// </summary>
-        private bool HasEyeBones => _faceDriver != null && _faceDriver.HasEyes;
+        private bool HasEyeBones => _faceDriver != null && _faceDriver.HasEyeBones;
 
         private void SetAbsentShapeSources(FaceParts parts, bool absent)
         {

@@ -42,7 +42,7 @@ OBS (Window Capture / Game Capture / Spout2) / 仮想カメラ (Discord / Zoom �
 
 ## 現在の状態
 
-**バージョン 2.2.2（製品版）**。変更点は [CHANGELOG.txt](CHANGELOG.txt)（日本語 / 英語、配布 zip にも同梱）。
+**バージョン 2.3.2（製品版）**。変更点は [CHANGELOG.txt](CHANGELOG.txt)（日本語 / 英語、配布 zip にも同梱）。
 
 **Milestone 1（Basic Avatar Runtime）**・**Milestone 2（Transparent Rendering）**・**Milestone 3（Expressions）**・**Milestone 4（Runtime Physics）**・**Milestone 5（Tracking）** 完了。
 VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポーズ・表情切り替えをしつつ背景透過で OBS に取り込める。
@@ -69,7 +69,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | 揺れもの（PhysBone 近似・コライダー） | 済 |
 | 小物のアニメーションの自動再生（小物の Animator・FX で常に再生される小物の動き。VRChat と同じ） | 済 |
 | カメラトラッキング（OpenSeeFace 同梱: 頭の向き・上半身の傾き・まばたき・口） | 済 |
-| 視線（目ボーン）・左右別ウインク | 済 |
+| 視線（目ボーン・視線用 BlendShape）・左右別ウインク | 済 |
 | MediaPipe トラッカー（顔 + 腕・手・指、既定の入力元。OpenSeeFace と切替可） | 済 |
 | 手の位置をアバターの体格に合わせる（顔の前の手はアバターの顔の前へ） | 済 |
 | iPhone・外部アプリからの顔トラッキング（VMC プロトコル受信。Waidayo 等の ARKit の値） | 済 |
@@ -194,7 +194,7 @@ VRM（VRoid Studio などで作った `.vrm`）は書き出し不要で、その
   - `blink` / `blinkLeft` / `blinkRight` → 自動まばたき・ウインク、`aa` / `ih` / `ou` / `ee` / `oh` → マイクの口パク（あいうえお）
   - SpringBone（揺れもの）とコライダー → PhysBone の近似（Body & pose タブの揺れもの ON/OFF も有効）
 - まばたき・口の形は 1 つのメッシュの BlendShape だけを使う（最も多く使われているメッシュ）。重みは 100 で動かす（BlendShape の上限で調整できる）。
-- マテリアルの色・UV を変える表情は反映されない（BlendShape を動かさない表情は一覧に出ない）。VRM の Node Constraint・視線の BlendShape 方式（目ボーンの無いモデル）は未対応。
+- マテリアルの色・UV を変える表情は反映されない（BlendShape を動かさない表情は一覧に出ない）。VRM の Node Constraint は未対応。視線は目ボーンに加え、「上を見る」「下を見る」「右を見る」「左を見る」（や LookUp 等）の BlendShape があればそれで動かす（目ボーンが無いアバターでも可）。
 - 見た目は MToon（UniVRM の MToon10）で描画する。ビルド時に `VRCastBuild` が MToon・UniUnlit・Standard を Always Included Shaders に追加する。
 - VRM に書かれた利用条件（アバターの使用許可・商用利用など）を守って使うこと。
 

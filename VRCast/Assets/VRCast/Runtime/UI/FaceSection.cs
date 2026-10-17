@@ -148,8 +148,11 @@ namespace VRCast.UI
             var face = _avatar.Get<FaceTrackingDriver>();
             if (_avatar.HasAvatar && (face == null || !face.HasEyes))
             {
-                GuiControls.Hint(Loc.T("No eye bones", "目のボーンがありません", "눈 본이 없습니다", "没有眼睛骨骼",
-                    "沒有眼睛骨骼"));
+                GuiControls.Hint(Loc.T("No eye bones or look blend shapes",
+                    "目のボーンも視線用の BlendShape（上を見る 等）もありません",
+                    "눈 본과 시선용 BlendShape(위를 보다 등)이 없습니다",
+                    "没有眼睛骨骼或视线用 BlendShape（上を見る 等）",
+                    "沒有眼睛骨骼或視線用 BlendShape（上を見る 等）"));
             }
         }
 

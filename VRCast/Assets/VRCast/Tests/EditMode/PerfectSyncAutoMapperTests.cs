@@ -48,6 +48,29 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Map_AssignsJapaneseLookShapes()
+        {
+            // アッシュ等の両目まとめの視線用 BlendShape を eyeLook* へ割り当てること
+            var candidates = new List<PerfectSyncAutoMapper.Candidate>
+            {
+                new PerfectSyncAutoMapper.Candidate("Body", "上を見る"),
+                new PerfectSyncAutoMapper.Candidate("Body", "下を見る"),
+                new PerfectSyncAutoMapper.Candidate("Body", "右を見る"),
+                new PerfectSyncAutoMapper.Candidate("Body", "左を見る"),
+            };
+            List<PerfectSyncBinding> bindings = PerfectSyncAutoMapper.Map(candidates);
+
+            Assert.That(Find(bindings, "eyeLookUpLeft")?.blendShape, Is.EqualTo("上を見る"));
+            Assert.That(Find(bindings, "eyeLookUpRight")?.blendShape, Is.EqualTo("上を見る"));
+            Assert.That(Find(bindings, "eyeLookDownLeft")?.blendShape, Is.EqualTo("下を見る"));
+            Assert.That(Find(bindings, "eyeLookDownRight")?.blendShape, Is.EqualTo("下を見る"));
+            Assert.That(Find(bindings, "eyeLookInLeft")?.blendShape, Is.EqualTo("右を見る"));
+            Assert.That(Find(bindings, "eyeLookOutRight")?.blendShape, Is.EqualTo("右を見る"));
+            Assert.That(Find(bindings, "eyeLookOutLeft")?.blendShape, Is.EqualTo("左を見る"));
+            Assert.That(Find(bindings, "eyeLookInRight")?.blendShape, Is.EqualTo("左を見る"));
+        }
+
+        [Test]
         public void Map_PrefersEarlierCandidatesAndSkipsArKitNames()
         {
             // 同じ名前は先に並べた（顔メッシュの）候補を使い、ARKit 名そのものは割り当てに使わないこと

@@ -10,7 +10,7 @@ namespace VRCast.Tracking
     /// フェイストラッキングをアバターへ適用する。頭の向きは首・頭ボーン、頭の位置は背骨・胸の傾き（前後・左右）と
     /// 腰の移動（前後・左右・上下、足も一緒に動く）のどちらかまたは両方、
     /// 両肩（MediaPipe の体）が映っていれば上半身のひねり・左右の傾きを肩の線から背骨・胸へ、
-    /// 視線は目ボーン、まばたき（左右別）・口は既存コントローラーへ外部入力として渡す。
+    /// 視線は目ボーンと、あれば視線用 BlendShape（「上を見る」等）、まばたき（左右別）・口は既存コントローラーへ外部入力として渡す。
     /// 表情（MediaPipe のみ）は判定結果が変わったときだけ、割り当てた表情プリセットへ切り替える。
     /// 揺れもの（PhysBoneSimulator）が回転後の頭を基準に計算できるよう、他の LateUpdate より先に実行する。
     /// </summary>
@@ -165,8 +165,9 @@ namespace VRCast.Tracking
         private float _eyesClosed;
         private FaceTrackingFrame _lastFrame;
 
-        // パーフェクトシンクの書き込み先（ARKit 名の BlendShape）
+        // パーフェクトシンクの書き込み先（ARKit 名の BlendShape）と、視線用 BlendShape（両目まとめの名前）
         private PerfectSyncBlendShapes _perfectSync;
+        private GazeBlendShapes _gazeBlendShapes;
 
         /// <summary>
         /// アバターで見つかった ARKit 名の BlendShape の種類数（パーフェクトシンクの対応状況の表示用）。
@@ -238,9 +239,14 @@ namespace VRCast.Tracking
         }
 
         /// <summary>
-        /// 視線（トラッキング・カメラ目線）で動かす目ボーンがあれば true。
+        /// 視線で動かす目ボーンがあれば true（パーフェクトシンク化で目の動きを形状にするかの判定用）。
         /// </summary>
-        public bool HasEyes => _leftEye != null || _rightEye != null;
+        public bool HasEyeBones => _leftEye != null || _rightEye != null;
+
+        /// <summary>
+        /// 視線（トラッキング・カメラ目線）で動かせる目ボーンか視線用 BlendShape があれば true。
+        /// </summary>
+        public bool HasEyes => HasEyeBones || (_gazeBlendShapes != null && _gazeBlendShapes.IsAvailable);
 
         /// <summary>
         /// トラッキング値を受信して適用中なら true。
@@ -285,11 +291,12 @@ namespace VRCast.Tracking
             _expressions = expressions;
             _settings = settings;
 
-            // ARKit 名の BlendShape（パーフェクトシンク化で割り当てた既存の BlendShape を含む）を探しておく
-            // （Humanoid でなくても顔は動かせる）
+            // ARKit 名の BlendShape（パーフェクトシンク化で割り当てた既存の BlendShape を含む）と、
+            // 視線用 BlendShape（「上を見る」等）を探しておく（Humanoid でなくても顔は動かせる）
             _perfectSync = PerfectSyncBlendShapes.Create(transform, perfectSyncBindings);
+            _gazeBlendShapes = GazeBlendShapes.Create(transform);
 
-            // Humanoid のみ頭を動かす（非 Humanoid はまばたき・口だけ）
+            // Humanoid のみ頭を動かす（非 Humanoid はまばたき・口・視線の BlendShape だけ）
             if (animator == null || !animator.isHuman)
             {
                 return;
@@ -310,7 +317,7 @@ namespace VRCast.Tracking
             _neckRest = RestOf(_neck);
             _headRest = RestOf(_head);
 
-            // 目ボーンが無いアバターは視線なし
+            // 目ボーン（無ければ視線は GazeBlendShapes のみ）
             _leftEye = animator.GetBoneTransform(HumanBodyBones.LeftEye);
             _rightEye = animator.GetBoneTransform(HumanBodyBones.RightEye);
             _leftEyeRest = RestOf(_leftEye);
@@ -323,6 +330,7 @@ namespace VRCast.Tracking
         public void ReleasePerfectSync()
         {
             _perfectSync?.Release();
+            _gazeBlendShapes?.Release();
         }
 
         /// <summary>
@@ -332,7 +340,9 @@ namespace VRCast.Tracking
         {
             // 今の書き込みを元の値へ戻してから作り直す（次のフレームから新しい書き込み先で動く）
             _perfectSync?.Release();
+            _gazeBlendShapes?.Release();
             _perfectSync = PerfectSyncBlendShapes.Create(transform, bindings);
+            _gazeBlendShapes = GazeBlendShapes.Create(transform);
         }
 
         /// <summary>
@@ -937,8 +947,10 @@ namespace VRCast.Tracking
 
         private void ApplyEyes(bool received)
         {
-            // 目ボーンが無ければ何もしない
-            if (_leftEye == null && _rightEye == null)
+            // 目ボーンも視線用 BlendShape も無ければ何もしない
+            bool hasBones = HasEyeBones;
+            bool hasShapes = _gazeBlendShapes != null && _gazeBlendShapes.IsAvailable;
+            if (!hasBones && !hasShapes)
             {
                 return;
             }
@@ -967,27 +979,44 @@ namespace VRCast.Tracking
                 Vector2.Distance(_currentGaze, _gazeTarget), EyeFastAngle, EyeSmoothing, EyeFastSmoothing, Time.deltaTime);
             _currentGaze = Vector2.Lerp(_currentGaze, _gazeTarget, blend);
 
-            // 無効化後に正面へ戻り切ったらボーンを触らない（カメラ目線の間は動かし続ける）
+            // 無効化後に正面へ戻り切ったらボーン・BlendShape を触らない（カメラ目線の間は動かし続ける）
             if ((!_settings.trackingEnabled || Suspended) && view == null && _currentGaze.sqrMagnitude < 1e-4f)
             {
                 _currentGaze = Vector2.zero;
+                _gazeBlendShapes?.Release();
                 return;
             }
 
-            // 読込時の回転へ戻してから回す
-            RestoreRest(_leftEye, _leftEyeRest);
-            RestoreRest(_rightEye, _rightEyeRest);
-            Quaternion look = Quaternion.Euler(-_currentGaze.y, _currentGaze.x, 0f);
-            RotateInFrame(_leftEye, headFrame, look);
-            RotateInFrame(_rightEye, headFrame, look);
+            // 目ボーンがあれば読込時の回転へ戻してから回す
+            if (hasBones)
+            {
+                RestoreRest(_leftEye, _leftEyeRest);
+                RestoreRest(_rightEye, _rightEyeRest);
+                Quaternion look = Quaternion.Euler(-_currentGaze.y, _currentGaze.x, 0f);
+                RotateInFrame(_leftEye, headFrame, look);
+                RotateInFrame(_rightEye, headFrame, look);
+            }
+
+            // 視線用 BlendShape。パーフェクトシンクが eyeLook* を動かしている間は二重に動かさない
+            if (hasShapes && !(IsPerfectSyncActive && _perfectSync != null && _perfectSync.DrivesEyeLook))
+            {
+                _gazeBlendShapes.Apply(_currentGaze.x, _currentGaze.y);
+            }
+            else
+            {
+                _gazeBlendShapes?.Release();
+            }
         }
 
         private Vector2 CalculateGazeTo(Vector3 point, Quaternion headFrame)
         {
-            // 両目の中間から見た点の方向を頭の向き基準にする（寄り目にならないよう両目で同じ角度を使う）
+            // 両目の中間（無ければ頭）から見た点の方向を頭の向き基準にする（寄り目にならないよう両目で同じ角度を使う）
             Vector3 eyes = _leftEye != null && _rightEye != null
                 ? (_leftEye.position + _rightEye.position) * 0.5f
-                : (_leftEye != null ? _leftEye : _rightEye).position;
+                : _leftEye != null ? _leftEye.position
+                : _rightEye != null ? _rightEye.position
+                : _head != null ? _head.position
+                : transform.position;
             Vector3 direction = Quaternion.Inverse(headFrame) * (point - eyes);
 
             // 左右（Y 軸まわり）と上下の角度にし、白目をむかない範囲に制限する
@@ -1044,6 +1073,7 @@ namespace VRCast.Tracking
             ClearBlink();
             SetMouth(0f);
             _perfectSync?.Release();
+            _gazeBlendShapes?.Release();
         }
     }
 }

@@ -4,6 +4,14 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 2.3.2 (2026-10-17)
+
+[日本語]
+- 視線を「上を見る」「下を見る」「右を見る」「左を見る」などの BlendShape でも動かせるように変更（アッシュなど、目の向きを形状で動かすアバター向け。目のボーンが無いアバターでも使えます）
+
+[English]
+- Gaze can now also be driven by blend shapes such as "Look up / down / left / right" in Japanese or English names (for avatars like Ash that move the eyes with shapes; works even without eye bones)
+
 ■ 2.2.2 (2026-10-15)
 
 [日本語]
