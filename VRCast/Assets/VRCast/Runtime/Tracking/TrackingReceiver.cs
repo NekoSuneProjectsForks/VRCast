@@ -157,7 +157,8 @@ namespace VRCast.Tracking
             }
 
             // Bound the network update rate so tracking/render FPS changes do not flood the OSC receiver.
-            _nextOscOutputTime = Time.unscaledTime + (1f / 30f);
+            int outputRate = Mathf.Clamp(_settings.oscParameterOutputRate <= 0 ? 30 : _settings.oscParameterOutputRate, 1, 60);
+            _nextOscOutputTime = Time.unscaledTime + (1f / outputRate);
             _oscParametersSentThisFrame.Clear();
             SendMappedFloat(_settings.oscParameterEyeOpenLeft, frame.EyeOpenLeft);
             SendMappedFloat(_settings.oscParameterEyeOpenRight, frame.EyeOpenRight);
