@@ -466,6 +466,11 @@ namespace VRCast.Core
         public bool oscParameterOutputEnabled;
         public string oscParameterOutputAddress = "127.0.0.1";
         public int oscParameterOutputPort = 9000;
+        // Optional face-frame-to-avatar-parameter mappings. Empty names disable individual mappings.
+        public string oscParameterEyeOpenLeft = string.Empty;
+        public string oscParameterEyeOpenRight = string.Empty;
+        public string oscParameterMouthOpen = string.Empty;
+        public string oscParameterSmile = string.Empty;
 
         // 表情ごとのしきい値（UseCommonThreshold = 未設定で trackingExpressionThreshold を使う。旧版の共通値を引き継ぐため）
         public float thresholdSmile = UseCommonThreshold;
