@@ -61,7 +61,7 @@ The first milestone should play VMD motion on an avatar already loaded by VRCast
 
 ## Tracking and VRChat OSC integration
 
-- [✓] VRChat OSC avatar-parameter sender exposed in Settings with endpoint configuration and float/bool test sends. The sender also supports signed integer avatar parameters at the API level; an integer test control has not yet been added to Settings.
+- [✓] VRChat OSC avatar-parameter sender exposed in Settings with endpoint configuration and float/bool test sends. The sender also supports signed integer avatar parameters, with a Settings test button sending `VRCastTestGesture = 1`.
 - [✓] Optional live face-frame mappings for left/right eye openness and mouth openness, plus smile when the selected provider supplies expression scores; output is rate-limited to 30 updates/second and blank mappings are disabled.
 - [✓] Configurable mappings for all 51 ARKit-compatible blendshape channels, with empty mappings disabled and duplicate channel entries normalised.
 - [✓] OSC sender integer packet encoding, endpoint address normalization, disposed-socket handling, and associated EditMode test cases added in source (Unity tests not executed).\n- [✗] Head/body/hand provider mapping, per-avatar profiles, provider conflict resolution, and inbound OSC/VRCFT discovery.
