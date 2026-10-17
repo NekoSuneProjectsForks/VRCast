@@ -471,6 +471,12 @@ namespace VRCast.Core
         public string oscParameterEyeOpenRight = string.Empty;
         public string oscParameterMouthOpen = string.Empty;
         public string oscParameterSmile = string.Empty;
+        public string oscParameterEyeBlinkLeft = string.Empty;
+        public string oscParameterEyeBlinkRight = string.Empty;
+        public string oscParameterJawOpen = string.Empty;
+        public string oscParameterMouthSmileLeft = string.Empty;
+        public string oscParameterMouthSmileRight = string.Empty;
+        public string oscParameterBrowInnerUp = string.Empty;
 
         // 表情ごとのしきい値（UseCommonThreshold = 未設定で trackingExpressionThreshold を使う。旧版の共通値を引き継ぐため）
         public float thresholdSmile = UseCommonThreshold;
@@ -1314,6 +1320,12 @@ namespace VRCast.Core
             oscParameterEyeOpenRight = NormalizeOscParameterName(oscParameterEyeOpenRight);
             oscParameterMouthOpen = NormalizeOscParameterName(oscParameterMouthOpen);
             oscParameterSmile = NormalizeOscParameterName(oscParameterSmile);
+            oscParameterEyeBlinkLeft = NormalizeOscParameterName(oscParameterEyeBlinkLeft);
+            oscParameterEyeBlinkRight = NormalizeOscParameterName(oscParameterEyeBlinkRight);
+            oscParameterJawOpen = NormalizeOscParameterName(oscParameterJawOpen);
+            oscParameterMouthSmileLeft = NormalizeOscParameterName(oscParameterMouthSmileLeft);
+            oscParameterMouthSmileRight = NormalizeOscParameterName(oscParameterMouthSmileRight);
+            oscParameterBrowInnerUp = NormalizeOscParameterName(oscParameterBrowInnerUp);
             // 上半身の傾きの強さは 0〜上限に制限
             trackingBodyLean = Mathf.Clamp(trackingBodyLean, 0f, MaxTrackingBodyLean);
             // 未知の体の動かし方は既定の傾きへ
