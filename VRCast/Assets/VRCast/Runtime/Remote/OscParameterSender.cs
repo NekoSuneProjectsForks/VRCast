@@ -42,7 +42,7 @@ namespace VRCast.Remote
                 Port = port;
                 _client = new UdpClient();
                 _client.Connect(new IPEndPoint(ip, port));
-                Status = "Connected to " + Address + ":" + Port;
+                Status = "Ready to send to " + Address + ":" + Port;
                 return true;
             }
             catch (SocketException ex)
@@ -98,7 +98,7 @@ namespace VRCast.Remote
             try
             {
                 _client.Send(packet, packet.Length);
-                Status = "Connected to " + Address + ":" + Port;
+                Status = "Ready to send to " + Address + ":" + Port;
                 return true;
             }
             catch (SocketException ex)
