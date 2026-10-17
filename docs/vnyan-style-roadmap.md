@@ -87,8 +87,11 @@ The first milestone should play VMD motion on an avatar already loaded by VRCast
 - [✓] Configurable FPS cap and settings sanitisation are present on `feature/vnyan-audio-mmd-performance`.
 - [✓] Reusable VRChat OSC avatar-parameter packet encoder and UDP sender (`Remote/OscParameterSender.cs`) supports float and bool values, defaulting to 127.0.0.1:9000.
 - [✓] Added persistent OSC output endpoint settings, Settings UI enable/disable and destination editing, plus test float/bool messages and settings validation tests.
+- [✓] Added optional live face mappings for eye openness, mouth openness, and smile scores. Output runs only while tracking is enabled and fresh face data is available, and is capped at 30 updates/second.
+- [✓] Added settings sanitisation/tests for mapping names; blank mappings are disabled and names containing `/` are rejected.
+- [✓] Clarified UDP status as “Ready to send” rather than implying remote receipt, and throttled retries for unavailable endpoints.
 - [✗] Unity EditMode tests/build and live VRChat testing have not been run. UDP send success only confirms the local socket accepted the datagram, not that VRChat received or applied it.
-- [✗] The OSC sender is not yet connected to live tracking values, VRCFT provider discovery, user-defined mappings, or skeletal tracking. It is not a complete VRCFT or full-body tracking integration.
+- [✗] ARKit-wide mappings, head/body/hand provider mapping, per-avatar profiles, source conflict resolution, inbound OSC/VRCFT discovery, and skeletal tracking forwarding are not implemented. This is not a complete VRCFT or full-body tracking integration.
 - [✗] Audio capture/analysis, AudioLink-inspired mappings, VMD playback, trigger/action workflows, session server, and the wider tracking/provider integrations remain to be implemented and validated.
 
 Status legend: `[✓]` = implementation exists in source; `[✗]` = outstanding or not yet validated end-to-end. Do not describe a feature as complete based only on a roadmap or an isolated helper class.
