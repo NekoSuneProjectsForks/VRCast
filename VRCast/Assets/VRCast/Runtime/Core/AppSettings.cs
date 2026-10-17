@@ -13,6 +13,10 @@ namespace VRCast.Core
     {
         public string blendShapeName = string.Empty;
         public string parameterName = string.Empty;
+
+        // Runtime-only cache; JsonUtility persists only the user-facing mapping fields.
+        [NonSerialized] public string cachedBlendShapeName;
+        [NonSerialized] public int cachedBlendShapeIndex = -1;
     }
 
     [Serializable]
