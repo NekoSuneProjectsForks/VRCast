@@ -240,6 +240,13 @@ namespace VRCast.UI
                 return;
             }
 
+            if (destination.IndexOf('/') >= 0)
+            {
+                GuiControls.Hint("Invalid OSC parameter name for '" + sourceName
+                    + "': '/' is not allowed. This mapping will be disabled when settings are sanitised.");
+                return;
+            }
+
             if (destinationOwners.TryGetValue(destination, out string firstSource))
             {
                 duplicateDestinations.Add(destination);
