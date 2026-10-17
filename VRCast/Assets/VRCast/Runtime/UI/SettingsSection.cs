@@ -219,9 +219,9 @@ namespace VRCast.UI
                 GUILayout.Label(mapping.blendShapeName);
                 mapping.parameterName = GUILayout.TextField(mapping.parameterName ?? string.Empty);
                 string destination = (mapping.parameterName ?? string.Empty).Trim();
-                if (destination.IndexOf('/') >= 0)
+                if (HasInvalidOscParameterCharacters(destination))
                 {
-                    GuiControls.Hint("Invalid OSC parameter name: '/' is not allowed. This mapping will be disabled when settings are sanitised.");
+                    GuiControls.Hint("Invalid OSC parameter name: path separators and control characters are not allowed. This mapping will be disabled when settings are sanitised.");
                 }
                 else if (!string.IsNullOrEmpty(destination))
                 {
@@ -249,6 +249,20 @@ namespace VRCast.UI
             }
         }
 
+        private static bool HasInvalidOscParameterCharacters(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return false;
+
+            foreach (char c in value)
+            {
+                if (c == '/' || char.IsControl(c))
+                    return true;
+            }
+
+            return false;
+        }
+
         private static void RegisterNamedDestination(
             string parameterName,
             string sourceName,
@@ -264,7 +278,7 @@ namespace VRCast.UI
             if (destination.IndexOf('/') >= 0)
             {
                 GuiControls.Hint("Invalid OSC parameter name for '" + sourceName
-                    + "': '/' is not allowed. This mapping will be disabled when settings are sanitised.");
+                    + "': path separators and control characters are not allowed. This mapping will be disabled when settings are sanitised.");
                 return;
             }
 
