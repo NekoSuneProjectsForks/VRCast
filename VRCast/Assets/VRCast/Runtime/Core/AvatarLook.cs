@@ -31,6 +31,27 @@ namespace VRCast.Core
         public float poseArmTwistLeft;
         public float poseArmTwistRight;
 
+        // 最新ライティング（Fill / Rim / IBL / 影 / 映え）。以前の版には無いため hasModernLighting が false なら既定のまま残す
+        public bool hasModernLighting;
+        public float fillIntensity;
+        public float fillYaw;
+        public float fillPitch;
+        public float fillTemperature;
+        public float rimIntensity;
+        public float rimYaw;
+        public float rimPitch;
+        public float rimTemperature;
+        public float iblIntensity;
+        public IblPreset iblPreset;
+        public bool softShadows;
+        public float shadowStrength;
+        public float shadowSoftness;
+        public bool bloomEnabled;
+        public float bloomIntensity;
+        public float bloomThreshold;
+        public bool tonemapEnabled;
+        public float tonemapStrength;
+
         /// <summary>
         /// 現在の設定から取り出す。
         /// </summary>
@@ -55,6 +76,25 @@ namespace VRCast.Core
                 poseArmForwardRight = settings.poseArmForwardRight,
                 poseArmTwistLeft = settings.poseArmTwistLeft,
                 poseArmTwistRight = settings.poseArmTwistRight,
+                hasModernLighting = true,
+                fillIntensity = settings.fillIntensity,
+                fillYaw = settings.fillYaw,
+                fillPitch = settings.fillPitch,
+                fillTemperature = settings.fillTemperature,
+                rimIntensity = settings.rimIntensity,
+                rimYaw = settings.rimYaw,
+                rimPitch = settings.rimPitch,
+                rimTemperature = settings.rimTemperature,
+                iblIntensity = settings.iblIntensity,
+                iblPreset = settings.iblPreset,
+                softShadows = settings.softShadows,
+                shadowStrength = settings.shadowStrength,
+                shadowSoftness = settings.shadowSoftness,
+                bloomEnabled = settings.bloomEnabled,
+                bloomIntensity = settings.bloomIntensity,
+                bloomThreshold = settings.bloomThreshold,
+                tonemapEnabled = settings.tonemapEnabled,
+                tonemapStrength = settings.tonemapStrength,
             };
         }
 
@@ -80,6 +120,29 @@ namespace VRCast.Core
             settings.poseArmForwardRight = hasArmAdjust ? poseArmForwardRight : 0f;
             settings.poseArmTwistLeft = hasArmAdjust ? poseArmTwistLeft : 0f;
             settings.poseArmTwistRight = hasArmAdjust ? poseArmTwistRight : 0f;
+
+            if (hasModernLighting)
+            {
+                settings.fillIntensity = fillIntensity;
+                settings.fillYaw = fillYaw;
+                settings.fillPitch = fillPitch;
+                settings.fillTemperature = fillTemperature;
+                settings.rimIntensity = rimIntensity;
+                settings.rimYaw = rimYaw;
+                settings.rimPitch = rimPitch;
+                settings.rimTemperature = rimTemperature;
+                settings.iblIntensity = iblIntensity;
+                settings.iblPreset = iblPreset;
+                settings.softShadows = softShadows;
+                settings.shadowStrength = shadowStrength;
+                settings.shadowSoftness = shadowSoftness;
+                settings.bloomEnabled = bloomEnabled;
+                settings.bloomIntensity = bloomIntensity;
+                settings.bloomThreshold = bloomThreshold;
+                settings.tonemapEnabled = tonemapEnabled;
+                settings.tonemapStrength = tonemapStrength;
+            }
+
             settings.Sanitize();
         }
 
@@ -90,7 +153,12 @@ namespace VRCast.Core
             && IsFiniteValue(lightTemperature) && IsFiniteValue(ambientIntensity) && IsFiniteValue(avatarBrightness)
             && IsFiniteValue(poseArmDown) && IsFiniteValue(poseElbowBend) && IsFiniteValue(avatarYaw)
             && IsFiniteValue(outlineWidth) && IsFiniteValue(poseArmSpread) && IsFiniteValue(poseArmForwardLeft)
-            && IsFiniteValue(poseArmForwardRight) && IsFiniteValue(poseArmTwistLeft) && IsFiniteValue(poseArmTwistRight);
+            && IsFiniteValue(poseArmForwardRight) && IsFiniteValue(poseArmTwistLeft) && IsFiniteValue(poseArmTwistRight)
+            && (!hasModernLighting || (IsFiniteValue(fillIntensity) && IsFiniteValue(fillYaw) && IsFiniteValue(fillPitch)
+                && IsFiniteValue(fillTemperature) && IsFiniteValue(rimIntensity) && IsFiniteValue(rimYaw)
+                && IsFiniteValue(rimPitch) && IsFiniteValue(rimTemperature) && IsFiniteValue(iblIntensity)
+                && IsFiniteValue(shadowStrength) && IsFiniteValue(shadowSoftness) && IsFiniteValue(bloomIntensity)
+                && IsFiniteValue(bloomThreshold) && IsFiniteValue(tonemapStrength)));
 
         /// <summary>
         /// 全要素が同じなら true（変化したときだけ記録するための比較）。
@@ -105,7 +173,16 @@ namespace VRCast.Core
                 && outlineWidth == other.outlineWidth && hasArmAdjust == other.hasArmAdjust
                 && poseArmSpread == other.poseArmSpread && poseArmForwardLeft == other.poseArmForwardLeft
                 && poseArmForwardRight == other.poseArmForwardRight && poseArmTwistLeft == other.poseArmTwistLeft
-                && poseArmTwistRight == other.poseArmTwistRight;
+                && poseArmTwistRight == other.poseArmTwistRight
+                && hasModernLighting == other.hasModernLighting
+                && fillIntensity == other.fillIntensity && fillYaw == other.fillYaw && fillPitch == other.fillPitch
+                && fillTemperature == other.fillTemperature && rimIntensity == other.rimIntensity
+                && rimYaw == other.rimYaw && rimPitch == other.rimPitch && rimTemperature == other.rimTemperature
+                && iblIntensity == other.iblIntensity && iblPreset == other.iblPreset
+                && softShadows == other.softShadows && shadowStrength == other.shadowStrength
+                && shadowSoftness == other.shadowSoftness && bloomEnabled == other.bloomEnabled
+                && bloomIntensity == other.bloomIntensity && bloomThreshold == other.bloomThreshold
+                && tonemapEnabled == other.tonemapEnabled && tonemapStrength == other.tonemapStrength;
         }
 
         private static bool IsFiniteValue(float value)

@@ -383,6 +383,16 @@ namespace VRCast.UI
 
         private void DrawTileButtons(string path, bool isCurrent)
         {
+            // 表示中は今の顔を撮り直せる（表情・向きを変えたあと一覧の写真を更新する）
+            if (isCurrent)
+            {
+                GUI.enabled = !_session.IsLoading && _session.Current != null;
+                if (GUILayout.Button(Loc.T("Retake", "撮り直す", "다시 찍기", "重拍", "重拍"), GuiControls.Shrinkable))
+                {
+                    _session.StartCoroutine(CaptureFace(_session.Current, false));
+                }
+            }
+
             // 一覧の画像を選ぶ
             GUI.enabled = FileDialog.IsSupported;
             if (GUILayout.Button(Loc.T("Image", "画像", "이미지", "图片", "圖片"), GuiControls.Shrinkable))
@@ -643,7 +653,7 @@ namespace VRCast.UI
             GUILayout.BeginHorizontal();
 
             // 今の顔（表情・向き）を撮り直して一覧の画像にする
-            if (GUILayout.Button(Loc.T("Capture face", "顔を撮る", "얼굴 촬영", "拍摄脸部", "拍攝臉部"),
+            if (GUILayout.Button(Loc.T("Retake face photo", "顔写真を撮り直す", "얼굴 사진 다시 찍기", "重拍脸部照片", "重拍臉部照片"),
                     GuiControls.Shrinkable))
             {
                 _session.StartCoroutine(CaptureFace(avatar, false));

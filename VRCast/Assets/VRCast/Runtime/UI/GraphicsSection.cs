@@ -5,7 +5,7 @@ using VRCast.Rendering;
 namespace VRCast.UI
 {
     /// <summary>
-    /// グラフィックタブ（背景の透過・背景色、ライト・アバターの明るさ、輪郭線の太さ）。
+    /// グラフィックタブ（背景、レガシー／最新ライティング、輪郭線）。
     /// </summary>
     public class GraphicsSection
     {
@@ -22,7 +22,18 @@ namespace VRCast.UI
         public void Draw()
         {
             DrawBackground();
-            DrawLight();
+            DrawLightingSystem();
+            if (_rendering.IsModern)
+            {
+                DrawModernLight();
+                DrawShadows();
+                DrawLook();
+            }
+            else
+            {
+                DrawLegacyLight();
+            }
+
             DrawOutline();
         }
 
@@ -67,7 +78,33 @@ namespace VRCast.UI
             GuiControls.EndCard();
         }
 
-        private void DrawLight()
+        private void DrawLightingSystem()
+        {
+            GuiControls.BeginCard(Loc.T("Lighting", "ライティング", "라이팅", "光照", "光照"));
+            GuiControls.Hint(Loc.T(
+                "Modern is the new look (three lights, soft shadows, studio light, bloom). Legacy matches VRCast 2.x.",
+                "最新は三点照明・柔らかい影・スタジオ環境光・ブルームなどの新しい見た目です。レガシーは VRCast 2.x と同じです。",
+                "최신은 삼점 조명·부드러운 그림자·스튜디오 환경광·블룸 등의 새 모습입니다. 레거시는 VRCast 2.x와 같습니다.",
+                "最新为三点照明、柔和阴影、工作室环境光、辉光等新外观。旧版与 VRCast 2.x 相同。",
+                "最新為三點照明、柔和陰影、工作室環境光、輝光等新外觀。舊版與 VRCast 2.x 相同。"));
+
+            int selected = GuiControls.LabeledChoice(
+                Loc.T("System", "系統", "계통", "系统", "系統"),
+                new[]
+                {
+                    Loc.T("Legacy (2.x)", "レガシー（2.x）", "레거시 (2.x)", "旧版 (2.x)", "舊版 (2.x)"),
+                    Loc.T("Modern", "最新", "최신", "最新", "最新"),
+                },
+                (int)_rendering.LightingSystem);
+            if (selected != (int)_rendering.LightingSystem)
+            {
+                _rendering.LightingSystem = (LightingSystem)selected;
+            }
+
+            GuiControls.EndCard();
+        }
+
+        private void DrawLegacyLight()
         {
             GuiControls.BeginCard(Loc.T("Light", "ライト", "조명", "灯光", "燈光"));
             GuiControls.Hint(Loc.T("Sunlight shines from one direction; ambient light brightens the whole avatar evenly",
@@ -75,13 +112,128 @@ namespace VRCast.UI
                 "태양광은 한 방향에서 비추는 빛, 환경광은 아바타 전체를 고르게 밝히는 빛입니다",
                 "阳光从一个方向照射，环境光会均匀照亮整个虚拟形象",
                 "陽光從一個方向照射，環境光會均勻照亮整個虛擬形象"));
-            GuiControls.Hint(Loc.T("Light and avatar brightness are remembered for each avatar.",
-                "ライトとアバターの明るさはアバターごとに記憶されます。",
-                "조명과 아바타 밝기는 아바타마다 기억됩니다.",
-                "灯光和虚拟形象亮度会按虚拟形象分别记住。",
-                "燈光和虛擬形象亮度會依虛擬形象分別記住。"));
+            DrawBrightnessHint();
+            DrawLegacyPresets();
+            DrawAvatarBrightness();
+            DrawAmbientSlider();
+            DrawKeyLightSliders(
+                Loc.T("Sunlight", "太陽光", "태양광", "阳光", "陽光"),
+                Loc.T("Sun color (K)", "太陽光の色 (K)", "태양광 색 (K)", "阳光颜色 (K)", "陽光顏色 (K)"));
+            GuiControls.EndCard();
+        }
 
-            // プリセット（太陽光と環境光をまとめて設定）
+        private void DrawModernLight()
+        {
+            GuiControls.BeginCard(Loc.T("Lights", "ライト", "조명", "灯光", "燈光"));
+            GuiControls.Hint(Loc.T(
+                "Key is the main light, Fill softens shadows, Rim outlines the silhouette. Remembered per avatar.",
+                "キーが主光、フィルが影を明るく、リムが輪郭を縁取る光です。アバターごとに記憶されます。",
+                "키가 주광, 필이 그림자를 밝히고, 림이 윤곽을 강조합니다. 아바타마다 기억됩니다.",
+                "主光、辅光柔化阴影、轮廓光勾边。按虚拟形象分别记住。",
+                "主光、輔光柔化陰影、輪廓光勾邊。依虛擬形象分別記住。"));
+            DrawBrightnessHint();
+            DrawModernPresets();
+            DrawAvatarBrightness();
+            DrawAmbientSlider();
+
+            GuiControls.SubHeading(Loc.T("Key light", "キーライト", "키 라이트", "主光", "主光"));
+            DrawKeyLightSliders(
+                Loc.T("Intensity", "強さ", "세기", "强度", "強度"),
+                Loc.T("Color (K)", "色 (K)", "색 (K)", "颜色 (K)", "顏色 (K)"));
+
+            GuiControls.SubHeading(Loc.T("Fill light", "フィルライト", "필 라이트", "辅光", "輔光"));
+            DrawFillSliders();
+
+            GuiControls.SubHeading(Loc.T("Rim light", "リムライト", "림 라이트", "轮廓光", "輪廓光"));
+            DrawRimSliders();
+
+            GuiControls.SubHeading(Loc.T("Studio environment", "スタジオ環境光", "스튜디오 환경광", "工作室环境光", "工作室環境光"));
+            DrawIblSliders();
+            GuiControls.EndCard();
+        }
+
+        private void DrawShadows()
+        {
+            GuiControls.BeginCard(Loc.T("Soft shadows (PCSS)", "柔らかい影（PCSS）", "부드러운 그림자 (PCSS)",
+                "柔和阴影（PCSS）", "柔和陰影（PCSS）"));
+            GuiControls.Hint(Loc.T(
+                "Softens self-shadows on the avatar. No floor is drawn (works with transparent backgrounds).",
+                "アバター自身への影を柔らかくします。床は出さないため透過背景のまま使えます。",
+                "아바타 자체 그림자를 부드럽게 합니다. 바닥은 그리지 않아 투명 배경에서도 쓸 수 있습니다.",
+                "柔化虚拟形象自身的阴影。不绘制地面，可与透明背景并用。",
+                "柔化虛擬形象自身的陰影。不繪製地面，可與透明背景並用。"));
+
+            _rendering.SoftShadows = GUILayout.Toggle(_rendering.SoftShadows,
+                Loc.T("Enable soft shadows", "柔らかい影を使う", "부드러운 그림자 사용", "启用柔和阴影", "啟用柔和陰影"));
+            if (_rendering.SoftShadows)
+            {
+                float strength = GuiControls.Slider(Loc.T("Strength", "強さ", "세기", "强度", "強度"),
+                    _rendering.ShadowStrength, 0f, AppSettings.MaxShadowStrength);
+                if (!Mathf.Approximately(strength, _rendering.ShadowStrength))
+                {
+                    _rendering.ShadowStrength = strength;
+                }
+
+                float softness = GuiControls.Slider(Loc.T("Softness (PCSS)", "柔らかさ（PCSS）", "부드러움 (PCSS)",
+                        "柔和度（PCSS）", "柔和度（PCSS）"),
+                    _rendering.ShadowSoftness, 0f, AppSettings.MaxShadowSoftness);
+                if (!Mathf.Approximately(softness, _rendering.ShadowSoftness))
+                {
+                    _rendering.ShadowSoftness = softness;
+                }
+            }
+
+            GuiControls.EndCard();
+        }
+
+        private void DrawLook()
+        {
+            GuiControls.BeginCard(Loc.T("Look", "映え", "연출", "观感", "觀感"));
+            GuiControls.Hint(Loc.T(
+                "Bloom and tone mapping. Alpha is preserved for transparent capture.",
+                "ブルームとトーンマップです。透過キャプチャのため透明度は保ちます。",
+                "블룸과 톤맵입니다. 투명 캡처를 위해 알파를 유지합니다.",
+                "辉光与色调映射。为透明采集保留透明度。",
+                "輝光與色調映射。為透明擷取保留透明度。"));
+
+            _rendering.BloomEnabled = GUILayout.Toggle(_rendering.BloomEnabled,
+                Loc.T("Bloom", "ブルーム", "블룸", "辉光", "輝光"));
+            if (_rendering.BloomEnabled)
+            {
+                float bloom = GuiControls.Slider(Loc.T("Bloom strength", "ブルームの強さ", "블룸 세기", "辉光强度", "輝光強度"),
+                    _rendering.BloomIntensity, 0f, AppSettings.MaxBloomIntensity);
+                if (!Mathf.Approximately(bloom, _rendering.BloomIntensity))
+                {
+                    _rendering.BloomIntensity = bloom;
+                }
+
+                float threshold = GuiControls.Slider(Loc.T("Bloom threshold", "ブルームのしきい値", "블룸 임계값",
+                        "辉光阈值", "輝光閾值"),
+                    _rendering.BloomThreshold, 0f, AppSettings.MaxBloomThreshold);
+                if (!Mathf.Approximately(threshold, _rendering.BloomThreshold))
+                {
+                    _rendering.BloomThreshold = threshold;
+                }
+            }
+
+            _rendering.TonemapEnabled = GUILayout.Toggle(_rendering.TonemapEnabled,
+                Loc.T("Tone mapping", "トーンマップ", "톤맵", "色调映射", "色調映射"));
+            if (_rendering.TonemapEnabled)
+            {
+                float tonemap = GuiControls.Slider(Loc.T("Tone map strength", "トーンマップの強さ", "톤맵 세기",
+                        "色调映射强度", "色調映射強度"),
+                    _rendering.TonemapStrength, 0f, AppSettings.MaxTonemapStrength);
+                if (!Mathf.Approximately(tonemap, _rendering.TonemapStrength))
+                {
+                    _rendering.TonemapStrength = tonemap;
+                }
+            }
+
+            GuiControls.EndCard();
+        }
+
+        private void DrawLegacyPresets()
+        {
             GUILayout.BeginHorizontal();
             if (GUILayout.Button(Loc.T("Sunny", "晴れ", "맑음", "晴天", "晴天"), GuiControls.Shrinkable))
             {
@@ -99,8 +251,45 @@ namespace VRCast.UI
             }
 
             GUILayout.EndHorizontal();
+        }
 
-            // アバターの明るさ（ライトを強くしても明るくならないシェーダー向け。1 = マテリアルのまま）
+        private void DrawModernPresets()
+        {
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button(Loc.T("Studio", "スタジオ", "스튜디오", "工作室", "工作室"), GuiControls.Shrinkable))
+            {
+                _rendering.ApplyPreset(LightingPreset.Studio);
+            }
+
+            if (GUILayout.Button(Loc.T("Sunny", "晴れ", "맑음", "晴天", "晴天"), GuiControls.Shrinkable))
+            {
+                _rendering.ApplyPreset(LightingPreset.Sunny);
+            }
+
+            if (GUILayout.Button(Loc.T("Soft", "やわらか", "부드럽게", "柔和", "柔和"), GuiControls.Shrinkable))
+            {
+                _rendering.ApplyPreset(LightingPreset.Soft);
+            }
+
+            if (GUILayout.Button(Loc.T("Default", "既定", "기본", "默认", "預設"), GuiControls.Shrinkable))
+            {
+                _rendering.ApplyPreset(LightingPreset.Default);
+            }
+
+            GUILayout.EndHorizontal();
+        }
+
+        private void DrawBrightnessHint()
+        {
+            GuiControls.Hint(Loc.T("Light and avatar brightness are remembered for each avatar.",
+                "ライトとアバターの明るさはアバターごとに記憶されます。",
+                "조명과 아바타 밝기는 아바타마다 기억됩니다.",
+                "灯光和虚拟形象亮度会按虚拟形象分别记住。",
+                "燈光和虛擬形象亮度會依虛擬形象分別記住。"));
+        }
+
+        private void DrawAvatarBrightness()
+        {
             float brightness = GuiControls.Slider(Loc.T("Avatar brightness", "アバターの明るさ", "아바타 밝기", "虚拟形象亮度", "虛擬形象亮度"),
                 _rendering.AvatarBrightness, AppSettings.MinAvatarBrightness, AppSettings.MaxAvatarBrightness);
             if (!Mathf.Approximately(brightness, _rendering.AvatarBrightness))
@@ -113,31 +302,34 @@ namespace VRCast.UI
                 "조명을 강하게 해도 밝아지지 않을 때 (lilToon 등은 밝기 상한이 있음) 아바타 밝기를 올리세요",
                 "增强灯光仍不变亮时（lilToon 等有亮度上限），请调高虚拟形象亮度",
                 "增強燈光仍不變亮時（lilToon 等有亮度上限），請調高虛擬形象亮度"));
+        }
 
-            // 値が変わったときだけ反映
+        private void DrawAmbientSlider()
+        {
             float ambient = GuiControls.Slider(
-                Loc.T("Ambient", "環境光", "환경광", "环境光", "環境光"), _rendering.AmbientIntensity, 0f, AppSettings.MaxAmbientIntensity);
+                Loc.T("Ambient", "環境光", "환경광", "环境光", "環境光"), _rendering.AmbientIntensity, 0f,
+                AppSettings.MaxAmbientIntensity);
             if (!Mathf.Approximately(ambient, _rendering.AmbientIntensity))
             {
                 _rendering.AmbientIntensity = ambient;
             }
+        }
 
-            float intensity = GuiControls.Slider(
-                Loc.T("Sunlight", "太陽光", "태양광", "阳光", "陽光"), _rendering.LightIntensity, 0f, MaxSunlight);
+        private void DrawKeyLightSliders(string intensityLabel, string temperatureLabel)
+        {
+            float intensity = GuiControls.Slider(intensityLabel, _rendering.LightIntensity, 0f, MaxSunlight);
             if (!Mathf.Approximately(intensity, _rendering.LightIntensity))
             {
                 _rendering.LightIntensity = intensity;
             }
 
-            // 色温度（左 = 夕日のような暖色、右 = 青白い光）。数値は K（100K 刻み）
-            float temperature = GuiControls.Slider(Loc.T("Sun color (K)", "太陽光の色 (K)", "태양광 색 (K)", "阳光颜色 (K)", "陽光顏色 (K)"),
+            float temperature = GuiControls.Slider(temperatureLabel,
                 _rendering.LightTemperature, AppSettings.MinLightTemperature, AppSettings.MaxLightTemperature, "F0");
             if (!Mathf.Approximately(temperature, _rendering.LightTemperature))
             {
                 _rendering.LightTemperature = Mathf.Round(temperature / 100f) * 100f;
             }
 
-            // 向きは正面（カメラ側）からの角度、0 で正面から当たる
             float yaw = GuiControls.Slider(
                 Loc.T("Direction", "向き", "방향", "方向", "方向"), _rendering.LightYaw, -180f, 180f, "F0");
             if (!Mathf.Approximately(yaw, _rendering.LightYaw))
@@ -151,8 +343,92 @@ namespace VRCast.UI
             {
                 _rendering.LightPitch = pitch;
             }
+        }
 
-            GuiControls.EndCard();
+        private void DrawFillSliders()
+        {
+            float intensity = GuiControls.Slider(Loc.T("Intensity", "強さ", "세기", "强度", "強度"),
+                _rendering.FillIntensity, 0f, MaxSunlight);
+            if (!Mathf.Approximately(intensity, _rendering.FillIntensity))
+            {
+                _rendering.FillIntensity = intensity;
+            }
+
+            float temperature = GuiControls.Slider(Loc.T("Color (K)", "色 (K)", "색 (K)", "颜色 (K)", "顏色 (K)"),
+                _rendering.FillTemperature, AppSettings.MinLightTemperature, AppSettings.MaxLightTemperature, "F0");
+            if (!Mathf.Approximately(temperature, _rendering.FillTemperature))
+            {
+                _rendering.FillTemperature = Mathf.Round(temperature / 100f) * 100f;
+            }
+
+            float yaw = GuiControls.Slider(Loc.T("Direction", "向き", "방향", "方向", "方向"),
+                _rendering.FillYaw, -180f, 180f, "F0");
+            if (!Mathf.Approximately(yaw, _rendering.FillYaw))
+            {
+                _rendering.FillYaw = yaw;
+            }
+
+            float pitch = GuiControls.Slider(Loc.T("Height", "高さ", "높이", "高度", "高度"),
+                _rendering.FillPitch, -90f, 90f, "F0");
+            if (!Mathf.Approximately(pitch, _rendering.FillPitch))
+            {
+                _rendering.FillPitch = pitch;
+            }
+        }
+
+        private void DrawRimSliders()
+        {
+            float intensity = GuiControls.Slider(Loc.T("Intensity", "強さ", "세기", "强度", "強度"),
+                _rendering.RimIntensity, 0f, MaxSunlight);
+            if (!Mathf.Approximately(intensity, _rendering.RimIntensity))
+            {
+                _rendering.RimIntensity = intensity;
+            }
+
+            float temperature = GuiControls.Slider(Loc.T("Color (K)", "色 (K)", "색 (K)", "颜色 (K)", "顏色 (K)"),
+                _rendering.RimTemperature, AppSettings.MinLightTemperature, AppSettings.MaxLightTemperature, "F0");
+            if (!Mathf.Approximately(temperature, _rendering.RimTemperature))
+            {
+                _rendering.RimTemperature = Mathf.Round(temperature / 100f) * 100f;
+            }
+
+            float yaw = GuiControls.Slider(Loc.T("Direction", "向き", "방향", "方向", "方向"),
+                _rendering.RimYaw, -180f, 180f, "F0");
+            if (!Mathf.Approximately(yaw, _rendering.RimYaw))
+            {
+                _rendering.RimYaw = yaw;
+            }
+
+            float pitch = GuiControls.Slider(Loc.T("Height", "高さ", "높이", "高度", "高度"),
+                _rendering.RimPitch, -90f, 90f, "F0");
+            if (!Mathf.Approximately(pitch, _rendering.RimPitch))
+            {
+                _rendering.RimPitch = pitch;
+            }
+        }
+
+        private void DrawIblSliders()
+        {
+            int preset = GuiControls.LabeledChoice(
+                Loc.T("Preset", "プリセット", "프리셋", "预设", "預設"),
+                new[]
+                {
+                    Loc.T("Studio", "スタジオ", "스튜디오", "工作室", "工作室"),
+                    Loc.T("Warm", "暖色", "따뜻한", "暖色", "暖色"),
+                    Loc.T("Cool", "寒色", "차가운", "冷色", "冷色"),
+                },
+                (int)_rendering.IblPreset);
+            if (preset != (int)_rendering.IblPreset)
+            {
+                _rendering.IblPreset = (IblPreset)preset;
+            }
+
+            float ibl = GuiControls.Slider(Loc.T("IBL strength", "環境光の強さ", "환경광 세기", "环境光强度", "環境光強度"),
+                _rendering.IblIntensity, 0f, AppSettings.MaxIblIntensity);
+            if (!Mathf.Approximately(ibl, _rendering.IblIntensity))
+            {
+                _rendering.IblIntensity = ibl;
+            }
         }
 
         private void DrawOutline()

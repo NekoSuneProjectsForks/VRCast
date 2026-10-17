@@ -32,6 +32,14 @@ namespace VRCast.Core
         // アバターの輪郭線の太さ（マテリアルの太さの倍率）の上限
         public const float MaxOutlineWidth = 3f;
 
+        // 最新ライティング（IBL・影・ブルーム・トーンマップ）の上限
+        public const float MaxIblIntensity = 3f;
+        public const float MaxShadowStrength = 1f;
+        public const float MaxShadowSoftness = 1f;
+        public const float MaxBloomIntensity = 3f;
+        public const float MaxBloomThreshold = 3f;
+        public const float MaxTonemapStrength = 1f;
+
         // マイク感度・しきい値の範囲
         public const float MinMicGain = 0.1f;
         public const float MaxMicGain = 10f;
@@ -197,7 +205,10 @@ namespace VRCast.Core
         // 背景透過のスクリーンショットの保存先フォルダ（空 = ピクチャ\VRCast）
         public string screenshotFolder = string.Empty;
 
-        // 太陽光（ディレクショナルライト）。向きはカメラ正面からの角度（0 = 正面から当たる）
+        // ライティング系統（既定は最新。レガシーは 2.x 相当の太陽光 1 灯 + 平坦な環境光）
+        public LightingSystem lightingSystem = LightingSystem.Modern;
+
+        // 太陽光 / Key（ディレクショナルライト）。向きはカメラ正面からの角度（0 = 正面から当たる）
         public float lightIntensity = 1.2f;
         public float lightYaw = -30f;
         public float lightPitch = 40f;
@@ -205,6 +216,30 @@ namespace VRCast.Core
         // 太陽光の色温度（6500K でほぼ白、低いほど暖色）と環境光の明るさ
         public float lightTemperature = 6000f;
         public float ambientIntensity = 1.2f;
+
+        // 最新ライティングの Fill（影なし）
+        public float fillIntensity = 0.45f;
+        public float fillYaw = 140f;
+        public float fillPitch = 20f;
+        public float fillTemperature = 7500f;
+
+        // 最新ライティングの Rim（影なし）
+        public float rimIntensity = 0.65f;
+        public float rimYaw = 160f;
+        public float rimPitch = -5f;
+        public float rimTemperature = 6500f;
+
+        // スタジオ環境光（空は描かない）と柔らかい影・映え
+        public float iblIntensity = 0.85f;
+        public IblPreset iblPreset = IblPreset.Studio;
+        public bool softShadows = true;
+        public float shadowStrength = 0.75f;
+        public float shadowSoftness = 0.55f;
+        public bool bloomEnabled = true;
+        public float bloomIntensity = 0.3f;
+        public float bloomThreshold = 1.05f;
+        public bool tonemapEnabled = true;
+        public float tonemapStrength = 0.85f;
 
         // アバターの明るさ（1 = マテリアルのまま。シェーダーの明るさ上限を超えて明るくする）
         public float avatarBrightness = 1f;
@@ -1000,6 +1035,18 @@ namespace VRCast.Core
             gpuAdapter ??= string.Empty;
             // スクリーンショットの保存先は前後の空白・" を除く（null は既定の保存先の空文字へ）
             screenshotFolder = PathUtility.NormalizeInput(screenshotFolder);
+            // 未知のライティング系統は最新へ
+            if (!Enum.IsDefined(typeof(LightingSystem), lightingSystem))
+            {
+                lightingSystem = LightingSystem.Modern;
+            }
+
+            // 未知の IBL プリセットはスタジオへ
+            if (!Enum.IsDefined(typeof(IblPreset), iblPreset))
+            {
+                iblPreset = IblPreset.Studio;
+            }
+
             // ライト強度は 0〜上限に制限
             lightIntensity = Mathf.Clamp(lightIntensity, 0f, MaxLightIntensity);
             // 仰角は真上〜真下の範囲に制限
@@ -1010,6 +1057,22 @@ namespace VRCast.Core
             lightTemperature = Mathf.Clamp(lightTemperature, MinLightTemperature, MaxLightTemperature);
             // 環境光は 0〜上限に制限
             ambientIntensity = Mathf.Clamp(ambientIntensity, 0f, MaxAmbientIntensity);
+            // Fill / Rim
+            fillIntensity = Mathf.Clamp(fillIntensity, 0f, MaxLightIntensity);
+            fillPitch = Mathf.Clamp(fillPitch, -90f, 90f);
+            fillYaw = Mathf.Repeat(fillYaw + 180f, 360f) - 180f;
+            fillTemperature = Mathf.Clamp(fillTemperature, MinLightTemperature, MaxLightTemperature);
+            rimIntensity = Mathf.Clamp(rimIntensity, 0f, MaxLightIntensity);
+            rimPitch = Mathf.Clamp(rimPitch, -90f, 90f);
+            rimYaw = Mathf.Repeat(rimYaw + 180f, 360f) - 180f;
+            rimTemperature = Mathf.Clamp(rimTemperature, MinLightTemperature, MaxLightTemperature);
+            // IBL・影・ポスト
+            iblIntensity = Mathf.Clamp(iblIntensity, 0f, MaxIblIntensity);
+            shadowStrength = Mathf.Clamp(shadowStrength, 0f, MaxShadowStrength);
+            shadowSoftness = Mathf.Clamp(shadowSoftness, 0f, MaxShadowSoftness);
+            bloomIntensity = Mathf.Clamp(bloomIntensity, 0f, MaxBloomIntensity);
+            bloomThreshold = Mathf.Clamp(bloomThreshold, 0f, MaxBloomThreshold);
+            tonemapStrength = Mathf.Clamp(tonemapStrength, 0f, MaxTonemapStrength);
             // アバターの明るさは範囲内に制限
             avatarBrightness = Mathf.Clamp(avatarBrightness, MinAvatarBrightness, MaxAvatarBrightness);
             // 輪郭線の太さは 0〜上限に制限

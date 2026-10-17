@@ -372,6 +372,11 @@ namespace VRCast.Tests
                 lightIntensity = 2f, lightYaw = 10f, lightPitch = 20f, lightTemperature = 5000f, ambientIntensity = 1.5f,
                 avatarBrightness = 2f, poseArmDown = 0.5f, poseElbowBend = 0.3f, avatarYaw = 15f,
                 hasOutlineWidth = true, outlineWidth = 0.5f,
+                hasModernLighting = true, fillIntensity = 0.4f, fillYaw = 100f, fillPitch = 10f, fillTemperature = 7000f,
+                rimIntensity = 0.5f, rimYaw = 150f, rimPitch = -5f, rimTemperature = 6000f,
+                iblIntensity = 0.9f, iblPreset = IblPreset.Warm, softShadows = true, shadowStrength = 0.6f,
+                shadowSoftness = 0.4f, bloomEnabled = true, bloomIntensity = 0.25f, bloomThreshold = 1.1f,
+                tonemapEnabled = true, tonemapStrength = 0.8f,
             };
             saved.SetAvatarCamera("C:/Avatars/A.vrcaster", pose);
             saved.SetAvatarLook("C:/Avatars/A.vrcaster", look);
@@ -409,6 +414,39 @@ namespace VRCast.Tests
             Assert.That(settings.lightIntensity, Is.EqualTo(AppSettings.MaxLightIntensity));
             Assert.That(settings.avatarBrightness, Is.EqualTo(AppSettings.MinAvatarBrightness));
             Assert.That(settings.poseArmDown, Is.EqualTo(1f));
+        }
+
+        [Test]
+        public void AvatarLook_ModernLighting_OldRecordKeepsDefaultsAndNewIsClamped()
+        {
+            var settings = new AppSettings { fillIntensity = 0.2f, bloomIntensity = 1.5f };
+
+            // 最新ライティングの記録が無い以前の版では Fill / ブルーム等を触らないこと
+            new AvatarLook { avatarBrightness = 1f }.ApplyTo(settings);
+            Assert.That(settings.fillIntensity, Is.EqualTo(0.2f));
+            Assert.That(settings.bloomIntensity, Is.EqualTo(1.5f));
+
+            // 記録のある最新ライティングは書き戻され、範囲外は補正されること
+            new AvatarLook
+            {
+                avatarBrightness = 1f, hasModernLighting = true, fillIntensity = 99f, shadowStrength = 2f,
+                bloomIntensity = -1f, iblPreset = (IblPreset)99,
+            }.ApplyTo(settings);
+            Assert.That(settings.fillIntensity, Is.EqualTo(AppSettings.MaxLightIntensity));
+            Assert.That(settings.shadowStrength, Is.EqualTo(AppSettings.MaxShadowStrength));
+            Assert.That(settings.bloomIntensity, Is.EqualTo(0f));
+            Assert.That(settings.iblPreset, Is.EqualTo(IblPreset.Studio));
+            Assert.That(AvatarLook.From(settings).hasModernLighting, Is.True);
+        }
+
+        [Test]
+        public void LightingSystem_Sanitize_UnknownFallsBackToModern()
+        {
+            var settings = new AppSettings { lightingSystem = (LightingSystem)99, iblIntensity = 99f };
+            settings.Sanitize();
+            Assert.That(settings.lightingSystem, Is.EqualTo(LightingSystem.Modern));
+            Assert.That(settings.iblIntensity, Is.EqualTo(AppSettings.MaxIblIntensity));
+            Assert.That(new AppSettings().lightingSystem, Is.EqualTo(LightingSystem.Modern));
         }
 
         [Test]

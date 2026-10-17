@@ -5,22 +5,23 @@ using VRCast.Core;
 namespace VRCast.Rendering
 {
     /// <summary>
-    /// ライティングのプリセット（太陽光の強さ・色温度・向きと環境光の組）。
+    /// ライティングのプリセット（太陽光の強さ・色温度・向きと環境光の組。最新では三点・IBL・映えも含む）。
     /// </summary>
     public enum LightingPreset
     {
         Default,
         Sunny,
         Soft,
+        Studio,
     }
 
     /// <summary>
-    /// 背景（透過 / 単色）、解像度、太陽光（ディレクショナルライト）と環境光を設定値に従って適用する。
+    /// 背景（透過 / 単色）、解像度、ライティング（レガシーまたは最新）を設定値に従って適用する。
     /// 値の保持は AppSettings に委ね、変更は即座に反映する。
     /// </summary>
     public class RenderingController : MonoBehaviour
     {
-        // 環境光の明るさ 1 のときの色（全方向から均一に当たる灰色）
+        // 環境光の明るさ 1 のときの色（全方向から均一に当たる灰色）— レガシー用
         private const float AmbientBase = 0.5f;
 
         // カメラ正面（アバターの正面）から当てるときのワールドの向き。カメラは +Z 側から -Z を向く
@@ -30,11 +31,19 @@ namespace VRCast.Rendering
         public const int NormalFrameRate = 60;
         public const int LowLoadFrameRate = 30;
 
+        // アバター向けの影距離（短くしてセルフシャドウの解像度を稼ぐ）
+        private const float ModernShadowDistance = 12f;
+        private const int ModernShadowResolution = 2048;
+
         private readonly AvatarMaterials _avatarMaterials = new AvatarMaterials();
         private UnityEngine.Camera _camera;
-        private Light _light;
+        private Light _keyLight;
+        private Light _fillLight;
+        private Light _rimLight;
+        private CameraPostProcess _postProcess;
         private AppSettings _settings;
         private bool _forceTransparent;
+        private float _savedShadowDistance = 150f;
 
         /// <summary>
         /// 設定に関係なく背景を透過させる（パネルを隠している間）。保存はしない。
@@ -100,13 +109,25 @@ namespace VRCast.Rendering
         /// </summary>
         public Color DefaultBackgroundColor => AppSettings.DefaultBackgroundOf(_settings.darkMode);
 
+        public LightingSystem LightingSystem
+        {
+            get => _settings.lightingSystem;
+            set
+            {
+                _settings.lightingSystem = value;
+                ApplyAll();
+            }
+        }
+
+        public bool IsModern => _settings.lightingSystem == LightingSystem.Modern;
+
         public float LightIntensity
         {
             get => _settings.lightIntensity;
             set
             {
                 _settings.lightIntensity = Mathf.Clamp(value, 0f, AppSettings.MaxLightIntensity);
-                ApplyLight();
+                ApplyLights();
             }
         }
 
@@ -116,7 +137,7 @@ namespace VRCast.Rendering
             set
             {
                 _settings.lightYaw = value;
-                ApplyLight();
+                ApplyLights();
             }
         }
 
@@ -126,7 +147,7 @@ namespace VRCast.Rendering
             set
             {
                 _settings.lightPitch = Mathf.Clamp(value, -90f, 90f);
-                ApplyLight();
+                ApplyLights();
             }
         }
 
@@ -137,7 +158,7 @@ namespace VRCast.Rendering
             {
                 _settings.lightTemperature = Mathf.Clamp(
                     value, AppSettings.MinLightTemperature, AppSettings.MaxLightTemperature);
-                ApplyLight();
+                ApplyLights();
             }
         }
 
@@ -149,6 +170,177 @@ namespace VRCast.Rendering
                 _settings.ambientIntensity = Mathf.Clamp(value, 0f, AppSettings.MaxAmbientIntensity);
                 ApplyAmbient();
             }
+        }
+
+        public float FillIntensity
+        {
+            get => _settings.fillIntensity;
+            set
+            {
+                _settings.fillIntensity = Mathf.Clamp(value, 0f, AppSettings.MaxLightIntensity);
+                ApplyLights();
+            }
+        }
+
+        public float FillYaw
+        {
+            get => _settings.fillYaw;
+            set
+            {
+                _settings.fillYaw = value;
+                ApplyLights();
+            }
+        }
+
+        public float FillPitch
+        {
+            get => _settings.fillPitch;
+            set
+            {
+                _settings.fillPitch = Mathf.Clamp(value, -90f, 90f);
+                ApplyLights();
+            }
+        }
+
+        public float FillTemperature
+        {
+            get => _settings.fillTemperature;
+            set
+            {
+                _settings.fillTemperature = Mathf.Clamp(
+                    value, AppSettings.MinLightTemperature, AppSettings.MaxLightTemperature);
+                ApplyLights();
+            }
+        }
+
+        public float RimIntensity
+        {
+            get => _settings.rimIntensity;
+            set
+            {
+                _settings.rimIntensity = Mathf.Clamp(value, 0f, AppSettings.MaxLightIntensity);
+                ApplyLights();
+            }
+        }
+
+        public float RimYaw
+        {
+            get => _settings.rimYaw;
+            set
+            {
+                _settings.rimYaw = value;
+                ApplyLights();
+            }
+        }
+
+        public float RimPitch
+        {
+            get => _settings.rimPitch;
+            set
+            {
+                _settings.rimPitch = Mathf.Clamp(value, -90f, 90f);
+                ApplyLights();
+            }
+        }
+
+        public float RimTemperature
+        {
+            get => _settings.rimTemperature;
+            set
+            {
+                _settings.rimTemperature = Mathf.Clamp(
+                    value, AppSettings.MinLightTemperature, AppSettings.MaxLightTemperature);
+                ApplyLights();
+            }
+        }
+
+        public float IblIntensity
+        {
+            get => _settings.iblIntensity;
+            set
+            {
+                _settings.iblIntensity = Mathf.Clamp(value, 0f, AppSettings.MaxIblIntensity);
+                ApplyAmbient();
+            }
+        }
+
+        public IblPreset IblPreset
+        {
+            get => _settings.iblPreset;
+            set
+            {
+                _settings.iblPreset = value;
+                ApplyAmbient();
+            }
+        }
+
+        public bool SoftShadows
+        {
+            get => _settings.softShadows;
+            set
+            {
+                _settings.softShadows = value;
+                ApplyLights();
+                _postProcess?.SetActive(IsModern);
+            }
+        }
+
+        public float ShadowStrength
+        {
+            get => _settings.shadowStrength;
+            set
+            {
+                _settings.shadowStrength = Mathf.Clamp(value, 0f, AppSettings.MaxShadowStrength);
+                ApplyLights();
+            }
+        }
+
+        public float ShadowSoftness
+        {
+            get => _settings.shadowSoftness;
+            set
+            {
+                _settings.shadowSoftness = Mathf.Clamp(value, 0f, AppSettings.MaxShadowSoftness);
+                ApplyLights();
+            }
+        }
+
+        public bool BloomEnabled
+        {
+            get => _settings.bloomEnabled;
+            set
+            {
+                _settings.bloomEnabled = value;
+                _postProcess?.SetActive(IsModern);
+            }
+        }
+
+        public float BloomIntensity
+        {
+            get => _settings.bloomIntensity;
+            set => _settings.bloomIntensity = Mathf.Clamp(value, 0f, AppSettings.MaxBloomIntensity);
+        }
+
+        public float BloomThreshold
+        {
+            get => _settings.bloomThreshold;
+            set => _settings.bloomThreshold = Mathf.Clamp(value, 0f, AppSettings.MaxBloomThreshold);
+        }
+
+        public bool TonemapEnabled
+        {
+            get => _settings.tonemapEnabled;
+            set
+            {
+                _settings.tonemapEnabled = value;
+                _postProcess?.SetActive(IsModern);
+            }
+        }
+
+        public float TonemapStrength
+        {
+            get => _settings.tonemapStrength;
+            set => _settings.tonemapStrength = Mathf.Clamp(value, 0f, AppSettings.MaxTonemapStrength);
         }
 
         public float AvatarBrightness
@@ -201,27 +393,30 @@ namespace VRCast.Rendering
             // 配信中にフォーカスが外れても描画を止めない
             Application.runInBackground = true;
 
-            // シーンのディレクショナルライトを使い、無ければ生成
-            _light = FindDirectionalLight();
-            if (_light == null)
+            _savedShadowDistance = QualitySettings.shadowDistance;
+            EnsureLights();
+
+            _postProcess = _camera.GetComponent<CameraPostProcess>();
+            if (_postProcess == null)
             {
-                _light = new GameObject("Directional Light").AddComponent<Light>();
-                _light.type = LightType.Directional;
+                _postProcess = _camera.gameObject.AddComponent<CameraPostProcess>();
             }
 
+            _postProcess.Initialize(_settings);
             ApplyAll();
         }
 
         /// <summary>
-        /// 設定値を直接書き換えた後（全設定のリセット等）に、フレームレート・背景・太陽光・環境光・アバターの明るさ・輪郭線を反映し直す。
+        /// 設定値を直接書き換えた後（全設定のリセット等）に、フレームレート・背景・ライト・環境光・アバターの明るさ・輪郭線を反映し直す。
         /// </summary>
         public void ApplyAll()
         {
             ApplyFrameRate();
             ApplyBackground();
-            ApplyLight();
+            ApplyLights();
             ApplyAmbient();
             ApplyAvatarMaterials();
+            _postProcess?.SetActive(IsModern);
         }
 
         /// <summary>
@@ -241,25 +436,64 @@ namespace VRCast.Rendering
         }
 
         /// <summary>
-        /// ライティングのプリセットを適用する（太陽光の強さ・色温度・向きと環境光）。
+        /// ライティングのプリセットを適用する。
         /// </summary>
         public void ApplyPreset(LightingPreset preset)
         {
-            // 既定値は AppSettings の初期値と同じ
             var defaults = new AppSettings();
+            if (!IsModern)
+            {
+                switch (preset)
+                {
+                    case LightingPreset.Sunny:
+                        SetLegacyLighting(1.8f, 5600f, defaults.lightYaw, 35f, 1.4f);
+                        break;
+                    case LightingPreset.Soft:
+                        SetLegacyLighting(0.9f, 6800f, 0f, 30f, 2f);
+                        break;
+                    default:
+                        SetLegacyLighting(defaults.lightIntensity, defaults.lightTemperature, defaults.lightYaw,
+                            defaults.lightPitch, defaults.ambientIntensity);
+                        break;
+                }
+
+                return;
+            }
+
             switch (preset)
             {
                 case LightingPreset.Sunny:
-                    // 晴れ: 強めの暖かい日差し + 明るめの環境光
-                    SetLighting(1.8f, 5600f, defaults.lightYaw, 35f, 1.4f);
+                    SetModernLighting(
+                        keyIntensity: 1.7f, keyTemp: 5400f, keyYaw: -25f, keyPitch: 38f,
+                        ambient: 0.9f, fillIntensity: 0.35f, fillTemp: 7000f, fillYaw: 130f, fillPitch: 18f,
+                        rimIntensity: 0.55f, rimTemp: 6000f, rimYaw: 155f, rimPitch: -8f,
+                        ibl: 0.7f, IblPreset.Warm, softShadows: true, shadowStrength: 0.8f, shadowSoftness: 0.4f,
+                        bloom: true, bloomIntensity: 0.25f, bloomThreshold: 1.1f, tonemap: true, tonemapStrength: 0.8f);
                     break;
                 case LightingPreset.Soft:
-                    // やわらか: 控えめな日差し + 強い環境光（影が薄く顔が明るい）
-                    SetLighting(0.9f, 6800f, 0f, 30f, 2f);
+                    SetModernLighting(
+                        keyIntensity: 0.95f, keyTemp: 6800f, keyYaw: 0f, keyPitch: 32f,
+                        ambient: 1.4f, fillIntensity: 0.7f, fillTemp: 7500f, fillYaw: 150f, fillPitch: 25f,
+                        rimIntensity: 0.35f, rimTemp: 7000f, rimYaw: 170f, rimPitch: 0f,
+                        ibl: 1.1f, IblPreset.Studio, softShadows: true, shadowStrength: 0.45f, shadowSoftness: 0.85f,
+                        bloom: true, bloomIntensity: 0.2f, bloomThreshold: 1.2f, tonemap: true, tonemapStrength: 0.7f);
+                    break;
+                case LightingPreset.Studio:
+                    SetModernLighting(
+                        keyIntensity: 1.35f, keyTemp: 5600f, keyYaw: -40f, keyPitch: 42f,
+                        ambient: 0.55f, fillIntensity: 0.5f, fillTemp: 7800f, fillYaw: 145f, fillPitch: 15f,
+                        rimIntensity: 0.85f, rimTemp: 6500f, rimYaw: 165f, rimPitch: -12f,
+                        ibl: 1f, IblPreset.Studio, softShadows: true, shadowStrength: 0.7f, shadowSoftness: 0.6f,
+                        bloom: true, bloomIntensity: 0.35f, bloomThreshold: 1.0f, tonemap: true, tonemapStrength: 0.9f);
                     break;
                 default:
-                    SetLighting(defaults.lightIntensity, defaults.lightTemperature, defaults.lightYaw,
-                        defaults.lightPitch, defaults.ambientIntensity);
+                    SetModernLighting(
+                        defaults.lightIntensity, defaults.lightTemperature, defaults.lightYaw, defaults.lightPitch,
+                        defaults.ambientIntensity, defaults.fillIntensity, defaults.fillTemperature, defaults.fillYaw,
+                        defaults.fillPitch, defaults.rimIntensity, defaults.rimTemperature, defaults.rimYaw,
+                        defaults.rimPitch, defaults.iblIntensity, defaults.iblPreset, defaults.softShadows,
+                        defaults.shadowStrength, defaults.shadowSoftness, defaults.bloomEnabled, defaults.bloomIntensity,
+                        defaults.bloomThreshold, defaults.tonemapEnabled, defaults.tonemapStrength);
                     break;
             }
         }
@@ -280,17 +514,51 @@ namespace VRCast.Rendering
             }
         }
 
-        private void SetLighting(float intensity, float temperature, float yaw, float pitch, float ambient)
+        private void SetLegacyLighting(float intensity, float temperature, float yaw, float pitch, float ambient)
         {
-            // 値を範囲内で記録してまとめて反映
             _settings.lightIntensity = Mathf.Clamp(intensity, 0f, AppSettings.MaxLightIntensity);
             _settings.lightTemperature = Mathf.Clamp(
                 temperature, AppSettings.MinLightTemperature, AppSettings.MaxLightTemperature);
             _settings.lightYaw = yaw;
             _settings.lightPitch = Mathf.Clamp(pitch, -90f, 90f);
             _settings.ambientIntensity = Mathf.Clamp(ambient, 0f, AppSettings.MaxAmbientIntensity);
-            ApplyLight();
+            ApplyLights();
             ApplyAmbient();
+        }
+
+        private void SetModernLighting(
+            float keyIntensity, float keyTemp, float keyYaw, float keyPitch, float ambient,
+            float fillIntensity, float fillTemp, float fillYaw, float fillPitch,
+            float rimIntensity, float rimTemp, float rimYaw, float rimPitch,
+            float ibl, IblPreset iblPreset, bool softShadows, float shadowStrength, float shadowSoftness,
+            bool bloom, float bloomIntensity, float bloomThreshold, bool tonemap, float tonemapStrength)
+        {
+            _settings.lightIntensity = Mathf.Clamp(keyIntensity, 0f, AppSettings.MaxLightIntensity);
+            _settings.lightTemperature = Mathf.Clamp(keyTemp, AppSettings.MinLightTemperature, AppSettings.MaxLightTemperature);
+            _settings.lightYaw = keyYaw;
+            _settings.lightPitch = Mathf.Clamp(keyPitch, -90f, 90f);
+            _settings.ambientIntensity = Mathf.Clamp(ambient, 0f, AppSettings.MaxAmbientIntensity);
+            _settings.fillIntensity = Mathf.Clamp(fillIntensity, 0f, AppSettings.MaxLightIntensity);
+            _settings.fillTemperature = Mathf.Clamp(fillTemp, AppSettings.MinLightTemperature, AppSettings.MaxLightTemperature);
+            _settings.fillYaw = fillYaw;
+            _settings.fillPitch = Mathf.Clamp(fillPitch, -90f, 90f);
+            _settings.rimIntensity = Mathf.Clamp(rimIntensity, 0f, AppSettings.MaxLightIntensity);
+            _settings.rimTemperature = Mathf.Clamp(rimTemp, AppSettings.MinLightTemperature, AppSettings.MaxLightTemperature);
+            _settings.rimYaw = rimYaw;
+            _settings.rimPitch = Mathf.Clamp(rimPitch, -90f, 90f);
+            _settings.iblIntensity = Mathf.Clamp(ibl, 0f, AppSettings.MaxIblIntensity);
+            _settings.iblPreset = iblPreset;
+            _settings.softShadows = softShadows;
+            _settings.shadowStrength = Mathf.Clamp(shadowStrength, 0f, AppSettings.MaxShadowStrength);
+            _settings.shadowSoftness = Mathf.Clamp(shadowSoftness, 0f, AppSettings.MaxShadowSoftness);
+            _settings.bloomEnabled = bloom;
+            _settings.bloomIntensity = Mathf.Clamp(bloomIntensity, 0f, AppSettings.MaxBloomIntensity);
+            _settings.bloomThreshold = Mathf.Clamp(bloomThreshold, 0f, AppSettings.MaxBloomThreshold);
+            _settings.tonemapEnabled = tonemap;
+            _settings.tonemapStrength = Mathf.Clamp(tonemapStrength, 0f, AppSettings.MaxTonemapStrength);
+            ApplyLights();
+            ApplyAmbient();
+            _postProcess?.SetActive(true);
         }
 
         private void ApplyFrameRate()
@@ -302,7 +570,7 @@ namespace VRCast.Rendering
 
         private void ApplyBackground()
         {
-            // スカイボックスは使わず常に単色クリア
+            // スカイボックスは使わず常に単色クリア（IBL 用 skybox があっても空は描かない）
             _camera.clearFlags = CameraClearFlags.SolidColor;
 
             // 透過時は色だけ塗って alpha 0（ウィンドウは alpha を無視して色を表示、ゲームキャプチャは alpha で抜く）
@@ -311,31 +579,118 @@ namespace VRCast.Rendering
             _camera.backgroundColor = color;
         }
 
-        private void ApplyLight()
+        private void EnsureLights()
         {
-            // 強度・色温度・向きを反映
-            _light.intensity = _settings.lightIntensity;
-            _light.color = Mathf.CorrelatedColorTemperatureToRGB(_settings.lightTemperature);
-            _light.transform.rotation = Quaternion.Euler(_settings.lightPitch, FrontYaw + _settings.lightYaw, 0f);
+            _keyLight = FindOrCreateDirectional("Directional Light", FindDirectionalLight());
+            _fillLight = FindOrCreateDirectional("VRCast Fill Light", FindNamedLight("VRCast Fill Light"));
+            _rimLight = FindOrCreateDirectional("VRCast Rim Light", FindNamedLight("VRCast Rim Light"));
+        }
+
+        private void ApplyLights()
+        {
+            if (_keyLight == null)
+            {
+                EnsureLights();
+            }
+
+            ApplyDirectional(_keyLight, _settings.lightIntensity, _settings.lightTemperature,
+                _settings.lightYaw, _settings.lightPitch);
+
+            if (IsModern)
+            {
+                _fillLight.enabled = true;
+                _rimLight.enabled = true;
+                ApplyDirectional(_fillLight, _settings.fillIntensity, _settings.fillTemperature,
+                    _settings.fillYaw, _settings.fillPitch);
+                ApplyDirectional(_rimLight, _settings.rimIntensity, _settings.rimTemperature,
+                    _settings.rimYaw, _settings.rimPitch);
+
+                _fillLight.shadows = LightShadows.None;
+                _rimLight.shadows = LightShadows.None;
+
+                bool shadows = _settings.softShadows;
+                _keyLight.shadows = shadows ? LightShadows.Soft : LightShadows.None;
+                _keyLight.shadowStrength = Mathf.Clamp01(_settings.shadowStrength);
+                _keyLight.shadowBias = Mathf.Lerp(0.03f, 0.08f, _settings.shadowSoftness);
+                _keyLight.shadowNormalBias = Mathf.Lerp(0.2f, 0.6f, _settings.shadowSoftness);
+                _keyLight.shadowCustomResolution = ModernShadowResolution;
+
+                QualitySettings.shadows = shadows ? ShadowQuality.All : ShadowQuality.Disable;
+                QualitySettings.shadowResolution = ShadowResolution.VeryHigh;
+                QualitySettings.shadowDistance = ModernShadowDistance;
+                QualitySettings.shadowCascades = 2;
+
+                // 面から光源へ向かう向き（forward の逆）をポストのコンタクトシャドウへ
+                _postProcess?.SetKeyLightDirection(-_keyLight.transform.forward);
+            }
+            else
+            {
+                _fillLight.enabled = false;
+                _rimLight.enabled = false;
+                // レガシーは影を品質設定に任せ、カスタム解像度を外す（2.x と同じ）
+                _keyLight.shadowCustomResolution = -1;
+                QualitySettings.shadowDistance = _savedShadowDistance;
+            }
         }
 
         private void ApplyAmbient()
         {
-            // ライティングデータを焼かないため、環境光は単色で直接与える（シェーダーが参照する SH も同じ色にする）
-            Color ambient = new Color(AmbientBase, AmbientBase, AmbientBase) * _settings.ambientIntensity;
-            RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.ambientLight = ambient;
-            var probe = new SphericalHarmonicsL2();
-            probe.AddAmbientLight(ambient);
-            RenderSettings.ambientProbe = probe;
+            if (IsModern)
+            {
+                StudioIbl.Apply(_settings.iblPreset, _settings.iblIntensity, _settings.ambientIntensity);
+            }
+            else
+            {
+                StudioIbl.Clear();
+                // ライティングデータを焼かないため、環境光は単色で直接与える（シェーダーが参照する SH も同じ色にする）
+                Color ambient = new Color(AmbientBase, AmbientBase, AmbientBase) * _settings.ambientIntensity;
+                RenderSettings.ambientMode = AmbientMode.Flat;
+                RenderSettings.ambientLight = ambient;
+                var probe = new SphericalHarmonicsL2();
+                probe.AddAmbientLight(ambient);
+                RenderSettings.ambientProbe = probe;
+            }
+        }
+
+        private static void ApplyDirectional(Light light, float intensity, float temperature, float yaw, float pitch)
+        {
+            light.intensity = intensity;
+            light.color = Mathf.CorrelatedColorTemperatureToRGB(temperature);
+            light.transform.rotation = Quaternion.Euler(pitch, FrontYaw + yaw, 0f);
+        }
+
+        private static Light FindOrCreateDirectional(string objectName, Light existing)
+        {
+            if (existing != null)
+            {
+                existing.type = LightType.Directional;
+                return existing;
+            }
+
+            var light = new GameObject(objectName).AddComponent<Light>();
+            light.type = LightType.Directional;
+            return light;
         }
 
         private static Light FindDirectionalLight()
         {
-            // 最初に見つかったディレクショナルライトを返す
             foreach (Light light in FindObjectsOfType<Light>())
             {
-                if (light.type == LightType.Directional)
+                if (light.type == LightType.Directional
+                    && light.name != "VRCast Fill Light" && light.name != "VRCast Rim Light")
+                {
+                    return light;
+                }
+            }
+
+            return null;
+        }
+
+        private static Light FindNamedLight(string objectName)
+        {
+            foreach (Light light in FindObjectsOfType<Light>())
+            {
+                if (light.name == objectName)
                 {
                     return light;
                 }

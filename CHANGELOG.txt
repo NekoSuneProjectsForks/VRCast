@@ -4,6 +4,20 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 3.0.0 (2026-10-17)
+
+[日本語]
+- ライティングを拡充（最新: キー／フィル／リムの三点照明、柔らかい影（PCSS）、スタジオ環境光、ブルーム／トーンマップ。透過背景のまま使えます）
+- ライティングに「レガシー（2.x と同じ）／最新」の切替を追加（既定は最新。いつでも戻せます）
+- グラフィックタブにスタジオ／晴れ／やわらか／既定のプリセットを追加（最新ライティング向け）
+- アバタータブで顔写真を撮り直せるように変更（表示中の一覧タイルと、読み込み情報の両方から）
+
+[English]
+- Expanded lighting (Modern: key / fill / rim three-point lights, soft shadows (PCSS), studio environment light, bloom / tone mapping; works with a transparent background)
+- Added a Legacy (same as 2.x) / Modern lighting switch (Modern is the default; you can switch back anytime)
+- Added Studio / Sunny / Soft / Default presets on the Graphics tab (for Modern lighting)
+- Face photos can now be retaken from the Avatar tab (on the tile for the avatar being shown, and in the loaded-avatar info)
+
 ■ 2.3.2 (2026-10-17)
 
 [日本語]

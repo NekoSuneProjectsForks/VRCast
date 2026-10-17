@@ -42,14 +42,18 @@ namespace VRCast.Editor.Build
         private const string ProductName = "VRCast";
 
         // アプリのバージョン（CHANGELOG.txt と converter の package.json の version に合わせる）
-        private const string AppVersion = "2.3.2";
+        private const string AppVersion = "3.0.0";
 
         // 初回起動時のウィンドウサイズ（以降は settings.json の値を使う）
         private const int DefaultWidth = 1280;
         private const int DefaultHeight = 720;
 
-        // VRM の読み込みで Shader.Find するシェーダー（MToon・Unlit・PBR）。ビルドに含めないとマゼンタになる
-        private static readonly string[] VrmShaderNames = { "VRM10/MToon10", "UniGLTF/UniUnlit", "Standard" };
+        // Shader.Find するシェーダー（VRM 用 + 最新ライティングのポスト）。ビルドに含めないと欠ける
+        private static readonly string[] AlwaysIncludedShaderNames =
+        {
+            "VRM10/MToon10", "UniGLTF/UniUnlit", "Standard",
+            "Hidden/VRCast/BloomTonemap", "Hidden/VRCast/ContactShadow", "Skybox/Cubemap",
+        };
 
         [MenuItem("VRCast/Build/Windows x64")]
         public static void BuildWindows()
@@ -116,8 +120,8 @@ namespace VRCast.Editor.Build
             // アプリアイコンを設定
             ApplyAppIcon();
 
-            // VRM 用のシェーダーを常に含める
-            IncludeVrmShaders();
+            // VRM・ライティング用のシェーダーを常に含める
+            IncludeAlwaysIncludedShaders();
 
             // 前回の出力を消してから出す（Mono でビルドした出力が残っていると IL2CPP のビルドが拒否される）
             if (!CleanOutputFolder())
@@ -334,19 +338,19 @@ namespace VRCast.Editor.Build
             PlayerSettings.SetIcons(NamedBuildTarget.Unknown, new[] { icon }, IconKind.Any);
         }
 
-        private static void IncludeVrmShaders()
+        private static void IncludeAlwaysIncludedShaders()
         {
             // Graphics 設定の「Always Included Shaders」を直接編集する
             var graphics = new SerializedObject(GraphicsSettings.GetGraphicsSettings());
             SerializedProperty list = graphics.FindProperty("m_AlwaysIncludedShaders");
 
-            foreach (string name in VrmShaderNames)
+            foreach (string name in AlwaysIncludedShaderNames)
             {
                 // パッケージが無い等で見つからなければ警告だけ出して続行
                 Shader shader = Shader.Find(name);
                 if (shader == null)
                 {
-                    Debug.LogWarning($"[VRCast][Build] Shader not found: {name}. VRM avatars using it will appear magenta.");
+                    Debug.LogWarning($"[VRCast][Build] Shader not found: {name}. Related avatars or lighting effects may be missing.");
                     continue;
                 }
 
