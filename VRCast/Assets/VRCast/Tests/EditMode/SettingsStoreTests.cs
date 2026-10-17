@@ -862,5 +862,27 @@ namespace VRCast.Tests
             Assert.That(settings.oscBlendShapeMappings[1].parameterName, Is.Empty);
             Assert.That(settings.oscBlendShapeMappings[2].parameterName, Is.Empty, "duplicate destination should be disabled");
         }
+
+        [Test]
+        public void OscBlendShapeMappings_SanitizeDestinationsAgainstNamedMappings()
+        {
+            var settings = new AppSettings
+            {
+                oscParameterEyeOpenLeft = "Shared",
+                oscParameterJawOpen = " Shared ",
+                oscBlendShapeMappings = new System.Collections.Generic.List<OscBlendShapeParameterMapping>
+                {
+                    new OscBlendShapeParameterMapping { blendShapeName = "mouthFunnel", parameterName = "Shared" },
+                    new OscBlendShapeParameterMapping { blendShapeName = "mouthPucker", parameterName = "Unique" },
+                },
+            };
+
+            settings.Sanitize();
+
+            Assert.That(settings.oscParameterEyeOpenLeft, Is.EqualTo("Shared"));
+            Assert.That(settings.oscParameterJawOpen, Is.Empty);
+            Assert.That(settings.oscBlendShapeMappings[0].parameterName, Is.Empty);
+            Assert.That(settings.oscBlendShapeMappings[1].parameterName, Is.EqualTo("Unique"));
+        }
     }
 }
