@@ -69,6 +69,29 @@ namespace VRCast.Tests
             Assert.That(settings.oscParameterOutputAddress, Is.EqualTo(expected));
         }
 
+        [TestCase(-100, 30)]
+        [TestCase(0, 30)]
+        [TestCase(1, 1)]
+        [TestCase(15, 15)]
+        [TestCase(30, 30)]
+        [TestCase(60, 60)]
+        [TestCase(61, 60)]
+        [TestCase(999, 60)]
+        public void OscOutputRate_SanitizesToSupportedFrequency(int input, int expected)
+        {
+            var settings = new AppSettings { oscParameterOutputRate = input };
+            settings.Sanitize();
+            Assert.That(settings.oscParameterOutputRate, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void OscOutputRate_SurvivesSettingsStoreRoundTrip()
+        {
+            _store.Save(new AppSettings { oscParameterOutputRate = 45 });
+            AppSettings loaded = _store.Load();
+            Assert.That(loaded.oscParameterOutputRate, Is.EqualTo(45));
+        }
+
         [Test]
         public void Defaults_OscParameterOutputIsDisabledAndUsesLocalhost()
         {
