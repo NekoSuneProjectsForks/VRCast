@@ -39,7 +39,7 @@ namespace VRCast.Remote
 
             try
             {
-                Address = address;
+                Address = address.Trim();
                 Port = port;
                 _client = new UdpClient();
                 _client.Connect(new IPEndPoint(ip, port));
@@ -56,6 +56,12 @@ namespace VRCast.Remote
             {
                 Stop();
                 Status = "Invalid OSC endpoint: " + ex.Message;
+                return false;
+            }
+            catch (ObjectDisposedException)
+            {
+                Stop();
+                Status = "OSC endpoint was disposed";
                 return false;
             }
         }
@@ -135,7 +141,7 @@ namespace VRCast.Remote
             }
             catch (ObjectDisposedException)
             {
-                Status = "Disabled";
+                Stop();
                 return false;
             }
         }
