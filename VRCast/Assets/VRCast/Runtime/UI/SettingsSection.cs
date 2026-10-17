@@ -178,6 +178,16 @@ namespace VRCast.UI
             GUILayout.Label("Additional ARKit blendshape mappings (all 51 channels; blank disables a mapping)");
             var destinationOwners = new System.Collections.Generic.Dictionary<string, string>(StringComparer.Ordinal);
             var duplicateDestinations = new System.Collections.Generic.HashSet<string>(StringComparer.Ordinal);
+            RegisterNamedDestination(_settings.oscParameterEyeOpenLeft, "Left eye open", destinationOwners, duplicateDestinations);
+            RegisterNamedDestination(_settings.oscParameterEyeOpenRight, "Right eye open", destinationOwners, duplicateDestinations);
+            RegisterNamedDestination(_settings.oscParameterMouthOpen, "Mouth open", destinationOwners, duplicateDestinations);
+            RegisterNamedDestination(_settings.oscParameterSmile, "Smile", destinationOwners, duplicateDestinations);
+            RegisterNamedDestination(_settings.oscParameterEyeBlinkLeft, "ARKit eye blink left", destinationOwners, duplicateDestinations);
+            RegisterNamedDestination(_settings.oscParameterEyeBlinkRight, "ARKit eye blink right", destinationOwners, duplicateDestinations);
+            RegisterNamedDestination(_settings.oscParameterJawOpen, "ARKit jaw open", destinationOwners, duplicateDestinations);
+            RegisterNamedDestination(_settings.oscParameterMouthSmileLeft, "ARKit mouth smile left", destinationOwners, duplicateDestinations);
+            RegisterNamedDestination(_settings.oscParameterMouthSmileRight, "ARKit mouth smile right", destinationOwners, duplicateDestinations);
+            RegisterNamedDestination(_settings.oscParameterBrowInnerUp, "ARKit brow inner up", destinationOwners, duplicateDestinations);
             foreach (OscBlendShapeParameterMapping mapping in _settings.oscBlendShapeMappings)
             {
                 if (mapping == null || string.IsNullOrWhiteSpace(mapping.blendShapeName))
@@ -215,6 +225,30 @@ namespace VRCast.UI
             {
                 GuiControls.Hint(
                     "Resolve duplicate destinations before use. A VRChat avatar parameter should normally receive one source value.");
+            }
+        }
+
+        private static void RegisterNamedDestination(
+            string parameterName,
+            string sourceName,
+            System.Collections.Generic.Dictionary<string, string> destinationOwners,
+            System.Collections.Generic.HashSet<string> duplicateDestinations)
+        {
+            string destination = (parameterName ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(destination))
+            {
+                return;
+            }
+
+            if (destinationOwners.TryGetValue(destination, out string firstSource))
+            {
+                duplicateDestinations.Add(destination);
+                GuiControls.Hint("Duplicate destination '" + destination + "' used by '" + firstSource
+                    + "' and '" + sourceName + "'. Only the first mapping can be sent.");
+            }
+            else
+            {
+                destinationOwners.Add(destination, sourceName);
             }
         }
 
