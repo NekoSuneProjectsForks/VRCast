@@ -847,6 +847,13 @@ namespace VRCast.Core
             resetHotkeys = ResetHotkey.Defaults();
         }
 
+        private static string NormalizeOscParameterName(string parameterName)
+        {
+            string name = (parameterName ?? string.Empty).Trim();
+            // OSC parameter names are one path segment; invalid names disable this optional mapping.
+            return string.IsNullOrEmpty(name) || name.IndexOf('/') >= 0 ? string.Empty : name;
+        }
+
         private void NormalizeResetHotkeys()
         {
             // 壊れた値・未知の種類・重複を捨て、使えないキーは未割り当てにする
@@ -1303,6 +1310,10 @@ namespace VRCast.Core
                 oscParameterOutputAddress = "127.0.0.1";
             }
             oscParameterOutputPort = Mathf.Clamp(oscParameterOutputPort, 1, 65535);
+            oscParameterEyeOpenLeft = NormalizeOscParameterName(oscParameterEyeOpenLeft);
+            oscParameterEyeOpenRight = NormalizeOscParameterName(oscParameterEyeOpenRight);
+            oscParameterMouthOpen = NormalizeOscParameterName(oscParameterMouthOpen);
+            oscParameterSmile = NormalizeOscParameterName(oscParameterSmile);
             // 上半身の傾きの強さは 0〜上限に制限
             trackingBodyLean = Mathf.Clamp(trackingBodyLean, 0f, MaxTrackingBodyLean);
             // 未知の体の動かし方は既定の傾きへ
