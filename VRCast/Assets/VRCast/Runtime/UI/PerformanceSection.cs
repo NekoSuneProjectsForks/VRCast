@@ -27,6 +27,8 @@ namespace VRCast.UI
 
         private readonly AppSettings _settings;
         private readonly RenderingController _rendering;
+        private string _frameRateLimitInput = string.Empty;
+        private bool _frameRateLimitInputInvalid;
 
         // NVIDIA オーバーレイの除外状態（ドライバー設定の読み込みは重いので初回と変更後だけ調べる）、直前の失敗理由、再起動待ちか
         private NvidiaOverlayExclusion.State? _overlayState;
@@ -84,6 +86,39 @@ namespace VRCast.UI
             if (selectedLimit >= 0 && selectedLimit < FrameRateLimits.Length && selectedLimit != currentLimit)
             {
                 _rendering.FrameRateLimit = FrameRateLimits[selectedLimit];
+                _frameRateLimitInput = _rendering.FrameRateLimit.ToString();
+                _frameRateLimitInputInvalid = false;
+            }
+
+            if (string.IsNullOrEmpty(_frameRateLimitInput))
+            {
+                _frameRateLimitInput = _rendering.FrameRateLimit.ToString();
+            }
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(Loc.T("Custom FPS (0 = Auto)", "FPS の手動指定（0 = 自動）", "사용자 지정 FPS (0 = 자동)",
+                "自定义 FPS（0 = 自动）", "自訂 FPS（0 = 自動）"), GUILayout.ExpandWidth(true));
+            _frameRateLimitInput = GUILayout.TextField(_frameRateLimitInput, GUILayout.Width(76f));
+            if (GUILayout.Button(Loc.T("Apply", "適用", "적용", "应用", "套用"), GUILayout.Width(72f)))
+            {
+                if (int.TryParse(_frameRateLimitInput, out int customLimit)
+                    && (customLimit == 0 || (customLimit >= AppSettings.MinFrameRateLimit
+                        && customLimit <= AppSettings.MaxFrameRateLimit)))
+                {
+                    _rendering.FrameRateLimit = customLimit;
+                    _frameRateLimitInputInvalid = false;
+                }
+                else
+                {
+                    _frameRateLimitInputInvalid = true;
+                }
+            }
+
+            GUILayout.EndHorizontal();
+            if (_frameRateLimitInputInvalid)
+            {
+                GuiControls.Hint(Loc.T("Enter 0 or a value from 15 to 360.", "0 または 15〜360 を入力してください。",
+                    "0 또는 15~360 사이의 값을 입력하세요.", "请输入 0 或 15 到 360 之间的值。", "請輸入 0 或 15 到 360 之間的值。"));
             }
 
             GuiControls.Hint(Loc.T(
