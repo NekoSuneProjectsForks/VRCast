@@ -504,27 +504,28 @@ namespace VRCast.Rendering
             {
                 case LightingPreset.Sunny:
                     SetModernLighting(
-                        keyIntensity: 1.55f, keyTemp: 5200f, keyYaw: -32f, keyPitch: 34f,
-                        ambient: 0.25f, fillIntensity: 0.32f, fillTemp: 7200f, fillYaw: 135f, fillPitch: 14f,
+                        keyIntensity: 1.45f, keyTemp: 5200f, keyYaw: -48f, keyPitch: 26f,
+                        ambient: 0.12f, fillIntensity: 0.2f, fillTemp: 7200f, fillYaw: 140f, fillPitch: 10f,
                         rimIntensity: 0.55f, rimTemp: 5800f, rimYaw: 155f, rimPitch: -8f,
-                        ibl: 0.7f, IblPreset.Warm, softShadows: true, shadowStrength: 0.65f, shadowSoftness: 0.5f,
+                        ibl: 0.45f, IblPreset.Warm, softShadows: true, shadowStrength: 0.75f, shadowSoftness: 0.4f,
                         bloom: true, bloomIntensity: 0.05f, bloomThreshold: 1.65f, tonemap: true, tonemapStrength: 0.8f);
                     break;
                 case LightingPreset.Soft:
+                    // やわらかは塗りを優先するが、完全に正面にはせず鼻の陰は残す
                     SetModernLighting(
-                        keyIntensity: 1.0f, keyTemp: 6200f, keyYaw: -18f, keyPitch: 28f,
-                        ambient: 0.4f, fillIntensity: 0.55f, fillTemp: 7600f, fillYaw: 150f, fillPitch: 16f,
+                        keyIntensity: 1.05f, keyTemp: 6200f, keyYaw: -35f, keyPitch: 24f,
+                        ambient: 0.25f, fillIntensity: 0.35f, fillTemp: 7600f, fillYaw: 150f, fillPitch: 12f,
                         rimIntensity: 0.4f, rimTemp: 7000f, rimYaw: 170f, rimPitch: -2f,
-                        ibl: 0.95f, IblPreset.Studio, softShadows: true, shadowStrength: 0.45f, shadowSoftness: 0.85f,
+                        ibl: 0.7f, IblPreset.Studio, softShadows: true, shadowStrength: 0.5f, shadowSoftness: 0.75f,
                         bloom: true, bloomIntensity: 0.03f, bloomThreshold: 1.75f, tonemap: true, tonemapStrength: 0.75f);
                     break;
                 case LightingPreset.Studio:
                     SetModernLighting(
-                        keyIntensity: 1.25f, keyTemp: 5400f, keyYaw: -45f, keyPitch: 32f,
-                        ambient: 0.2f, fillIntensity: 0.48f, fillTemp: 8000f, fillYaw: 148f, fillPitch: 10f,
-                        rimIntensity: 0.85f, rimTemp: 6200f, rimYaw: 168f, rimPitch: -14f,
-                        ibl: 0.85f, IblPreset.Studio, softShadows: true, shadowStrength: 0.55f, shadowSoftness: 0.7f,
-                        bloom: true, bloomIntensity: 0.045f, bloomThreshold: 1.7f, tonemap: true, tonemapStrength: 0.85f);
+                        keyIntensity: 1.2f, keyTemp: 5400f, keyYaw: -58f, keyPitch: 24f,
+                        ambient: 0.1f, fillIntensity: 0.25f, fillTemp: 8000f, fillYaw: 152f, fillPitch: 6f,
+                        rimIntensity: 0.9f, rimTemp: 6200f, rimYaw: 170f, rimPitch: -14f,
+                        ibl: 0.55f, IblPreset.Studio, softShadows: true, shadowStrength: 0.65f, shadowSoftness: 0.5f,
+                        bloom: true, bloomIntensity: 0.04f, bloomThreshold: 1.7f, tonemap: true, tonemapStrength: 0.85f);
                     break;
                 default:
                     SetModernLighting(
@@ -651,8 +652,9 @@ namespace VRCast.Rendering
                 bool shadows = _settings.softShadows;
                 _keyLight.shadows = shadows ? LightShadows.Soft : LightShadows.None;
                 _keyLight.shadowStrength = Mathf.Clamp01(_settings.shadowStrength);
-                _keyLight.shadowBias = Mathf.Lerp(0.03f, 0.08f, _settings.shadowSoftness);
-                _keyLight.shadowNormalBias = Mathf.Lerp(0.2f, 0.6f, _settings.shadowSoftness);
+                // Normal Bias を上げすぎると鼻など細かいセルフシャドウが消えるので上限を抑える
+                _keyLight.shadowBias = Mathf.Lerp(0.02f, 0.05f, _settings.shadowSoftness);
+                _keyLight.shadowNormalBias = Mathf.Lerp(0.08f, 0.22f, _settings.shadowSoftness);
                 _keyLight.shadowCustomResolution = ModernShadowResolution;
 
                 QualitySettings.shadows = shadows ? ShadowQuality.All : ShadowQuality.Disable;

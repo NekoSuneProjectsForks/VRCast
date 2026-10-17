@@ -29,14 +29,16 @@ namespace VRCast.Rendering
             RenderSettings.ambientIntensity = Mathf.Max(0f, intensity);
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
             RenderSettings.customReflectionTexture = cubemap;
-            RenderSettings.reflectionIntensity = Mathf.Clamp01(intensity * 0.5f);
+            // 反射は弱め（強いと顔の陰影が薄まる）
+            RenderSettings.reflectionIntensity = Mathf.Clamp01(intensity * 0.35f);
 
             // Flat の環境光スライダー分を SH に足して、トゥーンでも最低限の明るさを残す
             DynamicGI.UpdateEnvironment();
             if (ambientFlat > 0.001f)
             {
                 SphericalHarmonicsL2 probe = RenderSettings.ambientProbe;
-                Color flat = new Color(0.5f, 0.5f, 0.5f) * ambientFlat;
+                // 係数を抑え、フィル代わりのべた塗りで鼻の陰が消えないようにする
+                Color flat = new Color(0.35f, 0.35f, 0.35f) * ambientFlat;
                 probe.AddAmbientLight(flat);
                 RenderSettings.ambientProbe = probe;
             }
@@ -105,9 +107,9 @@ namespace VRCast.Rendering
                         Color color = t > 0.5f
                             ? Color.Lerp(horizon, zenith, (t - 0.5f) * 2f)
                             : Color.Lerp(nadir, horizon, t * 2f);
-                        // 正面寄りのソフトキーを足してスタジオっぽくする（強すぎると鼻の陰影が消える）
-                        float front = Mathf.Max(0f, Vector3.Dot(dir.normalized, new Vector3(0f, 0.2f, -1f)));
-                        color += horizon * (front * front * 0.28f);
+                        // 正面寄りのソフトキーは控えめ（強いとトゥーン顔の鼻の陰が消える）
+                        float front = Mathf.Max(0f, Vector3.Dot(dir.normalized, new Vector3(0.15f, 0.15f, -1f)));
+                        color += horizon * (front * front * 0.15f);
                         colors[y * FaceSize + x] = color;
                     }
                 }

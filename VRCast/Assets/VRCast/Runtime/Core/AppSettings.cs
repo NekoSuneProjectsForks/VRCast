@@ -216,33 +216,33 @@ namespace VRCast.Core
         public AntiAliasingQuality supersample = AntiAliasingQuality.Off;
 
         // 太陽光 / Key（ディレクショナルライト）。向きはカメラ正面からの角度（0 = 正面から当たる）
-        // 最新の既定は横から当てて鼻・頬の陰影を残し、フィル／IBL で塗りつぶしすぎない
-        public float lightIntensity = 1.2f;
-        public float lightYaw = -42f;
-        public float lightPitch = 30f;
+        // トゥーン顔は正面／弱い横光だと鼻の陰が消えるので、既定ははっきり横から当てる
+        public float lightIntensity = 1.15f;
+        public float lightYaw = -55f;
+        public float lightPitch = 22f;
 
         // 太陽光の色温度（6500K でほぼ白、低いほど暖色）と環境光の明るさ
         public float lightTemperature = 5600f;
-        public float ambientIntensity = 0.3f;
+        public float ambientIntensity = 0.15f;
 
-        // 最新ライティングの Fill（影なし）。影側の白は残しつつ、顔の陰影は消さない強さ
-        public float fillIntensity = 0.42f;
-        public float fillYaw = 145f;
-        public float fillPitch = 12f;
+        // 最新ライティングの Fill（影なし）。強すぎると鼻の陰が埋まるのでキーの 1/5 程度
+        public float fillIntensity = 0.22f;
+        public float fillYaw = 150f;
+        public float fillPitch = 8f;
         public float fillTemperature = 7800f;
 
         // 最新ライティングの Rim（影なし）。透過背景でも輪郭が沈まないよう少し強め
-        public float rimIntensity = 0.7f;
-        public float rimYaw = 165f;
-        public float rimPitch = -10f;
+        public float rimIntensity = 0.75f;
+        public float rimYaw = 168f;
+        public float rimPitch = -12f;
         public float rimTemperature = 6200f;
 
-        // スタジオ環境光（空は描かない）と柔らかい影・映え。ブルームは発光パーツ向けに弱め
-        public float iblIntensity = 0.8f;
+        // スタジオ環境光（空は描かない）と柔らかい影・映え。IBL は弱め（強いと顔が平らになる）
+        public float iblIntensity = 0.5f;
         public IblPreset iblPreset = IblPreset.Studio;
         public bool softShadows = true;
-        public float shadowStrength = 0.6f;
-        public float shadowSoftness = 0.65f;
+        public float shadowStrength = 0.7f;
+        public float shadowSoftness = 0.45f;
         public bool bloomEnabled = true;
         public float bloomIntensity = 0.04f;
         public float bloomThreshold = 1.7f;
