@@ -25,6 +25,57 @@ namespace VRCast.Tests
             yield return new object[] { ArKitFace.BrowInnerUp, "browInnerUp" };
         }
 
+        // Exactly 100 distinct OSC packet round-trip cases: 50 signed ints and 50 floats.
+        // The parser is the existing VRCast OSC receiver, not a new test-only decoder.
+        private static IEnumerable<object[]> PacketRoundTripCases()
+        {
+            for (int i = 0; i < 50; i++)
+                yield return new object[] { true, i * 7919 - 200000, 0f };
+            for (int i = 0; i < 50; i++)
+                yield return new object[] { false, 0, (i - 25) / 64f };
+        }
+
+        [TestCaseSource(nameof(PacketRoundTripCases))]
+        public void EncodedPackets_RoundTripThroughOscParser(bool integer, int intValue, float floatValue)
+        {
+            const string address = "/avatar/parameters/VRCastRoundTrip";
+            byte[] packet = integer
+                ? OscParameterPacket.CreateInt(address, intValue)
+                : OscParameterPacket.CreateFloat(address, floatValue);
+            var messages = new List<OscMessage>();
+            OscPacket.Parse(packet, 0, packet.Length, messages);
+
+            Assert.That(packet.Length % 4, Is.EqualTo(0));
+            Assert.That(messages.Count, Is.EqualTo(1));
+            Assert.That(messages[0].Address, Is.EqualTo(address));
+            if (integer)
+            {
+                Assert.That(messages[0].Kind, Is.EqualTo(OscValueKind.Int));
+                Assert.That(messages[0].Int, Is.EqualTo(intValue));
+            }
+            else
+            {
+                Assert.That(messages[0].Kind, Is.EqualTo(OscValueKind.Float));
+                Assert.That(messages[0].Float, Is.EqualTo(floatValue));
+            }
+        }
+
+        [TestCase("Bad/Name")]
+        [TestCase("Bad\\0Name")]
+        [TestCase("Bad\\nName")]
+        [TestCase("Bad\\tName")]
+        [TestCase("Bad\\rName")]
+        public void Sender_RejectsInvalidParameterCharactersForAllTypes(string name)
+        {
+            using (var sender = new OscParameterSender())
+            {
+                Assert.That(sender.Start("127.0.0.1", 9000), Is.True);
+                Assert.That(sender.SendFloat(name, 0.5f), Is.False);
+                Assert.That(sender.SendInt(name, 1), Is.False);
+                Assert.That(sender.SendBool(name, true), Is.False);
+            }
+        }
+
         [Test]
         public void Start_RejectsIpv6EndpointWithoutThrowing()
         {
