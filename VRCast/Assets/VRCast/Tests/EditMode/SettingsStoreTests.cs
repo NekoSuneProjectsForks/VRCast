@@ -32,6 +32,24 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Defaults_OscParameterOutputIsDisabledAndUsesLocalhost()
+        {
+            var settings = new AppSettings();
+            Assert.That(settings.oscParameterOutputEnabled, Is.False);
+            Assert.That(settings.oscParameterOutputAddress, Is.EqualTo("127.0.0.1"));
+            Assert.That(settings.oscParameterOutputPort, Is.EqualTo(9000));
+        }
+
+        [TestCase(0, 1)]
+        [TestCase(70000, 65535)]
+        public void Load_OscParameterOutputPort_IsClamped(int saved, int expected)
+        {
+            _store.Save(new AppSettings { oscParameterOutputPort = saved });
+            AppSettings settings = _store.Load();
+            Assert.That(settings.oscParameterOutputPort, Is.EqualTo(expected));
+        }
+
+        [Test]
         public void Load_MissingFile_ReturnsDefaults()
         {
             // ファイルが無い状態で読み込む
