@@ -760,5 +760,19 @@ namespace VRCast.Tests
             AppSettings settings = _store.Load();
             Assert.That(settings.uiOpacity, Is.EqualTo(expected));
         }
+
+        [TestCase(0, 0)]
+        [TestCase(-1, 0)]
+        [TestCase(5, AppSettings.MinFrameRateLimit)]
+        [TestCase(999, AppSettings.MaxFrameRateLimit)]
+        public void FrameRateLimit_Sanitize_ClampsAndAllowsAuto(int configured, int expected)
+        {
+            var settings = new AppSettings { frameRateLimit = configured };
+
+            // 0 は軽量モードに応じた自動設定。範囲外の値は安全な上限へ補正する。
+            settings.Sanitize();
+
+            Assert.That(settings.frameRateLimit, Is.EqualTo(expected));
+        }
     }
 }
