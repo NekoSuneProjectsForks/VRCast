@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
-    Build the setup EXE stub (VRCastSetup.exe) for stores that do not accept zip files (Jinxxy).
-    Tools/Package/package.ps1 calls this and appends the distribution zip to the stub,
-    producing dist/VRCast-<version>-win64-setup.exe. The stub alone only shows "does not contain VRCast".
+    Build the setup EXE (VRCastSetup.exe) for BOOTH / Jinxxy.
+    Tools/Package/package.ps1 copies it to dist/VRCast-<version>-win64-setup.exe.
+    With no zip appended, the EXE downloads the latest release from GitHub when run.
     Needs Visual Studio 2022 (its C# compiler) and .NET Framework 4.8 (included in Windows 10 / 11).
 .PARAMETER Version
     Version shown in the window title and the file properties. Defaults to "dev".
@@ -109,7 +109,8 @@ $sources = @(Get-ChildItem $src -Filter *.cs | ForEach-Object { $_.FullName }) +
 $arguments = @(
     '/nologo', '/target:winexe', '/platform:anycpu', '/optimize+', '/langversion:9.0', '/utf8output', '/warnaserror+',
     "/win32manifest:$(Join-Path $src 'app.manifest')", "/win32icon:$icon", "/out:$OutputPath",
-    '/reference:System.IO.Compression.dll', '/reference:System.Windows.Forms.dll', '/reference:System.Drawing.dll'
+    '/reference:System.IO.Compression.dll', '/reference:System.Windows.Forms.dll', '/reference:System.Drawing.dll',
+    '/reference:System.Runtime.Serialization.dll'
 ) + $sources
 & $csc @arguments
 if ($LASTEXITCODE -ne 0) {

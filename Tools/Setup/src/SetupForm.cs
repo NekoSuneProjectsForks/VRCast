@@ -27,12 +27,15 @@ namespace VRCast.Setup
         private bool _busy;
         private int _lastReport = int.MinValue;
 
+        /// <summary>
+        /// payload が null なら、展開時に GitHub から最新の配布 zip をダウンロードする。
+        /// </summary>
         public SetupForm(Payload payload, string version)
         {
             _payload = payload;
 
             // OS の表示倍率・言語に合ったフォントで、中身に合わせた大きさの固定ダイアログにする
-            Text = Texts.Title(version);
+            Text = payload != null ? Texts.Title(version) : Texts.TitleDownload;
             Font = SystemFonts.MessageBoxFont;
             Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
             FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -54,7 +57,12 @@ namespace VRCast.Setup
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 
-            AddWide(layout, new Label { Text = Texts.Intro, AutoSize = true, MaximumSize = new Size(width, 0) });
+            AddWide(layout, new Label
+            {
+                Text = payload != null ? Texts.Intro : Texts.IntroDownload,
+                AutoSize = true,
+                MaximumSize = new Size(width, 0),
+            });
 
             // 展開先（既定は EXE の場所に作る VRCast-x.y.z-win64 フォルダ）と参照ボタン
             _folder = new TextBox
@@ -183,13 +191,45 @@ namespace VRCast.Setup
                 }
             }
 
-            // 画面の操作を止めて、別スレッドで展開する（完了時の処理は画面のスレッドで行う）
+            // 画面の操作を止めて、別スレッドで取得・展開する（完了時の処理は画面のスレッドで行う）
             SetBusy(true);
             bool openFolder = _openFolder.Checked;
-            var installer = new Installer(_payload);
-            Task.Run(() => installer.Run(parent, Report))
+            Payload embedded = _payload;
+            Task.Run(() => RunInstall(parent, embedded, Report))
                 .ContinueWith(task => OnFinished(task, parent, openFolder),
                     TaskScheduler.FromCurrentSynchronizationContext());
+        }
+
+        private static bool RunInstall(string parent, Payload embedded, Action<InstallStage, double> report)
+        {
+            // 連結 zip があればそれを使い、無ければ GitHub から最新を取って一時ファイルへ保存する
+            if (embedded != null)
+            {
+                return new Installer(embedded).Run(parent, report);
+            }
+
+            report(InstallStage.Downloading, 0);
+            ReleaseDownload.Result download = ReleaseDownload.Fetch((done, total) =>
+            {
+                report(InstallStage.Downloading, total > 0 ? (double)done / total : 0);
+            });
+            try
+            {
+                return new Installer(download.ZipPath, download.Sha256).Run(parent, report);
+            }
+            finally
+            {
+                try
+                {
+                    if (File.Exists(download.ZipPath))
+                    {
+                        File.Delete(download.ZipPath);
+                    }
+                }
+                catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+                {
+                }
+            }
         }
 
         private static string PrepareFolder(string folder)
@@ -216,8 +256,8 @@ namespace VRCast.Setup
         private void Report(InstallStage stage, double progress)
         {
             // ファイルごとに呼ばれるので、表示が変わるとき（1% 単位・段階の切り替え）だけ画面へ送る
-            bool extracting = stage == InstallStage.Extracting;
-            int percent = extracting ? (int)(progress * 100) : 0;
+            bool bar = stage == InstallStage.Extracting || stage == InstallStage.Downloading;
+            int percent = bar ? (int)(progress * 100) : 0;
             int key = (int)stage * 1000 + percent;
             if (key == _lastReport)
             {
@@ -227,11 +267,13 @@ namespace VRCast.Setup
             _lastReport = key;
             BeginInvoke(new Action(() =>
             {
-                // 確認中・入れ替え中は終わりが分からないので流れる表示、展開中は割合
-                _progress.Style = extracting ? ProgressBarStyle.Continuous : ProgressBarStyle.Marquee;
+                // 確認中・入れ替え中は終わりが分からないので流れる表示、取得・展開中は割合
+                _progress.Style = bar ? ProgressBarStyle.Continuous : ProgressBarStyle.Marquee;
                 _progress.Value = Math.Max(0, Math.Min(100, percent));
-                _status.Text = stage == InstallStage.Verifying ? Texts.Verifying
-                    : extracting ? Texts.Extracting : Texts.Updating;
+                _status.Text = stage == InstallStage.Downloading ? Texts.Downloading
+                    : stage == InstallStage.Verifying ? Texts.Verifying
+                    : stage == InstallStage.Extracting ? Texts.Extracting
+                    : Texts.Updating;
             }));
         }
 

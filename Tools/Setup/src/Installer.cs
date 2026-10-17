@@ -14,6 +14,7 @@ namespace VRCast.Setup
     /// </summary>
     internal enum InstallStage
     {
+        Downloading,
         Verifying,
         Extracting,
         Updating,
@@ -49,11 +50,29 @@ namespace VRCast.Setup
         // 本体の StreamingAssets（Unity の出力では exe 名_Data の下）
         private const string StreamingAssetsFolderName = "StreamingAssets";
 
-        private readonly Payload _payload;
+        private readonly Func<Stream> _open;
+        private readonly string _sha256;
 
+        /// <summary>
+        /// EXE 末尾に連結した zip（従来の配布）から展開する。
+        /// </summary>
         public Installer(Payload payload)
+            : this(payload.Open, payload.Sha256)
         {
-            _payload = payload;
+        }
+
+        /// <summary>
+        /// ダウンロード済みの zip ファイルから展開する（sha256 が空ならハッシュ確認を省略）。
+        /// </summary>
+        public Installer(string zipPath, string sha256)
+            : this(() => File.OpenRead(zipPath), sha256 ?? string.Empty)
+        {
+        }
+
+        private Installer(Func<Stream> open, string sha256)
+        {
+            _open = open;
+            _sha256 = sha256 ?? string.Empty;
         }
 
         /// <summary>
@@ -127,15 +146,19 @@ namespace VRCast.Setup
         public bool Run(string parent, Action<InstallStage, double> report)
         {
             report(InstallStage.Verifying, 0);
-            using (Stream stream = _payload.Open())
+            using (Stream stream = _open())
             {
-                // EXE が途中で切れた・書き換えられた場合は何も展開しない
-                if (!string.Equals(HashUtility.ComputeSha256Hex(stream), _payload.Sha256, StringComparison.OrdinalIgnoreCase))
+                // SHA-256 があるときだけ確かめる（EXE 連結・version.json 経由）。無いときは HTTPS の取得元を信頼する
+                if (_sha256.Length > 0)
                 {
-                    throw new SetupException(Texts.Damaged);
+                    if (!string.Equals(HashUtility.ComputeSha256Hex(stream), _sha256, StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new SetupException(Texts.Damaged);
+                    }
+
+                    stream.Position = 0;
                 }
 
-                stream.Position = 0;
                 using (var zip = new ZipArchive(stream, ZipArchiveMode.Read, true))
                 {
                     return Extract(zip, parent, report);

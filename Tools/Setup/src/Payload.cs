@@ -6,7 +6,7 @@ using VRCast.Platform;
 namespace VRCast.Setup
 {
     /// <summary>
-    /// セットアップ EXE の末尾に連結した配布 zip（Tools/Package/package.ps1 が書き込む）。
+    /// セットアップ EXE の末尾に連結した配布 zip（オフライン用。通常の BOOTH / Jinxxy 配布では連結せず GitHub から取る）。
     /// 並び: [EXE 本体][zip][zip の大きさ（Int64, リトルエンディアン）][zip の SHA-256（16 進 64 文字, ASCII）][目印 "VRCSETUP"]
     /// </summary>
     internal sealed class Payload

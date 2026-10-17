@@ -740,7 +740,7 @@ OBS のウィンドウキャプチャは透過に対応していないため、�
 ├── Tools/
 │   ├── MediaPipeTracker/         同梱トラッカー (Python + MediaPipe、build.ps1 / build.bat で exe 化)
 │   ├── Package/                  配布用 zip・書き出しツールの unitypackage の作成 (一括 release.bat / package.bat / unitypackage.bat、同梱 README.txt)
-│   ├── Setup/                    Jinxxy 向けセットアップ EXE の展開プログラム (C# / .NET Framework 4.8。package.bat が zip を連結)
+│   ├── Setup/                    BOOTH / Jinxxy 向けセットアップ EXE (C# / .NET Framework 4.8。実行時に GitHub から最新 zip を取得)
 │   ├── Spout/                    Spout2 送信プラグインの取得スクリプト (fetch.ps1)
 │   ├── UnityCapture/             仮想カメラ DLL の取得スクリプト (fetch.ps1)
 │   ├── Updater/                  自動更新のアップデーター (C++。build.ps1 / build.bat で VRCastUpdater.exe をビルド)
@@ -855,7 +855,7 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Spout\fetch.ps1
 MediaPipe トラッカーのビルド → ビルド済みの `VRCast\Builds\Windows` の StreamingAssets へトラッカーを上書きコピー（Unity で再ビルドしなくても新しいトラッカーが入る）
 → Windows 11 の仮想カメラ DLL のビルド → ビルドの `VRCast_Data\Plugins\x86_64` へコピー
 → アップデーター（`VRCastUpdater.exe`）のビルド → ビルドの `VRCast_Data\StreamingAssets\Updater` へコピー
-→ 書き出しツールの unitypackage（`dist\`）→ 配布 zip と自動更新用の `dist\version.json`・Jinxxy 向けのセットアップ EXE を順に作る。
+→ 書き出しツールの unitypackage（`dist\`）→ GitHub 用 zip・自動更新用の `dist\version.json`・Jinxxy 向けセットアップ EXE・BOOTH 向け軽い zip を順に作る。
 開始時に VRCast.exe の有無と、ビルドのバージョンと書き出しツールのバージョンの不一致を確認する。
 
 - 仮想カメラ DLL とアップデーターのビルドには Visual Studio 2022 の「C++ によるデスクトップ開発」が要る。
@@ -884,15 +884,13 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.
 - 中身: `VRCast\` フォルダにビルド一式 + `LICENSE.txt` / `NOTICE.txt` / `CHANGELOG.txt` / `README.txt`（利用者向けの日英の説明、`Tools/Package/README.txt`）。
   本体と取り違えないよう、別の `VRCast-Converter\` フォルダに書き出しツール `VRCast-Converter-<package.json の version>.unitypackage` と、
   「アバターのプロジェクトにインポートする」ことをファイル名で伝える説明（`Tools/Package/Converter/` の中身をそのまま複製）を入れる。
-- セットアップ EXE: `dist\VRCast-<バージョン>-win64-setup.exe`。Jinxxy は zip などの圧縮ファイルを置けず、
-  ビルドにトラッカーの `base_library.zip` があるためフォルダごとのアップロードもできないので、こちらを Jinxxy に置く。
-  `Tools/Setup` の展開プログラム（C# / .NET Framework 4.8。Visual Studio 2022 付属の C# コンパイラーでビルド。無ければ警告を出して EXE だけ作らない）の
-  末尾に同じ zip（と大きさ・SHA-256）を連結したもの。起動すると選んだフォルダ（既定は EXE と同じ場所に新しく作る `VRCast-<バージョン>-win64`。zip をエクスプローラーで展開したときと同じ名前）に
-  zip と同じ `VRCast\` と `VRCast-Converter\` を展開する。
-  既に VRCast が入っていれば `%LOCALAPPDATA%\VRCast\update\VRCast` へ展開し、アップデーターに差し替えを任せて終わるまで待ち、結果を画面に出す
-  （`--pid 0 --restart no`。待つプロセスは無く、差し替え後に VRCast を起動しない）。どちらの場合も VRCast は起動せず、展開するだけ。
-  画面は VRCast 本体と同じ 5 言語（OS の表示言語で選ぶ。それ以外は英語）。
-  展開の検証は本体の `UpdatePackage.cs` と `HashUtility.cs` を共有する。管理者権限は求めない（Program Files 等には展開しない）。
+- セットアップ EXE: `dist\VRCast-<バージョン>-win64-setup.exe`（中身は入れない軽い EXE。実行時に GitHub から最新の本体 zip を取得して展開）。
+  Jinxxy にはこの EXE だけを置く。`Tools/Setup`（C# / .NET Framework 4.8。Visual Studio 2022 付属の C# コンパイラーでビルド。無ければ警告を出して EXE だけ作らない）。
+  取得先はアプリの自動更新と同じ `version.json`（無ければ GitHub Releases の latest）。選んだフォルダ（既定は EXE と同じ場所に作る `VRCast-<バージョン>-win64`）へ
+  `VRCast\` と `VRCast-Converter\` を展開する。既に VRCast が入っていればアップデーターに差し替えを任せる（起動はしない）。
+  画面は VRCast 本体と同じ 5 言語。管理者権限は求めない。
+- BOOTH 用 zip: `dist\VRCast-<バージョン>-booth.zip`（`README.txt`・`Download-VRCast.bat`・上記セットアップ EXE）。本体 zip は入れない。
+  バッチは GitHub から最新の `VRCast-*-win64.zip` を同じフォルダへ保存するだけ（展開は利用者が行う）。
 - 書き出しツールの unitypackage だけを作る場合は `Tools\Package\unitypackage.bat`（Unity 不要、出力 `dist\VRCast-Converter-<バージョン>.unitypackage`）。
   `Packages/com.vrcast.converter` を `Assets/VRCast/Converter/` に入るよう詰める。GUID はリポジトリの `.meta` を使うため版をまたいで同じ
   （上書きインポートで更新できる）。ファイルを追加したら Unity で一度開いて `.meta` を作り、一緒にコミットする（無いと中止する）。

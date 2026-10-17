@@ -2,7 +2,7 @@
 rem Build the release files in one go (the Unity app build is done manually beforehand):
 rem   1. MediaPipe tracker  2. copy it into VRCast\Builds\Windows
 rem   3. Windows 11 virtual camera DLL  4. copy it into VRCast\Builds\Windows
-rem   5. exporter unitypackage  6. distribution zip, version.json and the setup EXE for Jinxxy
+rem   5. exporter unitypackage  6. GitHub zip, version.json, Jinxxy setup EXE, BOOTH zip
 rem Output goes to dist\. Options are passed to release.ps1 (for example: release.bat -SkipTracker -SkipVirtualCamera).
 
 setlocal

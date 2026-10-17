@@ -25,12 +25,22 @@ namespace VRCast.Setup
                 $"VRCast {version} 安装程序", $"VRCast {version} 安裝程式");
         }
 
+        public static string TitleDownload => Pick(
+            "VRCast Setup", "VRCast セットアップ", "VRCast 설치", "VRCast 安装程序", "VRCast 安裝程式");
+
         public static string Intro => Pick(
             "VRCast (the app) and VRCast-Converter (the exporter for your avatar's Unity project) will be extracted into this folder.",
             "次のフォルダーの中に「VRCast」（アプリ本体）と「VRCast-Converter」（アバターの Unity プロジェクトに入れる書き出しツール）を展開します。",
             "이 폴더 안에 「VRCast」(앱 본체)와 「VRCast-Converter」(아바타의 Unity 프로젝트에 넣는 내보내기 도구)를 압축 해제합니다.",
             "将在此文件夹中解压「VRCast」（主程序）和「VRCast-Converter」（放入虚拟形象 Unity 项目的导出工具）。",
             "將在此資料夾中解壓「VRCast」（主程式）和「VRCast-Converter」（放入虛擬形象 Unity 專案的匯出工具）。");
+
+        public static string IntroDownload => Pick(
+            "The latest VRCast will be downloaded from GitHub and extracted into this folder (VRCast and VRCast-Converter). An internet connection is required.",
+            "GitHub から最新の VRCast をダウンロードし、次のフォルダーへ展開します（「VRCast」と「VRCast-Converter」）。インターネット接続が必要です。",
+            "GitHub에서 최신 VRCast를 다운로드하여 이 폴더에 압축 해제합니다(「VRCast」와 「VRCast-Converter」). 인터넷 연결이 필요합니다.",
+            "将从 GitHub 下载最新的 VRCast 并解压到此文件夹（「VRCast」和「VRCast-Converter」）。需要互联网连接。",
+            "將從 GitHub 下載最新的 VRCast 並解壓到此資料夾（「VRCast」和「VRCast-Converter」）。需要網際網路連線。");
 
         public static string Browse => Pick("Browse...", "参照...", "찾아보기...", "浏览...", "瀏覽...");
 
@@ -56,6 +66,10 @@ namespace VRCast.Setup
         public static string Cancel => Pick("Cancel", "キャンセル", "취소", "取消", "取消");
 
         public static string Close => Pick("Close", "閉じる", "닫기", "关闭", "關閉");
+
+        public static string Downloading => Pick(
+            "Downloading from GitHub...", "GitHub からダウンロードしています...", "GitHub에서 다운로드하는 중...",
+            "正在从 GitHub 下载...", "正在從 GitHub 下載...");
 
         public static string Verifying => Pick(
             "Checking the files...", "ファイルを確認しています...", "파일을 확인하는 중...", "正在检查文件...", "正在檢查檔案...");
@@ -88,12 +102,15 @@ namespace VRCast.Setup
             "安装文件已损坏。请重新下载。",
             "安裝檔案已損壞。請重新下載。");
 
-        public static string Incomplete => Pick(
-            "This file does not contain VRCast. Please download it again from the store page.",
-            "このファイルには VRCast が入っていません。配布ページからダウンロードし直してください。",
-            "이 파일에는 VRCast가 들어 있지 않습니다. 판매 페이지에서 다시 다운로드하세요.",
-            "此文件不包含 VRCast。请从商店页面重新下载。",
-            "此檔案不包含 VRCast。請從商店頁面重新下載。");
+        public static string DownloadFailed(string detail)
+        {
+            return WithDetail(Pick(
+                "Could not download VRCast from GitHub. Check your internet connection and try again.",
+                "GitHub から VRCast をダウンロードできませんでした。インターネット接続を確認して、もう一度試してください。",
+                "GitHub에서 VRCast를 다운로드하지 못했습니다. 인터넷 연결을 확인한 후 다시 시도하세요.",
+                "无法从 GitHub 下载 VRCast。请检查互联网连接后重试。",
+                "無法從 GitHub 下載 VRCast。請檢查網際網路連線後再試。"), detail);
+        }
 
         public static string NotWritable => Pick(
             "This folder cannot be written to. Please choose another folder, such as Desktop or Documents.",

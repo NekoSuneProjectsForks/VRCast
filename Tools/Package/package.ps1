@@ -1,12 +1,14 @@
 <#
 .SYNOPSIS
     Package the Windows build (VRCast/Builds/Windows) and the exporter .unitypackage
-    into dist/VRCast-<version>-win64.zip for distribution.
+    into dist/VRCast-<version>-win64.zip for GitHub Releases.
     The zip contains VRCast/ (the app) and VRCast-Converter/ (the exporter for the avatar project).
     Also writes dist/version.json (with the zip's SHA-256 and size for auto-update).
     Upload the zip to the GitHub release v<version> with the same file name BEFORE publishing version.json.
-    Also writes dist/VRCast-<version>-win64-setup.exe (the same zip inside a setup EXE, for stores that
-    do not accept zip files such as Jinxxy; skipped with a warning when Visual Studio is missing).
+    Also writes:
+      - dist/VRCast-<version>-win64-setup.exe (small installer that downloads the latest zip from GitHub; for Jinxxy)
+      - dist/VRCast-<version>-booth.zip (README + Download-VRCast.bat + the setup EXE; for BOOTH)
+    Skipped with a warning when Visual Studio is missing (setup / booth zip).
 .PARAMETER Version
     Version in the zip name. Defaults to bundleVersion in ProjectSettings (Player > Version).
 .PARAMETER BuildPath
@@ -141,35 +143,38 @@ try {
     Write-Host "SHA-256: $sha256"
     Write-Host "Wrote $json (publish it to the webpage branch only after uploading $name.zip to the release v$Version)"
 
-    # Jinxxy など圧縮ファイルを置けない配布先向けのセットアップ EXE（展開用の EXE の末尾に同じ zip を連結する）。
-    # 並びは Tools/Setup/src/Payload.cs と同じ: [EXE][zip][zip の大きさ Int64][SHA-256 の 16 進 64 文字][目印 "VRCSETUP"]
+    # Jinxxy / BOOTH 向けのセットアップ EXE（中身は入れず、実行時に GitHub から最新 zip を取る。軽い）
     $setup = Join-Path $dist "$name-setup.exe"
     if (Test-Path $setup) { Remove-Item $setup -Force }
     $stub = Join-Path $work "VRCastSetup.exe"
     try {
         & (Join-Path $repository "Tools\Setup\build.ps1") -Version $Version -OutputPath $stub
+        Copy-Item $stub $setup -Force
+        $setupSize = [Math]::Round((Get-Item $setup).Length / 1KB, 1)
+        Write-Host "Done: $setup ($setupSize KB, downloads latest from GitHub; for Jinxxy)"
     }
     catch {
-        # 展開用の EXE が作れなくても zip の配布はできるので続行する（Visual Studio が無い等）
+        # 展開用の EXE が作れなくても GitHub 用 zip の配布はできるので続行する（Visual Studio が無い等）
         Write-Warning "Skipped $name-setup.exe: $($_.Exception.Message)"
-        $stub = $null
+        $setup = $null
     }
-    if ($stub) {
-        $output = [System.IO.File]::Create($setup)
-        try {
-            foreach ($part in @($stub, $zip)) {
-                $reader = [System.IO.File]::OpenRead($part)
-                try { $reader.CopyTo($output) } finally { $reader.Dispose() }
-            }
-            $trailer = [byte[]]([System.BitConverter]::GetBytes([long]$bytes) +
-                [System.Text.Encoding]::ASCII.GetBytes($sha256) + [System.Text.Encoding]::ASCII.GetBytes("VRCSETUP"))
-            $output.Write($trailer, 0, $trailer.Length)
-        }
-        finally {
-            $output.Dispose()
-        }
-        $setupSize = [Math]::Round((Get-Item $setup).Length / 1MB, 1)
-        Write-Host "Done: $setup ($setupSize MB, for stores that do not accept zip files such as Jinxxy)"
+
+    # BOOTH 向けの軽い zip（README + 最新版を取るバッチ + セットアップ EXE）。本体 zip は GitHub のみ
+    if ($setup) {
+        $boothName = "VRCast-$Version-booth"
+        $boothZip = Join-Path $dist "$boothName.zip"
+        $boothDir = Join-Path $work "booth"
+        if (Test-Path $boothDir) { Remove-Item $boothDir -Recurse -Force }
+        New-Item -ItemType Directory -Force $boothDir | Out-Null
+        Copy-Item (Join-Path $PSScriptRoot "Booth\README.txt") (Join-Path $boothDir "README.txt")
+        Copy-Item (Join-Path $PSScriptRoot "Booth\Download-VRCast.bat") (Join-Path $boothDir "Download-VRCast.bat")
+        Copy-Item $setup (Join-Path $boothDir "$name-setup.exe")
+        if (Test-Path $boothZip) { Remove-Item $boothZip -Force }
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::CreateFromDirectory($boothDir, $boothZip,
+            [System.IO.Compression.CompressionLevel]::Optimal, $false)
+        $boothSize = [Math]::Round((Get-Item $boothZip).Length / 1KB, 1)
+        Write-Host "Done: $boothZip ($boothSize KB, for BOOTH)"
     }
 }
 finally {

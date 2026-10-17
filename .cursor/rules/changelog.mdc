@@ -33,13 +33,14 @@ alwaysApply: true
    `Packages/com.vrcast.converter/package.json` の `version`、
  `README.md` の「現在の状態」にある「**バージョン x.y.z（製品版）**」。
 3. 修正だけなら z、機能追加なら y、互換性が壊れる変更なら x を上げる。
-4. 配布 zip は `Tools\Package\release.bat`（または `package.bat`。`CHANGELOG.txt` は自動で同梱される）。
- `dist\VRCast-x.y.z-win64.zip` と、自動更新用の `dist\version.json`（zip の大きさと SHA-256 入り）、
- Jinxxy 向けの `dist\VRCast-x.y.z-win64-setup.exe`（同じ zip を内包。Jinxxy の商品ファイルを差し替える）ができる。
+4. 配布物は `Tools\Package\release.bat`（または `package.bat`。`CHANGELOG.txt` は本体 zip に自動で同梱される）。
+ `dist\VRCast-x.y.z-win64.zip`（GitHub 用の本体）、自動更新用の `dist\version.json`（zip の大きさと SHA-256 入り）、
+ Jinxxy 向けの `dist\VRCast-x.y.z-win64-setup.exe`（実行時に GitHub から最新 zip を取得。商品ファイルを差し替える）、
+ BOOTH 向けの `dist\VRCast-x.y.z-booth.zip`（README・Download-VRCast.bat・setup.exe。本体 zip は入れない）ができる。
 5. GitHub の Release `vx.y.z` に `VRCast-x.y.z-win64.zip` を**名前を変えずに**添付して公開する
- （アプリは `https://github.com/coffin299/VRCast/releases/download/vx.y.z/VRCast-x.y.z-win64.zip` を取りに行く）。
+ （アプリとセットアップ／バッチは `https://github.com/coffin299/VRCast/releases/download/vx.y.z/VRCast-x.y.z-win64.zip` を取りに行く）。
 6. zip の公開を確かめてから、`webpage` ブランチ（作業フォルダ `../VRCast-webpage`）の `version.json` を `dist\version.json` で置き換える
- （アプリの更新通知と自動更新に使う。zip の公開より先に変えない。zip を作り直したら SHA-256 が変わるので必ず置き換え直す）。
+ （アプリの更新通知・自動更新・セットアップの取得先に使う。zip の公開より先に変えない。zip を作り直したら SHA-256 が変わるので必ず置き換え直す）。
 7. `version.json` の `version` だけを手で書き換えない。`update`（`zipUrl`・`size`・`sha256`）が無いと、
  アプリは手動ダウンロードの案内だけを出し「今すぐ更新」を表示しない。形は次のとおり:
 

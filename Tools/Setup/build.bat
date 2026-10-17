@@ -1,5 +1,5 @@
 @echo off
-rem Build the setup EXE stub (VRCastSetup.exe) into %TEMP%\VRCastSetup (for testing).
+rem Build the setup EXE (VRCastSetup.exe) into %TEMP%\VRCastSetup (for testing; downloads from GitHub when run).
 rem The distributable dist\VRCast-<version>-win64-setup.exe is made by Tools\Package\package.bat.
 rem Needs Visual Studio 2022.
 
