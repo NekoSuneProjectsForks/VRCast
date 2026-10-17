@@ -405,19 +405,17 @@ namespace VRCast.UI
             GUILayout.BeginHorizontal();
             DrawSidebar();
 
-            // 選択中のタブの内容（横スクロールバーは出さない。幅はタブ列の残りに固定し、長い説明文で右が見切れないようにする）
-            float column = ContentColumnWidth();
+            // タブ列の残り幅いっぱい。縦スクロールバーは常に右端に出し、幅の計算がタブでぶれないようにする
+            // （横スクロールバーは出さない。長い説明は GUI 側で折り返す）
             Vector2 scroll = _scroll[(int)_tab];
-            // 横方向のずれが残ると右が見切れるので捨てる
             scroll.x = 0f;
             scroll = GUILayout.BeginScrollView(
-                scroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar,
-                GUILayout.Width(column), GUILayout.ExpandWidth(false));
+                scroll, false, true, GUIStyle.none, GUI.skin.verticalScrollbar,
+                GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
             scroll.x = 0f;
             _scroll[(int)_tab] = scroll;
 
-            GUILayout.BeginVertical(GUILayout.Width(column - 1f), GUILayout.MaxWidth(column - 1f),
-                GUILayout.ExpandWidth(false));
+            GUILayout.BeginVertical(GUILayout.MinWidth(0f), GUILayout.ExpandWidth(true));
             DrawContent();
             GUILayout.EndVertical();
             GUILayout.EndScrollView();
@@ -559,16 +557,6 @@ namespace VRCast.UI
             }
 
             GUILayout.EndHorizontal();
-        }
-
-        private float ContentColumnWidth()
-        {
-            // ウィンドウ内でタブ列・余白・縦スクロールバーを除いた幅（この幅を超える内容は右が見切れる）
-            GUIStyle scrollbar = GUI.skin.verticalScrollbar;
-            float scrollbarWidth = scrollbar.fixedWidth + scrollbar.margin.horizontal;
-            float padding = GUI.skin.window.padding.horizontal;
-            float sidebar = SidebarWidthFor() + _theme.Sidebar.margin.horizontal;
-            return Mathf.Max(80f, Mathf.Floor(_windowRect.width - padding - sidebar - scrollbarWidth));
         }
 
         private float SidebarWidthFor()

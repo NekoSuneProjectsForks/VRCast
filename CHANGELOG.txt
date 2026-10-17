@@ -20,7 +20,7 @@ Newest first. Each version is written in Japanese, then English.
 - グラフィックタブの背景からライト／ダークのテーマを切り替えられるように変更
 - レガシーライティングの太陽光・環境光の既定を 2.x と同じ値に戻した（最新向けの調整がレガシーにも乗っていた）
 - 最新ライティングに色調補正・SSAO・画面リム・反射・シャープ・ビネットを追加（透過のまま使えます）
-- グラフィックタブから設定タブへ移ると右が見切れることがある問題を修正
+- パネル右端に縦スクロールバーを常に出し、タブ切替で右が見切れることがある問題を修正
 - ボタンの文字の下が切れることがある問題を修正
 - アバタータブで顔写真を撮り直せるように変更（「最近使ったアバター」の下と、読み込み情報から）
 
@@ -38,7 +38,7 @@ Newest first. Each version is written in Japanese, then English.
 - Theme (Light / Dark) can now also be switched from Background on the Graphics tab
 - Restored Legacy lighting's default sun / ambient values to match 2.x (Modern tuning had overwritten them)
 - Added color grading, SSAO, screen rim, reflection, sharpen, and vignette to Modern lighting (alpha-safe)
-- Fixed the Settings tab content sometimes being clipped on the right after leaving the Graphics tab
+- Always show the content scrollbar on the panel's right edge (fixes clipping after switching tabs)
 - Fixed button text occasionally being clipped at the bottom
 - Face photos can now be retaken from the Avatar tab (below Recently used avatars, and in the loaded-avatar info)
 
