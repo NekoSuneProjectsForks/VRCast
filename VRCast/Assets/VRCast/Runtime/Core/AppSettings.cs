@@ -272,10 +272,10 @@ namespace VRCast.Core
         public float colorTemperature; // -1 暖色〜 +1 寒色
         public float colorTint; // -1 緑〜 +1 マゼンタ
 
-        // SSAO（最新のみ）。既定は控えめ
+        // SSAO＝くぼみの影（最新のみ）。首元などが分かる程度の既定
         public bool ssaoEnabled = true;
-        public float ssaoIntensity = 0.15f;
-        public float ssaoRadius = 0.4f;
+        public float ssaoIntensity = 0.35f;
+        public float ssaoRadius = 0.45f;
 
         // 画面空間リム（最新のみ。ライトのリムと併用）。既定は控えめ
         public bool screenRimEnabled = true;

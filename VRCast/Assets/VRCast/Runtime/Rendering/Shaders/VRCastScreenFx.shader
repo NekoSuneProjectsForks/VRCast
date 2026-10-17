@@ -42,15 +42,6 @@ Shader "Hidden/VRCast/ScreenFx"
                 return LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, uv));
             }
 
-            // 深度から粗い法線（ビュー空間）
-            float3 NormalFromDepth(float2 uv, float depth)
-            {
-                float2 texel = _MainTex_TexelSize.xy;
-                float ddx = SampleDepth(uv + float2(texel.x, 0)) - depth;
-                float ddy = SampleDepth(uv + float2(0, texel.y)) - depth;
-                return normalize(float3(-ddx, -ddy, depth * 0.02 + 1e-3));
-            }
-
             fixed4 frag(v2f i) : SV_Target
             {
                 fixed4 src = tex2D(_MainTex, i.uv);
@@ -65,11 +56,11 @@ Shader "Hidden/VRCast/ScreenFx"
                     return src;
                 }
 
-                float3 normal = NormalFromDepth(i.uv, depth);
+                // 近い遮蔽（首元・あご下・しわ）を優先して暗くする
+                float radius = lerp(0.35, 2.0, saturate(_SsaoRadius));
+                float range = lerp(0.08, 0.45, saturate(_SsaoRadius));
                 float ao = 0.0;
                 float weightSum = 0.0;
-                float radius = lerp(0.4, 2.2, saturate(_SsaoRadius));
-                // 8 方向の簡易サンプル
                 static const float2 dirs[8] = {
                     float2(1, 0), float2(-1, 0), float2(0, 1), float2(0, -1),
                     float2(0.707, 0.707), float2(-0.707, 0.707),
@@ -78,18 +69,19 @@ Shader "Hidden/VRCast/ScreenFx"
                 [unroll]
                 for (int s = 0; s < 8; s++)
                 {
-                    float2 uv = i.uv + dirs[s] * _MainTex_TexelSize.xy * radius * 10.0;
+                    float2 uv = i.uv + dirs[s] * _MainTex_TexelSize.xy * radius * 12.0;
                     float sampleDepth = SampleDepth(uv);
-                    float3 samplePos = float3(dirs[s] * radius, sampleDepth - depth);
-                    float3 dir = normalize(samplePos + float3(0, 0, 1e-4));
-                    float occ = saturate(dot(normal, dir));
-                    float dist = saturate(1.0 - abs(sampleDepth - depth) * 0.35);
-                    ao += occ * dist;
-                    weightSum += dist;
+                    // 周囲が手前（近い）ならくぼみ側＝遮蔽
+                    float delta = depth - sampleDepth;
+                    float occ = saturate(delta / max(range, 1e-3));
+                    float falloff = saturate(1.0 - abs(delta) / max(range * 2.5, 1e-3));
+                    ao += occ * falloff;
+                    weightSum += falloff;
                 }
 
-                ao = 1.0 - saturate(ao / max(weightSum, 1e-4)) * _SsaoIntensity;
-                return fixed4(src.rgb * ao, src.a);
+                float occlusion = saturate(ao / max(weightSum, 1e-4));
+                float shade = 1.0 - occlusion * _SsaoIntensity;
+                return fixed4(src.rgb * shade, src.a);
             }
             ENDCG
         }

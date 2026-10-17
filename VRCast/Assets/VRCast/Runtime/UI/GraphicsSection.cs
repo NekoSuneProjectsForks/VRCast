@@ -255,18 +255,18 @@ namespace VRCast.UI
         {
             GuiControls.BeginCard(Loc.T("Lighting", "ライティング", "라이팅", "光照", "光照"));
             GuiControls.Hint(Loc.T(
-                "Legacy matches VRCast 2.x (default). Modern adds three lights, soft shadows, studio light and bloom.",
-                "レガシーは VRCast 2.x と同じ見た目です（既定）。最新は三点照明・柔らかい影・スタジオ環境光・ブルームを使います。",
-                "레거시는 VRCast 2.x와 같은 모습입니다(기본). 최신은 삼점 조명·부드러운 그림자·스튜디오 환경광·블룸을 씁니다.",
-                "旧版与 VRCast 2.x 相同（默认）。最新使用三点照明、柔和阴影、工作室环境光和辉光。",
-                "舊版與 VRCast 2.x 相同（預設）。最新使用三點照明、柔和陰影、工作室環境光和輝光。"));
+                "Legacy matches VRCast 2.x and earlier (default). Modern (3.x+) adds three lights, soft shadows, studio light, bloom and more.",
+                "レガシーは VRCast 2.x 以前と同じ見た目です（既定）。最新（3.x 以降）は三点照明・柔らかい影・スタジオ環境光・ブルームなどを使います。",
+                "레거시는 VRCast 2.x 이전과 같은 모습입니다(기본). 최신(3.x 이후)은 삼점 조명·부드러운 그림자·스튜디오 환경광·블룸 등을 씁니다.",
+                "旧版与 VRCast 2.x 及更早相同（默认）。最新（3.x 起）使用三点照明、柔和阴影、工作室环境光、辉光等。",
+                "舊版與 VRCast 2.x 及更早相同（預設）。最新（3.x 起）使用三點照明、柔和陰影、工作室環境光、輝光等。"));
 
             int selected = GuiControls.LabeledChoice(
                 Loc.T("System", "系統", "계통", "系统", "系統"),
                 new[]
                 {
-                    Loc.T("Legacy (2.x)", "レガシー（2.x）", "레거시 (2.x)", "旧版 (2.x)", "舊版 (2.x)"),
-                    Loc.T("Modern", "最新", "최신", "最新", "最新"),
+                    Loc.T("Legacy (≤2.x)", "レガシー（2.x 以前）", "레거시 (2.x 이전)", "旧版（2.x 以前）", "舊版（2.x 以前）"),
+                    Loc.T("Modern (3.x+)", "最新（3.x 以降）", "최신 (3.x+)", "最新（3.x 起）", "最新（3.x 起）"),
                 },
                 (int)_rendering.LightingSystem);
             if (selected != (int)_rendering.LightingSystem)
@@ -327,28 +327,28 @@ namespace VRCast.UI
 
         private void DrawShadows()
         {
-            GuiControls.BeginCard(Loc.T("Soft shadows (PCSS)", "柔らかい影（PCSS）", "부드러운 그림자 (PCSS)",
-                "柔和阴影（PCSS）", "柔和陰影（PCSS）"));
+            GuiControls.BeginCard(Loc.T("Shadows", "影", "그림자", "阴影", "陰影"));
             GuiControls.Hint(Loc.T(
-                "Softens self-shadows on the avatar. No floor is drawn (works with transparent backgrounds).",
-                "アバター自身への影を柔らかくします。床は出さないため透過背景のまま使えます。",
-                "아바타 자체 그림자를 부드럽게 합니다. 바닥은 그리지 않아 투명 배경에서도 쓸 수 있습니다.",
-                "柔化虚拟形象自身的阴影。不绘制地面，可与透明背景并用。",
-                "柔化虛擬形象自身的陰影。不繪製地面，可與透明背景並用。"));
+                "Self-shadow density and softness (no floor; works with transparent backgrounds).",
+                "アバター自身の影の濃さと柔らかさです。床は出さないため透過背景のまま使えます。",
+                "아바타 자체 그림자의 농도와 부드러움입니다. 바닥은 그리지 않아 투명 배경에서도 쓸 수 있습니다.",
+                "虚拟形象自身阴影的浓度与柔和度。不绘制地面，可与透明背景并用。",
+                "虛擬形象自身陰影的濃度與柔和度。不繪製地面，可與透明背景並用。"));
 
             _rendering.SoftShadows = GUILayout.Toggle(_rendering.SoftShadows,
-                Loc.T("Enable soft shadows", "柔らかい影を使う", "부드러운 그림자 사용", "启用柔和阴影", "啟用柔和陰影"));
+                Loc.T("Enable shadows", "影を付ける", "그림자 사용", "启用阴影", "啟用陰影"));
             if (_rendering.SoftShadows)
             {
-                float strength = GuiControls.Slider(Loc.T("Strength", "強さ", "세기", "强度", "強度"),
+                float strength = GuiControls.Slider(
+                    Loc.T("Shadow density", "影の濃さ", "그림자 농도", "阴影浓度", "陰影濃度"),
                     _rendering.ShadowStrength, 0f, AppSettings.MaxShadowStrength);
                 if (!Mathf.Approximately(strength, _rendering.ShadowStrength))
                 {
                     _rendering.ShadowStrength = strength;
                 }
 
-                float softness = GuiControls.Slider(Loc.T("Softness (PCSS)", "柔らかさ（PCSS）", "부드러움 (PCSS)",
-                        "柔和度（PCSS）", "柔和度（PCSS）"),
+                float softness = GuiControls.Slider(
+                    Loc.T("Softness", "柔らかさ", "부드러움", "柔和度", "柔和度"),
                     _rendering.ShadowSoftness, 0f, AppSettings.MaxShadowSoftness);
                 if (!Mathf.Approximately(softness, _rendering.ShadowSoftness))
                 {
@@ -361,25 +361,28 @@ namespace VRCast.UI
 
         private void DrawSsao()
         {
-            GuiControls.BeginCard(Loc.T("SSAO", "SSAO（環境遮蔽）", "SSAO", "SSAO（环境光遮蔽）", "SSAO（環境光遮蔽）"));
+            GuiControls.BeginCard(Loc.T("Crease shadow (SSAO)", "くぼみの影（SSAO）", "움푹한 그림자 (SSAO)",
+                "凹陷阴影（SSAO）", "凹陷陰影（SSAO）"));
             GuiControls.Hint(Loc.T(
-                "Darkens creases and contact areas. Alpha is preserved.",
-                "しわや接地面を少し暗くします。透明度は保ちます。",
-                "주름이나 맞닿는 부분을 조금 어둡게 합니다. 알파는 유지합니다.",
-                "让褶皱和接触处略暗。保留透明度。",
-                "讓褶皺和接觸處略暗。保留透明度。"));
+                "Darkens the neck, under the chin, clothing folds, etc. Alpha is preserved.",
+                "首元・あごの下・服のしわなどを暗くします。透明度は保ちます。",
+                "목·턱 아래·옷 주름 등을 어둡게 합니다. 알파는 유지합니다.",
+                "让颈根、下巴下方、衣服褶皱等变暗。保留透明度。",
+                "讓頸根、下巴下方、衣服褶皺等變暗。保留透明度。"));
             _rendering.SsaoEnabled = GUILayout.Toggle(_rendering.SsaoEnabled,
-                Loc.T("Enable SSAO", "SSAO を使う", "SSAO 사용", "启用 SSAO", "啟用 SSAO"));
+                Loc.T("Enable crease shadow", "くぼみの影を使う", "움푹한 그림자 사용", "启用凹陷阴影", "啟用凹陷陰影"));
             if (_rendering.SsaoEnabled)
             {
-                float intensity = GuiControls.Slider(Loc.T("Strength", "強さ", "세기", "强度", "強度"),
+                float intensity = GuiControls.Slider(
+                    Loc.T("Density", "濃さ", "농도", "浓度", "濃度"),
                     _rendering.SsaoIntensity, 0f, AppSettings.MaxSsaoIntensity);
                 if (!Mathf.Approximately(intensity, _rendering.SsaoIntensity))
                 {
                     _rendering.SsaoIntensity = intensity;
                 }
 
-                float radius = GuiControls.Slider(Loc.T("Radius", "半径", "반경", "半径", "半徑"),
+                float radius = GuiControls.Slider(
+                    Loc.T("Spread", "広がり", "범위", "范围", "範圍"),
                     _rendering.SsaoRadius, 0f, AppSettings.MaxSsaoRadius);
                 if (!Mathf.Approximately(radius, _rendering.SsaoRadius))
                 {

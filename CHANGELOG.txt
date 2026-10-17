@@ -8,7 +8,7 @@ Newest first. Each version is written in Japanese, then English.
 
 [日本語]
 - ライティングを拡充（最新: 三点照明、柔らかい影、スタジオ環境光、ブルーム／トーンマップ、色調補正、SSAO、画面リム、反射など。透過背景のまま使えます）
-- ライティングに「レガシー（2.x と同じ）／最新」の切替を追加（既定はレガシー。いつでも最新に変えられます）
+- ライティングに「レガシー（2.x 以前）／最新（3.x 以降）」の切替を追加（既定はレガシー。いつでも最新に変えられます）
 - グラフィックタブにスタジオ／晴れ／やわらか／既定のプリセットを追加（最新ライティング向け）
 - アンチエイリアスに方式の選択を追加（オフ／MSAA／FXAA。既定は MSAA 4x。FXAA はぼやけやすいので選んだときだけ）
 - 高解像度描画（オフ／125%／150%／200%）を追加（AA と別設定で併用可。内部解像度を上げてジャギーを抑えます）
@@ -20,6 +20,7 @@ Newest first. Each version is written in Japanese, then English.
 - グラフィックタブの背景からライト／ダークのテーマを切り替えられるように変更
 - レガシーライティングの太陽光・環境光の既定を 2.x と同じ値に戻した（最新向けの調整がレガシーにも乗っていた）
 - 最新ライティングに色調補正・SSAO・画面リム・反射・シャープ・ビネットを追加（透過のまま使えます）
+- 影の濃さ・くぼみの影（首元など）の調整を分かりやすく変更
 - パネル右端に縦スクロールバーを常に出し、タブ切替で右が見切れることがある問題を修正
 - 操作パネルを広げ、カードの幅を内容列いっぱいにそろえるように変更
 - ボタンの文字の下が切れることがある問題を修正
@@ -27,7 +28,7 @@ Newest first. Each version is written in Japanese, then English.
 
 [English]
 - Expanded lighting (Modern: three-point lights, soft shadows, studio IBL, bloom / tone map, color grading, SSAO, screen rim, reflection, and more; works with a transparent background)
-- Added a Legacy (same as 2.x) / Modern lighting switch (Legacy is the default; you can switch to Modern anytime)
+- Added a Legacy (2.x and earlier) / Modern (3.x+) lighting switch (Legacy is the default; you can switch to Modern anytime)
 - Added Studio / Sunny / Soft / Default presets on the Graphics tab (for Modern lighting)
 - Added anti-aliasing method selection (Off / MSAA / FXAA; default MSAA 4x; FXAA only when chosen, since it can blur)
 - Added supersampling (Off / 125% / 150% / 200%) as a separate option that can be combined with AA to reduce jaggies
@@ -39,6 +40,7 @@ Newest first. Each version is written in Japanese, then English.
 - Theme (Light / Dark) can now also be switched from Background on the Graphics tab
 - Restored Legacy lighting's default sun / ambient values to match 2.x (Modern tuning had overwritten them)
 - Added color grading, SSAO, screen rim, reflection, sharpen, and vignette to Modern lighting (alpha-safe)
+- Clarified shadow density and crease-shadow (neck / folds) controls on the Graphics tab
 - Always show the content scrollbar on the panel's right edge (fixes clipping after switching tabs)
 - Widened the control panel and made cards stretch to the full content column width
 - Fixed button text occasionally being clipped at the bottom
