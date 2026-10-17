@@ -239,34 +239,29 @@ namespace VRCast.Core
         public float lightTemperature = 6000f;
         public float ambientIntensity = 1.2f;
 
-        // 最新ライティングの Fill（影なし）。影を潰さないよう弱め
+        // 最新ライティングの Fill / Rim / IBL 等（「明瞭影」プリセット＝既定）
         public float fillIntensity = 0.1f;
         public float fillYaw = 145f;
         public float fillPitch = 10f;
         public float fillTemperature = 7200f;
 
-        // 最新ライティングの Rim（影なし）。輪郭を背景から切り離す
         public float rimIntensity = 0.28f;
         public float rimYaw = 168f;
         public float rimPitch = -12f;
         public float rimTemperature = 6800f;
 
-        // スタジオ環境光（空は描かない）。影が薄くならないよう弱め
-        public float iblIntensity = 0.1f;
+        public float iblIntensity = 0.5f;
         public IblPreset iblPreset = IblPreset.Studio;
-        // 反射は控えめ（白衣のディテールを残す）
-        public float reflectionStrength = 0.12f;
+        public float reflectionStrength = 0.14f;
         public bool softShadows = true;
-        // 服のしわ・あご〜首がはっきり見える濃さ（上限 3。Unity Soft Shadow は 1 で頭打ち）
-        public float shadowStrength = 2f;
-        public float shadowSoftness = 0.3f;
+        public float shadowStrength = 5f;
+        public float shadowSoftness = 0.056f;
         public bool bloomEnabled = true;
         public float bloomIntensity = 0.012f;
         public float bloomThreshold = 1.95f;
         public bool tonemapEnabled = true;
         public float tonemapStrength = 0.5f;
 
-        // 色調補正（最新のみ）。露出は下げ・コントラストやや強め・低彩度で写真寄りの明瞭さ
         public bool colorGradeEnabled = true;
         public float exposure = -0.12f;
         public float contrast = 1.08f;
@@ -274,20 +269,17 @@ namespace VRCast.Core
         public float colorTemperature = -0.04f; // -1 暖色〜 +1 寒色
         public float colorTint = 0.01f; // -1 緑〜 +1 マゼンタ
 
-        // SSAO＝くぼみの影。ジャケットのしわ・首元がはっきり分かる強さ
         public bool ssaoEnabled = true;
-        public float ssaoIntensity = 1.4f;
-        public float ssaoRadius = 0.42f;
+        public float ssaoIntensity = 3.69f;
+        public float ssaoRadius = 0.15f;
 
-        // 画面空間リム。髪・袖の輪郭を少し立てる
         public bool screenRimEnabled = true;
         public float screenRimIntensity = 0.12f;
         public float screenRimPower = 3.5f;
         public float screenRimHue = 0.55f;
 
-        // シャープは既定 ON（明瞭さ）。ビネットはオフ
         public bool sharpenEnabled = true;
-        public float sharpenAmount = 0.38f;
+        public float sharpenAmount;
         public bool vignetteEnabled;
         public float vignetteIntensity = 0.22f;
 

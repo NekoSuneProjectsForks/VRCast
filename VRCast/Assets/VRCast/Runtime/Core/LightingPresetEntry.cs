@@ -226,23 +226,23 @@ namespace VRCast.Core
                 AppSettings.MaxAvatarBrightness, 1f);
             fillIntensity = Clamp(fillIntensity, 0f, AppSettings.MaxLightIntensity, 0.1f);
             fillYaw = Clamp(fillYaw, -360f, 360f, 145f);
-            fillPitch = Clamp(fillPitch, -90f, 90f, 12f);
+            fillPitch = Clamp(fillPitch, -90f, 90f, 10f);
             fillTemperature = Clamp(fillTemperature, AppSettings.MinLightTemperature,
-                AppSettings.MaxLightTemperature, 7400f);
+                AppSettings.MaxLightTemperature, 7200f);
             rimIntensity = Clamp(rimIntensity, 0f, AppSettings.MaxLightIntensity, 0.28f);
-            rimYaw = Clamp(rimYaw, -360f, 360f, 165f);
-            rimPitch = Clamp(rimPitch, -90f, 90f, -8f);
+            rimYaw = Clamp(rimYaw, -360f, 360f, 168f);
+            rimPitch = Clamp(rimPitch, -90f, 90f, -12f);
             rimTemperature = Clamp(rimTemperature, AppSettings.MinLightTemperature,
-                AppSettings.MaxLightTemperature, 6500f);
-            iblIntensity = Clamp(iblIntensity, 0f, AppSettings.MaxIblIntensity, 0.1f);
+                AppSettings.MaxLightTemperature, 6800f);
+            iblIntensity = Clamp(iblIntensity, 0f, AppSettings.MaxIblIntensity, 0.5f);
             if (!Enum.IsDefined(typeof(IblPreset), iblPreset))
             {
                 iblPreset = IblPreset.Studio;
             }
 
-            reflectionStrength = Clamp(reflectionStrength, 0f, AppSettings.MaxReflectionStrength, 0.12f);
-            shadowStrength = Clamp(shadowStrength, 0f, AppSettings.MaxShadowStrength, 2f);
-            shadowSoftness = Clamp(shadowSoftness, 0f, AppSettings.MaxShadowSoftness, 0.3f);
+            reflectionStrength = Clamp(reflectionStrength, 0f, AppSettings.MaxReflectionStrength, 0.14f);
+            shadowStrength = Clamp(shadowStrength, 0f, AppSettings.MaxShadowStrength, 5f);
+            shadowSoftness = Clamp(shadowSoftness, 0f, AppSettings.MaxShadowSoftness, 0.056f);
             bloomIntensity = Clamp(bloomIntensity, 0f, AppSettings.MaxBloomIntensity, 0.012f);
             bloomThreshold = Clamp(bloomThreshold, 0f, AppSettings.MaxBloomThreshold, 1.95f);
             tonemapStrength = Clamp(tonemapStrength, 0f, AppSettings.MaxTonemapStrength, 0.5f);
@@ -250,14 +250,14 @@ namespace VRCast.Core
             contrast = Clamp(contrast, AppSettings.MinContrast, AppSettings.MaxContrast, 1.08f);
             saturation = Clamp(saturation, 0f, AppSettings.MaxSaturation, 0.86f);
             colorTemperature = Clamp(colorTemperature, -AppSettings.MaxColorBalance, AppSettings.MaxColorBalance,
-                -0.02f);
-            colorTint = Clamp(colorTint, -AppSettings.MaxColorBalance, AppSettings.MaxColorBalance, 0.02f);
-            ssaoIntensity = Clamp(ssaoIntensity, 0f, AppSettings.MaxSsaoIntensity, 1.4f);
-            ssaoRadius = Clamp(ssaoRadius, 0f, AppSettings.MaxSsaoRadius, 0.42f);
+                -0.04f);
+            colorTint = Clamp(colorTint, -AppSettings.MaxColorBalance, AppSettings.MaxColorBalance, 0.01f);
+            ssaoIntensity = Clamp(ssaoIntensity, 0f, AppSettings.MaxSsaoIntensity, 3.69f);
+            ssaoRadius = Clamp(ssaoRadius, 0f, AppSettings.MaxSsaoRadius, 0.15f);
             screenRimIntensity = Clamp(screenRimIntensity, 0f, AppSettings.MaxScreenRimIntensity, 0.12f);
             screenRimPower = Clamp(screenRimPower, 0.5f, AppSettings.MaxScreenRimPower, 3.5f);
-            screenRimHue = Mathf.Repeat(IsFinite(screenRimHue) ? screenRimHue : 0f, 1f);
-            sharpenAmount = Clamp(sharpenAmount, 0f, AppSettings.MaxSharpen, 0.38f);
+            screenRimHue = Mathf.Repeat(IsFinite(screenRimHue) ? screenRimHue : 0.55f, 1f);
+            sharpenAmount = Clamp(sharpenAmount, 0f, AppSettings.MaxSharpen, 0f);
             vignetteIntensity = Clamp(vignetteIntensity, 0f, AppSettings.MaxVignette, 0.22f);
         }
 

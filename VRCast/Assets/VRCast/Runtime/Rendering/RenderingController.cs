@@ -649,10 +649,10 @@ namespace VRCast.Rendering
                     _settings.vignetteEnabled = false;
                     break;
                 default:
-                    // 既定＝スタジオ写真寄りの明瞭さ（影を強め、くぼみの影・リム・シャープ）
+                    // 既定＝「明瞭影」（利用者プリセット由来。Key／Ambient はレガシー共有既定と別）
                     SetModernLighting(
                         keyIntensity: 1.05f, keyTemp: 5800f, keyYaw: -22f, keyPitch: 34f,
-                        ambient: 0.2f,
+                        ambient: 0.14f,
                         fillIntensity: defaults.fillIntensity, fillTemp: defaults.fillTemperature,
                         fillYaw: defaults.fillYaw, fillPitch: defaults.fillPitch,
                         rimIntensity: defaults.rimIntensity, rimTemp: defaults.rimTemperature,
@@ -661,12 +661,12 @@ namespace VRCast.Rendering
                         defaults.shadowStrength, defaults.shadowSoftness, defaults.bloomEnabled, defaults.bloomIntensity,
                         defaults.bloomThreshold, defaults.tonemapEnabled, defaults.tonemapStrength,
                         defaults.reflectionStrength);
-                    _settings.avatarBrightness = 1f;
+                    _settings.avatarBrightness = 1.23f;
                     SetModernScreenFx(
                         defaults.ssaoIntensity, defaults.ssaoRadius, defaults.screenRimIntensity,
                         defaults.screenRimPower, defaults.screenRimHue, defaults.exposure, defaults.contrast,
                         defaults.saturation, defaults.colorTemperature, defaults.colorTint);
-                    _settings.sharpenEnabled = true;
+                    _settings.sharpenEnabled = defaults.sharpenEnabled;
                     _settings.sharpenAmount = defaults.sharpenAmount;
                     _settings.vignetteEnabled = false;
                     break;
