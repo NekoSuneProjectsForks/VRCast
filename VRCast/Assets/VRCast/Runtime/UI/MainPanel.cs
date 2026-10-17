@@ -388,6 +388,7 @@ namespace VRCast.UI
             _theme?.Destroy();
             _theme = null;
             _discordSection.Dispose();
+            _settingsSection?.Dispose();
         }
 
         private void FitToScreen(float screenWidth, float screenHeight)
