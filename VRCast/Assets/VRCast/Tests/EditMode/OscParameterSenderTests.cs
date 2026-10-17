@@ -50,6 +50,32 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void SendInt_RejectsInvalidParameterNames()
+        {
+            using (var sender = new OscParameterSender())
+            {
+                Assert.That(sender.Start("127.0.0.1", 9000), Is.True);
+                Assert.That(sender.SendInt("Bad/Name", 1), Is.False);
+                Assert.That(sender.SendInt("  ", 1), Is.False);
+            }
+        }
+
+        [TestCase(1, 0x00, 0x00, 0x00, 0x01)]
+        [TestCase(-1, 0xff, 0xff, 0xff, 0xff)]
+        [TestCase(256, 0x00, 0x00, 0x01, 0x00)]
+        public void CreateInt_UsesOscBigEndianSignedIntegerPayload(int value, int b0, int b1, int b2, int b3)
+        {
+            byte[] packet = OscParameterPacket.CreateInt("/avatar/parameters/GestureLeft", value);
+
+            Assert.That(packet.Length % 4, Is.EqualTo(0));
+            Assert.That(System.Text.Encoding.UTF8.GetString(packet), Does.Contain(",i"));
+            Assert.That(packet[packet.Length - 4], Is.EqualTo(b0));
+            Assert.That(packet[packet.Length - 3], Is.EqualTo(b1));
+            Assert.That(packet[packet.Length - 2], Is.EqualTo(b2));
+            Assert.That(packet[packet.Length - 1], Is.EqualTo(b3));
+        }
+
+        [Test]
         public void CreateFloat_UsesOscBigEndianFloatPayload()
         {
             byte[] packet = OscParameterPacket.CreateFloat("/x", 1.0f);
