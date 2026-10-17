@@ -3,6 +3,7 @@ using UnityEngine;
 using VRCast.Core;
 using VRCast.Rendering;
 using VRCast.Remote;
+using VRCast.Tracking;
 
 namespace VRCast.UI
 {
@@ -124,6 +125,8 @@ namespace VRCast.UI
             GuiControls.Hint(
                 "Mapped values are sent at up to 30 updates per second while fresh face tracking is available. Use parameter names that exist in the avatar's Expressions/FX setup. ARKit mappings require a provider that supplies ARKit-compatible blendshapes. This does not forward skeletal head, body, or hand motion.");
 
+            DrawAdditionalArKitMappings();
+
             GUILayout.Label("Status: " + _oscParameterSender.Status);
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Send test float"))
@@ -140,6 +143,52 @@ namespace VRCast.UI
             GuiControls.Hint(
                 "Test messages use /avatar/parameters/VRCastTest (0.5) and /avatar/parameters/VRCastTestToggle (true). Create matching parameters in the avatar's FX/Expressions setup to observe them.");
             GuiControls.EndCard();
+        }
+
+        private void DrawAdditionalArKitMappings()
+        {
+            if (_settings.oscBlendShapeMappings == null)
+            {
+                _settings.oscBlendShapeMappings = new System.Collections.Generic.List<OscBlendShapeParameterMapping>();
+            }
+
+            // Populate all known ARKit channels without overwriting user-entered parameter names.
+            foreach (string blendShapeName in ArKitFace.BlendShapeNames)
+            {
+                bool found = false;
+                foreach (OscBlendShapeParameterMapping mapping in _settings.oscBlendShapeMappings)
+                {
+                    if (mapping != null && string.Equals(mapping.blendShapeName, blendShapeName, StringComparison.Ordinal))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    _settings.oscBlendShapeMappings.Add(new OscBlendShapeParameterMapping
+                    {
+                        blendShapeName = blendShapeName,
+                        parameterName = string.Empty,
+                    });
+                }
+            }
+
+            GUILayout.Label("Additional ARKit blendshape mappings (all 51 channels; blank disables a mapping)");
+            foreach (OscBlendShapeParameterMapping mapping in _settings.oscBlendShapeMappings)
+            {
+                if (mapping == null || string.IsNullOrWhiteSpace(mapping.blendShapeName))
+                {
+                    continue;
+                }
+
+                GUILayout.Label(mapping.blendShapeName);
+                mapping.parameterName = GUILayout.TextField(mapping.parameterName ?? string.Empty);
+            }
+
+            GuiControls.Hint(
+                "These mappings forward the provider's raw ARKit-compatible blendshape values. They are optional and remain blank until you assign VRChat avatar parameter names. Only channels present in the incoming frame are sent.");
         }
 
         private void DrawPanel()
