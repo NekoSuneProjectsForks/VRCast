@@ -1348,9 +1348,14 @@ namespace VRCast.Core
             remoteHttpPort = Mathf.Clamp(remoteHttpPort, MinTrackingPort, MaxTrackingPort);
             // OSC 出力はローカル既定。無効な IP は既定へ戻し、ポートは有効範囲に制限
             oscParameterOutputAddress = (oscParameterOutputAddress ?? string.Empty).Trim();
-            if (string.IsNullOrEmpty(oscParameterOutputAddress))
+            if (!System.Net.IPAddress.TryParse(oscParameterOutputAddress, out var oscAddress)
+                || oscAddress.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork)
             {
                 oscParameterOutputAddress = "127.0.0.1";
+            }
+            else
+            {
+                oscParameterOutputAddress = oscAddress.ToString();
             }
             oscParameterOutputPort = Mathf.Clamp(oscParameterOutputPort, 1, 65535);
             var usedOscParameterNames = new HashSet<string>(StringComparer.Ordinal);
