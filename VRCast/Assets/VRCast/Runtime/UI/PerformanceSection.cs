@@ -15,6 +15,13 @@ namespace VRCast.UI
         // GPU の候補のうち、Windows の優先設定（GpuPreference）の数（以降が GPU の直接指定）
         private const int PresetCount = 3;
 
+        // 0 = 軽量モードに応じた自動設定。指定値は VSync を切って直接適用する。
+        private static readonly int[] FrameRateLimits = { 0, 30, 60, 90, 120, 144, 165, 240, 360 };
+        private static readonly string[] FrameRateLabels =
+        {
+            "Auto (30 / 60)", "30 FPS", "60 FPS", "90 FPS", "120 FPS", "144 FPS", "165 FPS", "240 FPS", "360 FPS",
+        };
+
         // GPU の一覧（初回表示時に取得）
         private List<GpuAdapter> _adapters;
 
@@ -54,21 +61,37 @@ namespace VRCast.UI
             }
 
             GuiControls.Hint(Loc.T(
-                $"Use this with games or OBS: drawing is limited to {RenderingController.LowLoadFrameRate} fps " +
-                $"(normally {RenderingController.NormalFrameRate}) and OpenSeeFace uses a lighter model. " +
-                "For MediaPipe, choose Eco in the Tracking tab's Tracker mode.",
-                $"ゲームや OBS と同時に使うときに。描画を {RenderingController.LowLoadFrameRate}fps " +
-                $"（通常は {RenderingController.NormalFrameRate}fps）に抑え、OpenSeeFace は軽いモデルを使います。" +
-                "MediaPipe はトラッキングタブの「トラッカーの動作」でエコを選んでください。",
-                $"게임이나 OBS와 함께 쓸 때 사용하세요. 화면을 {RenderingController.LowLoadFrameRate}fps" +
-                $"(평소 {RenderingController.NormalFrameRate}fps)로 제한하고 OpenSeeFace는 가벼운 모델을 씁니다. " +
-                "MediaPipe는 트래킹 탭의 「트래커 동작」에서 절약을 선택하세요.",
-                $"与游戏或 OBS 同时使用时开启。将画面限制为 {RenderingController.LowLoadFrameRate}fps" +
-                $"（通常为 {RenderingController.NormalFrameRate}fps），OpenSeeFace 使用较轻的模型。" +
-                "MediaPipe 请在追踪标签页的“追踪器模式”中选择节能。",
-                $"與遊戲或 OBS 同時使用時開啟。將畫面限制為 {RenderingController.LowLoadFrameRate}fps" +
-                $"（通常為 {RenderingController.NormalFrameRate}fps），OpenSeeFace 使用較輕的模型。" +
-                "MediaPipe 請在追蹤分頁的「追蹤器模式」中選擇節能。"));
+                "Use this with games or OBS. When FPS limit is Auto, drawing is limited to 30 FPS " +
+                "(normally 60 FPS) and OpenSeeFace uses a lighter model. For MediaPipe, choose Eco in the Tracking tab.",
+                "ゲームや OBS と同時に使うときに。FPS 上限が自動の場合は描画を 30fps（通常は 60fps）に抑え、" +
+                "OpenSeeFace は軽いモデルを使います。MediaPipe はトラッキングタブでエコを選んでください。",
+                "게임이나 OBS와 함께 사용할 때 켜세요. FPS 제한이 자동이면 화면을 30fps(일반 모드는 60fps)로 제한하고 " +
+                "OpenSeeFace는 가벼운 모델을 사용합니다. MediaPipe는 트래킹 탭에서 절약 모드를 선택하세요.",
+                "与游戏或 OBS 同时使用时开启。FPS 上限为自动时，画面限制为 30 FPS（普通模式为 60 FPS），" +
+                "OpenSeeFace 使用较轻的模型。MediaPipe 请在追踪标签页选择节能模式。",
+                "與遊戲或 OBS 同時使用時開啟。FPS 上限為自動時，畫面限制為 30 FPS（一般模式為 60 FPS），" +
+                "OpenSeeFace 使用較輕的模型。MediaPipe 請在追蹤分頁選擇節能模式。"));
+
+            int currentLimit = System.Array.IndexOf(FrameRateLimits, _rendering.FrameRateLimit);
+            if (currentLimit < 0)
+            {
+                currentLimit = 0;
+            }
+
+            int selectedLimit = GuiControls.LabeledChoice(
+                Loc.T("FPS limit", "FPS 上限", "FPS 제한", "FPS 上限", "FPS 上限"),
+                FrameRateLabels, currentLimit);
+            if (selectedLimit >= 0 && selectedLimit < FrameRateLimits.Length && selectedLimit != currentLimit)
+            {
+                _rendering.FrameRateLimit = FrameRateLimits[selectedLimit];
+            }
+
+            GuiControls.Hint(Loc.T(
+                "Auto uses 30 FPS in Low load mode and 60 FPS otherwise. A fixed limit overrides only the render cap; tracking settings remain independent.",
+                "自動では軽量モード時 30fps、通常時 60fps です。固定上限は描画だけに適用され、トラッキング設定は別です。",
+                "자동은 저부하 모드에서 30fps, 그 외에는 60fps를 사용합니다. 고정 제한은 렌더링에만 적용되며 트래킹 설정은 별도입니다.",
+                "自动模式在低负载模式下使用 30 FPS，否则使用 60 FPS。固定上限只限制渲染，追踪设置不受影响。",
+                "自動模式在低負載模式下使用 30 FPS，否則使用 60 FPS。固定上限只限制渲染，追蹤設定不受影響。"));
 
             // パネル下部の動作状況（表示は英語のみ）
             _settings.showPerformanceStats = GUILayout.Toggle(_settings.showPerformanceStats, Loc.T(
