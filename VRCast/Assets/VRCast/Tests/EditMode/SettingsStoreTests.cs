@@ -429,7 +429,7 @@ namespace VRCast.Tests
             // 記録のある最新ライティングは書き戻され、範囲外は補正されること
             new AvatarLook
             {
-                avatarBrightness = 1f, hasModernLighting = true, fillIntensity = 99f, shadowStrength = 2f,
+                avatarBrightness = 1f, hasModernLighting = true, fillIntensity = 99f, shadowStrength = 99f,
                 bloomIntensity = -1f, iblPreset = (IblPreset)99,
             }.ApplyTo(settings);
             Assert.That(settings.fillIntensity, Is.EqualTo(AppSettings.MaxLightIntensity));

@@ -6,17 +6,15 @@ namespace VRCast.Rendering
 {
     /// <summary>
     /// ライティングのプリセット。
-    /// レガシー UI は Default / Sunny / Soft。最新 UI は Default / LegacyLike / Mmd。
+    /// レガシー UI は Default / Sunny / Soft。最新 UI は Default / LegacyLike。
     /// </summary>
     public enum LightingPreset
     {
         Default = 0,
         Sunny = 1,
         Soft = 2,
-        /// <summary>最新向け。2.x 以前に近い見た目（旧 Studio 枠）。</summary>
+        /// <summary>最新向け。2.x 以前に近い見た目（三点・IBL・ポストはほぼオフ）。</summary>
         LegacyLike = 3,
-        /// <summary>最新向け。MMD 風の寒色寄り。</summary>
-        Mmd = 4,
     }
 
     /// <summary>
@@ -629,38 +627,30 @@ namespace VRCast.Rendering
             switch (preset)
             {
                 case LightingPreset.LegacyLike:
-                    // 2.x 以前に近い太陽光・環境光。Fill / Rim / IBL は最小限
+                    // 2.x と同じ太陽光・環境光だけ。Fill / Rim / IBL / ポストは足さない（白みの原因だった）
                     SetModernLighting(
                         keyIntensity: defaults.lightIntensity, keyTemp: defaults.lightTemperature,
                         keyYaw: defaults.lightYaw, keyPitch: defaults.lightPitch,
                         ambient: defaults.ambientIntensity,
-                        fillIntensity: 0.1f, fillTemp: 6500f, fillYaw: 140f, fillPitch: 15f,
-                        rimIntensity: 0.15f, rimTemp: 6500f, rimYaw: 160f, rimPitch: -5f,
-                        ibl: 0.15f, IblPreset.Studio, softShadows: true, shadowStrength: 0.55f, shadowSoftness: 0.45f,
-                        bloom: true, bloomIntensity: 0.02f, bloomThreshold: 1.85f, tonemap: true, tonemapStrength: 0.65f,
-                        reflection: 0.12f);
+                        fillIntensity: 0f, fillTemp: 6500f, fillYaw: 140f, fillPitch: 15f,
+                        rimIntensity: 0f, rimTemp: 6500f, rimYaw: 160f, rimPitch: -5f,
+                        ibl: 0f, IblPreset.Studio, softShadows: false, shadowStrength: 0.7f, shadowSoftness: 0.4f,
+                        bloom: false, bloomIntensity: 0.02f, bloomThreshold: 1.85f, tonemap: false, tonemapStrength: 0.6f,
+                        reflection: 0f);
                     _settings.avatarBrightness = 1f;
-                    SetModernScreenFx(ssao: 0.22f, ssaoRadius: 0.4f, screenRim: 0.05f, rimPower: 3.5f, rimHue: 0.55f,
+                    SetModernScreenFx(ssao: 0f, ssaoRadius: 0.38f, screenRim: 0f, rimPower: 4f, rimHue: 0.55f,
                         exposure: 0f, contrast: 1f, saturation: 1f, temperature: 0f, tint: 0f);
-                    break;
-                case LightingPreset.Mmd:
-                    // MMD 風：上前方からの光＋寒色の包み込み（青み）
-                    SetModernLighting(
-                        keyIntensity: 1.25f, keyTemp: 7800f, keyYaw: -22f, keyPitch: 48f,
-                        ambient: 0.35f, fillIntensity: 0.35f, fillTemp: 8500f, fillYaw: 130f, fillPitch: 20f,
-                        rimIntensity: 0.45f, rimTemp: 9000f, rimYaw: 170f, rimPitch: -10f,
-                        ibl: 0.7f, IblPreset.Cool, softShadows: true, shadowStrength: 0.7f, shadowSoftness: 0.4f,
-                        bloom: true, bloomIntensity: 0.04f, bloomThreshold: 1.7f, tonemap: true, tonemapStrength: 0.75f,
-                        reflection: 0.35f);
-                    _settings.avatarBrightness = 1f;
-                    SetModernScreenFx(ssao: 0.4f, ssaoRadius: 0.42f, screenRim: 0.2f, rimPower: 3f, rimHue: 0.58f,
-                        exposure: 0f, contrast: 1.02f, saturation: 0.95f, temperature: -0.28f, tint: -0.02f);
+                    _settings.ssaoEnabled = false;
+                    _settings.screenRimEnabled = false;
+                    _settings.colorGradeEnabled = false;
+                    _settings.sharpenEnabled = false;
+                    _settings.vignetteEnabled = false;
                     break;
                 default:
-                    // 既定＝淡いイラスト調（白飛びしないよう環境光・露出は控えめ）
+                    // 既定＝淡いイラスト調（環境光・フィル・IBL を抑えて白みを減らす）
                     SetModernLighting(
-                        keyIntensity: 1.05f, keyTemp: 6000f, keyYaw: -18f, keyPitch: 30f,
-                        ambient: 0.5f,
+                        keyIntensity: 1f, keyTemp: 5900f, keyYaw: -20f, keyPitch: 32f,
+                        ambient: 0.32f,
                         fillIntensity: defaults.fillIntensity, fillTemp: defaults.fillTemperature,
                         fillYaw: defaults.fillYaw, fillPitch: defaults.fillPitch,
                         rimIntensity: defaults.rimIntensity, rimTemp: defaults.rimTemperature,

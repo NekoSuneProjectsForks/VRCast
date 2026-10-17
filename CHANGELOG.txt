@@ -9,11 +9,13 @@ Newest first. Each version is written in Japanese, then English.
 [日本語]
 - ライティングを拡充（最新: 三点照明、柔らかい影、スタジオ環境光、ブルーム／トーンマップ、色調補正、SSAO、画面リム、反射など。透過背景のまま使えます）
 - ライティングに「レガシー（2.x 以前）／最新（3.x 以降）」の切替を追加（既定はレガシー。いつでも最新に変えられます）
-- グラフィックタブに最新向けライティングプリセット（レガシー寄り／既定／MMD 風）を追加
+- グラフィックタブに最新向けライティングプリセット（レガシー寄り／既定）を追加
+- 最新ライティングで今の値を名前付きで保存できるように追加（適用・削除可。書き出し・読み込みはグラフィックプリセットに含む）
 - アンチエイリアスに方式の選択を追加（オフ／MSAA／FXAA。既定は MSAA 4x。FXAA はぼやけやすいので選んだときだけ）
 - 高解像度描画（オフ／125%／150%／200%）を追加（AA と別設定で併用可。内部解像度を上げてジャギーを抑えます）
 - 最新ライティングのブルームを控えめな既定に変更（発光以外が溶けにくいように抽出も調整）
-- 最新ライティングの既定とプリセットを調整（既定の白みを抑え、あご〜首の影が分かる淡いイラスト調。影の Bias も見直し）
+- 最新ライティングの既定とレガシー寄りを再調整（白みを抑え、レガシー寄りは 2.x と同じ太陽光・環境光のみ）
+- 影の濃さ・くぼみの影の濃さの上限を引き上げ（最大 3）
 - グラフィックプリセットの書き出し・読み込みを追加（設定プリセットと同じ YAML / JSON。書き出しでは他の項目も選べ、読み込みではグラフィックだけ反映）
 - 動作状況に GPU 使用率（描画がフレーム時間に占める割合）とアバターの描画解像度を表示
 - グラフィックタブに「既定に戻す」を追加（確認付き。背景・アンチエイリアス・ライト・輪郭線だけ）
@@ -29,11 +31,13 @@ Newest first. Each version is written in Japanese, then English.
 [English]
 - Expanded lighting (Modern: three-point lights, soft shadows, studio IBL, bloom / tone map, color grading, SSAO, screen rim, reflection, and more; works with a transparent background)
 - Added a Legacy (2.x and earlier) / Modern (3.x+) lighting switch (Legacy is the default; you can switch to Modern anytime)
-- Added Modern lighting presets on the Graphics tab (Legacy-like / Default / MMD-style)
+- Added Modern lighting presets on the Graphics tab (Legacy-like / Default)
+- Added named saves for the current Modern lighting values (apply / delete; included in graphics preset export / import)
 - Added anti-aliasing method selection (Off / MSAA / FXAA; default MSAA 4x; FXAA only when chosen, since it can blur)
 - Added supersampling (Off / 125% / 150% / 200%) as a separate option that can be combined with AA to reduce jaggies
 - Made the default bloom for Modern lighting more subtle (and tightened bloom extraction so non-emissive areas melt less)
-- Tuned Modern lighting defaults and presets (Default is less washed-out, with a soft illustrated look and clearer chin–neck shadow; also lowered shadow bias)
+- Retuned Modern Default and Legacy-like (less washed-out; Legacy-like uses 2.x sun / ambient only)
+- Raised the max for shadow density and crease-shadow density (up to 3)
 - Added export / import for graphics presets (same YAML / JSON as settings presets; export can include other categories, import applies graphics only)
 - Performance stats now show GPU % (share of the frame time used by VRCast's drawing) and the avatar render resolution
 - Added "Reset to defaults" on the Graphics tab (with confirmation; background, anti-aliasing, lighting and outline only)

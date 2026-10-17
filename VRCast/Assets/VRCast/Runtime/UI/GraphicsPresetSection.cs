@@ -53,15 +53,20 @@ namespace VRCast.UI
             GuiControls.BeginCard(Loc.T("Graphics preset", "グラフィックプリセット", "그래픽 프리셋", "图形预设", "圖形預設"));
             GuiControls.Hint(Loc.T(
                 "Save graphics settings as YAML (.yaml) or JSON (.json), same as settings presets. "
-                + "Export can include other categories, but import applies graphics only (background, anti-aliasing, lighting, outline).",
+                + "Export can include other categories, but import applies graphics only "
+                + "(background, anti-aliasing, lighting, your saved lighting looks, outline).",
                 "グラフィック設定を、設定プリセットと同じ YAML（.yaml）／JSON（.json）で書き出せます。"
-                + "書き出しでは他のカテゴリも選べますが、読み込みではグラフィック（背景・アンチエイリアス・ライト・輪郭線）だけを反映します。",
+                + "書き出しでは他のカテゴリも選べますが、読み込みではグラフィック"
+                + "（背景・アンチエイリアス・ライト・保存したライティング・輪郭線）だけを反映します。",
                 "그래픽 설정을 설정 프리셋과 같은 YAML(.yaml)/JSON(.json)으로 내보냅니다. "
-                + "내보내기에서는 다른 카테고리도 고를 수 있지만, 불러오기는 그래픽(배경·안티앨리어싱·조명·윤곽선)만 적용합니다.",
+                + "내보내기에서는 다른 카테고리도 고를 수 있지만, 불러오기는 그래픽"
+                + "(배경·안티앨리어싱·조명·저장한 라이팅·윤곽선)만 적용합니다.",
                 "可将图形设置导出为与设置预设相同的 YAML（.yaml）/ JSON（.json）。"
-                + "导出时可包含其他类别，但导入只应用图形项（背景、抗锯齿、光照、轮廓线）。",
+                + "导出时可包含其他类别，但导入只应用图形项"
+                + "（背景、抗锯齿、光照、已保存的光照外观、轮廓线）。",
                 "可將圖形設定匯出為與設定預設相同的 YAML（.yaml）/ JSON（.json）。"
-                + "匯出時可包含其他類別，但匯入只套用圖形項（背景、抗鋸齒、光照、輪廓線）。"));
+                + "匯出時可包含其他類別，但匯入只套用圖形項"
+                + "（背景、抗鋸齒、光照、已儲存的光照外觀、輪廓線）。"));
 
             if (_pending != null)
             {

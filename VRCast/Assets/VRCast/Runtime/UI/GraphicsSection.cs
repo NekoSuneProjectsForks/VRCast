@@ -22,6 +22,9 @@ namespace VRCast.UI
         // 既定に戻すの二段階確認
         private bool _confirmingReset;
 
+        // 利用者ライティングプリセットの名前入力
+        private string _lightingPresetName = string.Empty;
+
         public GraphicsSection(RenderingController rendering, AppSettings settings, Action reapply)
         {
             _rendering = rendering;
@@ -301,12 +304,18 @@ namespace VRCast.UI
             GuiControls.BeginCard(Loc.T("Lighting presets", "ライティングプリセット", "라이팅 프리셋",
                 "光照预设", "光照預設"));
             GuiControls.Hint(Loc.T(
-                "Quick looks for Modern lighting. Legacy-like ≈ 2.x, Default = soft illustrated, MMD = cool stage light.",
-                "最新ライティング用の見た目です。レガシー寄り ≈ 2.x、既定＝淡いイラスト調、MMD 風＝寒色のステージ光。",
-                "최신 라이팅용 모습입니다. 레거시 비슷 ≈ 2.x, 기본＝연한 일러스트 톤, MMD풍＝차가운 스테이지 광.",
-                "最新光照的快捷外观。旧版风 ≈ 2.x，默认＝淡插画风，MMD 风＝冷色舞台光。",
-                "最新光照的快捷外觀。舊版風 ≈ 2.x，預設＝淡插畫風，MMD 風＝冷色舞台光。"));
+                "Built-in looks: Legacy-like ≈ 2.x (no fill / IBL / FX), Default = soft illustrated. "
+                + "Save the current sliders under a name; export / import them via Graphics preset below.",
+                "内蔵: レガシー寄り ≈ 2.x（フィル／IBL／FX なし）、既定＝淡いイラスト調。"
+                + "今のスライダーを名前を付けて保存できます。書き出し・読み込みは下のグラフィックプリセットから。",
+                "내장: 레거시 비슷 ≈ 2.x(필/IBL/FX 없음), 기본＝연한 일러스트 톤. "
+                + "지금 슬라이더를 이름 붙여 저장할 수 있습니다. 내보내기·불러오기는 아래 그래픽 프리셋에서.",
+                "内置：旧版风 ≈ 2.x（无辅光 / IBL / 特效），默认＝淡插画风。"
+                + "可将当前滑块以自定义名称保存；导出 / 导入请用下方的图形预设。",
+                "內建：舊版風 ≈ 2.x（無輔光／IBL／特效），預設＝淡插畫風。"
+                + "可將目前滑桿以自訂名稱儲存；匯出／匯入請用下方的圖形預設。"));
 
+            GuiControls.SubHeading(Loc.T("Built-in", "内蔵", "내장", "内置", "內建"));
             GUILayout.BeginHorizontal();
             if (GUILayout.Button(Loc.T("Legacy-like", "レガシー寄り", "레거시 비슷", "旧版风", "舊版風"),
                     GuiControls.Shrinkable))
@@ -319,13 +328,114 @@ namespace VRCast.UI
                 _rendering.ApplyPreset(LightingPreset.Default);
             }
 
-            if (GUILayout.Button(Loc.T("MMD-style", "MMD 風", "MMD풍", "MMD 风", "MMD 風"), GuiControls.Shrinkable))
+            GUILayout.EndHorizontal();
+
+            GuiControls.SubHeading(Loc.T("Saved", "保存済み", "저장됨", "已保存", "已儲存"));
+            DrawSavedLightingPresets();
+            DrawSaveLightingPreset();
+            GuiControls.EndCard();
+        }
+
+        private void DrawSavedLightingPresets()
+        {
+            List<LightingPresetEntry> presets = _settings.lightingPresets;
+            if (presets == null || presets.Count == 0)
             {
-                _rendering.ApplyPreset(LightingPreset.Mmd);
+                GuiControls.Hint(Loc.T(
+                    "No saved looks yet.",
+                    "まだ保存した見た目はありません。",
+                    "아직 저장한 모습이 없습니다.",
+                    "还没有保存的外观。",
+                    "尚未有儲存的外觀。"));
+                return;
             }
 
+            for (int i = 0; i < presets.Count; i++)
+            {
+                LightingPresetEntry entry = presets[i];
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                int index = i;
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(entry.name, GuiControls.Shrinkable);
+                if (GUILayout.Button(Loc.T("Apply", "適用", "적용", "应用", "套用"), GUILayout.Width(72f)))
+                {
+                    if (_settings.ApplyLightingPreset(index))
+                    {
+                        _reapply();
+                    }
+                }
+
+                if (GUILayout.Button(Loc.T("Delete", "削除", "삭제", "删除", "刪除"), GUILayout.Width(72f)))
+                {
+                    _settings.RemoveLightingPreset(index);
+                    GUILayout.EndHorizontal();
+                    break;
+                }
+
+                GUILayout.EndHorizontal();
+            }
+        }
+
+        private void DrawSaveLightingPreset()
+        {
+            _lightingPresetName = GuiControls.TextField(
+                Loc.T("Name", "名前", "이름", "名称", "名稱"),
+                _lightingPresetName, LightingPresetEntry.MaxNameLength);
+
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            bool canSave = !string.IsNullOrWhiteSpace(_lightingPresetName)
+                && (_settings.lightingPresets == null
+                    || _settings.lightingPresets.Count < AppSettings.MaxLightingPresets
+                    || HasLightingPresetName(_lightingPresetName));
+            GUI.enabled = canSave;
+            if (GUILayout.Button(Loc.T("Save current", "今の値を保存", "지금 값 저장", "保存当前", "儲存目前"),
+                    GuiControls.Shrinkable))
+            {
+                if (_settings.SaveLightingPreset(_lightingPresetName))
+                {
+                    _lightingPresetName = string.Empty;
+                }
+            }
+
+            GUI.enabled = true;
             GUILayout.EndHorizontal();
-            GuiControls.EndCard();
+
+            if (_settings.lightingPresets != null
+                && _settings.lightingPresets.Count >= AppSettings.MaxLightingPresets
+                && !HasLightingPresetName(_lightingPresetName))
+            {
+                GuiControls.Hint(Loc.T(
+                    "Saved look limit reached. Delete one, or overwrite an existing name.",
+                    "保存の上限です。どれかを削除するか、同じ名前で上書きしてください。",
+                    "저장 한도에 도달했습니다. 하나를 삭제하거나 같은 이름으로 덮어쓰세요.",
+                    "已达保存上限。请删除一个，或用同名覆盖。",
+                    "已達儲存上限。請刪除一個，或用同名覆寫。"));
+            }
+        }
+
+        private bool HasLightingPresetName(string presetName)
+        {
+            string name = LightingPresetEntry.NormalizeName(presetName);
+            if (string.IsNullOrEmpty(name) || _settings.lightingPresets == null)
+            {
+                return false;
+            }
+
+            foreach (LightingPresetEntry entry in _settings.lightingPresets)
+            {
+                if (entry != null
+                    && string.Equals(entry.name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void DrawModernLight()

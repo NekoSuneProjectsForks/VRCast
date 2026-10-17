@@ -80,7 +80,7 @@ Shader "Hidden/VRCast/ScreenFx"
                 }
 
                 float occlusion = saturate(ao / max(weightSum, 1e-4));
-                float shade = 1.0 - occlusion * _SsaoIntensity;
+                float shade = saturate(1.0 - occlusion * _SsaoIntensity);
                 return fixed4(src.rgb * shade, src.a);
             }
             ENDCG

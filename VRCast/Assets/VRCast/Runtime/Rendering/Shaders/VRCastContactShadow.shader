@@ -77,7 +77,7 @@ Shader "Hidden/VRCast/ContactShadow"
                 occlusion = saturate(occlusion / max(weightSum, 1e-4));
                 // 距離に応じた柔らかさ（遠い遮蔽ほど薄い）
                 float soft = lerp(1.0, 0.35, saturate(_Softness));
-                float shade = 1.0 - occlusion * _ShadowStrength * soft;
+                float shade = saturate(1.0 - occlusion * _ShadowStrength * soft);
                 return fixed4(src.rgb * shade, src.a);
             }
             ENDCG

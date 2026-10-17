@@ -268,6 +268,25 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Apply_Graphics_IncludesSavedLightingPresets()
+        {
+            var source = new AppSettings { lightIntensity = 2.5f, fillIntensity = 0.5f };
+            Assert.That(source.SaveLightingPreset("My Look"), Is.True);
+            source.lightIntensity = 0.1f;
+
+            string text = Export(source, SettingsPreset.GraphicsCategoryId);
+            var target = new AppSettings();
+            Assert.That(SettingsPreset.Apply(Parse(text), new[] { SettingsPreset.GraphicsCategoryId }, target),
+                Is.True);
+            Assert.That(target.lightingPresets, Has.Count.EqualTo(1));
+            Assert.That(target.lightingPresets[0].name, Is.EqualTo("My Look"));
+            Assert.That(target.lightingPresets[0].lightIntensity, Is.EqualTo(2.5f).Within(0.001f));
+            Assert.That(target.ApplyLightingPreset(0), Is.True);
+            Assert.That(target.lightIntensity, Is.EqualTo(2.5f).Within(0.001f));
+            Assert.That(target.fillIntensity, Is.EqualTo(0.5f).Within(0.001f));
+        }
+
+        [Test]
         public void Apply_ThemeOnly_DefaultBackgroundFollowsTheme()
         {
             const string text = "{\"format\": \"VRCastPreset\", \"formatVersion\": 1, \"categories\": " +

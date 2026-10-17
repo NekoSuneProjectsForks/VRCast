@@ -35,7 +35,8 @@ namespace VRCast.Core
         // 最新ライティング（IBL・影・ブルーム・トーンマップ・画面効果）の上限
         public const float MaxIblIntensity = 3f;
         public const float MaxReflectionStrength = 1f;
-        public const float MaxShadowStrength = 1f;
+        // コンタクト影は 1 超でも効く（Unity の Soft Shadow は 1 で頭打ち）
+        public const float MaxShadowStrength = 3f;
         public const float MaxShadowSoftness = 1f;
         public const float MaxBloomIntensity = 3f;
         public const float MaxBloomThreshold = 3f;
@@ -46,7 +47,7 @@ namespace VRCast.Core
         public const float MaxContrast = 1.5f;
         public const float MaxSaturation = 2f;
         public const float MaxColorBalance = 1f;
-        public const float MaxSsaoIntensity = 1f;
+        public const float MaxSsaoIntensity = 3f;
         public const float MaxSsaoRadius = 1f;
         public const float MaxScreenRimIntensity = 2f;
         public const float MaxScreenRimPower = 8f;
@@ -239,48 +240,48 @@ namespace VRCast.Core
         public float ambientIntensity = 1.2f;
 
         // 最新ライティングの Fill（影なし）。白飛びしないよう控えめ
-        public float fillIntensity = 0.28f;
+        public float fillIntensity = 0.16f;
         public float fillYaw = 145f;
         public float fillPitch = 12f;
         public float fillTemperature = 7400f;
 
         // 最新ライティングの Rim（影なし）。マット寄りの既定
-        public float rimIntensity = 0.15f;
+        public float rimIntensity = 0.12f;
         public float rimYaw = 165f;
         public float rimPitch = -8f;
         public float rimTemperature = 6500f;
 
-        // スタジオ環境光（空は描かない）
-        public float iblIntensity = 0.3f;
+        // スタジオ環境光（空は描かない）。白み防止のため弱め
+        public float iblIntensity = 0.16f;
         public IblPreset iblPreset = IblPreset.Studio;
         // 反射は弱め（イラスト調のマット感）
-        public float reflectionStrength = 0.15f;
+        public float reflectionStrength = 0.08f;
         public bool softShadows = true;
         // あご〜首・前髪の影がはっきり見える濃さ。やわらかさはセル寄りに控えめ
-        public float shadowStrength = 0.7f;
-        public float shadowSoftness = 0.4f;
+        public float shadowStrength = 0.9f;
+        public float shadowSoftness = 0.35f;
         public bool bloomEnabled = true;
-        public float bloomIntensity = 0.02f;
-        public float bloomThreshold = 1.85f;
+        public float bloomIntensity = 0.015f;
+        public float bloomThreshold = 1.9f;
         public bool tonemapEnabled = true;
-        public float tonemapStrength = 0.6f;
+        public float tonemapStrength = 0.55f;
 
-        // 色調補正（最新のみ）。露出は上げすぎない（白み防止）・やや低彩度
+        // 色調補正（最新のみ）。露出は下げ気味・やや低彩度で白みを抑える
         public bool colorGradeEnabled = true;
-        public float exposure;
-        public float contrast = 0.96f;
-        public float saturation = 0.9f;
+        public float exposure = -0.08f;
+        public float contrast = 1.02f;
+        public float saturation = 0.88f;
         public float colorTemperature = -0.02f; // -1 暖色〜 +1 寒色
         public float colorTint = 0.02f; // -1 緑〜 +1 マゼンタ
 
         // SSAO＝くぼみの影。首元・あご下が分かる強さ
         public bool ssaoEnabled = true;
-        public float ssaoIntensity = 0.45f;
-        public float ssaoRadius = 0.38f;
+        public float ssaoIntensity = 0.55f;
+        public float ssaoRadius = 0.4f;
 
         // 画面空間リム。マット寄りの既定ではほぼ足さない
         public bool screenRimEnabled = true;
-        public float screenRimIntensity = 0.06f;
+        public float screenRimIntensity = 0.04f;
         public float screenRimPower = 4f;
         public float screenRimHue = 0.55f;
 
@@ -473,6 +474,10 @@ namespace VRCast.Core
 
         // 表情のキャリブレーション（入力元ごとに記録した真顔と各表情の顔の数値。登録した表情だけ判定に使う）
         public List<ExpressionCalibrationSample> expressionCalibrations = new List<ExpressionCalibrationSample>();
+
+        // 利用者が名前を付けて保存した最新ライティング（グラフィックプリセットの書き出し・読み込みに含める）
+        public const int MaxLightingPresets = 32;
+        public List<LightingPresetEntry> lightingPresets = new List<LightingPresetEntry>();
 
         // VRCast から起動するトラッカー（実行ファイルのパス（空 = 同梱版）と、使うカメラのデバイス名）
         public string trackerPath = string.Empty;
@@ -1356,6 +1361,81 @@ namespace VRCast.Core
             // 表情のキャリブレーションは壊れた記録を捨てる
             expressionCalibrations ??= new List<ExpressionCalibrationSample>();
             expressionCalibrations.RemoveAll(sample => sample == null || !sample.IsValid);
+            // 利用者のライティングプリセットも壊れたものを捨て、上限を超えた古いものから落とす
+            lightingPresets ??= new List<LightingPresetEntry>();
+            lightingPresets.RemoveAll(entry => entry == null || !entry.IsValid);
+            foreach (LightingPresetEntry entry in lightingPresets)
+            {
+                entry.Sanitize();
+            }
+
+            while (lightingPresets.Count > MaxLightingPresets)
+            {
+                lightingPresets.RemoveAt(0);
+            }
+        }
+
+        /// <summary>
+        /// 今のライティングを名前付きで保存する（同じ名前があれば上書き）。空の名前は無視。
+        /// </summary>
+        public bool SaveLightingPreset(string presetName)
+        {
+            LightingPresetEntry entry = LightingPresetEntry.Capture(this, presetName);
+            if (!entry.IsValid)
+            {
+                return false;
+            }
+
+            lightingPresets ??= new List<LightingPresetEntry>();
+            for (int i = 0; i < lightingPresets.Count; i++)
+            {
+                LightingPresetEntry existing = lightingPresets[i];
+                if (existing != null
+                    && string.Equals(existing.name, entry.name, StringComparison.OrdinalIgnoreCase))
+                {
+                    lightingPresets[i] = entry;
+                    Sanitize();
+                    return true;
+                }
+            }
+
+            lightingPresets.Add(entry);
+            Sanitize();
+            return true;
+        }
+
+        /// <summary>
+        /// 保存済みライティングを適用する（見つからなければ false）。
+        /// </summary>
+        public bool ApplyLightingPreset(int index)
+        {
+            if (lightingPresets == null || index < 0 || index >= lightingPresets.Count)
+            {
+                return false;
+            }
+
+            LightingPresetEntry entry = lightingPresets[index];
+            if (entry == null || !entry.IsValid)
+            {
+                return false;
+            }
+
+            entry.ApplyTo(this);
+            return true;
+        }
+
+        /// <summary>
+        /// 保存済みライティングを削除する。
+        /// </summary>
+        public bool RemoveLightingPreset(int index)
+        {
+            if (lightingPresets == null || index < 0 || index >= lightingPresets.Count)
+            {
+                return false;
+            }
+
+            lightingPresets.RemoveAt(index);
+            return true;
         }
 
         private static float ClampOrDefault(float value, float min, float max, float fallback)

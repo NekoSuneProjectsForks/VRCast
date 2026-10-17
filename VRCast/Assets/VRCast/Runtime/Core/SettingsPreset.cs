@@ -121,7 +121,7 @@ namespace VRCast.Core
         {
             ["performance"] = "動作最適化（軽量モード・優先度・CPU・GPU・トラッカーの動作） / Performance (low load, priority, CPU, GPU, tracker mode)",
             ["display"] = "カメラの固定 / Camera lock",
-            ["graphics"] = "グラフィック（背景・アンチエイリアス・ライティング・輪郭線） / Graphics (background, anti-aliasing, lighting, outline)",
+            ["graphics"] = "グラフィック（背景・アンチエイリアス・ライティング・保存した見た目・輪郭線） / Graphics (background, anti-aliasing, lighting, saved looks, outline)",
             ["motion"] = "待機モーション・揺れもの・小物のアニメーション / Idle motion, physics and prop animations",
             ["face"] = "まばたき・口パク / Blinking and lip sync",
             ["tracking"] = "トラッキング / Tracking",
@@ -181,7 +181,8 @@ namespace VRCast.Core
                 nameof(AppSettings.screenRimPower), nameof(AppSettings.screenRimHue),
                 nameof(AppSettings.sharpenEnabled), nameof(AppSettings.sharpenAmount),
                 nameof(AppSettings.vignetteEnabled), nameof(AppSettings.vignetteIntensity),
-                nameof(AppSettings.avatarBrightness), nameof(AppSettings.outlineWidth)),
+                nameof(AppSettings.avatarBrightness), nameof(AppSettings.outlineWidth),
+                nameof(AppSettings.lightingPresets)),
             new PresetCategory("motion", false,
                 nameof(AppSettings.idleMotionEnabled), nameof(AppSettings.idleBreathing), nameof(AppSettings.idleSway),
                 nameof(AppSettings.idleHeadMotion), nameof(AppSettings.idleMotionSpeed), nameof(AppSettings.physicsEnabled),
