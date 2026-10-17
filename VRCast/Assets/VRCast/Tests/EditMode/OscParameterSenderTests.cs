@@ -26,6 +26,30 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Start_RejectsIpv6EndpointWithoutThrowing()
+        {
+            using (var sender = new OscParameterSender())
+            {
+                Assert.That(sender.Start("::1", 9000), Is.False);
+                Assert.That(sender.IsEnabled, Is.False);
+                Assert.That(sender.Status, Does.Contain("IPv4"));
+            }
+        }
+
+        [Test]
+        public void SendFloat_RejectsInvalidParameterNamesAndNonFiniteValues()
+        {
+            using (var sender = new OscParameterSender())
+            {
+                Assert.That(sender.Start("127.0.0.1", 9000), Is.True);
+                Assert.That(sender.SendFloat("Bad/Name", 0.5f), Is.False);
+                Assert.That(sender.SendFloat("   ", 0.5f), Is.False);
+                Assert.That(sender.SendFloat("Blink", float.NaN), Is.False);
+                Assert.That(sender.SendFloat("Blink", float.PositiveInfinity), Is.False);
+            }
+        }
+
+        [Test]
         public void CreateFloat_EncodesVRChatAvatarParameterMessage()
         {
             byte[] packet = OscParameterPacket.CreateFloat("/avatar/parameters/Blink", 0.75f);
