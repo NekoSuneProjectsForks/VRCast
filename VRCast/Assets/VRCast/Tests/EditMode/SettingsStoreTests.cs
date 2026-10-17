@@ -57,6 +57,18 @@ namespace VRCast.Tests
             Assert.That(settings.oscBlendShapeMappings[0].parameterName, Is.Empty);
         }
 
+        [TestCase("invalid-host", "127.0.0.1")]
+        [TestCase("::1", "127.0.0.1")]
+        [TestCase("", "127.0.0.1")]
+        [TestCase(" 127.0.0.1 ", "127.0.0.1")]
+        [TestCase("192.168.1.10", "192.168.1.10")]
+        public void OscOutputAddress_SanitizesToValidIpv4(string input, string expected)
+        {
+            var settings = new AppSettings { oscParameterOutputAddress = input };
+            settings.Sanitize();
+            Assert.That(settings.oscParameterOutputAddress, Is.EqualTo(expected));
+        }
+
         [Test]
         public void Defaults_OscParameterOutputIsDisabledAndUsesLocalhost()
         {
