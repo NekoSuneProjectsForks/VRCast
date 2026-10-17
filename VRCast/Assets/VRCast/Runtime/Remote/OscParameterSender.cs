@@ -84,6 +84,24 @@ namespace VRCast.Remote
             return Send(OscParameterPacket.CreateFloat("/avatar/parameters/" + parameterName, value));
         }
 
+        public bool SendInt(string parameterName, int value)
+        {
+            if (!IsEnabled)
+            {
+                Status = "Disabled";
+                return false;
+            }
+
+            parameterName = parameterName?.Trim();
+            if (string.IsNullOrEmpty(parameterName) || parameterName.IndexOf('/') >= 0)
+            {
+                Status = "Invalid parameter name";
+                return false;
+            }
+
+            return Send(OscParameterPacket.CreateInt("/avatar/parameters/" + parameterName, value));
+        }
+
         public bool SendBool(string parameterName, bool value)
         {
             if (!IsEnabled)
@@ -154,6 +172,17 @@ namespace VRCast.Remote
             Buffer.BlockCopy(tags, 0, packet, addressBytes.Length, tags.Length);
             WriteInt32BigEndian(packet, addressBytes.Length + tags.Length,
                 BitConverter.ToInt32(BitConverter.GetBytes(value), 0));
+            return packet;
+        }
+
+        public static byte[] CreateInt(string address, int value)
+        {
+            byte[] addressBytes = EncodeString(address);
+            byte[] tags = EncodeString(",i");
+            byte[] packet = new byte[addressBytes.Length + tags.Length + 4];
+            Buffer.BlockCopy(addressBytes, 0, packet, 0, addressBytes.Length);
+            Buffer.BlockCopy(tags, 0, packet, addressBytes.Length, tags.Length);
+            WriteInt32BigEndian(packet, addressBytes.Length + tags.Length, value);
             return packet;
         }
 
