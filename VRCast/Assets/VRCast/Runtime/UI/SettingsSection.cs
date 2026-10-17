@@ -176,6 +176,8 @@ namespace VRCast.UI
             }
 
             GUILayout.Label("Additional ARKit blendshape mappings (all 51 channels; blank disables a mapping)");
+            var destinationOwners = new System.Collections.Generic.Dictionary<string, string>(StringComparer.Ordinal);
+            var duplicateDestinations = new System.Collections.Generic.HashSet<string>(StringComparer.Ordinal);
             foreach (OscBlendShapeParameterMapping mapping in _settings.oscBlendShapeMappings)
             {
                 if (mapping == null || string.IsNullOrWhiteSpace(mapping.blendShapeName))
@@ -185,10 +187,35 @@ namespace VRCast.UI
 
                 GUILayout.Label(mapping.blendShapeName);
                 mapping.parameterName = GUILayout.TextField(mapping.parameterName ?? string.Empty);
+                string destination = (mapping.parameterName ?? string.Empty).Trim();
+                if (destination.IndexOf('/') >= 0)
+                {
+                    GuiControls.Hint("Invalid OSC parameter name: '/' is not allowed. This mapping will be disabled when settings are sanitised.");
+                }
+                else if (!string.IsNullOrEmpty(destination))
+                {
+                    if (destinationOwners.TryGetValue(destination, out string firstSource))
+                    {
+                        duplicateDestinations.Add(destination);
+                        GuiControls.Hint("Duplicate destination '" + destination + "'. '" + firstSource + "' takes priority; this mapping is disabled during sanitisation.");
+                    }
+                    else
+                    {
+                        destinationOwners.Add(destination, mapping.blendShapeName);
+                    }
+                }
             }
 
-            GuiControls.Hint(
-                "These mappings forward the provider's raw ARKit-compatible blendshape values. They are optional and remain blank until you assign VRChat avatar parameter names. Only channels present in the incoming frame are sent.");
+            if (duplicateDestinations.Count == 0)
+            {
+                GuiControls.Hint(
+                    "No duplicate destinations detected. These mappings forward raw ARKit-compatible blendshape values only when the selected provider supplies them.");
+            }
+            else
+            {
+                GuiControls.Hint(
+                    "Resolve duplicate destinations before use. A VRChat avatar parameter should normally receive one source value.");
+            }
         }
 
         private void DrawPanel()
