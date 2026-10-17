@@ -20,6 +20,7 @@ namespace VRCast.UI
         private static readonly string[] FrameRateLabels =
         {
             "Auto (30 / 60)", "30 FPS", "60 FPS", "90 FPS", "120 FPS", "144 FPS", "165 FPS", "240 FPS", "360 FPS",
+            "Custom value",
         };
 
         // GPU の一覧（初回表示時に取得）
@@ -77,7 +78,8 @@ namespace VRCast.UI
             int currentLimit = System.Array.IndexOf(FrameRateLimits, _rendering.FrameRateLimit);
             if (currentLimit < 0)
             {
-                currentLimit = 0;
+                // Keep custom saved values visible instead of misleadingly showing Auto.
+                currentLimit = FrameRateLimits.Length;
             }
 
             int selectedLimit = GuiControls.LabeledChoice(
