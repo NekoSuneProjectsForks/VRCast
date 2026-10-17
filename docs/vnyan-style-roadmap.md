@@ -94,6 +94,7 @@ The first milestone should play VMD motion on an avatar already loaded by VRCast
 - [✓] Added settings sanitisation/tests for mapping names; blank mappings are disabled and names containing `/` are rejected.
 - [✓] Prevent duplicate ARKit channels and duplicate destination parameter names across named face mappings and the configurable blendshape list; runtime also sends at most one value per destination per update (first mapping wins).
 - [✓] Cache custom ARKit blendshape-name lookups per mapping and refresh only when the source name changes, avoiding repeated 51-channel scans on every OSC update.
+- [✓] Added a regression test asserting the runtime-only ARKit lookup cache is excluded from JSON settings serialization.
 - [✓] Display mapping conflict and invalid-path diagnostics in the OSC settings UI so conflicts can be corrected before runtime.
 - [✓] Added EditMode test cases verifying the selected ARKit mapping indices still match their named blendshape channels.
 - [✓] Added settings sanitisation coverage for duplicate blendshape entries, duplicate destinations across named/custom mappings, whitespace, invalid OSC path segments, and null entries.
