@@ -1,5 +1,6 @@
 using UnityEngine;
 using VRCast.Core;
+using VRCast.Remote;
 
 namespace VRCast.Tracking
 {
@@ -19,6 +20,10 @@ namespace VRCast.Tracking
         private readonly TrackingChannel _camera = new TrackingChannel();
 
         private AppSettings _settings;
+        private readonly OscParameterSender _oscOutput = new OscParameterSender();
+        private string _oscOutputAddress;
+        private int _oscOutputPort = -1;
+        private float _nextOscOutputTime;
 
         // 併用中なら true（Update で設定から決める）
         private bool _hybrid;
@@ -72,6 +77,8 @@ namespace VRCast.Tracking
                 return;
             }
 
+            UpdateOscOutputConnection();
+
             // 無効化されたら閉じ、再有効化時はすぐ開けるようにする
             if (!_settings.trackingEnabled)
             {
@@ -111,6 +118,58 @@ namespace VRCast.Tracking
                 ? $"{_main.BoundSource}: {_main.Status} / MediaPipe: {_camera.Status}"
                   + (UsesCameraFace ? " (using the webcam face)" : string.Empty)
                 : _main.Status;
+
+            UpdateOscFaceParameters();
+        }
+
+        private void UpdateOscOutputConnection()
+        {
+            if (!_settings.oscParameterOutputEnabled)
+            {
+                _oscOutput.Stop();
+                _oscOutputAddress = null;
+                _oscOutputPort = -1;
+                return;
+            }
+
+            if (_oscOutputAddress == _settings.oscParameterOutputAddress
+                && _oscOutputPort == _settings.oscParameterOutputPort
+                && _oscOutput.IsEnabled)
+            {
+                return;
+            }
+
+            bool started = _oscOutput.Start(
+                _settings.oscParameterOutputAddress, _settings.oscParameterOutputPort);
+            _oscOutputAddress = started ? _settings.oscParameterOutputAddress : null;
+            _oscOutputPort = started ? _settings.oscParameterOutputPort : -1;
+        }
+
+        private void UpdateOscFaceParameters()
+        {
+            if (!_oscOutput.IsEnabled || Time.unscaledTime < _nextOscOutputTime
+                || !TryGetFrame(out FaceTrackingFrame frame))
+            {
+                return;
+            }
+
+            // Bound the network update rate so tracking/render FPS changes do not flood the OSC receiver.
+            _nextOscOutputTime = Time.unscaledTime + (1f / 30f);
+            SendMappedFloat(_settings.oscParameterEyeOpenLeft, frame.EyeOpenLeft);
+            SendMappedFloat(_settings.oscParameterEyeOpenRight, frame.EyeOpenRight);
+            SendMappedFloat(_settings.oscParameterMouthOpen, frame.MouthOpen);
+            if (frame.HasExpression)
+            {
+                SendMappedFloat(_settings.oscParameterSmile, frame.Expression.Smile);
+            }
+        }
+
+        private void SendMappedFloat(string parameterName, float value)
+        {
+            if (!string.IsNullOrWhiteSpace(parameterName))
+            {
+                _oscOutput.SendFloat(parameterName.Trim(), Mathf.Clamp01(value));
+            }
         }
 
         private void OnDestroy()
@@ -118,6 +177,7 @@ namespace VRCast.Tracking
             // 終了時にポートを解放
             _main.Close("Stopped");
             _camera.Close("Stopped");
+            _oscOutput.Dispose();
         }
     }
 }
