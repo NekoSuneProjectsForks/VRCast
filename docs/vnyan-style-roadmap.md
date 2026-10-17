@@ -92,8 +92,9 @@ The first milestone should play VMD motion on an avatar already loaded by VRCast
 - [✓] Added named ARKit-compatible mappings for eyeBlinkLeft, eyeBlinkRight, jawOpen, mouthSmileLeft, mouthSmileRight, and browInnerUp, only when the provider supplies a blendshape array.
 - [✓] Added an extensible settings list and UI for all 51 ARKit-compatible blendshape channels; additional channels are opt-in, preserve existing parameter names, and are sent only when present in the input frame.
 - [✓] Added settings sanitisation/tests for mapping names; blank mappings are disabled and names containing `/` are rejected.
+- [✓] Prevent duplicate ARKit channels and duplicate destination parameter names in configured mapping lists; runtime also sends at most one value per destination per update (first mapping wins).
 - [✓] Added EditMode test cases verifying the selected ARKit mapping indices still match their named blendshape channels.
-- [✓] Added settings sanitisation coverage for duplicate blendshape entries, whitespace, invalid OSC path segments, and null entries.
+- [✓] Added settings sanitisation coverage for duplicate blendshape entries, duplicate destinations, whitespace, invalid OSC path segments, and null entries.
 - [✓] Clarified UDP status as “Ready to send” rather than implying remote receipt, and throttled retries for unavailable endpoints.
 - [✗] Unity EditMode tests/build and live VRChat testing have not been run. UDP send success only confirms the local socket accepted the datagram, not that VRChat received or applied it.
 - [✗] Head/body/hand provider mapping, per-avatar profiles, source conflict resolution, inbound OSC/VRCFT discovery, and skeletal tracking forwarding are not implemented. This is not a complete VRCFT or full-body tracking integration.
