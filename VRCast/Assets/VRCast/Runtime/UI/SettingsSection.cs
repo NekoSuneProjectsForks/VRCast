@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using VRCast.Core;
 using VRCast.Rendering;
+using VRCast.Remote;
 
 namespace VRCast.UI
 {
@@ -19,6 +20,9 @@ namespace VRCast.UI
         private readonly RenderingController _rendering;
         private readonly Action _resetAll;
         private readonly PresetSection _presets;
+        private readonly OscParameterSender _oscParameterSender = new OscParameterSender();
+        private string _oscOutputAddress;
+        private int _oscOutputPort = -1;
 
         // リセットの確認中か、直前にリセットしたか
         private bool _confirmingReset;
@@ -37,8 +41,70 @@ namespace VRCast.UI
         public void Draw()
         {
             DrawPanel();
+            DrawOscParameterOutput();
             _presets.Draw();
             DrawReset();
+        }
+
+        private void DrawOscParameterOutput()
+        {
+            GuiControls.BeginCard("VRChat OSC output");
+            GuiControls.Hint(
+                "Send OSC avatar-parameter messages to VRChat. This is outbound parameter control only; it does not send skeletal full-body, head, hand, or VRCFT tracking data.");
+
+            bool enabled = GUILayout.Toggle(_settings.oscParameterOutputEnabled, "Enable avatar-parameter output");
+            if (enabled != _settings.oscParameterOutputEnabled)
+            {
+                _settings.oscParameterOutputEnabled = enabled;
+            }
+
+            GUILayout.Label("Destination IP address");
+            string address = GUILayout.TextField(_settings.oscParameterOutputAddress ?? "127.0.0.1");
+            if (address != _settings.oscParameterOutputAddress)
+            {
+                _settings.oscParameterOutputAddress = address;
+            }
+
+            GUILayout.Label("Destination UDP port");
+            string portText = GUILayout.TextField(_settings.oscParameterOutputPort.ToString());
+            if (int.TryParse(portText, out int port) && port >= 1 && port <= 65535
+                && port != _settings.oscParameterOutputPort)
+            {
+                _settings.oscParameterOutputPort = port;
+            }
+
+            if (!_settings.oscParameterOutputEnabled)
+            {
+                _oscParameterSender.Stop();
+                _oscOutputAddress = null;
+                _oscOutputPort = -1;
+            }
+            else if (_oscOutputAddress != _settings.oscParameterOutputAddress
+                || _oscOutputPort != _settings.oscParameterOutputPort
+                || !_oscParameterSender.IsEnabled)
+            {
+                bool started = _oscParameterSender.Start(
+                    _settings.oscParameterOutputAddress, _settings.oscParameterOutputPort);
+                _oscOutputAddress = started ? _settings.oscParameterOutputAddress : null;
+                _oscOutputPort = started ? _settings.oscParameterOutputPort : -1;
+            }
+
+            GUILayout.Label("Status: " + _oscParameterSender.Status);
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Send test float"))
+            {
+                _oscParameterSender.SendFloat("VRCastTest", 0.5f);
+            }
+
+            if (GUILayout.Button("Send test bool"))
+            {
+                _oscParameterSender.SendBool("VRCastTestToggle", true);
+            }
+
+            GUILayout.EndHorizontal();
+            GuiControls.Hint(
+                "Test messages use /avatar/parameters/VRCastTest (0.5) and /avatar/parameters/VRCastTestToggle (true). Create matching parameters in the avatar's FX/Expressions setup to observe them.");
+            GuiControls.EndCard();
         }
 
         private void DrawPanel()
