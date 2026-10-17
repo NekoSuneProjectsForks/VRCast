@@ -50,6 +50,34 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Defaults_OscFaceMappingsAreDisabledUntilConfigured()
+        {
+            var settings = new AppSettings();
+            Assert.That(settings.oscParameterEyeOpenLeft, Is.Empty);
+            Assert.That(settings.oscParameterEyeOpenRight, Is.Empty);
+            Assert.That(settings.oscParameterMouthOpen, Is.Empty);
+            Assert.That(settings.oscParameterSmile, Is.Empty);
+        }
+
+        [Test]
+        public void Load_OscFaceMappingNames_TrimsAndRejectsPathSeparators()
+        {
+            _store.Save(new AppSettings
+            {
+                oscParameterEyeOpenLeft = " EyeLeft ",
+                oscParameterEyeOpenRight = "Invalid/Path",
+                oscParameterMouthOpen = null,
+                oscParameterSmile = "Smile"
+            });
+
+            AppSettings settings = _store.Load();
+            Assert.That(settings.oscParameterEyeOpenLeft, Is.EqualTo("EyeLeft"));
+            Assert.That(settings.oscParameterEyeOpenRight, Is.Empty);
+            Assert.That(settings.oscParameterMouthOpen, Is.Empty);
+            Assert.That(settings.oscParameterSmile, Is.EqualTo("Smile"));
+        }
+
+        [Test]
         public void Load_MissingFile_ReturnsDefaults()
         {
             // ファイルが無い状態で読み込む
