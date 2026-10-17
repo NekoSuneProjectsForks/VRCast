@@ -49,6 +49,20 @@ namespace VRCast.Tests
             }
         }
 
+        [TestCase("not-an-ip", 9000)]
+        [TestCase("", 9000)]
+        [TestCase("127.0.0.1", 0)]
+        [TestCase("127.0.0.1", 65536)]
+        [TestCase("127.0.0.1", -1)]
+        public void Start_RejectsInvalidEndpointWithoutEnablingSender(string address, int port)
+        {
+            using (var sender = new OscParameterSender())
+            {
+                Assert.That(sender.Start(address, port), Is.False);
+                Assert.That(sender.IsEnabled, Is.False);
+            }
+        }
+
         [Test]
         public void Start_TrimsEndpointAddress()
         {
@@ -83,6 +97,20 @@ namespace VRCast.Tests
             Assert.That(packet[packet.Length - 3], Is.EqualTo(b1));
             Assert.That(packet[packet.Length - 2], Is.EqualTo(b2));
             Assert.That(packet[packet.Length - 1], Is.EqualTo(b3));
+        }
+
+        [Test]
+        public void Stop_DisablesSenderAndRejectsFurtherMessages()
+        {
+            using (var sender = new OscParameterSender())
+            {
+                Assert.That(sender.Start("127.0.0.1", 9000), Is.True);
+                sender.Stop();
+                Assert.That(sender.IsEnabled, Is.False);
+                Assert.That(sender.SendInt("GestureLeft", 1), Is.False);
+                Assert.That(sender.SendBool("GestureToggle", true), Is.False);
+                Assert.That(sender.SendFloat("Blink", 0.5f), Is.False);
+            }
         }
 
         [Test]
