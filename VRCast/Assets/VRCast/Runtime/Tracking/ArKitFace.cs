@@ -115,6 +115,9 @@ namespace VRCast.Tracking
         public static readonly int EyeBlinkRight = IndexOf("eyeBlinkRight");
         public static readonly int JawOpen = IndexOf("jawOpen");
         public static readonly int MouthPucker = IndexOf("mouthPucker");
+        public static readonly int MouthSmileLeft = IndexOf("mouthSmileLeft");
+        public static readonly int MouthSmileRight = IndexOf("mouthSmileRight");
+        public static readonly int BrowInnerUp = IndexOf("browInnerUp");
         private static readonly int EyeLookDownLeft = IndexOf("eyeLookDownLeft");
         private static readonly int EyeLookDownRight = IndexOf("eyeLookDownRight");
         private static readonly int EyeLookInLeft = IndexOf("eyeLookInLeft");
@@ -125,11 +128,10 @@ namespace VRCast.Tracking
         private static readonly int EyeLookUpRight = IndexOf("eyeLookUpRight");
 
         // 表情の合成に使う BlendShape の位置（MediaPipe でよく動くものだけ。頬・鼻・目の見開きはほぼ 0 のままで平均を薄めるため使わない）
-        private static readonly int[] SmileShapes = { IndexOf("mouthSmileLeft"), IndexOf("mouthSmileRight") };
+        private static readonly int[] SmileShapes = { MouthSmileLeft, MouthSmileRight };
         private static readonly int[] AngryShapes = { IndexOf("browDownLeft"), IndexOf("browDownRight") };
         private static readonly int[] FrownShapes = { IndexOf("mouthFrownLeft"), IndexOf("mouthFrownRight") };
         private static readonly int[] BrowOuterUpShapes = { IndexOf("browOuterUpLeft"), IndexOf("browOuterUpRight") };
-        private static readonly int BrowInnerUp = IndexOf("browInnerUp");
 
         /// <summary>
         /// 目・口・視線・表情の強さ・パーフェクトシンク用の値を face に書く（顔の向き・位置は書かない）。
