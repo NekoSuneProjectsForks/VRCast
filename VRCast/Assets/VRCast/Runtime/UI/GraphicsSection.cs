@@ -11,9 +11,6 @@ namespace VRCast.UI
     /// </summary>
     public class GraphicsSection
     {
-        // 太陽光スライダーの上限
-        private const float MaxSunlight = 4f;
-
         private readonly RenderingController _rendering;
         private readonly AppSettings _settings;
         private readonly Action _reapply;
@@ -771,7 +768,8 @@ namespace VRCast.UI
 
         private void DrawKeyLightSliders(string intensityLabel, string temperatureLabel)
         {
-            float intensity = GuiControls.Slider(intensityLabel, _rendering.LightIntensity, 0f, MaxSunlight);
+            float intensity = GuiControls.Slider(intensityLabel, _rendering.LightIntensity, 0f,
+                AppSettings.MaxLightIntensity);
             if (!Mathf.Approximately(intensity, _rendering.LightIntensity))
             {
                 _rendering.LightIntensity = intensity;
@@ -802,7 +800,7 @@ namespace VRCast.UI
         private void DrawFillSliders()
         {
             float intensity = GuiControls.Slider(Loc.T("Intensity", "強さ", "세기", "强度", "強度"),
-                _rendering.FillIntensity, 0f, MaxSunlight);
+                _rendering.FillIntensity, 0f, AppSettings.MaxLightIntensity);
             if (!Mathf.Approximately(intensity, _rendering.FillIntensity))
             {
                 _rendering.FillIntensity = intensity;
@@ -833,7 +831,7 @@ namespace VRCast.UI
         private void DrawRimSliders()
         {
             float intensity = GuiControls.Slider(Loc.T("Intensity", "強さ", "세기", "强度", "強度"),
-                _rendering.RimIntensity, 0f, MaxSunlight);
+                _rendering.RimIntensity, 0f, AppSettings.MaxLightIntensity);
             if (!Mathf.Approximately(intensity, _rendering.RimIntensity))
             {
                 _rendering.RimIntensity = intensity;

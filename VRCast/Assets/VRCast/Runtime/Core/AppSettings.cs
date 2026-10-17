@@ -18,41 +18,41 @@ namespace VRCast.Core
         public const int MinWindowSize = 64;
 
         // ライト強度の上限
-        public const float MaxLightIntensity = 8f;
+        public const float MaxLightIntensity = 16f;
 
         // 環境光（全方向から当たる明るさ）の上限と、太陽光の色温度（K）の範囲
-        public const float MaxAmbientIntensity = 3f;
-        public const float MinLightTemperature = 2500f;
-        public const float MaxLightTemperature = 10000f;
+        public const float MaxAmbientIntensity = 8f;
+        public const float MinLightTemperature = 2000f;
+        public const float MaxLightTemperature = 12000f;
 
         // アバターの明るさ（マテリアルの色の倍率）の範囲
-        public const float MinAvatarBrightness = 0.1f;
-        public const float MaxAvatarBrightness = 10f;
+        public const float MinAvatarBrightness = 0.05f;
+        public const float MaxAvatarBrightness = 20f;
 
         // アバターの輪郭線の太さ（マテリアルの太さの倍率）の上限
-        public const float MaxOutlineWidth = 3f;
+        public const float MaxOutlineWidth = 6f;
 
         // 最新ライティング（IBL・影・ブルーム・トーンマップ・画面効果）の上限
-        public const float MaxIblIntensity = 3f;
-        public const float MaxReflectionStrength = 1f;
+        public const float MaxIblIntensity = 8f;
+        public const float MaxReflectionStrength = 2f;
         // コンタクト影は 1 超でも効く（Unity の Soft Shadow は 1 で頭打ち）
-        public const float MaxShadowStrength = 3f;
+        public const float MaxShadowStrength = 5f;
         public const float MaxShadowSoftness = 1f;
-        public const float MaxBloomIntensity = 3f;
-        public const float MaxBloomThreshold = 3f;
-        public const float MaxTonemapStrength = 1f;
-        public const float MinExposure = -1.5f;
-        public const float MaxExposure = 1.5f;
-        public const float MinContrast = 0.5f;
-        public const float MaxContrast = 1.5f;
-        public const float MaxSaturation = 2f;
-        public const float MaxColorBalance = 1f;
-        public const float MaxSsaoIntensity = 3f;
-        public const float MaxSsaoRadius = 1f;
-        public const float MaxScreenRimIntensity = 2f;
-        public const float MaxScreenRimPower = 8f;
-        public const float MaxSharpen = 1f;
-        public const float MaxVignette = 1f;
+        public const float MaxBloomIntensity = 8f;
+        public const float MaxBloomThreshold = 5f;
+        public const float MaxTonemapStrength = 2f;
+        public const float MinExposure = -3f;
+        public const float MaxExposure = 3f;
+        public const float MinContrast = 0.25f;
+        public const float MaxContrast = 3f;
+        public const float MaxSaturation = 3f;
+        public const float MaxColorBalance = 2f;
+        public const float MaxSsaoIntensity = 5f;
+        public const float MaxSsaoRadius = 3f;
+        public const float MaxScreenRimIntensity = 5f;
+        public const float MaxScreenRimPower = 16f;
+        public const float MaxSharpen = 2f;
+        public const float MaxVignette = 2f;
 
         // マイク感度・しきい値の範囲
         public const float MinMicGain = 0.1f;
@@ -239,8 +239,8 @@ namespace VRCast.Core
         public float lightTemperature = 6000f;
         public float ambientIntensity = 1.2f;
 
-        // 最新ライティングの Fill（影なし）。形は残しつつ白飛びしないよう控えめ
-        public float fillIntensity = 0.18f;
+        // 最新ライティングの Fill（影なし）。影を潰さないよう弱め
+        public float fillIntensity = 0.1f;
         public float fillYaw = 145f;
         public float fillPitch = 10f;
         public float fillTemperature = 7200f;
@@ -251,15 +251,15 @@ namespace VRCast.Core
         public float rimPitch = -12f;
         public float rimTemperature = 6800f;
 
-        // スタジオ環境光（空は描かない）。白み防止のため弱め
-        public float iblIntensity = 0.18f;
+        // スタジオ環境光（空は描かない）。影が薄くならないよう弱め
+        public float iblIntensity = 0.1f;
         public IblPreset iblPreset = IblPreset.Studio;
         // 反射は控えめ（白衣のディテールを残す）
         public float reflectionStrength = 0.12f;
         public bool softShadows = true;
         // 服のしわ・あご〜首がはっきり見える濃さ（上限 3。Unity Soft Shadow は 1 で頭打ち）
-        public float shadowStrength = 1.25f;
-        public float shadowSoftness = 0.42f;
+        public float shadowStrength = 2f;
+        public float shadowSoftness = 0.3f;
         public bool bloomEnabled = true;
         public float bloomIntensity = 0.012f;
         public float bloomThreshold = 1.95f;
@@ -274,10 +274,10 @@ namespace VRCast.Core
         public float colorTemperature = -0.04f; // -1 暖色〜 +1 寒色
         public float colorTint = 0.01f; // -1 緑〜 +1 マゼンタ
 
-        // SSAO＝くぼみの影。ジャケットのしわ・首元が分かる強さ
+        // SSAO＝くぼみの影。ジャケットのしわ・首元がはっきり分かる強さ
         public bool ssaoEnabled = true;
-        public float ssaoIntensity = 0.85f;
-        public float ssaoRadius = 0.36f;
+        public float ssaoIntensity = 1.4f;
+        public float ssaoRadius = 0.42f;
 
         // 画面空間リム。髪・袖の輪郭を少し立てる
         public bool screenRimEnabled = true;

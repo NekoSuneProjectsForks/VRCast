@@ -13,13 +13,11 @@ Newest first. Each version is written in Japanese, then English.
 - 最新ライティングで今の値を名前付きで保存できるように追加（適用・削除可。書き出し・読み込みはグラフィックプリセットに含む）
 - アンチエイリアスに方式の選択を追加（オフ／MSAA／FXAA。既定は MSAA 4x。FXAA はぼやけやすいので選んだときだけ）
 - 高解像度描画（オフ／125%／150%／200%）を追加（AA と別設定で併用可。内部解像度を上げてジャギーを抑えます）
-- 最新ライティングのブルームを控えめな既定に変更（発光以外が溶けにくいように抽出も調整）
-- 影の濃さ・くぼみの影の濃さの上限を引き上げ（最大 3）
+- グラフィック／ライティングの各スライダー上限を引き上げ
 - グラフィックプリセットの書き出し・読み込みを追加（設定プリセットと同じ YAML / JSON。書き出しでは他の項目も選べ、読み込みではグラフィックだけ反映）
 - 動作状況に GPU 使用率（描画がフレーム時間に占める割合）とアバターの描画解像度を表示
 - グラフィックタブに「既定に戻す」を追加（確認付き。背景・アンチエイリアス・ライト・輪郭線だけ）
 - グラフィックタブの背景からライト／ダークのテーマを切り替えられるように変更
-- レガシーライティングの太陽光・環境光の既定を 2.x と同じ値に戻した（最新向けの調整がレガシーにも乗っていた）
 - 最新ライティングに色調補正・SSAO・画面リム・反射・シャープ・ビネットを追加（透過のまま使えます）
 - 影の濃さ・くぼみの影（首元など）の調整を分かりやすく変更
 - パネル右端に縦スクロールバーを常に出し、タブ切替で右が見切れることがある問題を修正
@@ -34,13 +32,11 @@ Newest first. Each version is written in Japanese, then English.
 - Added named saves for the current Modern lighting values (apply / delete; included in graphics preset export / import)
 - Added anti-aliasing method selection (Off / MSAA / FXAA; default MSAA 4x; FXAA only when chosen, since it can blur)
 - Added supersampling (Off / 125% / 150% / 200%) as a separate option that can be combined with AA to reduce jaggies
-- Made the default bloom for Modern lighting more subtle (and tightened bloom extraction so non-emissive areas melt less)
-- Raised the max for shadow density and crease-shadow density (up to 3)
+- Raised upper limits for graphics / lighting sliders
 - Added export / import for graphics presets (same YAML / JSON as settings presets; export can include other categories, import applies graphics only)
 - Performance stats now show GPU % (share of the frame time used by VRCast's drawing) and the avatar render resolution
 - Added "Reset to defaults" on the Graphics tab (with confirmation; background, anti-aliasing, lighting and outline only)
 - Theme (Light / Dark) can now also be switched from Background on the Graphics tab
-- Restored Legacy lighting's default sun / ambient values to match 2.x (Modern tuning had overwritten them)
 - Added color grading, SSAO, screen rim, reflection, sharpen, and vignette to Modern lighting (alpha-safe)
 - Clarified shadow density and crease-shadow (neck / folds) controls on the Graphics tab
 - Always show the content scrollbar on the panel's right edge (fixes clipping after switching tabs)

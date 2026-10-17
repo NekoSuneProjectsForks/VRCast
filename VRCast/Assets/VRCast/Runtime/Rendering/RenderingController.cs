@@ -649,10 +649,10 @@ namespace VRCast.Rendering
                     _settings.vignetteEnabled = false;
                     break;
                 default:
-                    // 既定＝スタジオ写真寄りの明瞭さ（くぼみの影・リム・シャープ、白は飛ばさない）
+                    // 既定＝スタジオ写真寄りの明瞭さ（影を強め、くぼみの影・リム・シャープ）
                     SetModernLighting(
                         keyIntensity: 1.05f, keyTemp: 5800f, keyYaw: -22f, keyPitch: 34f,
-                        ambient: 0.28f,
+                        ambient: 0.2f,
                         fillIntensity: defaults.fillIntensity, fillTemp: defaults.fillTemperature,
                         fillYaw: defaults.fillYaw, fillPitch: defaults.fillPitch,
                         rimIntensity: defaults.rimIntensity, rimTemp: defaults.rimTemperature,
