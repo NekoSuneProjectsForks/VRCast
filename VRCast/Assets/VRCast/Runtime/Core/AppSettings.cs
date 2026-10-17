@@ -54,6 +54,10 @@ namespace VRCast.Core
         public const float MaxSharpen = 2f;
         public const float MaxVignette = 2f;
 
+        // 描画フレームレート上限（0 = 軽量モードに応じて自動、15〜360 = 明示指定）
+        public const int MinFrameRateLimit = 15;
+        public const int MaxFrameRateLimit = 360;
+
         // マイク感度・しきい値の範囲
         public const float MinMicGain = 0.1f;
         public const float MaxMicGain = 10f;
@@ -178,6 +182,9 @@ namespace VRCast.Core
         // 軽量モード（描画のフレームレートとトラッカーの処理回数を下げ、ゲーム・OBS と同時に使うときの負荷を減らす）。
         // 配信ではゲーム・OBS と併用することが多いため既定は ON
         public bool lowLoadMode = true;
+
+        // 描画 FPS の上限。0 は自動（軽量モード ON = 30、OFF = 60）。15〜360 は指定値。
+        public int frameRateLimit;
 
         // パネルの一番下に動作状況（fps・CPU・GPU・トラッキング）を表示するか
         public bool showPerformanceStats = true;
@@ -1105,6 +1112,11 @@ namespace VRCast.Core
 
             // パネルの背景の不透明度も範囲内に制限
             uiOpacity = Mathf.Clamp(uiOpacity, MinUiOpacity, MaxUiOpacity);
+            // 描画 FPS の上限。0 は自動、負数も自動へ戻し、それ以外は安全な範囲に制限する
+            frameRateLimit = frameRateLimit <= 0
+                ? 0
+                : Mathf.Clamp(frameRateLimit, MinFrameRateLimit, MaxFrameRateLimit);
+
             // 未知の優先度（リアルタイム等の手編集）は通常へ
             if (!Enum.IsDefined(typeof(ProcessPriority), processPriority))
             {
