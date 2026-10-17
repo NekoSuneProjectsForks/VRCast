@@ -304,16 +304,16 @@ namespace VRCast.UI
             GuiControls.BeginCard(Loc.T("Lighting presets", "ライティングプリセット", "라이팅 프리셋",
                 "光照预设", "光照預設"));
             GuiControls.Hint(Loc.T(
-                "Built-in looks: Legacy-like ≈ 2.x (no fill / IBL / FX), Default = soft illustrated. "
-                + "Save the current sliders under a name; export / import them via Graphics preset below.",
-                "内蔵: レガシー寄り ≈ 2.x（フィル／IBL／FX なし）、既定＝淡いイラスト調。"
-                + "今のスライダーを名前を付けて保存できます。書き出し・読み込みは下のグラフィックプリセットから。",
-                "내장: 레거시 비슷 ≈ 2.x(필/IBL/FX 없음), 기본＝연한 일러스트 톤. "
-                + "지금 슬라이더를 이름 붙여 저장할 수 있습니다. 내보내기·불러오기는 아래 그래픽 프리셋에서.",
-                "内置：旧版风 ≈ 2.x（无辅光 / IBL / 特效），默认＝淡插画风。"
-                + "可将当前滑块以自定义名称保存；导出 / 导入请用下方的图形预设。",
-                "內建：舊版風 ≈ 2.x（無輔光／IBL／特效），預設＝淡插畫風。"
-                + "可將目前滑桿以自訂名稱儲存；匯出／匯入請用下方的圖形預設。"));
+                "Built-in looks: Legacy-like ≈ 2.x (no fill / IBL / FX), Default = clear studio look "
+                + "(crease shadows, rim, sharpen). Save current sliders under a name; export / import via Graphics preset.",
+                "内蔵: レガシー寄り ≈ 2.x（フィル／IBL／FX なし）、既定＝明瞭なスタジオ調"
+                + "（くぼみの影・リム・シャープ）。今の値は名前付きで保存可。書き出し・読み込みは下のグラフィックプリセットから。",
+                "내장: 레거시 비슷 ≈ 2.x(필/IBL/FX 없음), 기본＝선명한 스튜디오 톤"
+                + "(움푹한 그림자·림·샤픈). 지금 값은 이름 붙여 저장 가능. 내보내기·불러오기는 아래 그래픽 프리셋에서.",
+                "内置：旧版风 ≈ 2.x（无辅光 / IBL / 特效），默认＝清晰工作室风"
+                + "（凹陷阴影、轮廓光、锐化）。当前值可命名保存；导出 / 导入用下方图形预设。",
+                "內建：舊版風 ≈ 2.x（無輔光／IBL／特效），預設＝清晰工作室風"
+                + "（凹陷陰影、輪廓光、銳化）。目前值可命名儲存；匯出／匯入用下方圖形預設。"));
 
             GuiControls.SubHeading(Loc.T("Built-in", "内蔵", "내장", "内置", "內建"));
             GUILayout.BeginHorizontal();

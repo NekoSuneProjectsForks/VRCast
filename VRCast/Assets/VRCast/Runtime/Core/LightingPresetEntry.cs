@@ -224,40 +224,40 @@ namespace VRCast.Core
             ambientIntensity = Clamp(ambientIntensity, 0f, AppSettings.MaxAmbientIntensity, 1.2f);
             avatarBrightness = Clamp(avatarBrightness, AppSettings.MinAvatarBrightness,
                 AppSettings.MaxAvatarBrightness, 1f);
-            fillIntensity = Clamp(fillIntensity, 0f, AppSettings.MaxLightIntensity, 0.16f);
+            fillIntensity = Clamp(fillIntensity, 0f, AppSettings.MaxLightIntensity, 0.18f);
             fillYaw = Clamp(fillYaw, -360f, 360f, 145f);
             fillPitch = Clamp(fillPitch, -90f, 90f, 12f);
             fillTemperature = Clamp(fillTemperature, AppSettings.MinLightTemperature,
                 AppSettings.MaxLightTemperature, 7400f);
-            rimIntensity = Clamp(rimIntensity, 0f, AppSettings.MaxLightIntensity, 0.12f);
+            rimIntensity = Clamp(rimIntensity, 0f, AppSettings.MaxLightIntensity, 0.28f);
             rimYaw = Clamp(rimYaw, -360f, 360f, 165f);
             rimPitch = Clamp(rimPitch, -90f, 90f, -8f);
             rimTemperature = Clamp(rimTemperature, AppSettings.MinLightTemperature,
                 AppSettings.MaxLightTemperature, 6500f);
-            iblIntensity = Clamp(iblIntensity, 0f, AppSettings.MaxIblIntensity, 0.16f);
+            iblIntensity = Clamp(iblIntensity, 0f, AppSettings.MaxIblIntensity, 0.18f);
             if (!Enum.IsDefined(typeof(IblPreset), iblPreset))
             {
                 iblPreset = IblPreset.Studio;
             }
 
-            reflectionStrength = Clamp(reflectionStrength, 0f, AppSettings.MaxReflectionStrength, 0.08f);
-            shadowStrength = Clamp(shadowStrength, 0f, AppSettings.MaxShadowStrength, 0.9f);
-            shadowSoftness = Clamp(shadowSoftness, 0f, AppSettings.MaxShadowSoftness, 0.35f);
-            bloomIntensity = Clamp(bloomIntensity, 0f, AppSettings.MaxBloomIntensity, 0.015f);
-            bloomThreshold = Clamp(bloomThreshold, 0f, AppSettings.MaxBloomThreshold, 1.9f);
-            tonemapStrength = Clamp(tonemapStrength, 0f, AppSettings.MaxTonemapStrength, 0.55f);
-            exposure = Clamp(exposure, AppSettings.MinExposure, AppSettings.MaxExposure, -0.08f);
-            contrast = Clamp(contrast, AppSettings.MinContrast, AppSettings.MaxContrast, 1.02f);
-            saturation = Clamp(saturation, 0f, AppSettings.MaxSaturation, 0.88f);
+            reflectionStrength = Clamp(reflectionStrength, 0f, AppSettings.MaxReflectionStrength, 0.12f);
+            shadowStrength = Clamp(shadowStrength, 0f, AppSettings.MaxShadowStrength, 1.25f);
+            shadowSoftness = Clamp(shadowSoftness, 0f, AppSettings.MaxShadowSoftness, 0.42f);
+            bloomIntensity = Clamp(bloomIntensity, 0f, AppSettings.MaxBloomIntensity, 0.012f);
+            bloomThreshold = Clamp(bloomThreshold, 0f, AppSettings.MaxBloomThreshold, 1.95f);
+            tonemapStrength = Clamp(tonemapStrength, 0f, AppSettings.MaxTonemapStrength, 0.5f);
+            exposure = Clamp(exposure, AppSettings.MinExposure, AppSettings.MaxExposure, -0.12f);
+            contrast = Clamp(contrast, AppSettings.MinContrast, AppSettings.MaxContrast, 1.08f);
+            saturation = Clamp(saturation, 0f, AppSettings.MaxSaturation, 0.86f);
             colorTemperature = Clamp(colorTemperature, -AppSettings.MaxColorBalance, AppSettings.MaxColorBalance,
                 -0.02f);
             colorTint = Clamp(colorTint, -AppSettings.MaxColorBalance, AppSettings.MaxColorBalance, 0.02f);
-            ssaoIntensity = Clamp(ssaoIntensity, 0f, AppSettings.MaxSsaoIntensity, 0.55f);
-            ssaoRadius = Clamp(ssaoRadius, 0f, AppSettings.MaxSsaoRadius, 0.4f);
-            screenRimIntensity = Clamp(screenRimIntensity, 0f, AppSettings.MaxScreenRimIntensity, 0.04f);
-            screenRimPower = Clamp(screenRimPower, 0.5f, AppSettings.MaxScreenRimPower, 4f);
+            ssaoIntensity = Clamp(ssaoIntensity, 0f, AppSettings.MaxSsaoIntensity, 0.85f);
+            ssaoRadius = Clamp(ssaoRadius, 0f, AppSettings.MaxSsaoRadius, 0.36f);
+            screenRimIntensity = Clamp(screenRimIntensity, 0f, AppSettings.MaxScreenRimIntensity, 0.12f);
+            screenRimPower = Clamp(screenRimPower, 0.5f, AppSettings.MaxScreenRimPower, 3.5f);
             screenRimHue = Mathf.Repeat(IsFinite(screenRimHue) ? screenRimHue : 0f, 1f);
-            sharpenAmount = Clamp(sharpenAmount, 0f, AppSettings.MaxSharpen, 0.2f);
+            sharpenAmount = Clamp(sharpenAmount, 0f, AppSettings.MaxSharpen, 0.38f);
             vignetteIntensity = Clamp(vignetteIntensity, 0f, AppSettings.MaxVignette, 0.22f);
         }
 

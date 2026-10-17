@@ -549,6 +549,8 @@ namespace VRCast.Rendering
             Application.runInBackground = true;
 
             _savedShadowDistance = QualitySettings.shadowDistance;
+            // テクスチャの斜め面をはっきりさせる（明瞭さ）
+            QualitySettings.anisotropicFiltering = AnisotropicFiltering.ForceEnable;
             EnsureLights();
 
             _antiAliasing = _camera.GetComponent<CameraAntiAliasing>();
@@ -647,10 +649,10 @@ namespace VRCast.Rendering
                     _settings.vignetteEnabled = false;
                     break;
                 default:
-                    // 既定＝淡いイラスト調（環境光・フィル・IBL を抑えて白みを減らす）
+                    // 既定＝スタジオ写真寄りの明瞭さ（くぼみの影・リム・シャープ、白は飛ばさない）
                     SetModernLighting(
-                        keyIntensity: 1f, keyTemp: 5900f, keyYaw: -20f, keyPitch: 32f,
-                        ambient: 0.32f,
+                        keyIntensity: 1.05f, keyTemp: 5800f, keyYaw: -22f, keyPitch: 34f,
+                        ambient: 0.28f,
                         fillIntensity: defaults.fillIntensity, fillTemp: defaults.fillTemperature,
                         fillYaw: defaults.fillYaw, fillPitch: defaults.fillPitch,
                         rimIntensity: defaults.rimIntensity, rimTemp: defaults.rimTemperature,
@@ -664,6 +666,9 @@ namespace VRCast.Rendering
                         defaults.ssaoIntensity, defaults.ssaoRadius, defaults.screenRimIntensity,
                         defaults.screenRimPower, defaults.screenRimHue, defaults.exposure, defaults.contrast,
                         defaults.saturation, defaults.colorTemperature, defaults.colorTint);
+                    _settings.sharpenEnabled = true;
+                    _settings.sharpenAmount = defaults.sharpenAmount;
+                    _settings.vignetteEnabled = false;
                     break;
             }
         }

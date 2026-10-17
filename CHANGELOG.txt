@@ -14,7 +14,6 @@ Newest first. Each version is written in Japanese, then English.
 - アンチエイリアスに方式の選択を追加（オフ／MSAA／FXAA。既定は MSAA 4x。FXAA はぼやけやすいので選んだときだけ）
 - 高解像度描画（オフ／125%／150%／200%）を追加（AA と別設定で併用可。内部解像度を上げてジャギーを抑えます）
 - 最新ライティングのブルームを控えめな既定に変更（発光以外が溶けにくいように抽出も調整）
-- 最新ライティングの既定とレガシー寄りを再調整（白みを抑え、レガシー寄りは 2.x と同じ太陽光・環境光のみ）
 - 影の濃さ・くぼみの影の濃さの上限を引き上げ（最大 3）
 - グラフィックプリセットの書き出し・読み込みを追加（設定プリセットと同じ YAML / JSON。書き出しでは他の項目も選べ、読み込みではグラフィックだけ反映）
 - 動作状況に GPU 使用率（描画がフレーム時間に占める割合）とアバターの描画解像度を表示
@@ -36,7 +35,6 @@ Newest first. Each version is written in Japanese, then English.
 - Added anti-aliasing method selection (Off / MSAA / FXAA; default MSAA 4x; FXAA only when chosen, since it can blur)
 - Added supersampling (Off / 125% / 150% / 200%) as a separate option that can be combined with AA to reduce jaggies
 - Made the default bloom for Modern lighting more subtle (and tightened bloom extraction so non-emissive areas melt less)
-- Retuned Modern Default and Legacy-like (less washed-out; Legacy-like uses 2.x sun / ambient only)
 - Raised the max for shadow density and crease-shadow density (up to 3)
 - Added export / import for graphics presets (same YAML / JSON as settings presets; export can include other categories, import applies graphics only)
 - Performance stats now show GPU % (share of the frame time used by VRCast's drawing) and the avatar render resolution
