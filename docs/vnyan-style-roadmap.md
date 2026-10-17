@@ -62,7 +62,8 @@ The first milestone should play VMD motion on an avatar already loaded by VRCast
 ## Tracking and VRChat OSC integration
 
 - [✓] VRChat OSC avatar-parameter sender exposed in Settings with endpoint configuration and float/bool test sends.
-- [✗] Live tracking-provider values mapped to OSC avatar parameters; user-defined mappings and conflict-safe parameter ownership.
+- [✓] Optional live face-frame mappings for left/right eye openness and mouth openness, plus smile when the selected provider supplies expression scores; output is rate-limited to 30 updates/second and blank mappings are disabled.
+- [✗] Broader ARKit blendshape mappings, head/body/hand provider mapping, per-avatar profiles, provider conflict resolution, and inbound OSC/VRCFT discovery.
 - [✗] Incoming OSC/VRCFT provider discovery, parameter mapping, per-provider status, and conflict resolution.
 - [✗] Unified face/head/body/hand provider controls and safe start/stop/reconnect lifecycle.
 - [✗] Extend and test VMC receiver selection and calibration workflows; current code already has VMC pose reception and MediaPipe hand/body input, but the requested unified management is not complete.
