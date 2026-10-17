@@ -50,6 +50,16 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Start_TrimsEndpointAddress()
+        {
+            using (var sender = new OscParameterSender())
+            {
+                Assert.That(sender.Start(" 127.0.0.1 ", 9000), Is.True);
+                Assert.That(sender.Address, Is.EqualTo("127.0.0.1"));
+            }
+        }
+
+        [Test]
         public void SendInt_RejectsInvalidParameterNames()
         {
             using (var sender = new OscParameterSender())
@@ -73,6 +83,18 @@ namespace VRCast.Tests
             Assert.That(packet[packet.Length - 3], Is.EqualTo(b1));
             Assert.That(packet[packet.Length - 2], Is.EqualTo(b2));
             Assert.That(packet[packet.Length - 1], Is.EqualTo(b3));
+        }
+
+        [Test]
+        public void CreateInt_UsesUtf8PaddedOscAddress()
+        {
+            byte[] packet = OscParameterPacket.CreateInt("/avatar/parameters/GestureLeft", 5);
+            byte[] address = System.Text.Encoding.UTF8.GetBytes("/avatar/parameters/GestureLeft");
+
+            Assert.That(packet.Length % 4, Is.EqualTo(0));
+            for (int i = 0; i < address.Length; i++)
+                Assert.That(packet[i], Is.EqualTo(address[i]));
+            Assert.That(packet[address.Length], Is.EqualTo(0));
         }
 
         [Test]
