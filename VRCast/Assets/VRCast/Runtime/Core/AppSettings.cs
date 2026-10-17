@@ -462,6 +462,11 @@ namespace VRCast.Core
         public int remoteOscPort = DefaultRemoteOscPort;
         public int remoteHttpPort = DefaultRemoteHttpPort;
 
+        // VRChat OSC avatar-parameter output (separate from the inbound remote-control listener).
+        public bool oscParameterOutputEnabled;
+        public string oscParameterOutputAddress = "127.0.0.1";
+        public int oscParameterOutputPort = 9000;
+
         // 表情ごとのしきい値（UseCommonThreshold = 未設定で trackingExpressionThreshold を使う。旧版の共通値を引き継ぐため）
         public float thresholdSmile = UseCommonThreshold;
         public float thresholdSurprise = UseCommonThreshold;
@@ -1286,6 +1291,13 @@ namespace VRCast.Core
             // 外部操作のポートも同じ範囲に制限
             remoteOscPort = Mathf.Clamp(remoteOscPort, MinTrackingPort, MaxTrackingPort);
             remoteHttpPort = Mathf.Clamp(remoteHttpPort, MinTrackingPort, MaxTrackingPort);
+            // OSC 出力はローカル既定。無効な IP は既定へ戻し、ポートは有効範囲に制限
+            oscParameterOutputAddress = (oscParameterOutputAddress ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(oscParameterOutputAddress))
+            {
+                oscParameterOutputAddress = "127.0.0.1";
+            }
+            oscParameterOutputPort = Mathf.Clamp(oscParameterOutputPort, 1, 65535);
             // 上半身の傾きの強さは 0〜上限に制限
             trackingBodyLean = Mathf.Clamp(trackingBodyLean, 0f, MaxTrackingBodyLean);
             // 未知の体の動かし方は既定の傾きへ
