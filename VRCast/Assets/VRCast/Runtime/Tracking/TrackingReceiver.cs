@@ -174,6 +174,36 @@ namespace VRCast.Tracking
                 SendBlendShape(_settings.oscParameterMouthSmileLeft, blendShapes, ArKitFace.MouthSmileLeft);
                 SendBlendShape(_settings.oscParameterMouthSmileRight, blendShapes, ArKitFace.MouthSmileRight);
                 SendBlendShape(_settings.oscParameterBrowInnerUp, blendShapes, ArKitFace.BrowInnerUp);
+                SendConfiguredBlendShapes(blendShapes);
+            }
+        }
+
+        private void SendConfiguredBlendShapes(float[] blendShapes)
+        {
+            var mappings = _settings.oscBlendShapeMappings;
+            if (mappings == null)
+            {
+                return;
+            }
+
+            foreach (OscBlendShapeParameterMapping mapping in mappings)
+            {
+                if (mapping == null || string.IsNullOrWhiteSpace(mapping.parameterName)
+                    || string.IsNullOrWhiteSpace(mapping.blendShapeName))
+                {
+                    continue;
+                }
+
+                int index = -1;
+                for (int i = 0; i < ArKitFace.BlendShapeNames.Length; i++)
+                {
+                    if (string.Equals(ArKitFace.BlendShapeNames[i], mapping.blendShapeName, System.StringComparison.Ordinal))
+                    {
+                        index = i;
+                        break;
+                    }
+                }
+                SendBlendShape(mapping.parameterName, blendShapes, index);
             }
         }
 
