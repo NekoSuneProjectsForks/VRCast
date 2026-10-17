@@ -98,6 +98,18 @@ namespace VRCast.UI
                 _oscOutputPort = started ? _settings.oscParameterOutputPort : -1;
             }
 
+            GUILayout.Label("Live face parameter mappings (blank disables a mapping)");
+            GUILayout.Label("Left eye open");
+            _settings.oscParameterEyeOpenLeft = GUILayout.TextField(_settings.oscParameterEyeOpenLeft ?? string.Empty);
+            GUILayout.Label("Right eye open");
+            _settings.oscParameterEyeOpenRight = GUILayout.TextField(_settings.oscParameterEyeOpenRight ?? string.Empty);
+            GUILayout.Label("Mouth open");
+            _settings.oscParameterMouthOpen = GUILayout.TextField(_settings.oscParameterMouthOpen ?? string.Empty);
+            GUILayout.Label("Smile (providers with expression scores)");
+            _settings.oscParameterSmile = GUILayout.TextField(_settings.oscParameterSmile ?? string.Empty);
+            GuiControls.Hint(
+                "Mapped values are sent at up to 30 updates per second while fresh face tracking is available. Use parameter names that exist in the avatar's Expressions/FX setup. This does not forward skeletal head, body, or hand motion.");
+
             GUILayout.Label("Status: " + _oscParameterSender.Status);
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Send test float"))
