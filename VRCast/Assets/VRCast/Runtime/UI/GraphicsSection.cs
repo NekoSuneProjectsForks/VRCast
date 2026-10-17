@@ -22,6 +22,7 @@ namespace VRCast.UI
         public void Draw()
         {
             DrawBackground();
+            DrawAntiAliasing();
             DrawLightingSystem();
             if (_rendering.IsModern)
             {
@@ -78,15 +79,53 @@ namespace VRCast.UI
             GuiControls.EndCard();
         }
 
+        private void DrawAntiAliasing()
+        {
+            GuiControls.BeginCard(Loc.T("Anti-aliasing", "アンチエイリアス", "안티앨리어싱", "抗锯齿", "抗鋸齒"));
+            GuiControls.Hint(Loc.T(
+                "Smooths jagged edges. Higher settings use more GPU. Default is 4x.",
+                "ギザギザした輪郭をなめらかにします。高いほど GPU 負荷が増えます。既定は 4x です。",
+                "톱니 모양의 윤곽을 부드럽게 합니다. 높을수록 GPU 부하가 늘니다. 기본은 4x입니다.",
+                "平滑锯齿边缘。越高越耗 GPU。默认为 4x。",
+                "平滑鋸齒邊緣。越高越耗 GPU。預設為 4x。"));
+
+            AntiAliasingQuality[] options =
+            {
+                AntiAliasingQuality.Off, AntiAliasingQuality.x2, AntiAliasingQuality.x4, AntiAliasingQuality.x8,
+            };
+            string[] labels =
+            {
+                Loc.T("Off", "オフ", "끄기", "关", "關"),
+                "2x", "4x", "8x",
+            };
+            int index = 0;
+            for (int i = 0; i < options.Length; i++)
+            {
+                if (options[i] == _rendering.AntiAliasing)
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            int selected = GuiControls.LabeledChoice(Loc.T("Quality", "品質", "품질", "质量", "品質"), labels, index);
+            if (selected != index)
+            {
+                _rendering.AntiAliasing = options[selected];
+            }
+
+            GuiControls.EndCard();
+        }
+
         private void DrawLightingSystem()
         {
             GuiControls.BeginCard(Loc.T("Lighting", "ライティング", "라이팅", "光照", "光照"));
             GuiControls.Hint(Loc.T(
-                "Modern is the new look (three lights, soft shadows, studio light, bloom). Legacy matches VRCast 2.x.",
-                "最新は三点照明・柔らかい影・スタジオ環境光・ブルームなどの新しい見た目です。レガシーは VRCast 2.x と同じです。",
-                "최신은 삼점 조명·부드러운 그림자·스튜디오 환경광·블룸 등의 새 모습입니다. 레거시는 VRCast 2.x와 같습니다.",
-                "最新为三点照明、柔和阴影、工作室环境光、辉光等新外观。旧版与 VRCast 2.x 相同。",
-                "最新為三點照明、柔和陰影、工作室環境光、輝光等新外觀。舊版與 VRCast 2.x 相同。"));
+                "Legacy matches VRCast 2.x (default). Modern adds three lights, soft shadows, studio light and bloom.",
+                "レガシーは VRCast 2.x と同じ見た目です（既定）。最新は三点照明・柔らかい影・スタジオ環境光・ブルームを使います。",
+                "레거시는 VRCast 2.x와 같은 모습입니다(기본). 최신은 삼점 조명·부드러운 그림자·스튜디오 환경광·블룸을 씁니다.",
+                "旧版与 VRCast 2.x 相同（默认）。最新使用三点照明、柔和阴影、工作室环境光和辉光。",
+                "舊版與 VRCast 2.x 相同（預設）。最新使用三點照明、柔和陰影、工作室環境光和輝光。"));
 
             int selected = GuiControls.LabeledChoice(
                 Loc.T("System", "系統", "계통", "系统", "系統"),

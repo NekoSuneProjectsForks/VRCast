@@ -199,7 +199,7 @@ namespace VRCast.Core
                 nameof(AppSettings.darkMode),
                 nameof(AppSettings.checkForUpdates), nameof(AppSettings.detailedLogging)),
             new PresetCategory("avatarLook", true,
-                nameof(AppSettings.lightingSystem),
+                nameof(AppSettings.lightingSystem), nameof(AppSettings.antiAliasing),
                 nameof(AppSettings.lightIntensity), nameof(AppSettings.lightYaw), nameof(AppSettings.lightPitch),
                 nameof(AppSettings.lightTemperature), nameof(AppSettings.ambientIntensity),
                 nameof(AppSettings.fillIntensity), nameof(AppSettings.fillYaw), nameof(AppSettings.fillPitch),

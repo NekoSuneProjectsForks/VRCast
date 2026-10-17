@@ -8,14 +8,18 @@ Newest first. Each version is written in Japanese, then English.
 
 [日本語]
 - ライティングを拡充（最新: キー／フィル／リムの三点照明、柔らかい影（PCSS）、スタジオ環境光、ブルーム／トーンマップ。透過背景のまま使えます）
-- ライティングに「レガシー（2.x と同じ）／最新」の切替を追加（既定は最新。いつでも戻せます）
+- ライティングに「レガシー（2.x と同じ）／最新」の切替を追加（既定はレガシー。いつでも最新に変えられます）
 - グラフィックタブにスタジオ／晴れ／やわらか／既定のプリセットを追加（最新ライティング向け）
+- アンチエイリアス（オフ／2x／4x／8x）を追加（既定は 4x。ギザギザした輪郭をなめらかにします）
+- 最新ライティングのブルームを控えめな既定に変更
 - アバタータブで顔写真を撮り直せるように変更（表示中の一覧タイルと、読み込み情報の両方から）
 
 [English]
 - Expanded lighting (Modern: key / fill / rim three-point lights, soft shadows (PCSS), studio environment light, bloom / tone mapping; works with a transparent background)
-- Added a Legacy (same as 2.x) / Modern lighting switch (Modern is the default; you can switch back anytime)
+- Added a Legacy (same as 2.x) / Modern lighting switch (Legacy is the default; you can switch to Modern anytime)
 - Added Studio / Sunny / Soft / Default presets on the Graphics tab (for Modern lighting)
+- Added anti-aliasing (Off / 2x / 4x / 8x; default 4x) to smooth jagged edges
+- Made the default bloom for Modern lighting more subtle
 - Face photos can now be retaken from the Avatar tab (on the tile for the avatar being shown, and in the loaded-avatar info)
 
 ■ 2.3.2 (2026-10-17)

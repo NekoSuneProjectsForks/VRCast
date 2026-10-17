@@ -205,8 +205,11 @@ namespace VRCast.Core
         // 背景透過のスクリーンショットの保存先フォルダ（空 = ピクチャ\VRCast）
         public string screenshotFolder = string.Empty;
 
-        // ライティング系統（既定は最新。レガシーは 2.x 相当の太陽光 1 灯 + 平坦な環境光）
-        public LightingSystem lightingSystem = LightingSystem.Modern;
+        // ライティング系統（既定はレガシー＝2.x 相当。最新は三点・影・IBL・ポスト）
+        public LightingSystem lightingSystem = LightingSystem.Legacy;
+
+        // アンチエイリアス（既定 4x。MSAA + 必要なら FXAA）
+        public AntiAliasingQuality antiAliasing = AntiAliasingQuality.x4;
 
         // 太陽光 / Key（ディレクショナルライト）。向きはカメラ正面からの角度（0 = 正面から当たる）
         public float lightIntensity = 1.2f;
@@ -236,8 +239,8 @@ namespace VRCast.Core
         public float shadowStrength = 0.75f;
         public float shadowSoftness = 0.55f;
         public bool bloomEnabled = true;
-        public float bloomIntensity = 0.3f;
-        public float bloomThreshold = 1.05f;
+        public float bloomIntensity = 0.12f;
+        public float bloomThreshold = 1.25f;
         public bool tonemapEnabled = true;
         public float tonemapStrength = 0.85f;
 
@@ -1035,10 +1038,16 @@ namespace VRCast.Core
             gpuAdapter ??= string.Empty;
             // スクリーンショットの保存先は前後の空白・" を除く（null は既定の保存先の空文字へ）
             screenshotFolder = PathUtility.NormalizeInput(screenshotFolder);
-            // 未知のライティング系統は最新へ
+            // 未知のライティング系統はレガシーへ
             if (!Enum.IsDefined(typeof(LightingSystem), lightingSystem))
             {
-                lightingSystem = LightingSystem.Modern;
+                lightingSystem = LightingSystem.Legacy;
+            }
+
+            // 未知のアンチエイリアスは 4x へ
+            if (!Enum.IsDefined(typeof(AntiAliasingQuality), antiAliasing))
+            {
+                antiAliasing = AntiAliasingQuality.x4;
             }
 
             // 未知の IBL プリセットはスタジオへ

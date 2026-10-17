@@ -440,13 +440,22 @@ namespace VRCast.Tests
         }
 
         [Test]
-        public void LightingSystem_Sanitize_UnknownFallsBackToModern()
+        public void LightingSystem_Sanitize_UnknownFallsBackToLegacy()
         {
             var settings = new AppSettings { lightingSystem = (LightingSystem)99, iblIntensity = 99f };
             settings.Sanitize();
-            Assert.That(settings.lightingSystem, Is.EqualTo(LightingSystem.Modern));
+            Assert.That(settings.lightingSystem, Is.EqualTo(LightingSystem.Legacy));
             Assert.That(settings.iblIntensity, Is.EqualTo(AppSettings.MaxIblIntensity));
-            Assert.That(new AppSettings().lightingSystem, Is.EqualTo(LightingSystem.Modern));
+            Assert.That(new AppSettings().lightingSystem, Is.EqualTo(LightingSystem.Legacy));
+            Assert.That(new AppSettings().antiAliasing, Is.EqualTo(AntiAliasingQuality.x4));
+        }
+
+        [Test]
+        public void AntiAliasing_Sanitize_UnknownFallsBackToX4()
+        {
+            var settings = new AppSettings { antiAliasing = (AntiAliasingQuality)99 };
+            settings.Sanitize();
+            Assert.That(settings.antiAliasing, Is.EqualTo(AntiAliasingQuality.x4));
         }
 
         [Test]

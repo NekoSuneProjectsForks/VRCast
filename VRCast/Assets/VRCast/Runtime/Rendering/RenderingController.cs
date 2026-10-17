@@ -41,6 +41,7 @@ namespace VRCast.Rendering
         private Light _fillLight;
         private Light _rimLight;
         private CameraPostProcess _postProcess;
+        private CameraAntiAliasing _antiAliasing;
         private AppSettings _settings;
         private bool _forceTransparent;
         private float _savedShadowDistance = 150f;
@@ -120,6 +121,16 @@ namespace VRCast.Rendering
         }
 
         public bool IsModern => _settings.lightingSystem == LightingSystem.Modern;
+
+        public AntiAliasingQuality AntiAliasing
+        {
+            get => _settings.antiAliasing;
+            set
+            {
+                _settings.antiAliasing = value;
+                _antiAliasing?.Apply();
+            }
+        }
 
         public float LightIntensity
         {
@@ -396,6 +407,14 @@ namespace VRCast.Rendering
             _savedShadowDistance = QualitySettings.shadowDistance;
             EnsureLights();
 
+            _antiAliasing = _camera.GetComponent<CameraAntiAliasing>();
+            if (_antiAliasing == null)
+            {
+                _antiAliasing = _camera.gameObject.AddComponent<CameraAntiAliasing>();
+            }
+
+            _antiAliasing.Initialize(_settings);
+
             _postProcess = _camera.GetComponent<CameraPostProcess>();
             if (_postProcess == null)
             {
@@ -416,6 +435,7 @@ namespace VRCast.Rendering
             ApplyLights();
             ApplyAmbient();
             ApplyAvatarMaterials();
+            _antiAliasing?.Apply();
             _postProcess?.SetActive(IsModern);
         }
 
@@ -468,7 +488,7 @@ namespace VRCast.Rendering
                         ambient: 0.9f, fillIntensity: 0.35f, fillTemp: 7000f, fillYaw: 130f, fillPitch: 18f,
                         rimIntensity: 0.55f, rimTemp: 6000f, rimYaw: 155f, rimPitch: -8f,
                         ibl: 0.7f, IblPreset.Warm, softShadows: true, shadowStrength: 0.8f, shadowSoftness: 0.4f,
-                        bloom: true, bloomIntensity: 0.25f, bloomThreshold: 1.1f, tonemap: true, tonemapStrength: 0.8f);
+                        bloom: true, bloomIntensity: 0.1f, bloomThreshold: 1.3f, tonemap: true, tonemapStrength: 0.8f);
                     break;
                 case LightingPreset.Soft:
                     SetModernLighting(
@@ -476,7 +496,7 @@ namespace VRCast.Rendering
                         ambient: 1.4f, fillIntensity: 0.7f, fillTemp: 7500f, fillYaw: 150f, fillPitch: 25f,
                         rimIntensity: 0.35f, rimTemp: 7000f, rimYaw: 170f, rimPitch: 0f,
                         ibl: 1.1f, IblPreset.Studio, softShadows: true, shadowStrength: 0.45f, shadowSoftness: 0.85f,
-                        bloom: true, bloomIntensity: 0.2f, bloomThreshold: 1.2f, tonemap: true, tonemapStrength: 0.7f);
+                        bloom: true, bloomIntensity: 0.08f, bloomThreshold: 1.35f, tonemap: true, tonemapStrength: 0.7f);
                     break;
                 case LightingPreset.Studio:
                     SetModernLighting(
@@ -484,7 +504,7 @@ namespace VRCast.Rendering
                         ambient: 0.55f, fillIntensity: 0.5f, fillTemp: 7800f, fillYaw: 145f, fillPitch: 15f,
                         rimIntensity: 0.85f, rimTemp: 6500f, rimYaw: 165f, rimPitch: -12f,
                         ibl: 1f, IblPreset.Studio, softShadows: true, shadowStrength: 0.7f, shadowSoftness: 0.6f,
-                        bloom: true, bloomIntensity: 0.35f, bloomThreshold: 1.0f, tonemap: true, tonemapStrength: 0.9f);
+                        bloom: true, bloomIntensity: 0.15f, bloomThreshold: 1.2f, tonemap: true, tonemapStrength: 0.9f);
                     break;
                 default:
                     SetModernLighting(
