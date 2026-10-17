@@ -117,6 +117,11 @@ namespace VRCast.UI
                 _nextOscUiRetryTime = Time.unscaledTime + 3f;
             }
 
+            GUILayout.Label("Face OSC update rate: " + _settings.oscParameterOutputRate + " Hz");
+            _settings.oscParameterOutputRate = Mathf.RoundToInt(
+                GUILayout.HorizontalSlider(_settings.oscParameterOutputRate, 1f, 60f));
+            GuiControls.Hint("Independent from rendering FPS. Lower rates reduce UDP traffic; default is 30 Hz.");
+
             GUILayout.Label("Live face parameter mappings (blank disables a mapping)");
             GUILayout.Label("Left eye open");
             _settings.oscParameterEyeOpenLeft = GUILayout.TextField(_settings.oscParameterEyeOpenLeft ?? string.Empty);
