@@ -1341,21 +1341,33 @@ namespace VRCast.Core
             }
             var normalizedBlendShapeMappings = new List<OscBlendShapeParameterMapping>();
             var usedBlendShapes = new HashSet<string>(StringComparer.Ordinal);
+            var usedParameterNames = new HashSet<string>(StringComparer.Ordinal);
             foreach (OscBlendShapeParameterMapping mapping in oscBlendShapeMappings)
             {
                 if (mapping == null || string.IsNullOrWhiteSpace(mapping.blendShapeName))
                 {
                     continue;
                 }
+
                 string blendShapeName = mapping.blendShapeName.Trim();
-                if (usedBlendShapes.Add(blendShapeName))
+                string parameterName = NormalizeOscParameterName(mapping.parameterName);
+                if (!usedBlendShapes.Add(blendShapeName))
                 {
-                    normalizedBlendShapeMappings.Add(new OscBlendShapeParameterMapping
-                    {
-                        blendShapeName = blendShapeName,
-                        parameterName = NormalizeOscParameterName(mapping.parameterName),
-                    });
+                    continue;
                 }
+
+                // A VRChat avatar parameter can only represent one source value. Keep the first
+                // non-empty mapping when the same destination was assigned to multiple channels.
+                if (!string.IsNullOrEmpty(parameterName) && !usedParameterNames.Add(parameterName))
+                {
+                    parameterName = string.Empty;
+                }
+
+                normalizedBlendShapeMappings.Add(new OscBlendShapeParameterMapping
+                {
+                    blendShapeName = blendShapeName,
+                    parameterName = parameterName,
+                });
             }
             oscBlendShapeMappings = normalizedBlendShapeMappings;
             // 上半身の傾きの強さは 0〜上限に制限
