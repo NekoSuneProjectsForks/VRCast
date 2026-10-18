@@ -133,7 +133,8 @@ namespace VRCast.Tests
             Assert.That(preset.FormatVersion, Is.EqualTo(SettingsPreset.CurrentFormatVersion));
             Assert.That(preset.AppVersion, Is.EqualTo("1.2.3"));
             Assert.That(preset.CreatedAt, Is.EqualTo("2026-10-10T08:30:00+09:00"));
-            Assert.That(preset.Categories.Select(category => category.Id), Is.EqualTo(new[] { "performance" }));
+            Assert.That(preset.Categories.Select(category => category.Id).ToArray(),
+                Is.EqualTo(new[] { "performance" }));
             Assert.That(text, Does.Not.Contain("lightIntensity"));
         }
 
@@ -154,7 +155,7 @@ namespace VRCast.Tests
         }
 
         [Test]
-        public void Apply_WithoutAvatarRelated_KeepsLookAndExpressionMapping()
+        public void Apply_WithoutAvatarRelated_KeepsPoseAndExpressionMapping()
         {
             PresetFile preset = Parse(Export(Changed()));
             var target = new AppSettings();
@@ -166,7 +167,8 @@ namespace VRCast.Tests
             Assert.That(SettingsPreset.Apply(preset, ids, target), Is.True);
 
             // ライト・ポーズ・表情の割り当てとしきい値は変わらないこと
-            Assert.That(target.lightIntensity, Is.EqualTo(defaults.lightIntensity));
+            // Graphics settings are a general preset category, so lighting is applied.
+            Assert.That(target.lightIntensity, Is.EqualTo(2f));
             Assert.That(target.poseArmDown, Is.EqualTo(defaults.poseArmDown));
             Assert.That(target.expressionSmile, Is.EqualTo(defaults.expressionSmile));
             Assert.That(target.thresholdSmile, Is.EqualTo(defaults.thresholdSmile));
@@ -192,7 +194,9 @@ namespace VRCast.Tests
                 }
             }";
             PresetFile preset = Parse(text);
-            Assert.That(preset.Categories.Select(category => category.Id), Is.EqualTo(new[] { "performance" }));
+            // A recognized setting in the wrong category migrates to its current owner.
+            Assert.That(preset.Categories.Select(category => category.Id).ToArray(),
+                Is.EqualTo(new[] { "performance", "interface" }));
 
             var target = new AppSettings { lowLoadMode = false, windowWidth = 800 };
             Assert.That(SettingsPreset.Apply(preset, AllIds, target), Is.True);
@@ -200,7 +204,7 @@ namespace VRCast.Tests
             // 書いてある項目だけが変わり、消した項目（lowLoadMode）は今の値のまま、ほかのカテゴリ・除外のキーは反映されないこと
             Assert.That(target.trackerMode, Is.EqualTo(TrackerMode.Smooth));
             Assert.That(target.lowLoadMode, Is.False);
-            Assert.That(target.uiScale, Is.EqualTo(new AppSettings().uiScale));
+            Assert.That(target.uiScale, Is.EqualTo(2f));
             Assert.That(target.windowWidth, Is.EqualTo(800));
         }
 

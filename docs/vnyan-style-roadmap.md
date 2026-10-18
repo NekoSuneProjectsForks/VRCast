@@ -14,7 +14,8 @@ This roadmap describes a VRCast expansion inspired by the *types* of workflows a
 
 - [✗] Separate music/audio-reactive capture from the existing microphone lip-sync path.
 - [✗] Windows WASAPI loopback capture and device/latency diagnostics.
-- [✗] RMS, frequency bands, transient/beat detection, mappings, and audio-analysis tests.
+- [✓] Local RMS, basic four-band FFT, beat/onset approximation, optional settings, reusable buffers and deterministic EditMode tests authored; Unity test execution still pending.
+- [✗] Audio signal → user-configurable action mappings; full AudioLink shader semantics.
 
 ### Audio sources
 
@@ -33,7 +34,7 @@ This roadmap describes a VRCast expansion inspired by the *types* of workflows a
 
 ### AudioLink compatibility boundary
 
-VRCast renders an avatar in its own standalone Unity process. It cannot directly read the AudioLink texture generated inside an arbitrary VRChat world without an explicit bridge from that world. The practical first implementation is therefore an AudioLink-inspired analyser: read the selected audio source, calculate frequency-band signals, and expose those signals to VRCast's own avatar effects and mappings.
+VRCast renders an avatar in its own standalone Unity process. It cannot directly read the AudioLink texture generated inside an arbitrary VRChat world without an explicit bridge from that world. An initial opt-in microphone-driven local `_AudioTexture` now exposes approximate band data at the official row coordinates. It does not implement other AudioLink data passes; see [audio-reactive shaders](audio-reactive-shaders.md).
 
 If a later bridge is added, it should be optional and documented separately. Do not claim direct in-world AudioLink texture compatibility unless the texture/data is actually received.
 
@@ -104,6 +105,7 @@ The first milestone should play VMD motion on an avatar already loaded by VRCast
 - [✓] Added EditMode regression coverage for IPv6 endpoint rejection, invalid/non-finite float parameter sends, independent big-endian float payload bytes, and OSC boolean type tags; tests have been authored but not executed in Unity.
 - [✗] Unity EditMode tests/build and live VRChat testing have not been run. UDP send success only confirms the local socket accepted the datagram, not that VRChat received or applied it.
 - [✗] Head/body/hand provider mapping, per-avatar profiles, source conflict resolution, inbound OSC/VRCFT discovery, and skeletal tracking forwarding are not implemented. This is not a complete VRCFT or full-body tracking integration.
-- [✗] Audio capture/analysis, AudioLink-inspired mappings, VMD playback, trigger/action workflows, session server, and the wider tracking/provider integrations remain to be implemented and validated.
+- [✓] Microphone-driven four-band analyzer, basic AudioLink texture feed, independent physics/audio/session tick settings and diagnostic counters implemented in source; Unity EditMode and live shader/hair checks remain outstanding.
+- [✗] Independent Windows WASAPI music loopback, full AudioLink shader compatibility, VMD playback, trigger/action workflows, and wider tracking/provider integrations remain to be implemented and validated.
 
 Status legend: `[✓]` = implementation exists in source; `[✗]` = outstanding or not yet validated end-to-end. Do not describe a feature as complete based only on a roadmap or an isolated helper class.

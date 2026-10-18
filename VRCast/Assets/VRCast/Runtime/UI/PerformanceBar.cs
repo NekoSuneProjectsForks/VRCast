@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using System.Text;
 using UnityEngine;
@@ -5,6 +6,7 @@ using VRCast.Core;
 using VRCast.Platform;
 using VRCast.Rendering;
 using VRCast.Tracking;
+using VRCast.Remote;
 
 namespace VRCast.UI
 {
@@ -24,6 +26,7 @@ namespace VRCast.UI
         private readonly AppSettings _settings;
         private readonly IFaceTrackingProvider _tracker;
         private readonly TrackerProcess _trackerProcess;
+        private readonly SessionClient _sessionClient;
         private readonly ProcessCpuMeter _appCpu = new ProcessCpuMeter();
         private readonly ProcessCpuMeter _trackerCpu = new ProcessCpuMeter();
         private readonly FrameTiming[] _timings = new FrameTiming[1];
@@ -37,17 +40,23 @@ namespace VRCast.UI
         private int _windowFrame = -1;
         private double _gpuTotal;
         private int _gpuSamples;
+        private float _maxFrameMs;
+        private int _previousGen0Collections;
+        private long _sentWindowStart;
+        private long _receivedWindowStart;
 
         private string _text = "Measuring...";
 
         // 次の Layout で表示へ反映する計測結果（Repaint 中に文字を変えると、折り返しの高さと描画が食い違う）
         private string _pendingText;
 
-        public PerformanceBar(AppSettings settings, IFaceTrackingProvider tracker, TrackerProcess trackerProcess)
+        public PerformanceBar(AppSettings settings, IFaceTrackingProvider tracker, TrackerProcess trackerProcess,
+            SessionClient sessionClient)
         {
             _settings = settings;
             _tracker = tracker;
             _trackerProcess = trackerProcess;
+            _sessionClient = sessionClient;
         }
 
         public void Draw()
@@ -98,6 +107,7 @@ namespace VRCast.UI
             }
 
             float now = Time.unscaledTime;
+            _maxFrameMs = Mathf.Max(_maxFrameMs, Time.unscaledDeltaTime * 1000f);
             if (_windowFrame < 0)
             {
                 // CPU 使用率は差分で求めるため、期間の始めに基準を取っておく
@@ -115,7 +125,7 @@ namespace VRCast.UI
                 return;
             }
 
-            _pendingText = Format(frames / elapsed, elapsed * 1000f / frames);
+            _pendingText = Format(frames / elapsed, elapsed * 1000f / frames, elapsed);
             StartWindow(now);
         }
 
@@ -126,6 +136,12 @@ namespace VRCast.UI
             _windowFrame = Time.frameCount;
             _gpuTotal = 0.0;
             _gpuSamples = 0;
+            _maxFrameMs = 0f;
+            if (_sessionClient != null)
+            {
+                _sentWindowStart = _sessionClient.BytesSent;
+                _receivedWindowStart = _sessionClient.BytesReceived;
+            }
         }
 
         private float SampleTrackerCpu()
@@ -135,14 +151,22 @@ namespace VRCast.UI
             return processId != 0 ? _trackerCpu.Sample(processId) : -1f;
         }
 
-        private string Format(float fps, float frameMs)
+        private string Format(float fps, float frameMs, float elapsed)
         {
             _builder.Clear();
             _builder.Append("FPS ").Append(fps.ToString("F0", Invariant))
-                .Append(" (").Append(frameMs.ToString("F1", Invariant)).Append(" ms)");
+                .Append(" (").Append(frameMs.ToString("F1", Invariant)).Append(" ms avg, ")
+                .Append(_maxFrameMs.ToString("F1", Invariant)).Append(" ms max)");
 
             // VRCast 本体の CPU 使用率
             _builder.Append(Separator).Append("CPU ").Append(Percent(_appCpu.SampleCurrent()));
+            // Approximate managed heap and Gen0 collection count. CollectionCount
+            // is cumulative, so report the number during this sample window.
+            int gen0 = GC.CollectionCount(0);
+            _builder.Append(Separator).Append("Heap ")
+                .Append((GC.GetTotalMemory(false) / (1024f * 1024f)).ToString("F0", Invariant))
+                .Append(" MB, GC0 ").Append((gen0 - _previousGen0Collections).ToString(Invariant));
+            _previousGen0Collections = gen0;
 
             // GPU はフレーム時間に占める処理時間の割合（このアプリの描画負荷の目安。カード全体の使用率ではない）
             _builder.Append(Separator).Append("GPU ");
@@ -178,6 +202,14 @@ namespace VRCast.UI
             int trackingFps = _tracker.FramesPerSecond;
             _builder.Append(Separator).Append("Tracking ")
                 .Append(trackingFps > 0 ? trackingFps.ToString(Invariant) + " fps" : "-");
+            if (_sessionClient != null && _sessionClient.IsConnected)
+            {
+                float sentKbps = (_sessionClient.BytesSent - _sentWindowStart) / (1024f * elapsed);
+                float recvKbps = (_sessionClient.BytesReceived - _receivedWindowStart) / (1024f * elapsed);
+                _builder.Append(Separator).Append("Net ")
+                    .Append(sentKbps.ToString("F1", Invariant)).Append("/ ")
+                    .Append(recvKbps.ToString("F1", Invariant)).Append(" KB/s send/recv");
+            }
             return _builder.ToString();
         }
 

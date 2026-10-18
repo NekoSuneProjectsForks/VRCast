@@ -23,7 +23,7 @@ Source: [Original PR comment](https://github.com/NekoSuneProjectsForks/VRCast/pu
 - [ ] **Reduce jittery microphone lip-sync** — improve smoothing and/or expose mouth movement attack/release controls to reduce rapid, noisy changes.
 - [ ] **Microphone volume visualisation** — verify the input-level meter and microphone status feedback are clear and useful.
 - [ ] **Siusi​​u lip-sync compatibility** — investigate compatibility with SiuSiu lip-sync specifically.
-- [ ] **Audio-reactive avatar features** — explore audio-driven parameters such as volume, bass, mids, treble and beat detection. AudioLink-style analysis from captured audio is a possible first step; direct access to a VRChat world's AudioLink texture would require a suitable bridge.
+- [x] **Basic audio-reactive shader data** — local opt-in FFT analysis for RMS, four bands and basic beat events; 128x64 `_AudioTexture` with four AudioLink-compatible band rows, independent analysis rate and sensitivity. Live shader validation and full AudioLink passes remain open. See [audio-reactive shaders](docs/audio-reactive-shaders.md).
 ### Tracking and automation
 
 - [ ] **iPhone tracking plus webcam hand tracking** — verify the existing hybrid tracking modes and document setup/limitations.
@@ -104,7 +104,7 @@ Source: [Original PR comment](https://github.com/NekoSuneProjectsForks/VRCast/pu
 
 ### Avatar formats and motion
 
-- [ ] **VRM support:** investigate VRM 0.x, VRM 1.0, and VSFAvatar compatibility. Document supported components, expression mappings, materials, spring bones, and known limitations rather than assuming every model feature is interchangeable.
+- [x] **VRM compatibility audit:** code-path matrix for VRM 0.x, VRM 1.0, and unsupported VSFAvatar; expressions, materials, colliders, spring hair and limitations documented in [avatar compatibility](docs/avatar-compatibility.md). Live avatar testing remains open.
 - [ ] **MMD motion:** play VMD motion on compatible loaded avatars and optionally drive a camera; keep motion import/retargeting separate from PMX/PMD model import.
 - [ ] **Custom content SDK:** investigate an SDK for user-created props, items, worlds/scenes, and extensions, with versioning and clear sandbox boundaries.
 ### Tracking and props
@@ -117,8 +117,8 @@ Source: [Original PR comment](https://github.com/NekoSuneProjectsForks/VRCast/pu
 ### Audio and shaders
 
 - [ ] **Audio-based lip-sync:** configurable smoothing, sensitivity, attack/release, silence threshold, and vowel/viseme mapping to reduce jitter.
-- [ ] **Audio analysis:** expose volume and frequency bands (bass/mids/highs), peaks and beat/onset events to actions and plugins, with adjustable analysis rate.
-- [ ] **AudioLink shaders:** investigate compatibility with AudioLink-enabled materials. Determine whether the data is available from the current render/capture path; if not, use a supported bridge rather than promising direct access to arbitrary VRChat world textures.
+- [ ] **Audio analysis actions/plugins:** basic local RMS, four bands, beat detection and controls are implemented; exposing them to action graphs/plugins and WASAPI music loopback are still open.
+- [ ] **Full AudioLink shaders:** basic local four-band texture bridge is implemented; verify actual imported shaders and add remaining DFT/waveform/ColorChord/etc. passes. No direct bridge to VRChat worlds.
 ### Collaboration and external control
 
 - [x] **Multi-person sessions:** two or more users can join one room, exchange the supported actor pose and host scene events, and see connection/reconnection status. Remote avatars currently render as placeholders; full-body/face/animation replication remains open.

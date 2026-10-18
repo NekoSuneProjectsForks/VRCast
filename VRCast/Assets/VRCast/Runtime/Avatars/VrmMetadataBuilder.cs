@@ -317,7 +317,15 @@ namespace VRCast.Avatars
         {
             // 親 → 子でつながっている関節だけ（途中で切れていたらそこまで）
             List<VrmSpringJoint> joints = ConnectedJoints(root, spring.joints);
-            if (joints.Count < 2)
+            if (joints.Count == 0)
+            {
+                return null;
+            }
+
+            // VRM can specify just one spring joint. Simulate its tip only when a
+            // single, nonzero child offset makes the endpoint unambiguous.
+            Vector3 endpoint = Vector3.zero;
+            if (joints.Count == 1 && !TrySingleJointEndpoint(joints[0].transform, out endpoint))
             {
                 return null;
             }
@@ -326,6 +334,7 @@ namespace VRCast.Avatars
             {
                 rootPath = TransformPath.Of(joints[0].transform, root),
                 ignorePaths = IgnoredChildren(root, joints),
+                endpointPosition = endpoint,
                 multiChildType = PhysBoneData.MultiChildFirst,
                 stiffness = 0f,
                 gravityFalloff = 0f,
@@ -349,6 +358,26 @@ namespace VRCast.Avatars
 
             // 範囲外の値を含むものは使わない
             return data.Validate(int.MaxValue) == null ? data : null;
+        }
+
+        private static bool TrySingleJointEndpoint(Transform joint, out Vector3 endpoint)
+        {
+            endpoint = Vector3.zero;
+            // Multiple children may include accessories; avoid guessing which one
+            // is the spring tip. The actual child stays excluded from simulation.
+            if (joint.childCount != 1)
+            {
+                return false;
+            }
+
+            Vector3 offset = joint.GetChild(0).localPosition;
+            if (offset.sqrMagnitude < Epsilon * Epsilon || !PhysBoneSet.InRange(offset, PhysBoneSet.MaxOffset))
+            {
+                return false;
+            }
+
+            endpoint = offset;
+            return true;
         }
 
         private static List<VrmSpringJoint> ConnectedJoints(Transform root, List<VrmSpringJoint> joints)

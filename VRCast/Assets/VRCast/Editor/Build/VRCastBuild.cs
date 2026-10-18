@@ -54,6 +54,7 @@ namespace VRCast.Editor.Build
             "VRM10/MToon10", "UniGLTF/UniUnlit", "Standard",
             "Hidden/VRCast/BloomTonemap", "Hidden/VRCast/ContactShadow", "Hidden/VRCast/ScreenFx",
             "Hidden/VRCast/FXAA", "Skybox/Cubemap",
+            "VRCast/AudioReactive/Unlit",
         };
 
         [MenuItem("VRCast/Build/Windows x64")]

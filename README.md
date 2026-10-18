@@ -190,6 +190,8 @@ VRM（VRoid Studio などで作った `.vrm`）は書き出し不要で、その
 
 #### VRM を読み込む場合
 
+Supported VRM 0.x/1.0 features, spring-hair limitations, and the unsupported VSFAvatar format are documented in [Avatar compatibility](docs/avatar-compatibility.md). The optional microphone/Stereo-Mix driven four-band shader feed is described in [Basic AudioLink data](docs/audio-reactive-shaders.md); it does not reproduce full VRChat AudioLink. Performance checks and repeatable benchmarks: [Performance benchmark](docs/performance-benchmark.md).
+
 - VRM 0.x / 1.0 に対応（UniVRM で読み込み、0.x は 1.0 へ変換して扱う）。Avatar タブの状態に `VRM 1.0` / `VRM 0.x` と作者を表示する。
 - VRM の設定を `.vrcaster` の metadata と同じ形へ変換し、トラッキング・待機ポーズ・カメラ出力などは `.vrcaster` と同じように使える。
   - 感情（Happy / Angry / Sad / Relaxed / Surprised）と独自の表情 → 表情プリセット（Face & expressions タブ・ショートカットキー・トラッキングの表情反映）

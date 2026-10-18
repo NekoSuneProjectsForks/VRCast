@@ -343,12 +343,20 @@ namespace VRCast.Core
 
         // 揺れもの（PhysBone 近似）
         public bool physicsEnabled = true;
+        // 描画 FPS とは独立した揺れもののシミュレーション周波数
+        public int physicsRateHz = 60;
+        // Separate from FPS, OSC tracking, and audio analysis.
+        public int sessionNetworkHz = 20;
 
         // 小物のアニメーション（小物の Animator と FX の初期状態の動き）を VRChat と同じく自動で再生する
         public bool propAnimationsEnabled = true;
 
         // マイク音量によるリップシンク（デバイス名が空なら既定デバイス）
         public bool lipSyncEnabled = true;
+        // AudioLink の基本 4 バンドをマイク入力から作る（既定 OFF、口パクと独立）
+        public bool audioReactiveEnabled;
+        public int audioAnalysisHz = 30;
+        public float audioReactiveGain = 1f;
         public string microphoneDevice = string.Empty;
         public float micGain = 1f;
         public float micThreshold = 0.01f;
@@ -879,7 +887,7 @@ namespace VRCast.Core
 
             foreach (char c in name)
             {
-                if (c == '/' || char.IsControl(c))
+                if (c == '/' || c == '\\' || char.IsControl(c))
                 {
                     return string.Empty;
                 }
@@ -1178,6 +1186,10 @@ namespace VRCast.Core
             frameRateLimit = frameRateLimit <= 0
                 ? 0
                 : Mathf.Clamp(frameRateLimit, MinFrameRateLimit, MaxFrameRateLimit);
+            physicsRateHz = physicsRateHz <= 0 ? 60 : Mathf.Clamp(physicsRateHz, 15, 120);
+            sessionNetworkHz = sessionNetworkHz <= 0 ? 20 : Mathf.Clamp(sessionNetworkHz, 1, 60);
+            audioAnalysisHz = audioAnalysisHz <= 0 ? 30 : Mathf.Clamp(audioAnalysisHz, 5, 60);
+            audioReactiveGain = ClampOrDefault(audioReactiveGain, 0f, 8f, 1f);
 
             // 未知の優先度（リアルタイム等の手編集）は通常へ
             if (!Enum.IsDefined(typeof(ProcessPriority), processPriority))

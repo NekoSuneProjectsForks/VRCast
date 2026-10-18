@@ -48,6 +48,9 @@ namespace VRCast.Dynamics
             // カーブ適用済みのパラメーター
             public float Pull;
             public float Momentum;
+            public float StepMomentum;
+            public float StepPull;
+            public float StepStiffness;
             public float Stiffness;
             public float Gravity;
             public float Immobile;
@@ -64,6 +67,7 @@ namespace VRCast.Dynamics
         private readonly PhysBoneData _data;
         private readonly List<PhysBoneCollider> _colliders;
         private Vector3 _lastRootPosition;
+        private float _configuredStep;
 
         public int ParticleCount => _particles.Count;
 
@@ -99,6 +103,26 @@ namespace VRCast.Dynamics
 
                 // spring が大きいほど速度を保って揺れ続ける
                 particle.Momentum = Mathf.Lerp(MinMomentum, MaxMomentum, spring);
+            }
+        }
+
+        /// <summary>
+        /// The serialized coefficients were tuned for 60 Hz. Recalculate their
+        /// per-step equivalents only when the physics frequency changes, instead
+        /// of evaluating exponentials for every hair particle on every tick.
+        /// </summary>
+        public void ConfigureStep(float dt)
+        {
+            if (Mathf.Approximately(_configuredStep, dt)) return;
+            _configuredStep = dt;
+            float ratio = dt * 60f;
+            foreach (Particle particle in _particles)
+            {
+                particle.StepMomentum = Mathf.Pow(particle.Momentum, ratio);
+                float pull = Mathf.Clamp01(particle.Pull * PullStrength);
+                float stiffness = Mathf.Clamp01(particle.Stiffness * StiffnessStrength);
+                particle.StepPull = 1f - Mathf.Pow(1f - pull, ratio * ratio);
+                particle.StepStiffness = 1f - Mathf.Pow(1f - stiffness, ratio);
             }
         }
 
@@ -326,8 +350,8 @@ namespace VRCast.Dynamics
                 }
 
                 // 慣性（spring）と目標への引き戻し（pull）
-                Vector3 velocity = (particle.Position - particle.PreviousPosition) * particle.Momentum;
-                velocity += (target - particle.Position) * (particle.Pull * PullStrength);
+                Vector3 velocity = (particle.Position - particle.PreviousPosition) * particle.StepMomentum;
+                velocity += (target - particle.Position) * particle.StepPull;
 
                 // 重力。静止時に下を向いているほど gravityFalloff で弱める
                 float downness = Mathf.Max(0f, Vector3.Dot(restVector.normalized, Vector3.down));
@@ -339,7 +363,7 @@ namespace VRCast.Dynamics
                 particle.Position += velocity;
 
                 // 形状の維持（stiffness）
-                particle.Position = Vector3.Lerp(particle.Position, target, particle.Stiffness * StiffnessStrength);
+                particle.Position = Vector3.Lerp(particle.Position, target, particle.StepStiffness);
 
                 // 角度制限（静止方向からの円錐）
                 if (_data.limitType == PhysBoneData.LimitAngle)

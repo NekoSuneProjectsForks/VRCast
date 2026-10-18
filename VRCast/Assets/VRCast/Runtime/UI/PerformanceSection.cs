@@ -3,6 +3,9 @@ using UnityEngine;
 using VRCast.Core;
 using VRCast.Platform;
 using VRCast.Rendering;
+using VRCast.Avatars;
+using VRCast.Dynamics;
+using VRCast.Remote;
 
 namespace VRCast.UI
 {
@@ -28,6 +31,8 @@ namespace VRCast.UI
 
         private readonly AppSettings _settings;
         private readonly RenderingController _rendering;
+        private readonly AvatarSession _session;
+        private readonly SessionClient _sessionClient;
         private string _frameRateLimitInput = string.Empty;
         private bool _frameRateLimitInputInvalid;
 
@@ -36,15 +41,19 @@ namespace VRCast.UI
         private string _overlayError;
         private bool _overlayRestartPending;
 
-        public PerformanceSection(AppSettings settings, RenderingController rendering)
+        public PerformanceSection(AppSettings settings, RenderingController rendering, AvatarSession session, SessionClient sessionClient)
         {
             _settings = settings;
             _rendering = rendering;
+            _session = session;
+            _sessionClient = sessionClient;
         }
 
         public void Draw()
         {
             DrawPerformance();
+            DrawPhysics();
+            DrawNetwork();
             DrawCpu();
             DrawGpuCard();
             DrawNvidiaOverlay();
@@ -153,6 +162,39 @@ namespace VRCast.UI
             GuiControls.SubHeading(Loc.T("Intel (P-cores / E-cores)", "Intel（P コア / E コア）", "Intel (P 코어 / E 코어)",
                 "Intel（P 核 / E 核）", "Intel（P 核 / E 核）"));
             DrawHybridCores();
+            GuiControls.EndCard();
+        }
+
+        private void DrawPhysics()
+        {
+            GuiControls.BeginCard("Avatar physics");
+            _settings.physicsEnabled = GUILayout.Toggle(_settings.physicsEnabled, "Enable hair / accessory physics");
+            _settings.physicsRateHz = Mathf.RoundToInt(GuiControls.Slider(
+                "Physics update (Hz)", _settings.physicsRateHz, 15f, 120f));
+            GuiControls.Hint("Physics ticks independently of render FPS (up to 3 steps per frame). "
+                + "Higher rates use more CPU; low render FPS still limits simulation fidelity.");
+            if (_session != null && _session.Current != null && _session.Current.Instance != null)
+            {
+                PhysBoneSimulator simulator = _session.Current.Instance.GetComponent<PhysBoneSimulator>();
+                if (simulator != null)
+                {
+                    GuiControls.Hint($"PhysBone chains: {simulator.ChainCount} | particles: {simulator.ParticleCount} "
+                        + $"| steps/frame: {simulator.StepsLastFrame}");
+                }
+            }
+            GuiControls.EndCard();
+        }
+
+        private void DrawNetwork()
+        {
+            GuiControls.BeginCard("Shared session network");
+            _settings.sessionNetworkHz = Mathf.RoundToInt(GuiControls.Slider(
+                "Session update limit (Hz)", _settings.sessionNetworkHz, 1f, 60f));
+            GuiControls.Hint("Unchanged avatar states are skipped. Lower rates reduce bandwidth, "
+                + "but remote avatar motion can appear less fluid.");
+            if (_sessionClient != null && _sessionClient.IsConnected)
+                GuiControls.Hint($"Queued: {_sessionClient.PendingIncoming} | dropped in: "
+                    + $"{_sessionClient.DroppedIncoming} | dropped sends: {_sessionClient.DroppedOutgoing}");
             GuiControls.EndCard();
         }
 

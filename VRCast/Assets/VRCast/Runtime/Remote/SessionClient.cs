@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using VRCast.Avatars;
+using VRCast.Core;
 
 namespace VRCast.Remote
 {
@@ -33,6 +34,11 @@ namespace VRCast.Remote
         private readonly Dictionary<string, RemoteActor> _actors = new Dictionary<string, RemoteActor>();
         private readonly SemaphoreSlim _sendGate = new SemaphoreSlim(1, 1);
         private AvatarSession _avatars;
+        private AppSettings _settings;
+        private long _bytesSent;
+        private long _bytesReceived;
+        private int _droppedIncoming;
+        private int _droppedOutgoing;
         private ClientWebSocket _socket;
         private CancellationTokenSource _cancellation;
         private volatile bool _welcomed;
@@ -64,6 +70,11 @@ namespace VRCast.Remote
         public string ActiveRoom { get; private set; } = string.Empty;
         public string InviteTicket { get; private set; } = string.Empty;
         public int ParticipantCount => _actors.Count + (_welcomed ? 1 : 0);
+        public long BytesSent => Interlocked.Read(ref _bytesSent);
+        public long BytesReceived => Interlocked.Read(ref _bytesReceived);
+        public int DroppedIncoming => Volatile.Read(ref _droppedIncoming);
+        public int DroppedOutgoing => Volatile.Read(ref _droppedOutgoing);
+        public int PendingIncoming => _incoming.Count;
         public bool IsConnected => _welcomed;
         public bool IsHost { get; private set; }
         public bool IsBusy => _connecting || _roomCreation != null || _closingRoom;
@@ -81,7 +92,11 @@ namespace VRCast.Remote
             }
         }
 
-        public void Initialize(AvatarSession avatars) => _avatars = avatars;
+        public void Initialize(AvatarSession avatars, AppSettings settings = null)
+        {
+            _avatars = avatars;
+            _settings = settings;
+        }
 
         public void Join(string address, string room, string ticket, string displayName)
         {
@@ -309,21 +324,37 @@ namespace VRCast.Remote
                     // cannot keep the connection alive indefinitely.
                     using (var receiving = CancellationTokenSource.CreateLinkedTokenSource(cancellation))
                     {
-                        receiving.CancelAfter(_receiveIdleTimeout);
+                        // Unity's WebSocket implementation can ignore a cancelled
+                        // ReceiveAsync. Race every fragment against an explicit
+                        // deadline and abort the socket if it stops responding.
+                        Task idleDeadline = Task.Delay(_receiveIdleTimeout, receiving.Token);
                         int length = 0;
                         WebSocketReceiveResult result;
                         do
                         {
                             if (length == buffer.Length) throw new IOException("Session message too large");
-                            result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer, length, buffer.Length - length), receiving.Token)
-                                .ConfigureAwait(false);
+                            Task<WebSocketReceiveResult> receive = socket.ReceiveAsync(
+                                new ArraySegment<byte>(buffer, length, buffer.Length - length), receiving.Token);
+                            if (await Task.WhenAny(receive, idleDeadline).ConfigureAwait(false) != receive)
+                            {
+                                receiving.Cancel();
+                                socket.Abort();
+                                _ = receive.ContinueWith(completed => { _ = completed.Exception; },
+                                    TaskContinuationOptions.OnlyOnFaulted);
+                                cancellation.ThrowIfCancellationRequested();
+                                throw new TimeoutException("Session receive timed out");
+                            }
+                            result = await receive.ConfigureAwait(false);
                             if (result.MessageType == WebSocketMessageType.Close) return;
                             if (result.MessageType != WebSocketMessageType.Text) throw new IOException("Invalid frame type");
                             length += result.Count;
                         } while (!result.EndOfMessage);
                         if (generation != Volatile.Read(ref _generation)) return;
-                        if (_incoming.Count >= MaxIncomingQueue) _incoming.TryDequeue(out _);
+                        if (_incoming.Count >= MaxIncomingQueue && _incoming.TryDequeue(out _))
+                            Interlocked.Increment(ref _droppedIncoming);
+                        Interlocked.Add(ref _bytesReceived, length);
                         _incoming.Enqueue(new NetworkEvent(generation, Encoding.UTF8.GetString(buffer, 0, length)));
+                        receiving.Cancel(); // cancel the unused idle timer
                     }
                 }
             }
@@ -335,7 +366,7 @@ namespace VRCast.Remote
             catch (TimeoutException)
             {
                 if (!cancellation.IsCancellationRequested && generation == Volatile.Read(ref _generation))
-                    EnqueueStatus("Session connection timed out", generation);
+                    EnqueueStatus(handshakeCompleted ? "Session receive timed out" : "Session connection timed out", generation);
             }
             catch (Exception ex) when (ex is WebSocketException || ex is OperationCanceledException
                 || ex is IOException || ex is ObjectDisposedException || ex is HttpRequestException
@@ -369,6 +400,7 @@ namespace VRCast.Remote
                 byte[] data = Encoding.UTF8.GetBytes(json);
                 await socket.SendAsync(new ArraySegment<byte>(data), WebSocketMessageType.Text, true, cancellation)
                     .ConfigureAwait(false);
+                Interlocked.Add(ref _bytesSent, data.Length);
             }
             finally { _sendGate.Release(); }
         }
@@ -377,6 +409,7 @@ namespace VRCast.Remote
         {
             if (Interlocked.Increment(ref _pendingSends) > 4)
             {
+                Interlocked.Increment(ref _droppedOutgoing);
                 Interlocked.Decrement(ref _pendingSends);
                 return;
             }
@@ -527,7 +560,8 @@ namespace VRCast.Remote
 
         private void SendAvatarState()
         {
-            _nextSend = Time.unscaledTime + SendInterval;
+            _nextSend = Time.unscaledTime + (_settings == null
+                ? SendInterval : 1f / Mathf.Clamp(_settings.sessionNetworkHz, 1, 60));
             LoadedAvatar avatar = _avatars != null ? _avatars.Current : null;
             if (avatar == null || avatar.Instance == null) return;
             Transform transform = avatar.Instance.transform;

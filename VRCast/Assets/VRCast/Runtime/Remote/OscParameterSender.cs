@@ -99,7 +99,7 @@ namespace VRCast.Remote
             }
 
             parameterName = parameterName?.Trim();
-            if (string.IsNullOrEmpty(parameterName) || parameterName.IndexOf('/') >= 0)
+            if (!IsValidParameterName(parameterName))
             {
                 Status = "Invalid parameter name";
                 return false;
@@ -117,7 +117,7 @@ namespace VRCast.Remote
             }
 
             parameterName = parameterName?.Trim();
-            if (string.IsNullOrEmpty(parameterName) || parameterName.IndexOf('/') >= 0)
+            if (!IsValidParameterName(parameterName))
             {
                 Status = "Invalid parameter name";
                 return false;
@@ -134,8 +134,8 @@ namespace VRCast.Remote
             for (int i = 0; i < name.Length; i++)
             {
                 char c = name[i];
-                // OSC paths cannot contain nested path separators, NUL, or control characters.
-                if (c == '/' || char.IsControl(c))
+                // Keep the parameter as one unescaped OSC path segment.
+                if (c == '/' || c == '\\' || char.IsControl(c))
                     return false;
             }
 

@@ -123,7 +123,7 @@ namespace VRCast.UI
 
         public void Initialize(
             AvatarSession session, OrbitCameraController orbit, RenderingController rendering,
-            MicrophoneInput microphone, IFaceTrackingProvider tracker, TrackerProcess trackerProcess,
+            MicrophoneInput microphone, AudioReactiveBridge audioReactive, IFaceTrackingProvider tracker, TrackerProcess trackerProcess,
             TrackingSkeletonView skeleton, VirtualCameraOutput virtualCamera, SpoutOutput spout,
             FileDropReceiver fileDrop, UpdateChecker updates, RemoteControl remote, AppSettings settings, string initialPath,
             SessionClient sessionClient)
@@ -142,7 +142,7 @@ namespace VRCast.UI
             _animationSection = new AnimationSection(session, settings);
             _objectSection = new ObjectSection(session, settings);
             _particleSection = new ParticleSection(session, settings);
-            _faceSection = new FaceSection(session, microphone, settings);
+            _faceSection = new FaceSection(session, microphone, audioReactive, settings);
             _expressionSection = new ExpressionSection(session, settings);
             _shapeKeySection = new ShapeKeySection(session, settings);
             _perfectSyncEditor = new PerfectSyncEditor(session, orbit, settings);
@@ -162,7 +162,7 @@ namespace VRCast.UI
             {
                 remote.AvatarSwitchBlocker = () => _perfectSyncEditor.IsOpen ? "the perfect sync editor is open" : null;
             }
-            _performanceSection = new PerformanceSection(settings, rendering);
+            _performanceSection = new PerformanceSection(settings, rendering, session, sessionClient);
             _presetSection = new PresetSection(settings, ReapplySettings);
             _settingsSection = new SettingsSection(settings, rendering, ResetAllSettings, _presetSection);
             _infoSection = new InfoSection(settings, updates, new CreditsSection(),
@@ -177,7 +177,7 @@ namespace VRCast.UI
             var autoReset = gameObject.AddComponent<AutoResetScheduler>();
             autoReset.Initialize(session, settings);
             _autoResetSection = new AutoResetSection(autoReset, settings);
-            _performanceBar = new PerformanceBar(settings, tracker, trackerProcess);
+            _performanceBar = new PerformanceBar(settings, tracker, trackerProcess, sessionClient);
 
             // ウィンドウへのドロップで読み込む
             _fileDrop.FilesDropped += OnFilesDropped;

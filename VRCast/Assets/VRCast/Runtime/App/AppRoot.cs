@@ -101,6 +101,8 @@ namespace VRCast.App
             // リップシンク用のマイク入力（アプリ全体で 1 つ）
             _microphone = gameObject.AddComponent<MicrophoneInput>();
             _microphone.Initialize(_settings);
+            var audioReactive = gameObject.AddComponent<AudioReactiveBridge>();
+            audioReactive.Initialize(_microphone, _settings);
 
             // トラッキング受信（顔・腕・手、アプリ全体で 1 つ）
             _tracker = gameObject.AddComponent<TrackingReceiver>();
@@ -127,12 +129,12 @@ namespace VRCast.App
 
             // Optional shared-room client. Only active after the user explicitly connects.
             var sessionClient = gameObject.AddComponent<SessionClient>();
-            sessionClient.Initialize(_session);
+            sessionClient.Initialize(_session, _settings);
 
             // 操作パネル
             _initialAvatarPath = ResolveInitialAvatarPath();
             gameObject.AddComponent<MainPanel>().Initialize(
-                _session, _orbit, _rendering, _microphone, _tracker, trackerProcess, _skeleton, virtualCamera, spout,
+                _session, _orbit, _rendering, _microphone, audioReactive, _tracker, trackerProcess, _skeleton, virtualCamera, spout,
                 fileDrop, updates, remote, _settings, _initialAvatarPath, sessionClient);
         }
 

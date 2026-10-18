@@ -25,8 +25,11 @@ namespace VRCast.Dynamics
         private AppSettings _settings;
         private float _accumulator;
         private bool _wasEnabled;
+        private int _particles;
 
         public int ChainCount => _chains.Count;
+        public int ParticleCount => _particles;
+        public int StepsLastFrame { get; private set; }
 
         public bool IsAvailable => _chains.Count > 0;
 
@@ -69,6 +72,7 @@ namespace VRCast.Dynamics
 
             VRCastLog.Info(LogCategory,
                 $"Built {_chains.Count}/{set.bones.Length} chains, {particles} particles, {_colliders.Count} colliders.");
+            _particles = particles;
 
             // スケール起因の不具合を切り分けるため、ワールド空間でのコライダー寸法を記録
             foreach (PhysBoneCollider collider in _colliders)
@@ -103,6 +107,7 @@ namespace VRCast.Dynamics
 
         private void LateUpdate()
         {
+            StepsLastFrame = 0;
             // 未初期化・対象なし
             if (_settings == null || !IsAvailable)
             {
@@ -117,6 +122,8 @@ namespace VRCast.Dynamics
                     _chains.ForEach(chain => chain.RestoreRestPose());
                     _wasEnabled = false;
                 }
+
+                _accumulator = 0f;
 
                 return;
             }
@@ -134,18 +141,23 @@ namespace VRCast.Dynamics
             _colliders.ForEach(collider => collider.UpdateWorld());
 
             // 経過時間分だけ固定ステップで進める（上限を超えた分は捨てる）
-            _accumulator += Time.deltaTime;
+            float stepSeconds = 1f / Mathf.Clamp(_settings.physicsRateHz, 15, 120);
+            foreach (PhysBoneChain chain in _chains) chain.ConfigureStep(stepSeconds);
+            // Drop excessively old time under stalls; do not build a physics backlog.
+            _accumulator = Mathf.Min(_accumulator + Time.deltaTime, stepSeconds * MaxSubSteps);
             int steps = 0;
-            while (_accumulator >= TimeStep && steps < MaxSubSteps)
+            while (_accumulator >= stepSeconds && steps < MaxSubSteps)
             {
                 foreach (PhysBoneChain chain in _chains)
                 {
-                    chain.Step(TimeStep);
+                    chain.Step(stepSeconds);
                 }
 
-                _accumulator -= TimeStep;
+                _accumulator -= stepSeconds;
                 steps++;
             }
+
+            StepsLastFrame = steps;
 
             if (steps == MaxSubSteps)
             {

@@ -78,6 +78,45 @@ namespace VRCast.Tests
         }
 
         [UnityTest]
+        public IEnumerator IncompleteMessageCannotKeepSocketAlive()
+        {
+            using (var server = new SilentWebSocketServer(true, true))
+            {
+                var clientObject = new GameObject("Fragmented session client");
+                SessionClient client = clientObject.AddComponent<SessionClient>();
+                try
+                {
+                    typeof(SessionClient).GetField("_receiveIdleTimeout",
+                        BindingFlags.Instance | BindingFlags.NonPublic)
+                        .SetValue(client, TimeSpan.FromMilliseconds(500));
+                    client.Join(server.Address, "ABCDEF", "test-ticket", "Tester");
+                    DateTime deadline = DateTime.UtcNow.AddSeconds(5);
+                    while (!client.IsConnected && DateTime.UtcNow < deadline)
+                    {
+                        Tick(client);
+                        yield return null;
+                    }
+                    Assert.That(client.IsConnected, Is.True, client.Status);
+
+                    deadline = DateTime.UtcNow.AddSeconds(8);
+                    while (server.Admissions < 2 && DateTime.UtcNow < deadline)
+                    {
+                        Tick(client);
+                        yield return null;
+                    }
+                    Assert.That(server.Admissions, Is.GreaterThanOrEqualTo(2),
+                        "An unfinished WebSocket text message prevented reconnect");
+                    Assert.That(server.Error, Is.Null);
+                }
+                finally
+                {
+                    client.Disconnect();
+                    UnityEngine.Object.DestroyImmediate(clientObject);
+                }
+            }
+        }
+
+        [UnityTest]
         public IEnumerator IncompleteWebSocketHandshakeTimesOut()
         {
             using (var server = new SilentWebSocketServer(false))
@@ -118,6 +157,7 @@ namespace VRCast.Tests
                 new System.Collections.Generic.List<TcpClient>();
             private readonly CancellationTokenSource _stop = new CancellationTokenSource();
             private readonly bool _answerHandshake;
+            private readonly bool _leaveFragmentOpen;
             private volatile bool _disposed;
             private int _admissions;
 
@@ -125,9 +165,10 @@ namespace VRCast.Tests
             public int Admissions => Volatile.Read(ref _admissions);
             public string Error { get; private set; }
 
-            public SilentWebSocketServer(bool answerHandshake = true)
+            public SilentWebSocketServer(bool answerHandshake = true, bool leaveFragmentOpen = false)
             {
                 _answerHandshake = answerHandshake;
+                _leaveFragmentOpen = leaveFragmentOpen;
                 _listener.Start();
                 Address = "http://127.0.0.1:" + ((IPEndPoint)_listener.LocalEndpoint).Port;
                 Task.Run(AcceptLoop);
@@ -181,6 +222,14 @@ namespace VRCast.Tests
                         Buffer.BlockCopy(payload, 0, frame, 2, payload.Length);
                         Interlocked.Increment(ref _admissions);
                         await stream.WriteAsync(frame, 0, frame.Length);
+                        if (_leaveFragmentOpen)
+                        {
+                            // First fragment of a text message, without FIN or
+                            // a continuation frame. The receive watchdog must
+                            // cover the complete message, not only first bytes.
+                            byte[] incomplete = { 0x01, 0x01, (byte)'x' };
+                            await stream.WriteAsync(incomplete, 0, incomplete.Length);
+                        }
                     }
                 }
                 catch (Exception ex)
