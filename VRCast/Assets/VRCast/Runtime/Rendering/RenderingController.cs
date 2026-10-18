@@ -537,6 +537,21 @@ namespace VRCast.Rendering
             }
         }
 
+        /// <summary>
+        /// Explicit frame-rate cap. Zero follows the low-load mode defaults (30/60 FPS).
+        /// </summary>
+        public int FrameRateLimit
+        {
+            get => _settings.frameRateLimit;
+            set
+            {
+                _settings.frameRateLimit = value <= 0
+                    ? 0
+                    : Mathf.Clamp(value, AppSettings.MinFrameRateLimit, AppSettings.MaxFrameRateLimit);
+                ApplyFrameRate();
+            }
+        }
+
         public int Width => Screen.width;
         public int Height => Screen.height;
 
@@ -760,9 +775,12 @@ namespace VRCast.Rendering
 
         private void ApplyFrameRate()
         {
-            // 垂直同期に任せるとモニターのリフレッシュレート（144Hz 等）で描画するため、止めて上限を明示する
+            // 配信・ゲームと併用するときに GPU を使い切らないよう、VSync ではなく明示的な上限を使う。
+            // 0 は従来どおり軽量モードで 30 FPS、通常で 60 FPS。
             QualitySettings.vSyncCount = 0;
-            Application.targetFrameRate = _settings.lowLoadMode ? LowLoadFrameRate : NormalFrameRate;
+            Application.targetFrameRate = _settings.frameRateLimit > 0
+                ? _settings.frameRateLimit
+                : (_settings.lowLoadMode ? LowLoadFrameRate : NormalFrameRate);
         }
 
         private void ApplyBackground()

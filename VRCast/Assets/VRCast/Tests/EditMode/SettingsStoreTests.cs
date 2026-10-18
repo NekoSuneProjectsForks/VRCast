@@ -31,6 +31,131 @@ namespace VRCast.Tests
             }
         }
 
+        [TestCase("Bad/Name")]
+        [TestCase("Bad\\0Name")]
+        [TestCase("Bad\\nName")]
+        [TestCase("Bad\\tName")]
+        [TestCase("Bad\\rName")]
+        public void OscMappingSanitize_RejectsInvalidParameterCharacters(string invalidName)
+        {
+            var settings = new AppSettings
+            {
+                oscParameterEyeOpenLeft = invalidName,
+                oscBlendShapeMappings = new System.Collections.Generic.List<OscBlendShapeParameterMapping>
+                {
+                    new OscBlendShapeParameterMapping
+                    {
+                        blendShapeName = "jawOpen",
+                        parameterName = invalidName
+                    }
+                }
+            };
+            settings.Sanitize();
+
+            Assert.That(settings.oscParameterEyeOpenLeft, Is.Empty);
+            Assert.That(settings.oscBlendShapeMappings.Count, Is.EqualTo(1));
+            Assert.That(settings.oscBlendShapeMappings[0].parameterName, Is.Empty);
+        }
+
+        [TestCase("invalid-host", "127.0.0.1")]
+        [TestCase("::1", "127.0.0.1")]
+        [TestCase("", "127.0.0.1")]
+        [TestCase(" 127.0.0.1 ", "127.0.0.1")]
+        [TestCase("192.168.1.10", "192.168.1.10")]
+        public void OscOutputAddress_SanitizesToValidIpv4(string input, string expected)
+        {
+            var settings = new AppSettings { oscParameterOutputAddress = input };
+            settings.Sanitize();
+            Assert.That(settings.oscParameterOutputAddress, Is.EqualTo(expected));
+        }
+
+        [TestCase(-100, 30)]
+        [TestCase(0, 30)]
+        [TestCase(1, 1)]
+        [TestCase(15, 15)]
+        [TestCase(30, 30)]
+        [TestCase(60, 60)]
+        [TestCase(61, 60)]
+        [TestCase(999, 60)]
+        public void OscOutputRate_SanitizesToSupportedFrequency(int input, int expected)
+        {
+            var settings = new AppSettings { oscParameterOutputRate = input };
+            settings.Sanitize();
+            Assert.That(settings.oscParameterOutputRate, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void OscOutputRate_SurvivesSettingsStoreRoundTrip()
+        {
+            _store.Save(new AppSettings { oscParameterOutputRate = 45 });
+            AppSettings loaded = _store.Load();
+            Assert.That(loaded.oscParameterOutputRate, Is.EqualTo(45));
+        }
+
+        [Test]
+        public void Defaults_OscParameterOutputIsDisabledAndUsesLocalhost()
+        {
+            var settings = new AppSettings();
+            Assert.That(settings.oscParameterOutputEnabled, Is.False);
+            Assert.That(settings.oscParameterOutputAddress, Is.EqualTo("127.0.0.1"));
+            Assert.That(settings.oscParameterOutputPort, Is.EqualTo(9000));
+        }
+
+        [TestCase(0, 1)]
+        [TestCase(70000, 65535)]
+        public void Load_OscParameterOutputPort_IsClamped(int saved, int expected)
+        {
+            _store.Save(new AppSettings { oscParameterOutputPort = saved });
+            AppSettings settings = _store.Load();
+            Assert.That(settings.oscParameterOutputPort, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Defaults_OscFaceMappingsAreDisabledUntilConfigured()
+        {
+            var settings = new AppSettings();
+            Assert.That(settings.oscParameterEyeOpenLeft, Is.Empty);
+            Assert.That(settings.oscParameterEyeOpenRight, Is.Empty);
+            Assert.That(settings.oscParameterMouthOpen, Is.Empty);
+            Assert.That(settings.oscParameterSmile, Is.Empty);
+            Assert.That(settings.oscParameterEyeBlinkLeft, Is.Empty);
+            Assert.That(settings.oscParameterEyeBlinkRight, Is.Empty);
+            Assert.That(settings.oscParameterJawOpen, Is.Empty);
+            Assert.That(settings.oscParameterMouthSmileLeft, Is.Empty);
+            Assert.That(settings.oscParameterMouthSmileRight, Is.Empty);
+            Assert.That(settings.oscParameterBrowInnerUp, Is.Empty);
+        }
+
+        [Test]
+        public void Load_OscFaceMappingNames_TrimsAndRejectsPathSeparators()
+        {
+            _store.Save(new AppSettings
+            {
+                oscParameterEyeOpenLeft = " EyeLeft ",
+                oscParameterEyeOpenRight = "Invalid/Path",
+                oscParameterMouthOpen = null,
+                oscParameterSmile = "Smile",
+                oscParameterEyeBlinkLeft = "BlinkLeft",
+                oscParameterEyeBlinkRight = "Bad/Name",
+                oscParameterJawOpen = " JawOpen ",
+                oscParameterMouthSmileLeft = "SmileLeft",
+                oscParameterMouthSmileRight = null,
+                oscParameterBrowInnerUp = "BrowUp"
+            });
+
+            AppSettings settings = _store.Load();
+            Assert.That(settings.oscParameterEyeOpenLeft, Is.EqualTo("EyeLeft"));
+            Assert.That(settings.oscParameterEyeOpenRight, Is.Empty);
+            Assert.That(settings.oscParameterMouthOpen, Is.Empty);
+            Assert.That(settings.oscParameterSmile, Is.EqualTo("Smile"));
+            Assert.That(settings.oscParameterEyeBlinkLeft, Is.EqualTo("BlinkLeft"));
+            Assert.That(settings.oscParameterEyeBlinkRight, Is.Empty);
+            Assert.That(settings.oscParameterJawOpen, Is.EqualTo("JawOpen"));
+            Assert.That(settings.oscParameterMouthSmileLeft, Is.EqualTo("SmileLeft"));
+            Assert.That(settings.oscParameterMouthSmileRight, Is.Empty);
+            Assert.That(settings.oscParameterBrowInnerUp, Is.EqualTo("BrowUp"));
+        }
+
         [Test]
         public void Load_MissingFile_ReturnsDefaults()
         {
@@ -759,6 +884,86 @@ namespace VRCast.Tests
             // 範囲外のパネルの不透明度は範囲の端へ丸められること（0 で見えなくならない）
             AppSettings settings = _store.Load();
             Assert.That(settings.uiOpacity, Is.EqualTo(expected));
+        }
+
+        [TestCase(0, 0)]
+        [TestCase(-1, 0)]
+        [TestCase(5, AppSettings.MinFrameRateLimit)]
+        [TestCase(999, AppSettings.MaxFrameRateLimit)]
+        public void FrameRateLimit_Sanitize_ClampsAndAllowsAuto(int configured, int expected)
+        {
+            var settings = new AppSettings { frameRateLimit = configured };
+
+            // 0 は軽量モードに応じた自動設定。範囲外の値は安全な上限へ補正する。
+            settings.Sanitize();
+
+            Assert.That(settings.frameRateLimit, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void OscBlendShapeMappings_SanitizeNamesAndDropDuplicateChannels()
+        {
+            var settings = new AppSettings
+            {
+                oscBlendShapeMappings = new System.Collections.Generic.List<OscBlendShapeParameterMapping>
+                {
+                    new OscBlendShapeParameterMapping { blendShapeName = " jawOpen ", parameterName = " JawOpen " },
+                    new OscBlendShapeParameterMapping { blendShapeName = "jawOpen", parameterName = "Duplicate" },
+                    new OscBlendShapeParameterMapping { blendShapeName = "eyeBlinkLeft", parameterName = "Bad/Path" },
+                    new OscBlendShapeParameterMapping { blendShapeName = "eyeBlinkRight", parameterName = "JawOpen" },
+                    null,
+                },
+            };
+
+            settings.Sanitize();
+
+            Assert.That(settings.oscBlendShapeMappings.Count, Is.EqualTo(3));
+            Assert.That(settings.oscBlendShapeMappings[0].blendShapeName, Is.EqualTo("jawOpen"));
+            Assert.That(settings.oscBlendShapeMappings[0].parameterName, Is.EqualTo("JawOpen"));
+            Assert.That(settings.oscBlendShapeMappings[1].parameterName, Is.Empty);
+            Assert.That(settings.oscBlendShapeMappings[2].parameterName, Is.Empty, "duplicate destination should be disabled");
+        }
+
+        [Test]
+        public void OscBlendShapeMapping_RuntimeCache_IsNotSerialized()
+        {
+            var mapping = new OscBlendShapeParameterMapping
+            {
+                blendShapeName = "jawOpen",
+                parameterName = "JawOpen",
+                cachedBlendShapeName = "jawOpen",
+                cachedBlendShapeIndex = 24,
+            };
+
+            string json = JsonUtility.ToJson(mapping);
+
+            // Runtime-only lookup state must not leak into settings.json.
+            Assert.That(json, Does.Contain("\"blendShapeName\""));
+            Assert.That(json, Does.Contain("\"parameterName\""));
+            Assert.That(json, Does.Not.Contain("cachedBlendShapeName"));
+            Assert.That(json, Does.Not.Contain("cachedBlendShapeIndex"));
+        }
+
+        [Test]
+        public void OscBlendShapeMappings_SanitizeDestinationsAgainstNamedMappings()
+        {
+            var settings = new AppSettings
+            {
+                oscParameterEyeOpenLeft = "Shared",
+                oscParameterJawOpen = " Shared ",
+                oscBlendShapeMappings = new System.Collections.Generic.List<OscBlendShapeParameterMapping>
+                {
+                    new OscBlendShapeParameterMapping { blendShapeName = "mouthFunnel", parameterName = "Shared" },
+                    new OscBlendShapeParameterMapping { blendShapeName = "mouthPucker", parameterName = "Unique" },
+                },
+            };
+
+            settings.Sanitize();
+
+            Assert.That(settings.oscParameterEyeOpenLeft, Is.EqualTo("Shared"));
+            Assert.That(settings.oscParameterJawOpen, Is.Empty);
+            Assert.That(settings.oscBlendShapeMappings[0].parameterName, Is.Empty);
+            Assert.That(settings.oscBlendShapeMappings[1].parameterName, Is.EqualTo("Unique"));
         }
     }
 }

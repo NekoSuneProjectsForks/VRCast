@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using UnityEngine;
 using VRCast.Core;
+using VRCast.Remote;
 
 namespace VRCast.Tracking
 {
@@ -19,6 +21,12 @@ namespace VRCast.Tracking
         private readonly TrackingChannel _camera = new TrackingChannel();
 
         private AppSettings _settings;
+        private readonly OscParameterSender _oscOutput = new OscParameterSender();
+        private readonly HashSet<string> _oscParametersSentThisFrame = new HashSet<string>();
+        private string _oscOutputAddress;
+        private int _oscOutputPort = -1;
+        private float _nextOscOutputTime;
+        private float _nextOscOutputRetryTime;
 
         // 併用中なら true（Update で設定から決める）
         private bool _hybrid;
@@ -72,6 +80,8 @@ namespace VRCast.Tracking
                 return;
             }
 
+            UpdateOscOutputConnection();
+
             // 無効化されたら閉じ、再有効化時はすぐ開けるようにする
             if (!_settings.trackingEnabled)
             {
@@ -111,6 +121,122 @@ namespace VRCast.Tracking
                 ? $"{_main.BoundSource}: {_main.Status} / MediaPipe: {_camera.Status}"
                   + (UsesCameraFace ? " (using the webcam face)" : string.Empty)
                 : _main.Status;
+
+            UpdateOscFaceParameters();
+        }
+
+        private void UpdateOscOutputConnection()
+        {
+            if (!_settings.oscParameterOutputEnabled)
+            {
+                _oscOutput.Stop();
+                _oscOutputAddress = null;
+                _oscOutputPort = -1;
+                return;
+            }
+
+            bool sameEndpoint = _oscOutputAddress == _settings.oscParameterOutputAddress
+                && _oscOutputPort == _settings.oscParameterOutputPort;
+            if (sameEndpoint && (_oscOutput.IsEnabled || Time.unscaledTime < _nextOscOutputRetryTime))
+            {
+                return;
+            }
+
+            _oscOutput.Start(_settings.oscParameterOutputAddress, _settings.oscParameterOutputPort);
+            _oscOutputAddress = _settings.oscParameterOutputAddress;
+            _oscOutputPort = _settings.oscParameterOutputPort;
+            _nextOscOutputRetryTime = Time.unscaledTime + 3f;
+        }
+
+        private void UpdateOscFaceParameters()
+        {
+            if (!_oscOutput.IsEnabled || Time.unscaledTime < _nextOscOutputTime
+                || !TryGetFrame(out FaceTrackingFrame frame))
+            {
+                return;
+            }
+
+            // Bound the network update rate so tracking/render FPS changes do not flood the OSC receiver.
+            int outputRate = Mathf.Clamp(_settings.oscParameterOutputRate <= 0 ? 30 : _settings.oscParameterOutputRate, 1, 60);
+            _nextOscOutputTime = Time.unscaledTime + (1f / outputRate);
+            _oscParametersSentThisFrame.Clear();
+            SendMappedFloat(_settings.oscParameterEyeOpenLeft, frame.EyeOpenLeft);
+            SendMappedFloat(_settings.oscParameterEyeOpenRight, frame.EyeOpenRight);
+            SendMappedFloat(_settings.oscParameterMouthOpen, frame.MouthOpen);
+            if (frame.HasExpression)
+            {
+                SendMappedFloat(_settings.oscParameterSmile, frame.Expression.Smile);
+            }
+
+            // ARKit-compatible providers expose the original blendshape vector; map selected channels directly.
+            float[] blendShapes = frame.BlendShapes;
+            if (blendShapes != null)
+            {
+                SendBlendShape(_settings.oscParameterEyeBlinkLeft, blendShapes, ArKitFace.EyeBlinkLeft);
+                SendBlendShape(_settings.oscParameterEyeBlinkRight, blendShapes, ArKitFace.EyeBlinkRight);
+                SendBlendShape(_settings.oscParameterJawOpen, blendShapes, ArKitFace.JawOpen);
+                SendBlendShape(_settings.oscParameterMouthSmileLeft, blendShapes, ArKitFace.MouthSmileLeft);
+                SendBlendShape(_settings.oscParameterMouthSmileRight, blendShapes, ArKitFace.MouthSmileRight);
+                SendBlendShape(_settings.oscParameterBrowInnerUp, blendShapes, ArKitFace.BrowInnerUp);
+                SendConfiguredBlendShapes(blendShapes);
+            }
+        }
+
+        private void SendConfiguredBlendShapes(float[] blendShapes)
+        {
+            var mappings = _settings.oscBlendShapeMappings;
+            if (mappings == null)
+            {
+                return;
+            }
+
+            foreach (OscBlendShapeParameterMapping mapping in mappings)
+            {
+                if (mapping == null || string.IsNullOrWhiteSpace(mapping.parameterName)
+                    || string.IsNullOrWhiteSpace(mapping.blendShapeName))
+                {
+                    continue;
+                }
+
+                // Cache the fixed ARKit channel index per mapping. The mapping UI can change
+                // names at runtime, so refresh only when its source name changes.
+                if (!string.Equals(mapping.cachedBlendShapeName, mapping.blendShapeName, System.StringComparison.Ordinal))
+                {
+                    mapping.cachedBlendShapeName = mapping.blendShapeName;
+                    mapping.cachedBlendShapeIndex = System.Array.IndexOf(ArKitFace.BlendShapeNames, mapping.blendShapeName);
+                }
+
+                SendBlendShape(mapping.parameterName, blendShapes, mapping.cachedBlendShapeIndex);
+            }
+        }
+
+        private void SendBlendShape(string parameterName, float[] blendShapes, int index)
+        {
+            if (index >= 0 && index < blendShapes.Length)
+            {
+                SendMappedFloat(parameterName, blendShapes[index]);
+            }
+        }
+
+        private void SendMappedFloat(string parameterName, float value)
+        {
+            if (string.IsNullOrWhiteSpace(parameterName))
+            {
+                return;
+            }
+
+            string name = parameterName.Trim();
+            // Multiple channels targeting the same VRChat parameter would overwrite each other in one update.
+            // Keep the first configured source for this update instead of sending conflicting values.
+            if (float.IsNaN(value) || float.IsInfinity(value) || name.IndexOf('/') >= 0)
+            {
+                return;
+            }
+
+            if (_oscParametersSentThisFrame.Add(name))
+            {
+                _oscOutput.SendFloat(name, Mathf.Clamp01(value));
+            }
         }
 
         private void OnDestroy()
@@ -118,6 +244,7 @@ namespace VRCast.Tracking
             // 終了時にポートを解放
             _main.Close("Stopped");
             _camera.Close("Stopped");
+            _oscOutput.Dispose();
         }
     }
 }

@@ -2,6 +2,8 @@
 
 小さな縦切りで進める: 設計 → 小さな実装 → ビルド → 確認 → 次の実装。
 
+VNyan-style expansion (configurable FPS cap, audio-reactive avatar controls, MMD/VMD playback, and triggers): [docs/vnyan-style-roadmap.md](vnyan-style-roadmap.md).
+
 | # | 名称 | 状態 |
 | :--- | :--- | :--- |
 | 0 | プロジェクト基盤 | 完了 |

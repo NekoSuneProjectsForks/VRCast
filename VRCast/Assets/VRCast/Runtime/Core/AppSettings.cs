@@ -9,6 +9,17 @@ namespace VRCast.Core
     /// フィールド追加は後方互換（欠けている項目は既定値）なので version は上げない。
     /// </summary>
     [Serializable]
+    public class OscBlendShapeParameterMapping
+    {
+        public string blendShapeName = string.Empty;
+        public string parameterName = string.Empty;
+
+        // Runtime-only cache; JsonUtility persists only the user-facing mapping fields.
+        [NonSerialized] public string cachedBlendShapeName;
+        [NonSerialized] public int cachedBlendShapeIndex = -1;
+    }
+
+    [Serializable]
     public class AppSettings
     {
         // 設定フォーマットのバージョン、互換性のない変更時に増やす
@@ -53,6 +64,10 @@ namespace VRCast.Core
         public const float MaxScreenRimPower = 16f;
         public const float MaxSharpen = 2f;
         public const float MaxVignette = 2f;
+
+        // 描画フレームレート上限（0 = 軽量モードに応じて自動、15〜360 = 明示指定）
+        public const int MinFrameRateLimit = 15;
+        public const int MaxFrameRateLimit = 360;
 
         // マイク感度・しきい値の範囲
         public const float MinMicGain = 0.1f;
@@ -178,6 +193,9 @@ namespace VRCast.Core
         // 軽量モード（描画のフレームレートとトラッカーの処理回数を下げ、ゲーム・OBS と同時に使うときの負荷を減らす）。
         // 配信ではゲーム・OBS と併用することが多いため既定は ON
         public bool lowLoadMode = true;
+
+        // 描画 FPS の上限。0 は自動（軽量モード ON = 30、OFF = 60）。15〜360 は指定値。
+        public int frameRateLimit;
 
         // パネルの一番下に動作状況（fps・CPU・GPU・トラッキング）を表示するか
         public bool showPerformanceStats = true;
@@ -325,12 +343,20 @@ namespace VRCast.Core
 
         // 揺れもの（PhysBone 近似）
         public bool physicsEnabled = true;
+        // 描画 FPS とは独立した揺れもののシミュレーション周波数
+        public int physicsRateHz = 60;
+        // Separate from FPS, OSC tracking, and audio analysis.
+        public int sessionNetworkHz = 20;
 
         // 小物のアニメーション（小物の Animator と FX の初期状態の動き）を VRChat と同じく自動で再生する
         public bool propAnimationsEnabled = true;
 
         // マイク音量によるリップシンク（デバイス名が空なら既定デバイス）
         public bool lipSyncEnabled = true;
+        // AudioLink の基本 4 バンドをマイク入力から作る（既定 OFF、口パクと独立）
+        public bool audioReactiveEnabled;
+        public int audioAnalysisHz = 30;
+        public float audioReactiveGain = 1f;
         public string microphoneDevice = string.Empty;
         public float micGain = 1f;
         public float micThreshold = 0.01f;
@@ -454,6 +480,26 @@ namespace VRCast.Core
         public bool remoteControlEnabled;
         public int remoteOscPort = DefaultRemoteOscPort;
         public int remoteHttpPort = DefaultRemoteHttpPort;
+
+        // VRChat OSC avatar-parameter output (separate from the inbound remote-control listener).
+        public bool oscParameterOutputEnabled;
+        public string oscParameterOutputAddress = "127.0.0.1";
+        public int oscParameterOutputPort = 9000;
+        // Independent face OSC send rate; keep this lower than high-FPS rendering to avoid UDP flooding.
+        public int oscParameterOutputRate = 30;
+        // Optional face-frame-to-avatar-parameter mappings. Empty names disable individual mappings.
+        public string oscParameterEyeOpenLeft = string.Empty;
+        public string oscParameterEyeOpenRight = string.Empty;
+        public string oscParameterMouthOpen = string.Empty;
+        public string oscParameterSmile = string.Empty;
+        public string oscParameterEyeBlinkLeft = string.Empty;
+        public string oscParameterEyeBlinkRight = string.Empty;
+        public string oscParameterJawOpen = string.Empty;
+        public string oscParameterMouthSmileLeft = string.Empty;
+        public string oscParameterMouthSmileRight = string.Empty;
+        public string oscParameterBrowInnerUp = string.Empty;
+        // Additional optional ARKit-compatible channels; existing named mappings above remain supported.
+        public List<OscBlendShapeParameterMapping> oscBlendShapeMappings = new List<OscBlendShapeParameterMapping>();
 
         // 表情ごとのしきい値（UseCommonThreshold = 未設定で trackingExpressionThreshold を使う。旧版の共通値を引き継ぐため）
         public float thresholdSmile = UseCommonThreshold;
@@ -830,6 +876,37 @@ namespace VRCast.Core
             resetHotkeys = ResetHotkey.Defaults();
         }
 
+        private static string NormalizeOscParameterName(string parameterName)
+        {
+            string name = (parameterName ?? string.Empty).Trim();
+            // OSC parameter names are one path segment; invalid names disable this optional mapping.
+            if (string.IsNullOrEmpty(name))
+            {
+                return string.Empty;
+            }
+
+            foreach (char c in name)
+            {
+                if (c == '/' || c == '\\' || char.IsControl(c))
+                {
+                    return string.Empty;
+                }
+            }
+
+            return name;
+        }
+
+        private static string NormalizeUniqueOscParameterName(string parameterName, HashSet<string> usedParameterNames)
+        {
+            string name = NormalizeOscParameterName(parameterName);
+            if (string.IsNullOrEmpty(name) || !usedParameterNames.Add(name))
+            {
+                return string.Empty;
+            }
+
+            return name;
+        }
+
         private void NormalizeResetHotkeys()
         {
             // 壊れた値・未知の種類・重複を捨て、使えないキーは未割り当てにする
@@ -1105,6 +1182,15 @@ namespace VRCast.Core
 
             // パネルの背景の不透明度も範囲内に制限
             uiOpacity = Mathf.Clamp(uiOpacity, MinUiOpacity, MaxUiOpacity);
+            // 描画 FPS の上限。0 は自動、負数も自動へ戻し、それ以外は安全な範囲に制限する
+            frameRateLimit = frameRateLimit <= 0
+                ? 0
+                : Mathf.Clamp(frameRateLimit, MinFrameRateLimit, MaxFrameRateLimit);
+            physicsRateHz = physicsRateHz <= 0 ? 60 : Mathf.Clamp(physicsRateHz, 15, 120);
+            sessionNetworkHz = sessionNetworkHz <= 0 ? 20 : Mathf.Clamp(sessionNetworkHz, 1, 60);
+            audioAnalysisHz = audioAnalysisHz <= 0 ? 30 : Mathf.Clamp(audioAnalysisHz, 5, 60);
+            audioReactiveGain = ClampOrDefault(audioReactiveGain, 0f, 8f, 1f);
+
             // 未知の優先度（リアルタイム等の手編集）は通常へ
             if (!Enum.IsDefined(typeof(ProcessPriority), processPriority))
             {
@@ -1274,6 +1360,60 @@ namespace VRCast.Core
             // 外部操作のポートも同じ範囲に制限
             remoteOscPort = Mathf.Clamp(remoteOscPort, MinTrackingPort, MaxTrackingPort);
             remoteHttpPort = Mathf.Clamp(remoteHttpPort, MinTrackingPort, MaxTrackingPort);
+            // OSC 出力はローカル既定。無効な IP は既定へ戻し、ポートは有効範囲に制限
+            oscParameterOutputAddress = (oscParameterOutputAddress ?? string.Empty).Trim();
+            if (!System.Net.IPAddress.TryParse(oscParameterOutputAddress, out var oscAddress)
+                || oscAddress.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork)
+            {
+                oscParameterOutputAddress = "127.0.0.1";
+            }
+            else
+            {
+                oscParameterOutputAddress = oscAddress.ToString();
+            }
+            oscParameterOutputPort = Mathf.Clamp(oscParameterOutputPort, 1, 65535);
+            oscParameterOutputRate = Mathf.Clamp(oscParameterOutputRate <= 0 ? 30 : oscParameterOutputRate, 1, 60);
+            var usedOscParameterNames = new HashSet<string>(StringComparer.Ordinal);
+            oscParameterEyeOpenLeft = NormalizeUniqueOscParameterName(oscParameterEyeOpenLeft, usedOscParameterNames);
+            oscParameterEyeOpenRight = NormalizeUniqueOscParameterName(oscParameterEyeOpenRight, usedOscParameterNames);
+            oscParameterMouthOpen = NormalizeUniqueOscParameterName(oscParameterMouthOpen, usedOscParameterNames);
+            oscParameterSmile = NormalizeUniqueOscParameterName(oscParameterSmile, usedOscParameterNames);
+            oscParameterEyeBlinkLeft = NormalizeUniqueOscParameterName(oscParameterEyeBlinkLeft, usedOscParameterNames);
+            oscParameterEyeBlinkRight = NormalizeUniqueOscParameterName(oscParameterEyeBlinkRight, usedOscParameterNames);
+            oscParameterJawOpen = NormalizeUniqueOscParameterName(oscParameterJawOpen, usedOscParameterNames);
+            oscParameterMouthSmileLeft = NormalizeUniqueOscParameterName(oscParameterMouthSmileLeft, usedOscParameterNames);
+            oscParameterMouthSmileRight = NormalizeUniqueOscParameterName(oscParameterMouthSmileRight, usedOscParameterNames);
+            oscParameterBrowInnerUp = NormalizeUniqueOscParameterName(oscParameterBrowInnerUp, usedOscParameterNames);
+            if (oscBlendShapeMappings == null)
+            {
+                oscBlendShapeMappings = new List<OscBlendShapeParameterMapping>();
+            }
+            var normalizedBlendShapeMappings = new List<OscBlendShapeParameterMapping>();
+            var usedBlendShapes = new HashSet<string>(StringComparer.Ordinal);
+            foreach (OscBlendShapeParameterMapping mapping in oscBlendShapeMappings)
+            {
+                if (mapping == null || string.IsNullOrWhiteSpace(mapping.blendShapeName))
+                {
+                    continue;
+                }
+
+                string blendShapeName = mapping.blendShapeName.Trim();
+                if (!usedBlendShapes.Add(blendShapeName))
+                {
+                    continue;
+                }
+
+                // Standard mappings reserve their destinations first; custom mappings then reserve
+                // any remaining names. This prevents separate controls from competing for one parameter.
+                string parameterName = NormalizeUniqueOscParameterName(mapping.parameterName, usedOscParameterNames);
+
+                normalizedBlendShapeMappings.Add(new OscBlendShapeParameterMapping
+                {
+                    blendShapeName = blendShapeName,
+                    parameterName = parameterName,
+                });
+            }
+            oscBlendShapeMappings = normalizedBlendShapeMappings;
             // 上半身の傾きの強さは 0〜上限に制限
             trackingBodyLean = Mathf.Clamp(trackingBodyLean, 0f, MaxTrackingBodyLean);
             // 未知の体の動かし方は既定の傾きへ

@@ -223,5 +223,36 @@ namespace VRCast.Tests
             // 揺れる区間が無いチェーンは作らない
             Assert.That(set.bones, Is.Empty);
         }
+
+        [Test]
+        public void BuildPhysBones_SingleJointWithTip_UsesVirtualEndpoint()
+        {
+            _root = new GameObject("Root");
+            Transform hair = Child(_root.transform, "Hair", Vector3.up);
+            Child(hair, "Tip", Vector3.down * 0.12f);
+            var spring = new VrmSpring { joints = { new VrmSpringJoint { transform = hair, stiffness = 1f } } };
+
+            PhysBoneSet set = VrmMetadataBuilder.BuildPhysBones(_root.transform, new[] { spring }, new List<VrmCollider>());
+
+            Assert.That(set.bones, Has.Length.EqualTo(1));
+            Assert.That(set.bones[0].endpointPosition, Is.EqualTo(Vector3.down * 0.12f));
+            Assert.That(set.bones[0].ignorePaths, Is.EqualTo(new[] { "Hair/Tip" }));
+            Assert.That(set.bones[0].pull, Is.EqualTo(0.5f));
+            Assert.That(set.Validate(), Is.Null);
+        }
+
+        [Test]
+        public void BuildPhysBones_SingleJointAmbiguousOrZeroTip_IsSkipped()
+        {
+            _root = new GameObject("Root");
+            Transform hair = Child(_root.transform, "Hair", Vector3.up);
+            Transform tip = Child(hair, "Tip", Vector3.zero);
+            var spring = new VrmSpring { joints = { new VrmSpringJoint { transform = hair } } };
+            Assert.That(VrmMetadataBuilder.BuildPhysBones(_root.transform, new[] { spring }, new List<VrmCollider>()).bones, Is.Empty);
+
+            tip.localPosition = Vector3.down * 0.1f;
+            Child(hair, "Accessory", Vector3.right * 0.1f);
+            Assert.That(VrmMetadataBuilder.BuildPhysBones(_root.transform, new[] { spring }, new List<VrmCollider>()).bones, Is.Empty);
+        }
     }
 }

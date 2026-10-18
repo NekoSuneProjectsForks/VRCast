@@ -123,9 +123,10 @@ namespace VRCast.UI
 
         public void Initialize(
             AvatarSession session, OrbitCameraController orbit, RenderingController rendering,
-            MicrophoneInput microphone, IFaceTrackingProvider tracker, TrackerProcess trackerProcess,
+            MicrophoneInput microphone, AudioReactiveBridge audioReactive, IFaceTrackingProvider tracker, TrackerProcess trackerProcess,
             TrackingSkeletonView skeleton, VirtualCameraOutput virtualCamera, SpoutOutput spout,
-            FileDropReceiver fileDrop, UpdateChecker updates, RemoteControl remote, AppSettings settings, string initialPath)
+            FileDropReceiver fileDrop, UpdateChecker updates, RemoteControl remote, AppSettings settings, string initialPath,
+            SessionClient sessionClient)
         {
             // 依存の受け取りと各タブの作成
             _session = session;
@@ -141,7 +142,7 @@ namespace VRCast.UI
             _animationSection = new AnimationSection(session, settings);
             _objectSection = new ObjectSection(session, settings);
             _particleSection = new ParticleSection(session, settings);
-            _faceSection = new FaceSection(session, microphone, settings);
+            _faceSection = new FaceSection(session, microphone, audioReactive, settings);
             _expressionSection = new ExpressionSection(session, settings);
             _shapeKeySection = new ShapeKeySection(session, settings);
             _perfectSyncEditor = new PerfectSyncEditor(session, orbit, settings);
@@ -154,14 +155,14 @@ namespace VRCast.UI
             var screenshot = new AvatarScreenshot(orbit.GetComponent<UnityEngine.Camera>(), settings);
             _outputSection = new OutputSection(virtualCamera, spout, rendering, screenshot, settings);
             _shortcutSection = new ShortcutSection(session, settings);
-            _remoteSection = new RemoteSection(session, remote, settings);
+            _remoteSection = new RemoteSection(session, remote, settings, sessionClient);
 
             // パーフェクトシンク化の編集中は、外部からアバターを切り替えさせない（編集中のアバターが消えるため）
             if (remote != null)
             {
                 remote.AvatarSwitchBlocker = () => _perfectSyncEditor.IsOpen ? "the perfect sync editor is open" : null;
             }
-            _performanceSection = new PerformanceSection(settings, rendering);
+            _performanceSection = new PerformanceSection(settings, rendering, session, sessionClient);
             _presetSection = new PresetSection(settings, ReapplySettings);
             _settingsSection = new SettingsSection(settings, rendering, ResetAllSettings, _presetSection);
             _infoSection = new InfoSection(settings, updates, new CreditsSection(),
@@ -176,7 +177,7 @@ namespace VRCast.UI
             var autoReset = gameObject.AddComponent<AutoResetScheduler>();
             autoReset.Initialize(session, settings);
             _autoResetSection = new AutoResetSection(autoReset, settings);
-            _performanceBar = new PerformanceBar(settings, tracker, trackerProcess);
+            _performanceBar = new PerformanceBar(settings, tracker, trackerProcess, sessionClient);
 
             // ウィンドウへのドロップで読み込む
             _fileDrop.FilesDropped += OnFilesDropped;
@@ -388,6 +389,7 @@ namespace VRCast.UI
             _theme?.Destroy();
             _theme = null;
             _discordSection.Dispose();
+            _settingsSection?.Dispose();
         }
 
         private void FitToScreen(float screenWidth, float screenHeight)

@@ -21,6 +21,7 @@ namespace VRCast.UI
 
         private readonly AvatarComponentCache _avatar;
         private readonly MicrophoneInput _microphone;
+        private readonly AudioReactiveBridge _audioReactive;
         private readonly AppSettings _settings;
 
         // まばたきに使う BlendShape のアバターごとの指定
@@ -29,10 +30,11 @@ namespace VRCast.UI
         // 自動まばたきに使う .anim のアバターごとの指定
         private readonly BlinkAnimationControls _blinkAnimation;
 
-        public FaceSection(AvatarSession session, MicrophoneInput microphone, AppSettings settings)
+        public FaceSection(AvatarSession session, MicrophoneInput microphone, AudioReactiveBridge audioReactive, AppSettings settings)
         {
             _avatar = new AvatarComponentCache(session);
             _microphone = microphone;
+            _audioReactive = audioReactive;
             _settings = settings;
             _blinkShapes = new BlinkShapeEditor(session, _avatar, settings);
             _blinkAnimation = new BlinkAnimationControls(session, _avatar, settings);
@@ -43,6 +45,7 @@ namespace VRCast.UI
             _avatar.Refresh();
             DrawBlinkAndGaze();
             DrawLipSync();
+            DrawAudioReactive();
         }
 
         private void DrawBlinkAndGaze()
@@ -246,6 +249,38 @@ namespace VRCast.UI
                 GuiControls.Hint(Loc.T("Vowel", "母音", "모음", "元音", "母音") + $": {vowel}"
                     + $"    F1 {formants.x:F0} Hz / F2 {formants.y:F0} Hz");
             }
+        }
+
+        private void DrawAudioReactive()
+        {
+            GuiControls.BeginCard("Audio-reactive shaders (basic AudioLink)");
+            _settings.audioReactiveEnabled = GUILayout.Toggle(_settings.audioReactiveEnabled,
+                "Enable music-reactive shader data");
+            GuiControls.Hint("Uses the selected microphone or a Stereo Mix / virtual audio cable input. "
+                + "Four AudioLink bands are approximated; full AudioLink effects require more passes.");
+            if (_settings.audioReactiveEnabled)
+            {
+                // Music and lip sync share the same recording, including the
+                // selected device when lip sync itself is disabled.
+                if (!_settings.lipSyncEnabled) DrawDeviceSelector();
+                _settings.audioAnalysisHz = Mathf.RoundToInt(GuiControls.Slider(
+                    "Audio analysis (Hz)", _settings.audioAnalysisHz, 5f, 60f));
+                _settings.audioReactiveGain = GuiControls.Slider(
+                    "Audio sensitivity", _settings.audioReactiveGain, 0f, 8f);
+                if (_audioReactive != null && _audioReactive.HasInput)
+                {
+                    GUI.enabled = false;
+                    AudioBandAnalyzer analyzer = _audioReactive.Analyzer;
+                    GuiControls.Slider("Bass", analyzer.GetBand(0), 0f, 1f);
+                    GuiControls.Slider("Low mids", analyzer.GetBand(1), 0f, 1f);
+                    GuiControls.Slider("High mids", analyzer.GetBand(2), 0f, 1f);
+                    GuiControls.Slider("Treble", analyzer.GetBand(3), 0f, 1f);
+                    GUI.enabled = true;
+                    if (analyzer.Beat) GuiControls.Hint("Beat / transient detected");
+                }
+                else GuiControls.Hint(_microphone.Status + " (waiting for audio)");
+            }
+            GuiControls.EndCard();
         }
 
         private void DrawDeviceSelector()

@@ -2,6 +2,8 @@ using System;
 using UnityEngine;
 using VRCast.Core;
 using VRCast.Rendering;
+using VRCast.Remote;
+using VRCast.Tracking;
 
 namespace VRCast.UI
 {
@@ -19,6 +21,13 @@ namespace VRCast.UI
         private readonly RenderingController _rendering;
         private readonly Action _resetAll;
         private readonly PresetSection _presets;
+        private readonly OscParameterSender _oscParameterSender = new OscParameterSender();
+        private string _oscOutputAddress;
+        private int _oscOutputPort = -1;
+        private float _nextOscUiRetryTime;
+        private string _oscAddressText;
+        private string _oscPortText;
+        private string _oscDestinationError;
 
         // リセットの確認中か、直前にリセットしたか
         private bool _confirmingReset;
@@ -32,13 +41,262 @@ namespace VRCast.UI
             _rendering = rendering;
             _resetAll = resetAll;
             _presets = presets;
+            _oscAddressText = settings.oscParameterOutputAddress ?? "127.0.0.1";
+            _oscPortText = settings.oscParameterOutputPort.ToString();
         }
 
         public void Draw()
         {
             DrawPanel();
+            DrawOscParameterOutput();
             _presets.Draw();
             DrawReset();
+        }
+
+        public void Dispose()
+        {
+            _oscParameterSender.Dispose();
+        }
+
+        private void DrawOscParameterOutput()
+        {
+            GuiControls.BeginCard("VRChat OSC output");
+            GuiControls.Hint(
+                "Send OSC avatar-parameter messages to VRChat. This is outbound parameter control only; it does not send skeletal full-body, head, hand, or VRCFT tracking data.");
+
+            bool enabled = GUILayout.Toggle(_settings.oscParameterOutputEnabled, "Enable avatar-parameter output");
+            if (enabled != _settings.oscParameterOutputEnabled)
+            {
+                _settings.oscParameterOutputEnabled = enabled;
+            }
+
+            GUILayout.Label("Destination IP address");
+            _oscAddressText = GUILayout.TextField(_oscAddressText ?? string.Empty);
+
+            GUILayout.Label("Destination UDP port");
+            _oscPortText = GUILayout.TextField(_oscPortText ?? string.Empty);
+            if (GUILayout.Button("Apply destination"))
+            {
+                if (!int.TryParse(_oscPortText, out int port) || port < 1 || port > 65535)
+                {
+                    _oscDestinationError = "UDP port must be between 1 and 65535.";
+                }
+                else if (!System.Net.IPAddress.TryParse((_oscAddressText ?? string.Empty).Trim(), out var ip)
+                    || ip.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork)
+                {
+                    _oscDestinationError = "Enter a valid IPv4 address.";
+                }
+                else
+                {
+                    _settings.oscParameterOutputAddress = ip.ToString();
+                    _settings.oscParameterOutputPort = port;
+                    _oscAddressText = ip.ToString();
+                    _oscDestinationError = null;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(_oscDestinationError))
+            {
+                GuiControls.Hint(_oscDestinationError);
+            }
+
+            if (!_settings.oscParameterOutputEnabled)
+            {
+                _oscParameterSender.Stop();
+                _oscOutputAddress = null;
+                _oscOutputPort = -1;
+            }
+            else if (_oscOutputAddress != _settings.oscParameterOutputAddress
+                || _oscOutputPort != _settings.oscParameterOutputPort
+                || (!_oscParameterSender.IsEnabled && Time.unscaledTime >= _nextOscUiRetryTime))
+            {
+                _oscParameterSender.Start(
+                    _settings.oscParameterOutputAddress, _settings.oscParameterOutputPort);
+                _oscOutputAddress = _settings.oscParameterOutputAddress;
+                _oscOutputPort = _settings.oscParameterOutputPort;
+                _nextOscUiRetryTime = Time.unscaledTime + 3f;
+            }
+
+            GUILayout.Label("Face OSC update rate: " + _settings.oscParameterOutputRate + " Hz");
+            _settings.oscParameterOutputRate = Mathf.RoundToInt(
+                GUILayout.HorizontalSlider(_settings.oscParameterOutputRate, 1f, 60f));
+            GuiControls.Hint("Independent from rendering FPS. Lower rates reduce UDP traffic; default is 30 Hz.");
+
+            GUILayout.Label("Live face parameter mappings (blank disables a mapping)");
+            GUILayout.Label("Left eye open");
+            _settings.oscParameterEyeOpenLeft = GUILayout.TextField(_settings.oscParameterEyeOpenLeft ?? string.Empty);
+            GUILayout.Label("Right eye open");
+            _settings.oscParameterEyeOpenRight = GUILayout.TextField(_settings.oscParameterEyeOpenRight ?? string.Empty);
+            GUILayout.Label("Mouth open");
+            _settings.oscParameterMouthOpen = GUILayout.TextField(_settings.oscParameterMouthOpen ?? string.Empty);
+            GUILayout.Label("Smile (providers with expression scores)");
+            _settings.oscParameterSmile = GUILayout.TextField(_settings.oscParameterSmile ?? string.Empty);
+            GUILayout.Label("ARKit eye blink left");
+            _settings.oscParameterEyeBlinkLeft = GUILayout.TextField(_settings.oscParameterEyeBlinkLeft ?? string.Empty);
+            GUILayout.Label("ARKit eye blink right");
+            _settings.oscParameterEyeBlinkRight = GUILayout.TextField(_settings.oscParameterEyeBlinkRight ?? string.Empty);
+            GUILayout.Label("ARKit jaw open");
+            _settings.oscParameterJawOpen = GUILayout.TextField(_settings.oscParameterJawOpen ?? string.Empty);
+            GUILayout.Label("ARKit mouth smile left");
+            _settings.oscParameterMouthSmileLeft = GUILayout.TextField(_settings.oscParameterMouthSmileLeft ?? string.Empty);
+            GUILayout.Label("ARKit mouth smile right");
+            _settings.oscParameterMouthSmileRight = GUILayout.TextField(_settings.oscParameterMouthSmileRight ?? string.Empty);
+            GUILayout.Label("ARKit brow inner up");
+            _settings.oscParameterBrowInnerUp = GUILayout.TextField(_settings.oscParameterBrowInnerUp ?? string.Empty);
+            GuiControls.Hint(
+                "Mapped values are sent at up to 30 updates per second while fresh face tracking is available. Use parameter names that exist in the avatar's Expressions/FX setup. ARKit mappings require a provider that supplies ARKit-compatible blendshapes. This does not forward skeletal head, body, or hand motion.");
+
+            DrawAdditionalArKitMappings();
+
+            GUILayout.Label("Status: " + _oscParameterSender.Status);
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Send test float"))
+            {
+                _oscParameterSender.SendFloat("VRCastTest", 0.5f);
+            }
+
+            if (GUILayout.Button("Send test bool"))
+            {
+                _oscParameterSender.SendBool("VRCastTestToggle", true);
+            }
+
+            if (GUILayout.Button("Send test int"))
+            {
+                _oscParameterSender.SendInt("VRCastTestGesture", 1);
+            }
+
+            GUILayout.EndHorizontal();
+            GuiControls.Hint(
+                "Test messages use /avatar/parameters/VRCastTest (float 0.5), /avatar/parameters/VRCastTestToggle (bool true), and /avatar/parameters/VRCastTestGesture (int 1). Create matching parameters in the avatar's FX/Expressions setup to observe them.");
+            GuiControls.EndCard();
+        }
+
+        private void DrawAdditionalArKitMappings()
+        {
+            if (_settings.oscBlendShapeMappings == null)
+            {
+                _settings.oscBlendShapeMappings = new System.Collections.Generic.List<OscBlendShapeParameterMapping>();
+            }
+
+            // Populate all known ARKit channels without overwriting user-entered parameter names.
+            foreach (string blendShapeName in ArKitFace.BlendShapeNames)
+            {
+                bool found = false;
+                foreach (OscBlendShapeParameterMapping mapping in _settings.oscBlendShapeMappings)
+                {
+                    if (mapping != null && string.Equals(mapping.blendShapeName, blendShapeName, StringComparison.Ordinal))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    _settings.oscBlendShapeMappings.Add(new OscBlendShapeParameterMapping
+                    {
+                        blendShapeName = blendShapeName,
+                        parameterName = string.Empty,
+                    });
+                }
+            }
+
+            GUILayout.Label("Additional ARKit blendshape mappings (all 51 channels; blank disables a mapping)");
+            var destinationOwners = new System.Collections.Generic.Dictionary<string, string>(StringComparer.Ordinal);
+            var duplicateDestinations = new System.Collections.Generic.HashSet<string>(StringComparer.Ordinal);
+            RegisterNamedDestination(_settings.oscParameterEyeOpenLeft, "Left eye open", destinationOwners, duplicateDestinations);
+            RegisterNamedDestination(_settings.oscParameterEyeOpenRight, "Right eye open", destinationOwners, duplicateDestinations);
+            RegisterNamedDestination(_settings.oscParameterMouthOpen, "Mouth open", destinationOwners, duplicateDestinations);
+            RegisterNamedDestination(_settings.oscParameterSmile, "Smile", destinationOwners, duplicateDestinations);
+            RegisterNamedDestination(_settings.oscParameterEyeBlinkLeft, "ARKit eye blink left", destinationOwners, duplicateDestinations);
+            RegisterNamedDestination(_settings.oscParameterEyeBlinkRight, "ARKit eye blink right", destinationOwners, duplicateDestinations);
+            RegisterNamedDestination(_settings.oscParameterJawOpen, "ARKit jaw open", destinationOwners, duplicateDestinations);
+            RegisterNamedDestination(_settings.oscParameterMouthSmileLeft, "ARKit mouth smile left", destinationOwners, duplicateDestinations);
+            RegisterNamedDestination(_settings.oscParameterMouthSmileRight, "ARKit mouth smile right", destinationOwners, duplicateDestinations);
+            RegisterNamedDestination(_settings.oscParameterBrowInnerUp, "ARKit brow inner up", destinationOwners, duplicateDestinations);
+            foreach (OscBlendShapeParameterMapping mapping in _settings.oscBlendShapeMappings)
+            {
+                if (mapping == null || string.IsNullOrWhiteSpace(mapping.blendShapeName))
+                {
+                    continue;
+                }
+
+                GUILayout.Label(mapping.blendShapeName);
+                mapping.parameterName = GUILayout.TextField(mapping.parameterName ?? string.Empty);
+                string destination = (mapping.parameterName ?? string.Empty).Trim();
+                if (HasInvalidOscParameterCharacters(destination))
+                {
+                    GuiControls.Hint("Invalid OSC parameter name: path separators and control characters are not allowed. This mapping will be disabled when settings are sanitised.");
+                }
+                else if (!string.IsNullOrEmpty(destination))
+                {
+                    if (destinationOwners.TryGetValue(destination, out string firstSource))
+                    {
+                        duplicateDestinations.Add(destination);
+                        GuiControls.Hint("Duplicate destination '" + destination + "'. '" + firstSource + "' takes priority; this mapping is disabled during sanitisation.");
+                    }
+                    else
+                    {
+                        destinationOwners.Add(destination, mapping.blendShapeName);
+                    }
+                }
+            }
+
+            if (duplicateDestinations.Count == 0)
+            {
+                GuiControls.Hint(
+                    "No duplicate destinations detected. These mappings forward raw ARKit-compatible blendshape values only when the selected provider supplies them.");
+            }
+            else
+            {
+                GuiControls.Hint(
+                    "Resolve duplicate destinations before use. A VRChat avatar parameter should normally receive one source value.");
+            }
+        }
+
+        private static bool HasInvalidOscParameterCharacters(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return false;
+
+            foreach (char c in value)
+            {
+                if (c == '/' || char.IsControl(c))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static void RegisterNamedDestination(
+            string parameterName,
+            string sourceName,
+            System.Collections.Generic.Dictionary<string, string> destinationOwners,
+            System.Collections.Generic.HashSet<string> duplicateDestinations)
+        {
+            string destination = (parameterName ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(destination))
+            {
+                return;
+            }
+
+            if (destination.IndexOf('/') >= 0)
+            {
+                GuiControls.Hint("Invalid OSC parameter name for '" + sourceName
+                    + "': path separators and control characters are not allowed. This mapping will be disabled when settings are sanitised.");
+                return;
+            }
+
+            if (destinationOwners.TryGetValue(destination, out string firstSource))
+            {
+                duplicateDestinations.Add(destination);
+                GuiControls.Hint("Duplicate destination '" + destination + "' used by '" + firstSource
+                    + "' and '" + sourceName + "'. Only the first mapping can be sent.");
+            }
+            else
+            {
+                destinationOwners.Add(destination, sourceName);
+            }
         }
 
         private void DrawPanel()

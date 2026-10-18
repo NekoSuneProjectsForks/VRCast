@@ -1,0 +1,23 @@
+services:
+  session-server:
+    build: .
+    image: vrcast/session-server:local
+    restart: unless-stopped
+    init: true
+    ports:
+      - "${VRCAST_SESSION_PUBLISH_ADDRESS:-127.0.0.1}:${VRCAST_SESSION_PORT:-39580}:39580"
+    environment:
+      VRCAST_SESSION_BIND: 0.0.0.0
+      VRCAST_SESSION_PORT: 39580
+      VRCAST_SESSION_ADMIN_TOKEN: ${VRCAST_SESSION_ADMIN_TOKEN:?Set a strong random token in .env}
+      VRCAST_SESSION_MAX_ROOMS: ${VRCAST_SESSION_MAX_ROOMS:-100}
+      VRCAST_SESSION_MAX_PARTICIPANTS: ${VRCAST_SESSION_MAX_PARTICIPANTS:-16}
+      VRCAST_SESSION_RATE_LIMIT: ${VRCAST_SESSION_RATE_LIMIT:-60}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:39580/healthz"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]

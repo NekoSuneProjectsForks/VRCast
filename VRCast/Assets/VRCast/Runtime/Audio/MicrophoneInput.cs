@@ -6,7 +6,7 @@ namespace VRCast.Audio
 {
     /// <summary>
     /// マイク入力の音量（0〜1）を提供する。アプリ全体で 1 つ。
-    /// 録音は lipSyncEnabled の間だけ行い、デバイス変更・切断時は再開する。
+    /// 録音はリップシンクまたは AudioLink 用の入力が必要な間だけ行う。
     /// </summary>
     public class MicrophoneInput : MonoBehaviour
     {
@@ -42,6 +42,13 @@ namespace VRCast.Audio
         private int _frequency;
         private AppSettings _settings;
         private AudioClip _clip;
+        // Multi-channel devices (including some Stereo Mix inputs) are downmixed
+        // through one reusable buffer; GetData's offset is in sample frames.
+        private float[] _interleavedLevel;
+        private float[] _interleavedVowels;
+        private float[] _interleavedAudio;
+        private int _lastCapturePosition;
+        private bool _captureHasLooped;
 
         // 設定上のデバイス名と、Microphone API に実際に渡した名前（既定デバイスは null）
         private string _requestedDevice;
@@ -54,6 +61,15 @@ namespace VRCast.Audio
         public float Level { get; private set; }
 
         public bool IsRecording => _clip != null;
+
+        /// <summary>Existing recording's recent samples for audio-reactive effects; no second microphone capture.</summary>
+        public bool TryCopyLatest(float[] destination, out int sampleRate)
+        {
+            sampleRate = 0;
+            if (_clip == null || destination == null || !ReadLatest(destination)) return false;
+            sampleRate = _frequency;
+            return true;
+        }
 
         /// <summary>
         /// 平滑化済みの母音の重み（VowelAnalyzer.A / I / U / E / O、合計 1）。母音判定が無効なら A だけ 1。
@@ -105,7 +121,7 @@ namespace VRCast.Audio
             }
 
             // 無効化されたら停止し、再有効化時はすぐ開始できるようにする
-            if (!_settings.lipSyncEnabled)
+            if (!_settings.lipSyncEnabled && !_settings.audioReactiveEnabled)
             {
                 StopRecording("Disabled");
                 _nextRetryTime = 0f;
@@ -131,7 +147,10 @@ namespace VRCast.Audio
             Level = Mathf.MoveTowards(Level, target, speed * Time.deltaTime);
 
             // 声が出ている間だけ母音を推定する（無音の間は直前の口の形のまま閉じる）
-            UpdateVowels(target > 0f);
+            if (_settings.lipSyncEnabled)
+            {
+                UpdateVowels(target > 0f);
+            }
         }
 
         private void UpdateVowels(bool voiced)
@@ -198,6 +217,17 @@ namespace VRCast.Audio
 
             // ループ録音で開始
             _clip = Microphone.Start(_startedDevice, true, ClipSeconds, frequency);
+            if (_clip != null && _clip.channels > 1)
+            {
+                // AudioClip.GetData reads the entire supplied array. Keep a buffer
+                // for each window size so it never reads extra (possibly unwritten)
+                // frames or pays to copy the largest window every render frame.
+                _interleavedLevel = new float[_samples.Length * _clip.channels];
+                _interleavedVowels = new float[_vowelSamples.Length * _clip.channels];
+                _interleavedAudio = new float[AudioBandAnalyzer.WindowSize * _clip.channels];
+            }
+            _lastCapturePosition = 0;
+            _captureHasLooped = false;
             Status = _clip != null ? $"Recording: {_startedDevice ?? "Default"}" : "Failed to start";
             VRCastLog.Info(LogCategory, Status);
         }
@@ -213,25 +243,58 @@ namespace VRCast.Audio
             }
 
             Level = 0f;
+            _interleavedLevel = null;
+            _interleavedVowels = null;
+            _interleavedAudio = null;
             Status = status;
+            _lastCapturePosition = 0;
+            _captureHasLooped = false;
         }
 
         private bool ReadLatest(float[] buffer)
         {
             // バッファがクリップより長ければ読めない
-            if (buffer.Length == 0 || buffer.Length > _clip.samples)
+            if (_clip == null || buffer == null || buffer.Length == 0 || buffer.Length > _clip.samples)
             {
                 return false;
             }
 
             // 録音位置の直前 buffer.Length 分を読む（GetData は末尾で先頭へ折り返す）
-            int offset = Microphone.GetPosition(_startedDevice) - buffer.Length;
+            int position = Microphone.GetPosition(_startedDevice);
+            if (position < _lastCapturePosition) _captureHasLooped = true;
+            _lastCapturePosition = position;
+            // A fresh looping clip contains unwritten samples before its first
+            // complete window. A stopped device reports position zero.
+            int frames = buffer.Length;
+            if (frames > _clip.samples) return false;
+            if (position <= 0 || (!_captureHasLooped && position < frames)) return false;
+            int offset = position - frames;
             if (offset < 0)
             {
                 offset += _clip.samples;
             }
 
-            return _clip.GetData(buffer, offset);
+            if (_clip.channels == 1) return _clip.GetData(buffer, offset);
+            float[] interleaved = frames == _samples.Length ? _interleavedLevel
+                : frames == _vowelSamples.Length ? _interleavedVowels
+                : frames == AudioBandAnalyzer.WindowSize ? _interleavedAudio : null;
+            if (interleaved == null || !_clip.GetData(interleaved, offset)) return false;
+            return DownmixInterleaved(interleaved, _clip.channels, buffer);
+        }
+
+        /// <summary>Convert a complete interleaved window to mono without allocating.</summary>
+        public static bool DownmixInterleaved(float[] source, int channels, float[] destination)
+        {
+            if (source == null || destination == null || channels < 1
+                || source.Length != destination.Length * channels) return false;
+            for (int i = 0; i < destination.Length; i++)
+            {
+                float total = 0f;
+                for (int channel = 0; channel < channels; channel++)
+                    total += source[i * channels + channel];
+                destination[i] = total / channels;
+            }
+            return true;
         }
 
         private float MeasureLevel()
