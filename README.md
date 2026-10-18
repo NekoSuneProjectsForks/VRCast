@@ -1,5 +1,7 @@
 # VRCast
 
+> **Fork development:** [BUILDING.md](BUILDING.md) explains the exact Unity versions, Windows IL2CPP build, tests, and avatar converter setup. [TODO.md](TODO.md) consolidates the feature requests and checklists from [PR #1](https://github.com/NekoSuneProjectsForks/VRCast/pull/1). The existing README below documents the original application's features; the fork's unverified additions are tracked separately.
+
 <p align="center"><img src="docs/images/vrcast-icon.png" alt="VRCast" width="160"></p>
 
 <p align="center">
