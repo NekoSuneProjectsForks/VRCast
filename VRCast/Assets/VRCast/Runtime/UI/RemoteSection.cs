@@ -19,6 +19,7 @@ namespace VRCast.UI
         private readonly AvatarComponentCache _avatar;
         private readonly RemoteControl _remote;
         private readonly AppSettings _settings;
+        private readonly SessionSection _sessions;
 
         // 入力途中のポート番号
         private string _oscPortInput;
@@ -32,11 +33,12 @@ namespace VRCast.UI
         private List<string> _avatarNames = new List<string>();
         private float _avatarNamesRefreshAt;
 
-        public RemoteSection(AvatarSession session, RemoteControl remote, AppSettings settings)
+        public RemoteSection(AvatarSession session, RemoteControl remote, AppSettings settings, SessionClient sessionClient)
         {
             _avatar = new AvatarComponentCache(session);
             _remote = remote;
             _settings = settings;
+            _sessions = new SessionSection(sessionClient);
             SyncFromSettings();
         }
 
@@ -52,6 +54,7 @@ namespace VRCast.UI
         public void Draw()
         {
             _avatar.Refresh();
+            _sessions.Draw();
             DrawGeneral();
             DrawCommonCommands();
             DrawAvatarCommands();

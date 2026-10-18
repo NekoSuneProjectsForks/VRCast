@@ -125,7 +125,8 @@ namespace VRCast.UI
             AvatarSession session, OrbitCameraController orbit, RenderingController rendering,
             MicrophoneInput microphone, IFaceTrackingProvider tracker, TrackerProcess trackerProcess,
             TrackingSkeletonView skeleton, VirtualCameraOutput virtualCamera, SpoutOutput spout,
-            FileDropReceiver fileDrop, UpdateChecker updates, RemoteControl remote, AppSettings settings, string initialPath)
+            FileDropReceiver fileDrop, UpdateChecker updates, RemoteControl remote, AppSettings settings, string initialPath,
+            SessionClient sessionClient)
         {
             // 依存の受け取りと各タブの作成
             _session = session;
@@ -154,7 +155,7 @@ namespace VRCast.UI
             var screenshot = new AvatarScreenshot(orbit.GetComponent<UnityEngine.Camera>(), settings);
             _outputSection = new OutputSection(virtualCamera, spout, rendering, screenshot, settings);
             _shortcutSection = new ShortcutSection(session, settings);
-            _remoteSection = new RemoteSection(session, remote, settings);
+            _remoteSection = new RemoteSection(session, remote, settings, sessionClient);
 
             // パーフェクトシンク化の編集中は、外部からアバターを切り替えさせない（編集中のアバターが消えるため）
             if (remote != null)

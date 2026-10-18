@@ -72,10 +72,10 @@ Optional command line:
   -batchmode -nographics -projectPath "$PWD\VRCast" `
   -runTests -testPlatform EditMode `
   -testResults "$PWD\editmode-results.xml" `
-  -logFile "$PWD\editmode-tests.log" -quit
+  -logFile "$PWD\editmode-tests.log"
 ```
 
-These instructions are based on project configuration; **the tests and full Windows build have not been executed as part of preparing this guide**.
+For the live two-client session integration fixture, first build `SessionServer/VRCast.SessionServer.csproj` in Release and set `-testFilter VRCast.Tests.SessionClientIntegrationTests`. Keep `-quit` off the Unity test command: some batch-mode runs exit before the test result file is produced.
 
 ## Optional native components
 

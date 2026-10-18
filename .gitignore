@@ -1,4 +1,9 @@
 # Unity generated
+/SessionServer/bin/
+/SessionServer/obj/
+/SessionServer.Tests/bin/
+/SessionServer.Tests/obj/
+/SessionServer/.env
 /VRCast/[Ll]ibrary/
 /VRCast/[Tt]emp/
 /VRCast/[Oo]bj/
@@ -12,6 +17,10 @@
 # Generated per checkout by the Unity Editor (only ProjectVersion.txt is shared)
 /VRCast/Assets/**/*.meta
 /VRCast/Assets/*.meta
+!/VRCast/Assets/VRCast/Runtime/Remote/SessionClient.cs.meta
+!/VRCast/Assets/VRCast/Runtime/UI/SessionSection.cs.meta
+!/VRCast/Assets/VRCast/Tests/EditMode/SessionClientIntegrationTests.cs.meta
+/unity-session-*.log
 /VRCast/ProjectSettings/*
 !/VRCast/ProjectSettings/ProjectVersion.txt
 /VRCast/Packages/packages-lock.json

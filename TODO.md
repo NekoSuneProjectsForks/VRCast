@@ -45,27 +45,27 @@ Source: [Original PR comment](https://github.com/NekoSuneProjectsForks/VRCast/pu
 
 Source: [Original PR comment](https://github.com/NekoSuneProjectsForks/VRCast/pull/1#issuecomment-6232180210)
 
-**Status: ❌ NOT IMPLEMENTED — shared-session server and portable hosting remain future work.**
+**Status: ✅ INITIAL IMPLEMENTATION — headless room server, Control tab host/join, roster, pose placeholders, reconnect and room revocation are implemented and covered by automated tests. Real avatar/tracking replication and full desktop GUI verification remain open.**
 
 ## Additional roadmap: shared sessions, portable server, and performance
 
 ### Shared session server
 
-- [ ] Add a lightweight, headless VRCast Session Server with named rooms so two or more clients can host/join the same session.
-- [ ] Make joining simple: room code or invite link, visible connection status, and host/join controls.
+- [x] Add a lightweight, headless VRCast Session Server with named rooms so two or more clients can host/join the same session.
+- [x] Make joining simple: room code or invite link, visible connection status, and host/join controls.
 - [ ] Synchronize only necessary state: participant identity, supported avatar/actor selection, transforms/facing, expression parameters, animation/motion state, and scene events.
-- [ ] Use a versioned protocol, event-driven updates, periodic snapshots when needed, interpolation for remote movement, and clear rules for state ownership/conflicts.
-- [ ] Handle heartbeat/timeouts, disconnects, reconnects, room membership changes, and client/server version mismatch.
-- [ ] Relay state/events rather than rendered video or duplicated rendering work. Keep media streaming separate and optional.
-- [ ] Start with LAN/direct-connect sessions, then add internet hosting. Consider an optional relay for networks where direct connections fail.
-- [ ] Secure sessions with pairing codes or revocable tokens, input validation, rate limits, and TLS guidance. Do not expose unauthenticated control endpoints by default.
+- [x] Use a versioned protocol, event-driven updates, periodic snapshots when needed, interpolation for remote movement, and clear rules for state ownership/conflicts.
+- [x] Handle heartbeat/timeouts, disconnects, reconnects, room membership changes, and client/server version mismatch.
+- [x] Relay state/events rather than rendered video or duplicated rendering work. Keep media streaming separate and optional.
+- [ ] Start with LAN/direct-connect sessions, then add internet hosting. HTTPS reverse-proxy support exists; optional relay and WAN validation remain.
+- [x] Secure sessions with pairing codes or revocable tokens, input validation, rate limits, and TLS guidance. Do not expose unauthenticated control endpoints by default.
 ### Portable hosting
 
-- [ ] Docker Compose deployment with a small image, configurable ports/environment, health check, restart policy, persistent config, graceful shutdown, and reverse-proxy/TLS documentation.
+- [x] Docker Compose deployment with a small image, configurable ports/environment, health check, restart policy, persistent config, graceful shutdown, and reverse-proxy/TLS documentation.
 - [ ] Windows x64 standalone release, with an optional Windows Service installer.
 - [ ] Linux x64 standalone binary and optional systemd unit; assess ARM64 support separately.
-- [ ] Keep the server headless and independent of Unity or graphics hardware so it can run on a VPS, home server, or spare PC.
-- [ ] Include example configuration, `.env.example`, structured logs, and a status/health endpoint. Avoid a database for the initial small-session use case unless persistence actually requires one.
+- [x] Keep the server headless and independent of Unity or graphics hardware so it can run on a VPS, home server, or spare PC.
+- [x] Include example configuration, `.env.example`, structured logs, and a status/health endpoint. Avoid a database for the initial small-session use case unless persistence actually requires one.
 - [ ] Publish versioned binaries/container images and document client/server compatibility.
 ### Optimisation ideas
 
@@ -83,7 +83,7 @@ Source: [Original PR comment](https://github.com/NekoSuneProjectsForks/VRCast/pu
 - [ ] A documented plugin/event API so integrations do not need to modify core code.
 - [ ] Optional OSC/VMC bridges for compatible tracking and avatar-control tools, with explicit mapping and loop prevention.
 - [ ] One-click diagnostics export with logs/settings/performance data and secrets or tokens redacted.
-- [ ] Headless protocol/server tests in CI that do not require Unity or a GPU.
+- [x] Headless protocol/server tests in CI that do not require Unity or a GPU.
 - [ ] Better keyboard shortcuts, searchable settings, and actionable connection error messages.
 ### Suggested order
 
@@ -121,7 +121,7 @@ Source: [Original PR comment](https://github.com/NekoSuneProjectsForks/VRCast/pu
 - [ ] **AudioLink shaders:** investigate compatibility with AudioLink-enabled materials. Determine whether the data is available from the current render/capture path; if not, use a supported bridge rather than promising direct access to arbitrary VRChat world textures.
 ### Collaboration and external control
 
-- [ ] **Multi-person sessions:** extend the previously proposed session server so multiple users can join one room, exchange supported avatar/scene state, and see connection/reconnection status. Keep the server headless and lightweight.
+- [x] **Multi-person sessions:** two or more users can join one room, exchange the supported actor pose and host scene events, and see connection/reconnection status. Remote avatars currently render as placeholders; full-body/face/animation replication remains open.
 - [ ] **VNyanNet-style collaboration:** investigate an interoperability layer for cross-client collaboration, while avoiding assumptions about a proprietary protocol. Prefer a documented, versioned protocol with authentication and explicit permissions.
 - [ ] **WebSocket commands:** provide a documented, authenticated command API for Stream Deck, Streamer.bot, and other tools. Include command allowlists, validation, rate limits, and safe defaults.
 - [ ] **Twitch integration:** investigate events such as follows, subscriptions, channel points, raids, and hype trains where the official API exposes them; use OAuth scopes minimally and handle expired/revoked tokens.

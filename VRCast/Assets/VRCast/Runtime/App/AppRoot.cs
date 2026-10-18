@@ -125,11 +125,15 @@ namespace VRCast.App
             var remote = gameObject.AddComponent<RemoteControl>();
             remote.Initialize(_session, _settings);
 
+            // Optional shared-room client. Only active after the user explicitly connects.
+            var sessionClient = gameObject.AddComponent<SessionClient>();
+            sessionClient.Initialize(_session);
+
             // 操作パネル
             _initialAvatarPath = ResolveInitialAvatarPath();
             gameObject.AddComponent<MainPanel>().Initialize(
                 _session, _orbit, _rendering, _microphone, _tracker, trackerProcess, _skeleton, virtualCamera, spout,
-                fileDrop, updates, remote, _settings, _initialAvatarPath);
+                fileDrop, updates, remote, _settings, _initialAvatarPath, sessionClient);
         }
 
         private void Start()
